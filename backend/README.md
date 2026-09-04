@@ -24,6 +24,6 @@ Opcionalmente:
 1. Asumiendo que estamos en la raíz del repositorio, ejecutar los tests con: `python -m pytest tests/`
 
 **Importante**: 
-* Al trabajar en nuevos dominios, los módulos y archivos de ejemplo (personas, mascotas) ya no son necesarios y pueden ser eliminados junto con cualquier referencia a ellos dentro de `src/` y `tests/`.
+* Al trabajar en nuevos dominios, los módulos y archivos de ejemplo (Personals, mascotas) ya no son necesarios y pueden ser eliminados junto con cualquier referencia a ellos dentro de `src/` y `tests/`.
 * Por defecto el proyecto utiliza el motor de base de datos `sqlite` por lo que los datos de la app vivirán dentro del archivo cuyo nombre está definido en el archivo `.env` (por ejemplo: `db.sqlite3`) a menos que se renombre y/o se decida utilizar otro motor de base de datos.
-* Los tests han sido configurados para ejecutarse utilizando una base de datos en memoria por lo que no existe un archivo que contenga sus datos. Estos tests están relacionados al dominio personas/mascotas por lo que si borras los módulos, es probable que dejen de funcionar.
+* Los tests han sido configurados para ejecutarse utilizando una base de datos en memoria por lo que no existe un archivo que contenga sus datos. Estos tests están relacionados al dominio Personals/mascotas por lo que si borras los módulos, es probable que dejen de funcionar.

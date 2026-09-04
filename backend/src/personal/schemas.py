@@ -7,22 +7,24 @@ from src import Mascota
 # https://docs.pydantic.dev/latest/concepts/fields/
 
 
-class PersonaBase(BaseModel):
+class PersonalBase(BaseModel):
     nombre: str
+    apellido: str
     email: EmailStr
 
 
-class PersonaCreate(PersonaBase):
+class PersonalCreate(PersonalBase):
     pass
 
 
-class PersonaUpdate(PersonaBase):
+class PersonalUpdate(PersonalBase):
     pass
 
 
-class Persona(PersonaBase):
-    id: int
-    mascotas: List[Mascota]
+class Personal(PersonalBase):
+    dni: int
+    nroLegajo: int
+    documentos: List[Documentacion]
 
     # from_atributes=True permite que Pydantic trabaje con modelos SQLAlchemy
     # más info.: https://docs.pydantic.dev/latest/api/config/#pydantic.config.ConfigDict.from_attributes

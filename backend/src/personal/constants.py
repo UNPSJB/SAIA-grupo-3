@@ -1,5 +1,6 @@
 class ErrorCode:
-    PERSONA_NO_ENCONTRADA = "La persona no fue encontrada."
+    PERSONAL_NO_ENCONTRADO = "El personal no fue encontrado."
+    NRO_LEGAJO_DUPLICADO = "El número de legajo ya existe."
     EMAIL_DUPLICADO = "El email ya existe."
-    NOMBRE_DUPLICADO = "El nombre ya existe."
-    PERSONA_TIENE_MASCOTAS = "La persona tiene mascotas a cargo. No puede ser eliminada."
+    DNI_DUPLICADO = "El DNI ya existe."
+    PERSONAL_TIENE_DOCUMENTACION = "El personal tiene documentación a cargo. No puede ser eliminado."

@@ -6,9 +6,9 @@ from src.main import app
 from src.database import get_db
 from src.config import settings
 from src.models import ModeloBase
-from src.personas.services import crear_persona
+from src.personal.services import crear_persona
 from src.mascotas.services import crear_mascota
-from src.personas.schemas import PersonaCreate
+from src.personal.schemas import PersonaCreate
 from src.mascotas.schemas import MascotaCreate
 from src.mascotas.models import TipoMascota
 

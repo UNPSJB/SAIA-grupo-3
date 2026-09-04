@@ -2,50 +2,50 @@ import logging
 from typing import List
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
-from src.personas.models import Persona
-from src.personas import schemas, exceptions
+from src.personal.models import Personal
+from src.personal import schemas, exceptions
 
 # Creamos un logger para este módulo específico. Más info.: https://docs.python.org/3/library/logging.html
 logger = logging.getLogger(__name__)
 
 # operaciones CRUD para Personas
 
-def crear_persona(db: Session, persona: schemas.PersonaCreate) -> schemas.Persona:
-    _persona = Persona(**persona.model_dump())
-    db.add(_persona)
+def crear_personal(db: Session, personal: schemas.PersonalCreate) -> schemas.Personal:
+    _personal = personal(**personal.model_dump())
+    db.add(_personal)
     db.commit()
-    db.refresh(_persona)
-    return _persona
+    db.refresh(_personal)
+    return _personal
 
 
-def listar_personas(db: Session) -> List[schemas.Persona]:
-    logger.info("Listando personas desde services")  # <- este mensaje se verá por la terminal
-    return db.scalars(select(Persona)).all()
+def listar_personal(db: Session) -> List[schemas.Personal]:
+    logger.info("Listando personal desde services")  # <- este mensaje se verá por la terminal
+    return db.scalars(select(Personal)).all()
 
 
-def leer_persona(db: Session, persona_id: int) -> schemas.Persona:
-    db_persona = db.scalar(select(Persona).where(Persona.id == persona_id))
+def leer_personal(db: Session, personal_id: int) -> schemas.Personal:
+    db_persona = db.scalar(select(Personal).where(Personal.id == personal_id))
     if db_persona is None:
-        raise exceptions.PersonaNoEncontrada()
+        raise exceptions.PersonalNoEncontrado()
     return db_persona
 
 
-def modificar_persona(
-    db: Session, persona_id: int, persona: schemas.PersonaUpdate
-) -> Persona:
-    db_persona = leer_persona(db, persona_id)
+def modificar_personal(
+    db: Session, personal_id: int, personal: schemas.PersonalUpdate
+) -> Personal:
+    db_persona = leer_personal(db, personal_id)
     db.execute(
-        update(Persona).where(Persona.id == persona_id).values(**persona.model_dump())
+        update(Personal).where(Personal.id == personal_id).values(**personal.model_dump())
     )
     db.commit()
     db.refresh(db_persona)
     return db_persona
 
 
-def eliminar_persona(db: Session, persona_id: int) -> schemas.Persona:
-    db_persona = leer_persona(db, persona_id)
-    if len(db_persona.mascotas) > 0:
-        raise exceptions.PersonaTieneMascotas()
-    db.execute(delete(Persona).where(Persona.id == persona_id))
+def eliminar_personal(db: Session, personal_id: int) -> schemas.Personal:
+    db_persona = leer_personal(db, personal_id)
+    if len(db_persona.documentos) > 0:
+        raise exceptions.PersonalTieneDocumentacion()
+    db.execute(delete(Personal).where(Personal.id == personal_id))
     db.commit()
     return db_persona

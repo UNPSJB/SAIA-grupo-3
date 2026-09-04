@@ -42,4 +42,4 @@ app.add_middleware(
 
 # asociamos los routers a nuestra app
 app.include_router(personal_router)
-app.include_router(documentos_router)
+app.include_router(documentacion_router)
