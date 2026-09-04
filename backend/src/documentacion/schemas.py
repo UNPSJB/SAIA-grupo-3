@@ -1,39 +1,39 @@
 from pydantic import BaseModel, ConfigDict, field_validator
-from src.mascotas.models import TipoMascota
-from src.mascotas import exceptions
+from src.documentacion.models import TipoMascota
+from src.documentacion import exceptions
 
 # Los siguientes schemas contienen atributos sin muchas restricciones de tipo.
 # Podemos crear atributos con ciertas reglas mediante el uso de un "Field" adecuado.
 # https://docs.pydantic.dev/latest/concepts/fields/
 
 
-class MascotaBase(BaseModel):
+class DocumentoBase(BaseModel):
     nombre: str
-    tipo: TipoMascota  # solo permitiremos valores de este tipo.
+    tipo: TipoDocumento # solo permitiremos valores de este tipo.
 
     @field_validator(
         "tipo", mode="before"
     )  # <- Más info. sobre mode: https://pydantic.dev/docs/validation/dev/concepts/validators/#field-validators
     @classmethod
-    def is_valid_tipo_mascota(cls, v: str) -> str:
-        if v.lower() not in TipoMascota:
-            raise exceptions.TipoMascotaInvalido(list(TipoMascota))
+    def is_valid_tipo_documento(cls, v: str) -> str:
+        if v.lower() not in TipoDocumentao:
+            raise exceptions.TipoDocumentacionInvalido(list(TipoDocumento))
         return v.lower()
 
 
-class MascotaCreate(MascotaBase):
+class DocumentoCreate(DocumentoBase):
     tutor_id: int
 
 
-class MascotaUpdate(MascotaBase):
+class DocumentoUpdate(DocumentoBase):
     pass
 
 
-class Mascota(MascotaBase):
+class Documento(DocumentoBase):
     id: int
-    tipo: TipoMascota
+    tipo: TipoDocumento
     tutor_id: int
-    nombre_tutor: str
+    nombre_personal: str
 
     # La siguiente opción nos permite instanciar schemas pydantic pasando modelos SQLAlchemy por parámetros.
     # De otro modo solo podríamos usar diccionarios.
@@ -41,6 +41,6 @@ class Mascota(MascotaBase):
     model_config = ConfigDict(from_attributes = True)
 
 
-class MascotaDelete(MascotaBase):
+class DocumentoDelete(DocumentoBase):
     id: int
-    tutor_id: int
+    personal_id: int
