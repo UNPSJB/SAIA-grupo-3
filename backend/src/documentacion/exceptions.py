@@ -4,7 +4,7 @@ from src.exceptions import NotFound, BadRequest
 
 
 class DocumentoNoEncontrado(NotFound):
-    DETAIL = ErrorCode.DOCUMNTACION_NO_ENCONTRADA
+    DETAIL = ErrorCode.DOCUMENTACION_NO_ENCONTRADA
 
 
 class DocumentoDuplicado(BadRequest):

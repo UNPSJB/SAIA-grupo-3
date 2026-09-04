@@ -1,14 +1,14 @@
 from typing import List
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
-from src.documentacion.models import Documento
+from src.documentacion.models import Documentacion
 from src.documentacion import schemas, exceptions
 
 
 # operaciones CRUD para Mascota
 
 
-def crear_documentacion(db: Session, Documento: schemas.DocumentoCreate) -> schemas.Mascota:
+def crear_documento(db: Session, Documento: schemas.DocumentoCreate) -> schemas.Mascota:
     _documento = Documento(**documento.model_dump())
     db.add(_documento)
     db.commit()

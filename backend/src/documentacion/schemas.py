@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, field_validator
-from src.documentacion.models import TipoMascota
+from src.documentacion.models import TipoDocumento
 from src.documentacion import exceptions
 
 # Los siguientes schemas contienen atributos sin muchas restricciones de tipo.
@@ -16,7 +16,7 @@ class DocumentoBase(BaseModel):
     )  # <- Más info. sobre mode: https://pydantic.dev/docs/validation/dev/concepts/validators/#field-validators
     @classmethod
     def is_valid_tipo_documento(cls, v: str) -> str:
-        if v.lower() not in TipoDocumentao:
+        if v.lower() not in TipoDocumento:
             raise exceptions.TipoDocumentacionInvalido(list(TipoDocumento))
         return v.lower()
 
