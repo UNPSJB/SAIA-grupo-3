@@ -8,8 +8,8 @@ from src.documentacion import schemas, exceptions
 # operaciones CRUD para Mascota
 
 
-def crear_documento(db: Session, Documento: schemas.DocumentoCreate) -> schemas.Mascota:
-    _documento = Documento(**documento.model_dump())
+def crear_documento(db: Session, documento: schemas.DocumentoCreate) -> schemas.Documento:
+    _documento = Documentacion(**documento.model_dump())
     db.add(_documento)
     db.commit()
     db.refresh(
@@ -19,32 +19,31 @@ def crear_documento(db: Session, Documento: schemas.DocumentoCreate) -> schemas.
 
 
 def listar_documentos(db: Session) -> List[schemas.Documento]:
-    return db.scalars(select(Documento)).all()
+    return db.scalars(select(Documentacion)).all()
 
 
 def leer_documento(db: Session, documento_id: int) -> schemas.Documento:
-    db_documento = db.scalar(select(Documento).where(Documento.id == documento_id))
+    db_documento = db.scalar(select(Documentacion).where(Documentacion.id == documento_id))
     if db_documento is None:
         raise exceptions.DocumentoNoEncontrado() # <- usamos nuestras propias excepciones adaptadas al dominio de aplicación
     return db_documento
 
 
-def documento_mascota(
+def modificar_documento(
     db: Session, documento_id: int, documento: schemas.DocumentoUpdate
-) -> Documento:
-    db_docuento = leer_docuento(db, docuento_id)
-    db.execute(update(Documento)
-               .where(Documento.id == documento_id)
-               .values(**documentos.model_dump()))
+) -> Documentacion:
+    db_documento = leer_documento(db, documento_id)
+    db.execute(update(Documentacion)
+               .where(Documentacion.id == documento_id)
+               .values(**documento.model_dump()))
     db.commit()
     db.refresh(db_documento)
     return db_documento
 
-
 def eliminar_documento(db: Session, documento_id: int) -> schemas.DocumentoDelete:
     db_documento = leer_documento(db, documento_id)
     db.execute(
-        delete(Documento).where(Documento.id == documento_id)
+        delete(Documentacion).where(Documentacion.id == documento_id)
     )
     db.commit()
     return db_documento

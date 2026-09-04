@@ -22,7 +22,7 @@ class DocumentoBase(BaseModel):
 
 
 class DocumentoCreate(DocumentoBase):
-    tutor_id: int
+    personal_id: int
 
 
 class DocumentoUpdate(DocumentoBase):
@@ -32,7 +32,7 @@ class DocumentoUpdate(DocumentoBase):
 class Documento(DocumentoBase):
     id: int
     tipo: TipoDocumento
-    tutor_id: int
+    personal_id: int
     nombre_personal: str
 
     # La siguiente opción nos permite instanciar schemas pydantic pasando modelos SQLAlchemy por parámetros.
@@ -44,3 +44,5 @@ class Documento(DocumentoBase):
 class DocumentoDelete(DocumentoBase):
     id: int
     personal_id: int
+
+    model_config = ConfigDict(from_attributes=True)

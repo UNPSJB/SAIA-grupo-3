@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import List
-from src import Mascota
+from src.documentacion.schemas import Documento
 
 # Los siguientes schemas contienen atributos sin muchas restricciones de tipo.
 # Podemos crear atributos con ciertas reglas mediante el uso de un "Field" adecuado.
@@ -11,6 +11,8 @@ class PersonalBase(BaseModel):
     nombre: str
     apellido: str
     email: EmailStr
+    dni: int
+    nroLegajo: int
 
 
 class PersonalCreate(PersonalBase):
@@ -22,9 +24,7 @@ class PersonalUpdate(PersonalBase):
 
 
 class Personal(PersonalBase):
-    dni: int
-    nroLegajo: int
-    documentos: List[Documentacion]
+    documentos: List[Documento]
 
     # from_atributes=True permite que Pydantic trabaje con modelos SQLAlchemy
     # más info.: https://docs.pydantic.dev/latest/api/config/#pydantic.config.ConfigDict.from_attributes

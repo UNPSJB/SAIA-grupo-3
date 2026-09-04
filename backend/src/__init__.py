@@ -1,2 +1,2 @@
-from src.documentacion.schemas import Mascota
-from src.personas.schemas import Persona
+from src.documentacion.schemas import Documento
+from src.personal.schemas import Personal
