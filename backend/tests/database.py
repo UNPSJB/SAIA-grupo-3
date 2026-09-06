@@ -7,6 +7,7 @@ from src.database import get_db
 from src.config import settings
 from src.models import ModeloBase
 
+
 # creamos una db para testing
 engine = create_engine(
     settings.DB_URL_TEST,

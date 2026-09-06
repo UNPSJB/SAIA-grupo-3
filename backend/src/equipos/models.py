@@ -15,3 +15,5 @@ class Equipo(ModeloBase):
     nombre: Mapped[str] = mapped_column(nullable=False, index=True)
     tipo: Mapped[TipoEquipo] = mapped_column(nullable=False)  # ej.: "Equipo", "Herramienta", etc.
     ubicacion: Mapped[str] = mapped_column(nullable=False)
+
+    
