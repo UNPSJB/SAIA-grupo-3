@@ -52,7 +52,7 @@ export function Sidebar() {
             }`
           }
         >
-          {/* <i className="bi bi-journal-bookmark fs-5"></i> */}
+          {/* <i className="bi bi-journal-bookmark fs-5"></i>  Buscar un icono acorde*/}
           <span>Insumo</span>
         </NavLink>
       </nav>
