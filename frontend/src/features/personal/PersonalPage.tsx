@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Container } from 'react-bootstrap';
+import { PersonalView} from './PersonalView';
 import { PersonalList } from './PersonalList';
 import { PersonalForm } from './PersonalForm';
 import { PersonalDeleteView } from './PersonalDeleteView';
 import { usePersonal } from './usePersonal';
 import type { Personal } from './types';
 
-type ModoVista = 'listado' | 'crear' | 'editar' | 'eliminar';
+type ModoVista = 'ver' | 'listado' | 'crear' | 'editar' | 'eliminar';
 
 export function PersonalPage() {
   const [modo, setModo] = useState<ModoVista>('listado');
@@ -16,6 +17,11 @@ export function PersonalPage() {
   const handleNuevo = () => {
     setPersonalSeleccionado(null);
     setModo('crear');
+  };
+  
+  const handleView = (personal: Personal) => {
+    setPersonalSeleccionado(personal);
+    setModo('ver');
   };
 
   const handleEditar = (personal: Personal) => {
@@ -51,8 +57,17 @@ export function PersonalPage() {
     <Container className="py-2">
       <h2 className="mb-4 border-bottom pb-2 text-secondary">Gestión de Personal</h2>
 
+      {modo === 'ver' && personalSeleccionado && (
+        <PersonalView
+          personal={personalSeleccionado}
+          onEditar={() => handleEditar(personalSeleccionado)}
+          onVolver={volverAlListado}
+        />
+      )}
+
       {modo === 'listado' && (
         <PersonalList
+          onViewClick={handleView}
           onNuevoClick={handleNuevo}
           onEditarClick={handleEditar}
           onEliminarClick={handleEliminarClick}

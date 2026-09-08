@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Form, Button } from 'react-bootstrap';
-import type { Personal } from './types';
+import type { Personal, TipoCapacidad } from './types';
+import { TIPOS_CAPACIDAD } from './types';
 
 interface PersonalFormProps {
   personalInicial?: Personal | null;
@@ -14,6 +15,7 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [email, setEmail] = useState('');
+  const [tipoCapacidad, setTipoCapacidad] = useState<TipoCapacidad>('operar');
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
@@ -23,6 +25,7 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
       setNombre(personalInicial.nombre);
       setApellido(personalInicial.apellido);
       setEmail(personalInicial.email);
+      setTipoCapacidad(personalInicial.tipo_capacidad);
     }
   }, [personalInicial]);
 
@@ -32,7 +35,14 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
 
     setEnviando(true);
     try {
-      await onGuardar({ dni: Number(dni), nroLegajo: Number(nroLegajo), nombre, apellido, email });
+      await onGuardar({ 
+        dni: Number(dni), 
+        nroLegajo: Number(nroLegajo), 
+        nombre, 
+        apellido, 
+        email, 
+        tipo_capacidad: tipoCapacidad 
+      });
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Error al guardar los datos.');
     } finally {
@@ -60,6 +70,7 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
               <Form.Control type="number" required value={nroLegajo} onChange={(e) => setNroLegajo(e.target.value === '' ? '' : Number(e.target.value))} />
             </Form.Group>
           </div>
+          
           <div className="row">
             <Form.Group className="col-md-6 mb-3">
               <Form.Label>Nombre</Form.Label>
@@ -70,10 +81,28 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
               <Form.Control type="text" required value={apellido} onChange={(e) => setApellido(e.target.value)} />
             </Form.Group>
           </div>
-          <Form.Group className="mb-4">
-            <Form.Label>Correo Electrónico</Form.Label>
-            <Form.Control type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          </Form.Group>
+
+          <div className="row">
+            <Form.Group className="col-md-6 mb-4">
+              <Form.Label>Correo Electrónico</Form.Label>
+              <Form.Control type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            </Form.Group>
+            
+            <Form.Group className="col-md-6 mb-4">
+              <Form.Label>Capacidad en el Sistema</Form.Label>
+              <Form.Select 
+                required 
+                value={tipoCapacidad} 
+                onChange={(e) => setTipoCapacidad(e.target.value as TipoCapacidad)}
+              >
+                {TIPOS_CAPACIDAD.map((tipo) => (
+                  <option key={tipo.value} value={tipo.value}>
+                    {tipo.label}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </div>
 
           <div className="d-flex justify-content-end gap-2">
             <Button variant="secondary" onClick={onCancelar} disabled={enviando}>Cancelar</Button>
