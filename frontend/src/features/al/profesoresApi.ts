@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../../shared/lib/api';
+import { API_BASE_URL } from '../../shared/libreria/api';
 import type { Profesor } from './types';
 
 // export async function getProfesores(): Promise<Profesor[]> {
