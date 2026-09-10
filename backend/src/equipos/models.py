@@ -16,4 +16,12 @@ class Equipo(ModeloBase):
     tipo: Mapped[TipoEquipo] = mapped_column(nullable=False)  # ej.: "Equipo", "Herramienta", etc.
     ubicacion: Mapped[str] = mapped_column(nullable=False)
 
+    # =========================================================================
+    # EXTENSIONES FUTURAS (Sprint 1 y Sprint 2):
+    # - E2 (POES / Limpieza): Tareas de limpieza asignadas al equipo.
+    #   tareas_limpieza: Mapped[list["TareaLimpieza"]] = relationship(back_populates="equipo")
+    # - E4 (Mantenimiento y Calibración): Planes o registros de calibración.
+    #   calibraciones: Mapped[list["PlanCalibracion"]] = relationship(back_populates="equipo")
+    # =========================================================================
+
     
