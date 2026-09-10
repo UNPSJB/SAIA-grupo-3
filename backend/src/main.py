@@ -14,6 +14,7 @@ from src.personal.router import router as personal_router
 from src.equipos.router import router as equipos_router 
 from src.documentacion.router import router as documentacion_router
 from src.insumos.router import router as insumos_router
+from src.unidadMedida.router import router as unidad_medida_router
 from fastapi.middleware.cors import CORSMiddleware
 
 ENV = settings.ENV.upper()
@@ -47,3 +48,4 @@ app.include_router(personal_router)
 app.include_router(documentacion_router)
 app.include_router(equipos_router)
 app.include_router(insumos_router)
+app.include_router(unidad_medida_router)

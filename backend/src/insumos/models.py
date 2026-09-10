@@ -2,6 +2,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import auto, StrEnum
 from src.models import ModeloBase
+from src.unidadMedida.models import UnidadMedida
     
 
 class Insumo(ModeloBase):

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from src.database import get_db
 from src.unidadMedida import schemas, services
 
-router = APIRouter(prefix="/insumos", tags=["insumos"])
+router = APIRouter(prefix="/unidadMedida", tags=["unidad_medida"])
 
 # Unidad de medida
 
