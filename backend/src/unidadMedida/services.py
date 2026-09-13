@@ -22,3 +22,24 @@ def leer_unidad_medida(db: Session, unidad_id: int) -> schemas.UnidadMedida:
     if db_unidad is None:
         raise exceptions.UnidadMedidaNoEncontrada()
     return db_unidad
+
+def modificar_unidad_medida(db: Session, unidad_id: int, payload: dict) -> schemas.UnidadMedida:
+    db_unidad = db.scalar(select(models.UnidadMedida).where(models.UnidadMedida.id == unidad_id))
+    if db_unidad is None:
+        raise exceptions.UnidadMedidaNoEncontrada()
+    
+    for key, value in payload.items():
+        if value is not None:
+            setattr(db_unidad, key, value)
+        
+    db.commit()
+    db.refresh(db_unidad)
+    return db_unidad
+
+def eliminar_unidad_medida(db: Session, unidad_id: int) -> None:
+    db_unidad = db.scalar(select(models.UnidadMedida).where(models.UnidadMedida.id == unidad_id))
+    if db_unidad is None:
+        raise exceptions.UnidadMedidaNoEncontrada()
+    
+    db.delete(db_unidad)
+    db.commit()

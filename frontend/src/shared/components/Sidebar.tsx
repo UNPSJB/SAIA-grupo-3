@@ -43,7 +43,7 @@ export function Sidebar() {
         </NavLink>
 
         <NavLink
-          to="/insumo"
+          to="/insumos"
           className={({ isActive }) =>
             `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium ${
               isActive
@@ -54,6 +54,19 @@ export function Sidebar() {
         >
           {/* <i className="bi bi-journal-bookmark fs-5"></i>  Buscar un icono acorde*/}
           <span>Insumo</span>
+        </NavLink>
+
+        <NavLink
+          to="/unidades-medida"
+          className={({ isActive }) =>
+            `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium ${
+              isActive
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-secondary hover-bg-light'
+            }`
+          }
+        >
+          <span>Unidades de Medida</span>
         </NavLink>
       </nav>
     </aside>

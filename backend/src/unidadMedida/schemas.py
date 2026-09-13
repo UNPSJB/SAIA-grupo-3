@@ -15,6 +15,11 @@ class UnidadMedidaBase(BaseModel):
             raise exceptions.TipoUnidadInvalido(list(TipoUnidadMedida))
         return v.lower()
 
+class UnidadMedidaUpdate(BaseModel):
+    tipo: Optional[TipoUnidadMedida] = None
+    sufijo: Optional[str] = None
+
+
 class UnidadMedidaCreate(UnidadMedidaBase):
     pass
 

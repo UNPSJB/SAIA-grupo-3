@@ -2,7 +2,8 @@ from typing import List
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 from src.insumos import models, schemas, exceptions
-
+from src.unidadMedida.schemas import UnidadMedida
+from src.unidadMedida.services import leer_unidad_medida
 #Insumo
 
 def _validar_duplicados(
