@@ -94,7 +94,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
 
           <div className="d-flex justify-content-end gap-2">
             <Button variant="secondary" onClick={onCancelar} disabled={enviando}>Cancelar</Button>
-            <Button variant="success" type="submit" disabled={enviando}>
+            <Button variant="primary" type="submit" disabled={enviando}>
               {enviando ? 'Guardando...' : esEdicion ? 'Actualizar Cambios' : 'Guardar'}
             </Button>
           </div>

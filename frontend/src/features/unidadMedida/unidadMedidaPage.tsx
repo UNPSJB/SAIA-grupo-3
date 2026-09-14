@@ -139,7 +139,7 @@ export const UnidadMedidaPage = () => {
 
               <div className="d-flex justify-content-end gap-2">
                 <Button variant="secondary" onClick={() => setModo('listado')} disabled={enviando}>Cancelar</Button>
-                <Button variant={modo === 'editar' ? 'warning' : 'success'} type="submit" disabled={enviando} className={modo === 'editar' ? 'text-white' : ''}>
+                <Button variant={modo === 'editar' ? 'primary' : 'primary'} type="submit" disabled={enviando} className={modo === 'editar' ? 'text-white' : ''}>
                   {enviando ? 'Guardando...' : modo === 'editar' ? 'Actualizar Cambios' : 'Guardar'}
                 </Button>
               </div>

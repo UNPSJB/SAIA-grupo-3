@@ -32,7 +32,7 @@ export function InsumoView({ insumo, onEditar, onVolver }: InsumoViewProps) {
             <span className="col-4 text-muted fw-semibold">Unidad de Medida:</span>
             <span className="col-8">
               {insumo.unidadMedidaObj 
-                ? `${insumo.unidadMedidaObj.tipo} (${insumo.unidadMedidaObj.sufijo})` 
+                ? `${insumo.unidadMedidaObj.sufijo}` 
                 : `ID: ${insumo.unidad_medida_id}`}
             </span>
           </div>
