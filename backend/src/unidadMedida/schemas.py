@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, field_validator
 from src.unidadMedida.models import TipoUnidadMedida
 from src.unidadMedida import exceptions
+from typing import Optional
 
 
 #Unidad de medida
