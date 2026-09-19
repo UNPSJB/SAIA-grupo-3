@@ -48,7 +48,7 @@ def cargar_datos():
         # 3. Generar Equipos e Instrumentos
         sectores = ["Sector Envasado", "Línea 1 Cocción", "Cámara Frigorífica", "Laboratorio"]
         tipos_equipos = list(TipoEquipo)
-        for _ in range(8):
+        for _ in range(21):
             equipo = Equipo(
                 nombre=f"{fake.word().capitalize()} Industrial {fake.random_int(100, 999)}",
                 tipo=random.choice(tipos_equipos),

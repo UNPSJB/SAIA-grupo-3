@@ -1,8 +1,16 @@
 import { API_BASE_URL } from '../../shared/libreria/api';
 import type { Equipo } from './types';
 
-export async function getEquipos(): Promise<Equipo[]> {
-  const res = await fetch(`${API_BASE_URL}/equipos`);
+export interface PaginatedEquipos {
+  items: Equipo[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
+export async function getEquipos(page = 1, size = 10): Promise<PaginatedEquipos> {
+  const res = await fetch(`${API_BASE_URL}/equipos?page=${page}&size=${size}`);
   if (!res.ok) throw new Error('No se pudo listar los equipos.');
   return res.json();
 }

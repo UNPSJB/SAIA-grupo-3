@@ -6,12 +6,21 @@ export function useEquipo() {
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [size] = useState(10); // Puedes hacerlo dinámico después si quieres que el usuario lo elija
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const cargarEquipos = useCallback(() => {
+  
+
+  const cargarEquipos = useCallback((currentPage: number, currentSize: number) => {
     setLoading(true);
-    getEquipos()
+    getEquipos(currentPage, currentSize)
       .then((data) => {
-        setEquipos(data);
+        setEquipos(data.items);
+        setTotalPages(data.pages);
+        setTotal(data.total);
+        setPage(data.page);
         setError(null);
       })
       .catch((err: Error) => setError(err.message))
@@ -19,12 +28,12 @@ export function useEquipo() {
   }, []);
 
   useEffect(() => {
-    cargarEquipos();
-  }, [cargarEquipos]);
+    cargarEquipos(page, size);
+  }, [cargarEquipos, page, size]);
 
   const eliminar = async (id: number) => {
     await deleteEquipo(id);
-    setEquipos((prev) => prev.filter((e) => e.id !== id));
+    cargarEquipos(page, size); // Recarga la página actual para reflejar el cambio
   };
 
   const guardar = async (datos: Equipo, idExistente?: number) => {
@@ -33,8 +42,24 @@ export function useEquipo() {
     } else {
       await createEquipo(datos);
     }
-    cargarEquipos();
+    cargarEquipos(page, size); // Recarga la página actual
   };
 
-  return { equipos, loading, error, eliminar, guardar };
+  // Funciones de navegación
+  const nextPage = () => {
+    if (page < totalPages) setPage(prev => prev + 1);
+  };
+
+  const prevPage = () => {
+    if (page > 1) setPage(prev => prev - 1);
+  };
+
+  const changePage = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  return { 
+    equipos, loading, error, eliminar, guardar, 
+    page, totalPages, total, nextPage, prevPage, changePage 
+  };
 }

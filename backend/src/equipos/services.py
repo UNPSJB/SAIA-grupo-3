@@ -1,5 +1,5 @@
-from typing import List
-from sqlalchemy import delete, select, update
+from typing import List, Dict, Any
+from sqlalchemy import delete, select, update, func
 from sqlalchemy.orm import Session
 from src.equipos.models import Equipo
 from src.equipos import schemas, exceptions
@@ -18,8 +18,23 @@ def crear_equipo(db: Session, equipo: schemas.EquipoCreate) -> schemas.Equipo:
     return _equipo
 
 
-def listar_equipos(db: Session) -> List[schemas.Equipo]:
-    return db.scalars(select(Equipo)).all()
+def listar_equipos(db: Session, page: int = 1, size: int = 10) -> Dict[str, Any]:
+
+    skip = (page - 1) * size
+    
+    total = db.scalar(select(func.count()).select_from(Equipo))
+    
+    items = db.scalars(select(Equipo).offset(skip).limit(size)).all()
+    
+    pages = (total + size - 1) // size
+    
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "size": size,
+        "pages": pages
+    }
 
 
 def leer_equipo(db: Session, equipo_id: int) -> schemas.Equipo:
