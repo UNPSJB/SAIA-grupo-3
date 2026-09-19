@@ -1,4 +1,4 @@
-import { Table, Card, Button, Badge } from 'react-bootstrap';
+import { Table, Card, Button, Badge, Pagination } from 'react-bootstrap';
 import { useEquipo } from './useEquipo';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -18,7 +18,10 @@ export function EquipoList({
   onEditarClick,
   onEliminarClick,
 }: EquipoListProps) {
-  const { equipos, loading, error } = useEquipo();
+  const { 
+    equipos, loading, error,
+    page, totalPages, total, nextPage, prevPage, changePage 
+  } = useEquipo();
 
   const getLabelTipo = (valor: TipoEquipo) => {
     const encontrado = TIPOS_EQUIPOS.find((t) => t.value === valor);
@@ -27,14 +30,10 @@ export function EquipoList({
 
   const getBadgeVariant = (valor: TipoEquipo) => {
     switch (valor) {
-      case 'equipo':
-        return 'primary';
-      case 'herramienta':
-        return 'warning';
-      case 'instrumento':
-        return 'info';
-      default:
-        return 'secondary';
+      case 'equipo': return 'primary';
+      case 'herramienta': return 'warning';
+      case 'instrumento': return 'info';
+      default: return 'secondary';
     }
   };
 
@@ -59,6 +58,7 @@ export function EquipoList({
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
+            {/* ... el thead se mantiene igual ... */}
             <thead className="table-light">
               <tr>
                 <th style={{ width: '80px' }}>ID</th>
@@ -78,12 +78,8 @@ export function EquipoList({
               ) : (
                 equipos.map((e) => (
                   <tr key={e.id}>
-                    <td>
-                      <Badge bg="secondary">#{e.id}</Badge>
-                    </td>
-                    <td>
-                      <strong>{e.nombre}</strong>
-                    </td>
+                    <td><Badge bg="secondary">#{e.id}</Badge></td>
+                    <td><strong>{e.nombre}</strong></td>
                     <td>
                       <Badge bg={getBadgeVariant(e.tipo)}>
                         {getLabelTipo(e.tipo)}
@@ -92,31 +88,13 @@ export function EquipoList({
                     <td>{e.ubicacion}</td>
                     <td className="text-center">
                       <div className="d-flex justify-content-center gap-2">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          className="text-white py-1 px-2 shadow-sm"
-                          title="Ver"
-                          onClick={() => onViewClick(e)}
-                        >
+                        <Button variant="primary" size="sm" className="text-white py-1 px-2 shadow-sm" title="Ver" onClick={() => onViewClick(e)}>
                           <i className="bi bi-eye-fill"></i>
                         </Button>
-                        <Button
-                          variant="warning"
-                          size="sm"
-                          className="text-white py-1 px-2 shadow-sm"
-                          title="Modificar"
-                          onClick={() => onEditarClick(e)}
-                        >
+                        <Button variant="warning" size="sm" className="text-white py-1 px-2 shadow-sm" title="Modificar" onClick={() => onEditarClick(e)}>
                           <i className="bi bi-pencil-fill"></i>
                         </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          className="py-1 px-2 shadow-sm"
-                          title="Eliminar"
-                          onClick={() => onEliminarClick(e)}
-                        >
+                        <Button variant="danger" size="sm" className="py-1 px-2 shadow-sm" title="Eliminar" onClick={() => onEliminarClick(e)}>
                           <i className="bi bi-trash3-fill"></i>
                         </Button>
                       </div>
@@ -127,6 +105,28 @@ export function EquipoList({
             </tbody>
           </Table>
         </Card.Body>
+        
+
+        {totalPages > 0 && (
+          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
+            <span className="text-muted small mb-2 mb-md-0">
+              Mostrando página {page} de {totalPages} ({total} registros en total)
+            </span>
+            <Pagination className="mb-0" size="sm">
+              <Pagination.Prev onClick={prevPage} disabled={page === 1} />
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+                <Pagination.Item 
+                  key={num} 
+                  active={num === page} 
+                  onClick={() => changePage(num)}
+                >
+                  {num}
+                </Pagination.Item>
+              ))}
+              <Pagination.Next onClick={nextPage} disabled={page === totalPages} />
+            </Pagination>
+          </Card.Footer>
+        )}
       </Card>
     </>
   );

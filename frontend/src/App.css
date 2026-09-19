@@ -15,3 +15,24 @@ body {
 .table th {
   background-color: #f8fafc;
 }
+
+
+.main-content {
+  margin-left: 0;
+  transition: margin-left 0.3s ease-in-out;
+}
+
+.top-header {
+  left: 0 !important;
+  transition: left 0.3s ease-in-out;
+}
+
+
+@media (min-width: 768px) {
+  .main-content {
+    margin-left: 60px;
+  }
+  .top-header {
+    left: 260px !important;
+  }
+}
