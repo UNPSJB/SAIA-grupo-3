@@ -7,7 +7,7 @@ export function useEquipo() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [size] = useState(10); // Puedes hacerlo dinámico después si quieres que el usuario lo elija
+  const [size] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
@@ -33,7 +33,7 @@ export function useEquipo() {
 
   const eliminar = async (id: number) => {
     await deleteEquipo(id);
-    cargarEquipos(page, size); // Recarga la página actual para reflejar el cambio
+    cargarEquipos(page, size); 
   };
 
   const guardar = async (datos: Equipo, idExistente?: number) => {
@@ -42,10 +42,10 @@ export function useEquipo() {
     } else {
       await createEquipo(datos);
     }
-    cargarEquipos(page, size); // Recarga la página actual
+    cargarEquipos(page, size);
   };
 
-  // Funciones de navegación
+
   const nextPage = () => {
     if (page < totalPages) setPage(prev => prev + 1);
   };
