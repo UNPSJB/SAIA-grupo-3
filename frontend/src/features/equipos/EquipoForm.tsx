@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, Form, Button } from 'react-bootstrap';
 import type { Equipo, TipoEquipo } from './types';
 import { TIPOS_EQUIPOS } from './types';
+import { getSectoresActivos, type SectorOption } from './sectorApi';
 
 interface EquipoFormProps {
   equipoInicial?: Equipo | null;
@@ -10,29 +11,41 @@ interface EquipoFormProps {
 }
 
 export function EquipoForm({ equipoInicial, onGuardar, onCancelar }: EquipoFormProps) {
+  const [numeroSerie, setNumeroSerie] = useState('');
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState<TipoEquipo>('equipo');
-  const [ubicacion, setUbicacion] = useState('');
+  const [sectorId, setSectorId] = useState<number | ''>('');
+  const [sectores, setSectores] = useState<SectorOption[]>([]);
+  const [cargandoSectores, setCargandoSectores] = useState(true);
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
+    getSectoresActivos()
+      .then((data) => setSectores(data))
+      .catch((err: Error) => alert(err.message))
+      .finally(() => setCargandoSectores(false));
+  }, []);
+
+  useEffect(() => {
     if (equipoInicial) {
+      setNumeroSerie(equipoInicial.numero_serie);
       setNombre(equipoInicial.nombre);
       setTipo(equipoInicial.tipo);
-      setUbicacion(equipoInicial.ubicacion);
+      setSectorId(equipoInicial.sector_id);
     }
   }, [equipoInicial]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombre.trim() || !ubicacion.trim()) return;
+    if (!numeroSerie.trim() || !nombre.trim() || sectorId === '') return;
 
     setEnviando(true);
     try {
       await onGuardar({
+        numero_serie: numeroSerie.trim(),
         nombre: nombre.trim(),
         tipo,
-        ubicacion: ubicacion.trim(),
+        sector_id: Number(sectorId),
       });
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Error al guardar los datos.');
@@ -44,13 +57,26 @@ export function EquipoForm({ equipoInicial, onGuardar, onCancelar }: EquipoFormP
   const esEdicion = Boolean(equipoInicial);
 
   return (
-    <Card className="shadow-sm border-0">
+    <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
       <Card.Header as="h5" className="bg-light text-secondary py-3">
-        {esEdicion ? `Modificar Equipo #${equipoInicial?.id}: ${nombre}` : 'Registrar Nuevo Equipo'}
+        {esEdicion
+          ? `Modificar Equipo: ${equipoInicial?.numero_serie}`
+          : 'Registrar Nuevo Equipo'}
       </Card.Header>
       <Card.Body className="p-4">
         <Form onSubmit={handleSubmit}>
           <div className="row">
+            <Form.Group className="col-md-6 mb-3">
+              <Form.Label>N° de Serie / Código Único</Form.Label>
+              <Form.Control
+                type="text"
+                required
+                placeholder="Ej. SN-AB-1234"
+                value={numeroSerie}
+                onChange={(e) => setNumeroSerie(e.target.value)}
+              />
+            </Form.Group>
+
             <Form.Group className="col-md-6 mb-3">
               <Form.Label>Nombre del Equipo</Form.Label>
               <Form.Control
@@ -61,8 +87,10 @@ export function EquipoForm({ equipoInicial, onGuardar, onCancelar }: EquipoFormP
                 onChange={(e) => setNombre(e.target.value)}
               />
             </Form.Group>
+          </div>
 
-            <Form.Group className="col-md-6 mb-3">
+          <div className="row">
+            <Form.Group className="col-md-6 mb-4">
               <Form.Label>Tipo de Equipo</Form.Label>
               <Form.Select
                 required
@@ -76,18 +104,28 @@ export function EquipoForm({ equipoInicial, onGuardar, onCancelar }: EquipoFormP
                 ))}
               </Form.Select>
             </Form.Group>
-          </div>
 
-          <div className="row">
-            <Form.Group className="col-12 mb-4">
-              <Form.Label>Ubicación</Form.Label>
-              <Form.Control
-                type="text"
+            <Form.Group className="col-md-6 mb-4">
+              <Form.Label>Sector de Ubicación</Form.Label>
+              <Form.Select
                 required
-                placeholder="Ej. Laboratorio central / Sector 2"
-                value={ubicacion}
-                onChange={(e) => setUbicacion(e.target.value)}
-              />
+                disabled={cargandoSectores}
+                value={sectorId}
+                onChange={(e) =>
+                  setSectorId(e.target.value === '' ? '' : Number(e.target.value))
+                }
+              >
+                <option value="">
+                  {cargandoSectores
+                    ? 'Cargando sectores...'
+                    : 'Seleccione un sector...'}
+                </option>
+                {sectores.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.nombre}
+                  </option>
+                ))}
+              </Form.Select>
             </Form.Group>
           </div>
 
@@ -96,7 +134,11 @@ export function EquipoForm({ equipoInicial, onGuardar, onCancelar }: EquipoFormP
               Cancelar
             </Button>
             <Button variant="primary" type="submit" disabled={enviando}>
-              {enviando ? 'Guardando...' : esEdicion ? 'Actualizar Cambios' : 'Guardar'}
+              {enviando
+                ? 'Guardando...'
+                : esEdicion
+                ? 'Actualizar Cambios'
+                : 'Guardar'}
             </Button>
           </div>
         </Form>

@@ -35,4 +35,30 @@ body {
   .top-header {
     left: 260px !important;
   }
+
+
+}
+.pagination .page-item.active .page-link {
+  background-color: #e2e8f0 !important; 
+  border-color: #cbd5e1 !important;     
+  color: #0f172a !important;            
+  font-weight: 600 !important;
+}
+
+
+.pagination .page-link {
+  color: #64748b !important;            
+  background-color: #ffffff !important; 
+  border-color: #e2e8f0 !important;     
+}
+
+
+.pagination .page-link:hover {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.pagination .page-link:focus {
+  box-shadow: none !important;
 }

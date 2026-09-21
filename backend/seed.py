@@ -2,23 +2,22 @@ import random
 from faker import Faker
 from src.database import SessionLocal, engine
 from src.models import ModeloBase
+from src.sector.models import Sector
 from src.personal.models import Personal, TipoCapacidad
-from src.documentacion.models import Documentacion, TipoDocumento
 from src.equipos.models import Equipo, TipoEquipo
 from src.unidadMedida.models import UnidadMedida, TipoUnidadMedida
 from src.insumos.models import Insumo
 
-# Inicializamos Faker con localización en español
 fake = Faker("es_AR")
 
 
 def cargar_datos():
-    # Asegura que las tablas estén creadas en la base de datos
+    # Creamos las tablas registradas en ModeloBase
     ModeloBase.metadata.create_all(bind=engine)
     
     db = SessionLocal()
     try:
-        # 1. Crear Unidades de Medida base requeridas para los insumos
+        # 1. Unidades de Medida base requeridas para los insumos
         unidades = [
             UnidadMedida(tipo=TipoUnidadMedida.PESO, sufijo="Kg"),
             UnidadMedida(tipo=TipoUnidadMedida.CAPACIDAD, sufijo="Litros"),
@@ -26,40 +25,38 @@ def cargar_datos():
             UnidadMedida(tipo=TipoUnidadMedida.LONGITUD, sufijo="Metros"),
         ]
         db.add_all(unidades)
-        db.flush()  # Asigna los IDs necesarios para las claves foráneas
+        db.flush()
 
-        # 2. Generar Insumos vinculados a las unidades de medida
-        nombres_insumos = [
-            "Detergente Desengrasante",
-            "Lavandina Concentrada",
-            "Alcohol Etílico 70%",
-            "Bolsas Sanitarias",
-            "Cofias Descartables",
-            "Jabón Antibacterial",
+        # 2. Sectores (15 registros)
+        sectores = []
+        nombres_base_sectores = [
+            "Envasado Primario", "Línea de Cocción A", "Cámara Frigorífica 1",
+            "Laboratorio Central", "Depósito de Insumos", "Control de Calidad",
+            "Mantenimiento General", "Área de Empaque", "Sector Molienda",
+            "Zona de Despacho", "Silos de Harina", "Tratamiento de Agua",
+            "Cámara de Maduración", "Planta Piloto", "Zona de Carga"
         ]
-        for nombre in nombres_insumos:
+        for nombre in nombres_base_sectores:
+            sector = Sector(
+                nombre=nombre,
+                activo=True
+            )
+            db.add(sector)
+            sectores.append(sector)
+        db.flush()
+
+        # 3. Insumos (15 registros)
+        for _ in range(15):
             insumo = Insumo(
-                nombre=f"{nombre} {fake.random_int(1, 50)}",
-                cantidad=round(random.uniform(5.0, 150.0), 2),
+                nombre=f"{fake.word().capitalize()} Sanitizante {fake.unique.random_int(min=100, max=999)}",
+                cantidad=round(random.uniform(10.0, 500.0), 2),
                 unidad_medida_id=random.choice(unidades).id,
             )
             db.add(insumo)
 
-        # 3. Generar Equipos e Instrumentos
-        sectores = ["Sector Envasado", "Línea 1 Cocción", "Cámara Frigorífica", "Laboratorio"]
-        tipos_equipos = list(TipoEquipo)
-        for _ in range(21):
-            equipo = Equipo(
-                nombre=f"{fake.word().capitalize()} Industrial {fake.random_int(100, 999)}",
-                tipo=random.choice(tipos_equipos),
-                ubicacion=random.choice(sectores),
-            )
-            db.add(equipo)
-
-        # 4. Generar Personal con campos únicos (DNI, Legajo, Email)
+        # 4. Personal (15 registros con claves únicas)
         tipos_capacidad = list(TipoCapacidad)
-        personal_creado = []
-        for _ in range(6):
+        for _ in range(15):
             persona = Personal(
                 dni=fake.unique.random_int(min=20000000, max=45000000),
                 nroLegajo=fake.unique.random_int(min=1000, max=9999),
@@ -69,24 +66,28 @@ def cargar_datos():
                 tipo_capacidad=random.choice(tipos_capacidad),
             )
             db.add(persona)
-            personal_creado.append(persona)
 
-        db.flush()
-
-        # 5. Generar Documentación vinculada al personal
-        """
-        tipos_documentacion = list(TipoDocumento)
-        for persona in personal_creado:
-            doc = Documentacion(
-                nombre=f"Certificado {fake.word().capitalize()}",
-                tipo_documento=random.choice(tipos_documentacion),
-                personal_id=persona.dni,
+        # 5. Equipos (15 registros vinculados por Foreign Key al sector)
+        tipos_equipos = list(TipoEquipo)
+        nombres_equipos = [
+            "Balanza de Precisión", "Mezcladora", "Horno Convector",
+            "Envasadora al Vacío", "Termómetro Infrarrojo", "Autoclave",
+            "Cinta Transportadora", "Calibrador Digital", "Detector de Metales",
+            "Bomba Centrífuga", "Molino Industrial", "Tamiz Vibratorio",
+            "Selladora Térmica", "Compresor de Aire", "Tanque Homogeneizador"
+        ]
+        for i in range(15):
+            equipo = Equipo(
+                nombre=nombres_equipos[i],
+                tipo=random.choice(tipos_equipos),
+                numero_serie=f"SN-{fake.unique.bothify(text='??-####').upper()}",
+                activo=True,
+                sector_id=random.choice(sectores).id,
             )
-            db.add(doc)
-        """
+            db.add(equipo)
+
         db.commit()
-        
-        print("✅ Base de datos poblada exitosamente con datos de prueba.")
+        print("✅ Base de datos poblada exitosamente con 15 registros por entidad y relaciones operativas.")
 
     except Exception as e:
         db.rollback()

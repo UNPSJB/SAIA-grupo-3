@@ -1,4 +1,4 @@
-import { Table, Card, Button, Badge, Pagination } from 'react-bootstrap';
+import { Table, Card, Button, Badge, Pagination, Form } from 'react-bootstrap';
 import { useEquipo } from './useEquipo';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -18,9 +18,19 @@ export function EquipoList({
   onEditarClick,
   onEliminarClick,
 }: EquipoListProps) {
-  const { 
-    equipos, loading, error,
-    page, totalPages, total, nextPage, prevPage, changePage 
+  const {
+    equipos,
+    loading,
+    error,
+    page,
+    totalPages,
+    total,
+    nextPage,
+    prevPage,
+    changePage,
+    mostrarInactivos,
+    setMostrarInactivos,
+    guardar // Función importada para poder reactivar
   } = useEquipo();
 
   const getLabelTipo = (valor: TipoEquipo) => {
@@ -44,59 +54,132 @@ export function EquipoList({
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4 className="mb-0 text-secondary">Inventario de Equipos</h4>
-        <Button
-          variant="success"
-          size="sm"
-          onClick={onNuevoClick}
-          className="d-flex align-items-center gap-1 shadow-sm"
-        >
-          <i className="bi bi-plus-lg"></i>
-          <span>Nuevo Equipo</span>
-        </Button>
+        
+        <div className="d-flex align-items-center gap-3">
+          {/* SWITCH PARA MOSTRAR INACTIVOS */}
+          <Form.Check 
+            type="switch"
+            id="switch-inactivos"
+            label="Ver dados de baja"
+            checked={mostrarInactivos}
+            onChange={(e) => setMostrarInactivos(e.target.checked)}
+            className="text-secondary mb-0"
+          />
+          <Button
+            variant="success"
+            size="sm"
+            onClick={onNuevoClick}
+            className="d-flex align-items-center gap-1 shadow-sm"
+          >
+            <i className="bi bi-plus-lg"></i>
+            <span>Nuevo Equipo</span>
+          </Button>
+        </div>
       </div>
 
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
-            {/* ... el thead se mantiene igual ... */}
             <thead className="table-light">
               <tr>
-                <th style={{ width: '80px' }}>ID</th>
+                <th>N° de Serie</th>
                 <th>Nombre</th>
                 <th>Tipo</th>
-                <th>Ubicación</th>
-                <th className="text-center" style={{ width: '120px' }}>Acciones</th>
+                <th>Sector</th>
+                <th>Estado</th>
+                <th className="text-center" style={{ width: '120px' }}>
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody>
               {equipos.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-4 text-muted">
-                    No hay equipos registrados en el sistema.
+                  <td colSpan={6} className="text-center py-4 text-muted">
+                    No hay equipos registrados para los filtros actuales.
                   </td>
                 </tr>
               ) : (
                 equipos.map((e) => (
-                  <tr key={e.id}>
-                    <td><Badge bg="secondary">#{e.id}</Badge></td>
-                    <td><strong>{e.nombre}</strong></td>
+                  <tr key={e.id} className={!e.activo ? 'opacity-50' : ''}>
                     <td>
-                      <Badge bg={getBadgeVariant(e.tipo)}>
+                      <Badge bg="secondary" className="font-monospace">
+                        {e.numero_serie}
+                      </Badge>
+                    </td>
+                    <td>
+                      <strong>{e.nombre}</strong>
+                    </td>
+                    <td>
+                      <Badge
+                        bg={getBadgeVariant(e.tipo)}
+                        className={e.tipo === 'herramienta' ? 'text-dark' : ''}
+                      >
                         {getLabelTipo(e.tipo)}
                       </Badge>
                     </td>
-                    <td>{e.ubicacion}</td>
+                    <td>Sector #{e.sector_id}</td>
+                    
+                    {/* COLUMNA DE ESTADO */}
+                    <td>
+                      {e.activo ? (
+                        <Badge bg="success">Activo</Badge>
+                      ) : (
+                        <Badge bg="danger">Inactivo</Badge>
+                      )}
+                    </td>
+
                     <td className="text-center">
                       <div className="d-flex justify-content-center gap-2">
-                        <Button variant="primary" size="sm" className="text-white py-1 px-2 shadow-sm" title="Ver" onClick={() => onViewClick(e)}>
-                          <i className="bi bi-eye-fill"></i>
-                        </Button>
-                        <Button variant="warning" size="sm" className="text-white py-1 px-2 shadow-sm" title="Modificar" onClick={() => onEditarClick(e)}>
-                          <i className="bi bi-pencil-fill"></i>
-                        </Button>
-                        <Button variant="danger" size="sm" className="py-1 px-2 shadow-sm" title="Eliminar" onClick={() => onEliminarClick(e)}>
-                          <i className="bi bi-trash3-fill"></i>
-                        </Button>
+                        {e.activo ? (
+                          <>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              className="text-white py-1 px-2 shadow-sm"
+                              title="Ver Detalle"
+                              onClick={() => onViewClick(e)}
+                            >
+                              <i className="bi bi-eye-fill"></i>
+                            </Button>
+                            <Button
+                              variant="warning"
+                              size="sm"
+                              className="text-white py-1 px-2 shadow-sm"
+                              title="Modificar"
+                              onClick={() => onEditarClick(e)}
+                            >
+                              <i className="bi bi-pencil-fill"></i>
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              className="py-1 px-2 shadow-sm"
+                              title="Eliminar"
+                              onClick={() => onEliminarClick(e)}
+                            >
+                              <i className="bi bi-trash3-fill"></i>
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant="success"
+                            size="sm"
+                            className="py-1 px-2 shadow-sm"
+                            title="Reactivar Equipo"
+                            onClick={async () => {
+                              if (confirm(`¿Reactivar el equipo ${e.numero_serie}?`)) {
+                                try {
+                                  await guardar({ ...e, activo: true }, e.id);
+                                } catch (err: unknown) {
+                                  alert(err instanceof Error ? err.message : 'Error al reactivar el equipo.');
+                                }
+                              }
+                            }}
+                          >
+                            <i className="bi bi-arrow-counterclockwise me-1"></i> Reactivar
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -105,7 +188,6 @@ export function EquipoList({
             </tbody>
           </Table>
         </Card.Body>
-        
 
         {totalPages > 0 && (
           <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
@@ -115,9 +197,9 @@ export function EquipoList({
             <Pagination className="mb-0" size="sm">
               <Pagination.Prev onClick={prevPage} disabled={page === 1} />
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-                <Pagination.Item 
-                  key={num} 
-                  active={num === page} 
+                <Pagination.Item
+                  key={num}
+                  active={num === page}
                   onClick={() => changePage(num)}
                 >
                   {num}

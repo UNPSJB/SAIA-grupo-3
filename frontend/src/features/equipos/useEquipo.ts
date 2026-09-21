@@ -10,12 +10,14 @@ export function useEquipo() {
   const [size] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-
   
+  // NUEVO ESTADO PARA EL FILTRO
+  const [mostrarInactivos, setMostrarInactivos] = useState(false);
 
-  const cargarEquipos = useCallback((currentPage: number, currentSize: number) => {
+  // RECIBIMOS EL PARÁMETRO showInactive
+  const cargarEquipos = useCallback((currentPage: number, currentSize: number, showInactive: boolean) => {
     setLoading(true);
-    getEquipos(currentPage, currentSize)
+    getEquipos(currentPage, currentSize, showInactive)
       .then((data) => {
         setEquipos(data.items);
         setTotalPages(data.pages);
@@ -28,12 +30,12 @@ export function useEquipo() {
   }, []);
 
   useEffect(() => {
-    cargarEquipos(page, size);
-  }, [cargarEquipos, page, size]);
+    cargarEquipos(page, size, mostrarInactivos);
+  }, [cargarEquipos, page, size, mostrarInactivos]);
 
   const eliminar = async (id: number) => {
     await deleteEquipo(id);
-    cargarEquipos(page, size); 
+    cargarEquipos(page, size, mostrarInactivos);
   };
 
   const guardar = async (datos: Equipo, idExistente?: number) => {
@@ -42,24 +44,16 @@ export function useEquipo() {
     } else {
       await createEquipo(datos);
     }
-    cargarEquipos(page, size);
+    cargarEquipos(page, size, mostrarInactivos);
   };
 
+  const nextPage = () => { if (page < totalPages) setPage((prev) => prev + 1); };
+  const prevPage = () => { if (page > 1) setPage((prev) => prev - 1); };
+  const changePage = (newPage: number) => setPage(newPage);
 
-  const nextPage = () => {
-    if (page < totalPages) setPage(prev => prev + 1);
-  };
-
-  const prevPage = () => {
-    if (page > 1) setPage(prev => prev - 1);
-  };
-
-  const changePage = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  return { 
-    equipos, loading, error, eliminar, guardar, 
-    page, totalPages, total, nextPage, prevPage, changePage 
+  return {
+    equipos, loading, error, eliminar, guardar,
+    page, totalPages, total, nextPage, prevPage, changePage,
+    mostrarInactivos, setMostrarInactivos // EXPORTAMOS ESTOS DOS
   };
 }
