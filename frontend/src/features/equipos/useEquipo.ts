@@ -6,18 +6,26 @@ export function useEquipo() {
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
   const [page, setPage] = useState(1);
   const [size] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  
-  // NUEVO ESTADO PARA EL FILTRO
   const [mostrarInactivos, setMostrarInactivos] = useState(false);
 
-  // RECIBIMOS EL PARÁMETRO showInactive
-  const cargarEquipos = useCallback((currentPage: number, currentSize: number, showInactive: boolean) => {
+  // NUEVOS ESTADOS DE ORDENAMIENTO
+  const [ordenarPor, setOrdenarPor] = useState('id');
+  const [orden, setOrden] = useState<'asc' | 'desc'>('asc');
+
+  const cargarEquipos = useCallback((
+    currentPage: number, 
+    currentSize: number, 
+    showInactive: boolean,
+    sortCol: string,
+    sortDir: string
+  ) => {
     setLoading(true);
-    getEquipos(currentPage, currentSize, showInactive)
+    getEquipos(currentPage, currentSize, showInactive, sortCol, sortDir)
       .then((data) => {
         setEquipos(data.items);
         setTotalPages(data.pages);
@@ -30,12 +38,22 @@ export function useEquipo() {
   }, []);
 
   useEffect(() => {
-    cargarEquipos(page, size, mostrarInactivos);
-  }, [cargarEquipos, page, size, mostrarInactivos]);
+    cargarEquipos(page, size, mostrarInactivos, ordenarPor, orden);
+  }, [cargarEquipos, page, size, mostrarInactivos, ordenarPor, orden]);
+
+  // Función para manejar el click en las columnas
+  const cambiarOrden = (columna: string) => {
+    if (ordenarPor === columna) {
+      setOrden(orden === 'asc' ? 'desc' : 'asc');
+    } else {
+      setOrdenarPor(columna);
+      setOrden('asc');
+    }
+  };
 
   const eliminar = async (id: number) => {
     await deleteEquipo(id);
-    cargarEquipos(page, size, mostrarInactivos);
+    cargarEquipos(page, size, mostrarInactivos, ordenarPor, orden);
   };
 
   const guardar = async (datos: Equipo, idExistente?: number) => {
@@ -44,7 +62,7 @@ export function useEquipo() {
     } else {
       await createEquipo(datos);
     }
-    cargarEquipos(page, size, mostrarInactivos);
+    cargarEquipos(page, size, mostrarInactivos, ordenarPor, orden);
   };
 
   const nextPage = () => { if (page < totalPages) setPage((prev) => prev + 1); };
@@ -54,6 +72,7 @@ export function useEquipo() {
   return {
     equipos, loading, error, eliminar, guardar,
     page, totalPages, total, nextPage, prevPage, changePage,
-    mostrarInactivos, setMostrarInactivos // EXPORTAMOS ESTOS DOS
+    mostrarInactivos, setMostrarInactivos,
+    ordenarPor, orden, cambiarOrden 
   };
 }

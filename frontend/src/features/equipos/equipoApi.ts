@@ -9,8 +9,14 @@ export interface PaginatedEquipos {
   pages: number;
 }
 
-export async function getEquipos(page = 1, size = 10, mostrarInactivos = false): Promise<PaginatedEquipos> {
-  const res = await fetch(`${API_BASE_URL}/equipos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}`);
+export async function getEquipos(
+  page = 1, 
+  size = 10, 
+  mostrarInactivos = false,
+  ordenarPor = 'id',
+  orden = 'asc'
+): Promise<PaginatedEquipos> {
+  const res = await fetch(`${API_BASE_URL}/equipos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`);
   if (!res.ok) throw new Error('No se pudo listar los equipos.');
   return res.json();
 }

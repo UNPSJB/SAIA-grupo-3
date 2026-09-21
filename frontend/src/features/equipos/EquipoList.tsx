@@ -30,7 +30,10 @@ export function EquipoList({
     changePage,
     mostrarInactivos,
     setMostrarInactivos,
-    guardar // Función importada para poder reactivar
+    guardar,
+    ordenarPor,
+    orden,
+    cambiarOrden
   } = useEquipo();
 
   const getLabelTipo = (valor: TipoEquipo) => {
@@ -45,6 +48,16 @@ export function EquipoList({
       case 'instrumento': return 'info';
       default: return 'secondary';
     }
+  };
+
+  // Función auxiliar para dibujar la flechita si la columna está activa
+  const renderIconoOrden = (columna: string) => {
+    if (ordenarPor !== columna) {
+      return <i className="bi bi-chevron-expand text-muted ms-1" style={{ fontSize: '0.8rem' }}></i>;
+    }
+    return orden === 'asc' 
+      ? <i className="bi bi-chevron-up ms-1 text-primary" style={{ fontSize: '0.8rem' }}></i>
+      : <i className="bi bi-chevron-down ms-1 text-primary" style={{ fontSize: '0.8rem' }}></i>;
   };
 
   if (loading) return <LoadingSpinner mensaje="Cargando equipos..." />;
@@ -82,10 +95,18 @@ export function EquipoList({
           <Table striped hover responsive className="mb-0 align-middle">
             <thead className="table-light">
               <tr>
-                <th>N° de Serie</th>
-                <th>Nombre</th>
-                <th>Tipo</th>
-                <th>Sector</th>
+                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('numero_serie')}>
+                  N° de Serie {renderIconoOrden('numero_serie')}
+                </th>
+                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('nombre')}>
+                  Nombre {renderIconoOrden('nombre')}
+                </th>
+                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('tipo')}>
+                  Tipo {renderIconoOrden('tipo')}
+                </th>
+                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('sector_id')}>
+                  Sector {renderIconoOrden('sector_id')}
+                </th>
                 <th>Estado</th>
                 <th className="text-center" style={{ width: '120px' }}>
                   Acciones

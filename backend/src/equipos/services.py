@@ -34,15 +34,26 @@ def crear_equipo(db: Session, equipo: schemas.EquipoCreate) -> schemas.Equipo:
     db.refresh(_equipo)
     return _equipo
 
-
-def listar_equipos(db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False) -> Dict[str, Any]:
+def listar_equipos(
+    db: Session, 
+    page: int = 1, 
+    size: int = 10, 
+    mostrar_inactivos: bool = False,
+    ordenar_por: str = "id",
+    orden: str = "asc"
+) -> Dict[str, Any]:
     skip = (page - 1) * size
-    
     query = select(Equipo)
     
-    # Si el frontend no pide los inactivos, filtramos solo los activos
     if not mostrar_inactivos:
         query = query.where(Equipo.activo == True)
+
+    # Lógica de ordenamiento
+    columna_orden = getattr(Equipo, ordenar_por, Equipo.id)
+    if orden == "desc":
+        query = query.order_by(columna_orden.desc())
+    else:
+        query = query.order_by(columna_orden.asc())
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()
@@ -55,7 +66,6 @@ def listar_equipos(db: Session, page: int = 1, size: int = 10, mostrar_inactivos
         "size": size,
         "pages": pages,
     }
-
 
 def leer_equipo(db: Session, equipo_id: int, incluir_inactivos: bool = False) -> schemas.Equipo:
     """Busca un equipo. Si incluir_inactivos es False, solo trae equipos activos."""
