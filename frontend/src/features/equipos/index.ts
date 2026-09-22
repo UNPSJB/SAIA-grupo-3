@@ -6,4 +6,3 @@ export * from './EquipoList';
 export * from './types';
 export * from './useEquipo';
 export * from './equipoApi';
-export * from './sectorApi';

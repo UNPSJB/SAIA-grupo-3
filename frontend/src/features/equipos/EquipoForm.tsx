@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, Form, Button } from 'react-bootstrap';
 import type { Equipo, TipoEquipo } from './types';
 import { TIPOS_EQUIPOS } from './types';
-import { getSectoresActivos, type SectorOption } from './sectorApi';
+
+// IMPORTANTE: Ahora importamos desde el index.ts de la feature 'sectores'
+import { getSectores, type Sector } from '../sectores';
 
 interface EquipoFormProps {
   equipoInicial?: Equipo | null;
@@ -15,13 +17,15 @@ export function EquipoForm({ equipoInicial, onGuardar, onCancelar }: EquipoFormP
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState<TipoEquipo>('equipo');
   const [sectorId, setSectorId] = useState<number | ''>('');
-  const [sectores, setSectores] = useState<SectorOption[]>([]);
+  
+  const [sectores, setSectores] = useState<Sector[]>([]);
   const [cargandoSectores, setCargandoSectores] = useState(true);
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
-    getSectoresActivos()
-      .then((data) => setSectores(data))
+   
+    getSectores(1, 100)
+      .then((data) => setSectores(data.items))
       .catch((err: Error) => alert(err.message))
       .finally(() => setCargandoSectores(false));
   }, []);

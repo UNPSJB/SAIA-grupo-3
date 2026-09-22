@@ -1,25 +1,24 @@
-import { Table, Card, Button, Badge, Pagination, Form } from 'react-bootstrap';
-import { useEquipo } from './useEquipo';
+import { Table, Card, Button, Badge, Pagination, Form, InputGroup } from 'react-bootstrap';
+import { useSector } from './useSector';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
-import type { Equipo, TipoEquipo } from './types';
-import { TIPOS_EQUIPOS } from './types';
+import type { Sector } from './types';
 
-interface EquipoListProps {
+interface SectorListProps {
   onNuevoClick: () => void;
-  onViewClick: (equipo: Equipo) => void;
-  onEditarClick: (equipo: Equipo) => void;
-  onEliminarClick: (equipo: Equipo) => void;
+  onViewClick: (sector: Sector) => void;
+  onEditarClick: (sector: Sector) => void;
+  onEliminarClick: (sector: Sector) => void;
 }
 
-export function EquipoList({
+export function SectorList({
   onNuevoClick,
   onViewClick,
   onEditarClick,
   onEliminarClick,
-}: EquipoListProps) {
+}: SectorListProps) {
   const {
-    equipos,
+    sectores,
     loading,
     error,
     page,
@@ -33,24 +32,11 @@ export function EquipoList({
     guardar,
     ordenarPor,
     orden,
-    cambiarOrden
-  } = useEquipo();
+    cambiarOrden,
+    busqueda,
+    setBusqueda
+  } = useSector();
 
-  const getLabelTipo = (valor: TipoEquipo) => {
-    const encontrado = TIPOS_EQUIPOS.find((t) => t.value === valor);
-    return encontrado ? encontrado.label : valor;
-  };
-
-  const getBadgeVariant = (valor: TipoEquipo) => {
-    switch (valor) {
-      case 'equipo': return 'primary';
-      case 'herramienta': return 'warning';
-      case 'instrumento': return 'info';
-      default: return 'secondary';
-    }
-  };
-
-  // Función auxiliar para dibujar la flechita si la columna está activa
   const renderIconoOrden = (columna: string) => {
     if (ordenarPor !== columna) {
       return <i className="bi bi-chevron-expand text-muted ms-1" style={{ fontSize: '0.8rem' }}></i>;
@@ -60,24 +46,38 @@ export function EquipoList({
       : <i className="bi bi-chevron-down ms-1 text-primary" style={{ fontSize: '0.8rem' }}></i>;
   };
 
-  if (loading) return <LoadingSpinner mensaje="Cargando equipos..." />;
+  if (loading && page === 1 && !busqueda) return <LoadingSpinner mensaje="Cargando sectores..." />;
   if (error) return <ErrorAlert mensaje={error} />;
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 className="mb-0 text-secondary">Inventario de Equipos</h4>
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <h4 className="text-secondary fw-normal mb-0 mt-md-2">Nómina de Sectores</h4>
         
-        <div className="d-flex align-items-center gap-3">
-          {/* SWITCH PARA MOSTRAR INACTIVOS */}
+        <div className="d-flex flex-wrap align-items-center gap-3">
+          {/*
+          <InputGroup size="sm" className="shadow-sm border-0" style={{ width: '250px' }}>
+            <InputGroup.Text className="bg-white border-end-0">
+              <i className="bi bi-search text-muted"></i>
+            </InputGroup.Text>
+            <Form.Control
+              type="search"
+              placeholder="Buscar por nombre..."
+              className="border-start-0 ps-0 shadow-none"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />z
+          </InputGroup>
+          */}
           <Form.Check 
             type="switch"
-            id="switch-inactivos"
+            id="switch-inactivos-sectores"
             label="Ver dados de baja"
             checked={mostrarInactivos}
             onChange={(e) => setMostrarInactivos(e.target.checked)}
             className="text-secondary mb-0"
           />
+
           <Button
             variant="success"
             size="sm"
@@ -85,7 +85,7 @@ export function EquipoList({
             className="d-flex align-items-center gap-1 shadow-sm"
           >
             <i className="bi bi-plus-lg"></i>
-            <span>Nuevo Equipo</span>
+            <span>Nuevo Sector</span>
           </Button>
         </div>
       </div>
@@ -95,77 +95,53 @@ export function EquipoList({
           <Table striped hover responsive className="mb-0 align-middle">
             <thead className="table-light">
               <tr>
-                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('numero_serie')}>
-                  N° de Serie {renderIconoOrden('numero_serie')}
+                <th style={{ cursor: 'pointer', userSelect: 'none', width: '120px' }} onClick={() => cambiarOrden('id')}>
+                  ID {renderIconoOrden('id')}
                 </th>
                 <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('nombre')}>
-                  Nombre {renderIconoOrden('nombre')}
-                </th>
-                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('tipo')}>
-                  Tipo {renderIconoOrden('tipo')}
-                </th>
-                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('sector_id')}>
-                  Sector {renderIconoOrden('sector_id')}
+                  Nombre del Sector {renderIconoOrden('nombre')}
                 </th>
                 <th>Estado</th>
-                <th className="text-center" style={{ width: '120px' }}>
-                  Acciones
-                </th>
+                <th className="text-center" style={{ width: '120px' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {equipos.length === 0 ? (
+              {sectores.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-4 text-muted">
-                    No hay equipos registrados para los filtros actuales.
+                  <td colSpan={4} className="text-center py-4 text-muted">
+                    {busqueda 
+                      ? `No se encontraron sectores para "${busqueda}".`
+                      : "No hay sectores registrados para los filtros actuales."}
                   </td>
                 </tr>
               ) : (
-                equipos.map((e) => (
-                  <tr key={e.id} className={!e.activo ? 'opacity-50' : ''}>
+                sectores.map((s) => (
+                  <tr key={s.id} className={!s.activo ? 'opacity-50' : ''}>
                     <td>
-                      <Badge bg="secondary" className="font-monospace">
-                        {e.numero_serie}
+                      <Badge bg="secondary" className="font-monospace px-2 py-1">
+                        #{s.id}
                       </Badge>
                     </td>
                     <td>
-                      <strong>{e.nombre}</strong>
+                      <strong>{s.nombre}</strong>
                     </td>
                     <td>
-                      <Badge
-                        bg={getBadgeVariant(e.tipo)}
-                        className={e.tipo === 'herramienta' ? 'text-dark' : ''}
-                      >
-                        {getLabelTipo(e.tipo)}
-                      </Badge>
-                    </td>
-                    <td>
-                      {e.sector ? (
-                        <span className="fw-medium text-dark">{e.sector.nombre}</span>
-                      ) : (
-                        <span className="text-muted">Sector #{e.sector_id}</span>
-                      )}
-                    </td>
-                    
-                    {/* COLUMNA DE ESTADO */}
-                    <td>
-                      {e.activo ? (
+                      {s.activo ? (
                         <Badge bg="success">Activo</Badge>
                       ) : (
                         <Badge bg="danger">Inactivo</Badge>
                       )}
                     </td>
-
                     <td className="text-center">
                       <div className="d-flex justify-content-center gap-2">
-                        {e.activo ? (
+                        {s.activo ? (
                           <>
                             <Button
                               variant="primary"
                               size="sm"
                               className="text-white py-1 px-2 shadow-sm"
                               title="Ver Detalle"
-                              onClick={() => onViewClick(e)}
+                              onClick={() => onViewClick(s)}
                             >
                               <i className="bi bi-eye-fill"></i>
                             </Button>
@@ -174,7 +150,7 @@ export function EquipoList({
                               size="sm"
                               className="text-white py-1 px-2 shadow-sm"
                               title="Modificar"
-                              onClick={() => onEditarClick(e)}
+                              onClick={() => onEditarClick(s)}
                             >
                               <i className="bi bi-pencil-fill"></i>
                             </Button>
@@ -183,7 +159,7 @@ export function EquipoList({
                               size="sm"
                               className="py-1 px-2 shadow-sm"
                               title="Eliminar"
-                              onClick={() => onEliminarClick(e)}
+                              onClick={() => onEliminarClick(s)}
                             >
                               <i className="bi bi-trash3-fill"></i>
                             </Button>
@@ -193,13 +169,13 @@ export function EquipoList({
                             variant="success"
                             size="sm"
                             className="py-1 px-2 shadow-sm"
-                            title="Reactivar Equipo"
+                            title="Reactivar Sector"
                             onClick={async () => {
-                              if (confirm(`¿Reactivar el equipo ${e.numero_serie}?`)) {
+                              if (confirm(`¿Reactivar el sector ${s.nombre}?`)) {
                                 try {
-                                  await guardar({ ...e, activo: true }, e.id);
+                                  await guardar({ ...s, activo: true }, s.id);
                                 } catch (err: unknown) {
-                                  alert(err instanceof Error ? err.message : 'Error al reactivar el equipo.');
+                                  alert(err instanceof Error ? err.message : 'Error al reactivar el sector.');
                                 }
                               }
                             }}

@@ -13,4 +13,8 @@ export interface Equipo {
   tipo: TipoEquipo;
   sector_id: number;
   activo?: boolean;
+  sector?: {           
+    id: number;
+    nombre: string;
+  };
 }

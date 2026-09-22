@@ -25,11 +25,30 @@ def crear_sector(db: Session, sector: schemas.SectorCreate) -> Sector:
     return _sector
 
 
-def listar_sectores(db: Session, page: int = 1, size: int = 10) -> Dict[str, Any]:
+def listar_sectores(
+    db: Session, 
+    page: int = 1, 
+    size: int = 10,
+    mostrar_inactivos: bool = False,
+    ordenar_por: str = "id",
+    orden: str = "asc"
+) -> Dict[str, Any]:
     skip = (page - 1) * size
-    query_activos = select(Sector).where(Sector.activo == True)
-    total = db.scalar(select(func.count()).select_from(query_activos.subquery()))
-    items = db.scalars(query_activos.offset(skip).limit(size)).all()
+    query = select(Sector)
+    
+    # Filtro de inactivos
+    if not mostrar_inactivos:
+        query = query.where(Sector.activo == True)
+
+    # Lógica de ordenamiento
+    columna_orden = getattr(Sector, ordenar_por, Sector.id)
+    if orden == "desc":
+        query = query.order_by(columna_orden.desc())
+    else:
+        query = query.order_by(columna_orden.asc())
+
+    total = db.scalar(select(func.count()).select_from(query.subquery()))
+    items = db.scalars(query.offset(skip).limit(size)).all()
     pages = (total + size - 1) // size if total else 0
     
     return {
@@ -41,10 +60,12 @@ def listar_sectores(db: Session, page: int = 1, size: int = 10) -> Dict[str, Any
     }
 
 
-def leer_sector(db: Session, sector_id: int) -> Sector:
-    db_sector = db.scalar(
-        select(Sector).where(Sector.id == sector_id, Sector.activo == True)
-    )
+def leer_sector(db: Session, sector_id: int, incluir_inactivos: bool = False) -> Sector:
+    query = select(Sector).where(Sector.id == sector_id)
+    if not incluir_inactivos:
+        query = query.where(Sector.activo == True)
+        
+    db_sector = db.scalar(query)
     if db_sector is None:
         raise exceptions.SectorNoEncontrado() 
     return db_sector
@@ -53,7 +74,8 @@ def leer_sector(db: Session, sector_id: int) -> Sector:
 def modificar_sector(
     db: Session, sector_id: int, sector: schemas.SectorUpdate
 ) -> Sector:
-    db_sector = leer_sector(db, sector_id)
+    # Pasamos incluir_inactivos=True para permitir reactivación desde el frontend
+    db_sector = leer_sector(db, sector_id, incluir_inactivos=True)
     
     if sector.nombre is not None:
         _validar_duplicados(db, sector.nombre, excluir_id=sector_id)

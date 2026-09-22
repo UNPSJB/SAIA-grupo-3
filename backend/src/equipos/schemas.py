@@ -3,6 +3,11 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from src.equipos.models import TipoEquipo
 from src.equipos import exceptions
 
+class SectorInfo(BaseModel):
+    id: int
+    nombre: str
+    model_config = ConfigDict(from_attributes=True)
+
 class EquipoBase(BaseModel):
     numero_serie: str
     nombre: str
@@ -15,7 +20,6 @@ class EquipoBase(BaseModel):
         if isinstance(v, str) and v.lower() not in TipoEquipo:
             raise exceptions.TipoEquipoInvalido(list(TipoEquipo))
         return v.lower() if isinstance(v, str) else v
-
 
 class EquipoCreate(EquipoBase):
     pass
@@ -41,6 +45,7 @@ class EquipoUpdate(BaseModel):
 class Equipo(EquipoBase):
     id: int
     activo: bool
+    sector: SectorInfo | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

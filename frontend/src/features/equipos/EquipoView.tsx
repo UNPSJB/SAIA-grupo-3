@@ -54,7 +54,13 @@ export function EquipoView({ equipo, onEditar, onVolver }: EquipoViewProps) {
           </div>
           <div className="row">
             <span className="col-4 text-muted fw-semibold">Sector Asignado:</span>
-            <span className="col-8">Sector #{equipo.sector_id}</span>
+            <span className="col-8">
+              {equipo.sector ? (
+                <span className="fw-medium text-dark">{equipo.sector.nombre}</span>
+              ) : (
+                <span className="text-muted">Sector #{equipo.sector_id}</span>
+              )}
+            </span>
           </div>
         </div>
       </Card.Body>
@@ -62,7 +68,7 @@ export function EquipoView({ equipo, onEditar, onVolver }: EquipoViewProps) {
         <Button variant="secondary" onClick={onVolver}>
           Volver
         </Button>
-        <Button variant="primary" onClick={onEditar} className="text-white">
+        <Button variant="warning" onClick={onEditar} className="text-white">
           Editar
         </Button>
       </Card.Footer>

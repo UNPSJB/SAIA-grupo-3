@@ -1,34 +1,30 @@
 import { useState } from 'react';
 import { Card, Button, Alert, Badge } from 'react-bootstrap';
-import type { Equipo } from './types';
-import { TIPOS_EQUIPOS } from './types';
+import type { Sector } from './types';
 
-interface EquipoDeleteViewProps {
-  equipo: Equipo;
+interface SectorDeleteViewProps {
+  sector: Sector;
   onConfirmarEliminar: (id: number) => Promise<void>;
   onCancelar: () => void;
 }
 
-export function EquipoDeleteView({
-  equipo,
+export function SectorDeleteView({
+  sector,
   onConfirmarEliminar,
   onCancelar,
-}: EquipoDeleteViewProps) {
+}: SectorDeleteViewProps) {
   const [eliminando, setEliminando] = useState(false);
   const [errorBackend, setErrorBackend] = useState<string | null>(null);
 
-  const etiquetaTipo =
-    TIPOS_EQUIPOS.find((t) => t.value === equipo.tipo)?.label ?? equipo.tipo;
-
   const handleEliminar = async () => {
-    if (equipo.id === undefined) return;
+    if (sector.id === undefined) return;
     setEliminando(true);
     setErrorBackend(null);
     try {
-      await onConfirmarEliminar(equipo.id);
+      await onConfirmarEliminar(sector.id);
     } catch (err: unknown) {
       setErrorBackend(
-        err instanceof Error ? err.message : 'Error al procesar la baja del equipo.'
+        err instanceof Error ? err.message : 'Error al procesar la baja del sector.'
       );
       setEliminando(false);
     }
@@ -38,7 +34,7 @@ export function EquipoDeleteView({
     <Card className="border-danger shadow-sm mx-auto" style={{ maxWidth: '650px' }}>
       <Card.Header className="bg-danger text-white d-flex align-items-center gap-2 py-3">
         <i className="bi bi-exclamation-triangle-fill fs-5"></i>
-        <h5 className="mb-0">Dar de Baja Equipo</h5>
+        <h5 className="mb-0">Dar de Baja Sector</h5>
       </Card.Header>
       <Card.Body className="p-4">
         {errorBackend && (
@@ -48,37 +44,21 @@ export function EquipoDeleteView({
           </Alert>
         )}
         <p className="text-secondary fs-6">
-          ¿Estás seguro de que deseas dar de baja este equipo del inventario activo?
+          ¿Estás seguro de que deseas dar de baja este sector?
         </p>
         <div className="bg-light p-3 rounded border mb-4">
           <div className="row mb-2">
-            <span className="col-4 text-muted fw-semibold">N° de Serie:</span>
-            <span className="col-8 fw-bold font-monospace">{equipo.numero_serie}</span>
+            <span className="col-4 text-muted fw-semibold">ID de Sector:</span>
+            <span className="col-8 fw-bold font-monospace">#{sector.id}</span>
           </div>
-          <div className="row mb-2">
+          <div className="row">
             <span className="col-4 text-muted fw-semibold">Nombre:</span>
-            <span className="col-8">{equipo.nombre}</span>
+            <span className="col-8">{sector.nombre}</span>
           </div>
-          <div className="row mb-2">
-            <span className="col-4 text-muted fw-semibold">Tipo:</span>
-            <span className="col-8">
-              <Badge bg="secondary">{etiquetaTipo}</Badge>
-            </span>
-          </div>
-            <div className="row">
-              <span className="col-4 text-muted fw-semibold">Sector:</span>
-              <span className="col-8">
-                {equipo.sector ? (
-                  <span className="fw-medium text-dark">{equipo.sector.nombre}</span>
-                ) : (
-                  <span className="text-muted">Sector #{equipo.sector_id}</span>
-                )}
-              </span>
-            </div>
         </div>
         <Alert variant="warning" className="small mb-0">
           <i className="bi bi-info-circle me-1"></i>
-          <strong>Atención:</strong> Esta acción aplicará una baja lógica; el equipo dejará de estar visible en el inventario activo pero no se borrará físicamente.
+          <strong>Atención:</strong> Esta acción aplicará una baja lógica. Si el sector tiene equipos asignados, el sistema rechazará la operación.
         </Alert>
       </Card.Body>
       <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
