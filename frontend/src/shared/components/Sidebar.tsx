@@ -16,15 +16,10 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         {[
           { to: "/personal", label: "Personal" },
           { to: "/equipos", label: "Equipos" },
-<<<<<<< HEAD
-          { to: "/insumos", label: "Insumo" },
-          { to: "/unidades-medida", label: "Unidades de Medida" },
-          { to: "/tarea", label: "Tarea" }
-=======
           { to: "/insumos", label: "Insumos" },
           { to: "/unidades-medida", label: "Unidades de Medida" },
+          { to: "/tarea", label: "Tareas" },
           { to: "/sectores", label: "Sectores" }
->>>>>>> e498285576739179defc20ae2c14a02967600a14
         ].map((item) => (
           <NavLink
             key={item.to}

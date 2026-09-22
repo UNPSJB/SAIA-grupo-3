@@ -18,11 +18,8 @@ export function AppRouter() {
         <Route path="equipos" element={<EquipoPage/>} />
         <Route path="insumos" element={<InsumoPage />} />
         <Route path="unidades-medida" element={<UnidadMedidaPage />} />
-<<<<<<< HEAD
         <Route path="tarea" element={<TareaPage />} />
-=======
         <Route path="sectores" element={<SectorPage/>} />
->>>>>>> e498285576739179defc20ae2c14a02967600a14
           {/* Redirige por defecto a profesores */}
           {/* <Route index element={<Navigate to="/profesores" replace />} /> */}
          {/*  <Route path="profesores" element={<ProfesoresPage />} /> */}

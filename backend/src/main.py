@@ -51,8 +51,5 @@ app.include_router(documentacion_router)
 app.include_router(equipos_router)
 app.include_router(insumos_router)
 app.include_router(unidad_medida_router)
-<<<<<<< HEAD
-app.include_router(tarea_router)
-=======
 app.include_router(sector_router)
->>>>>>> e498285576739179defc20ae2c14a02967600a14
+app.include_router(tarea_router)

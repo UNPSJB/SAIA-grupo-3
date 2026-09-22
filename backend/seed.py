@@ -56,12 +56,7 @@ def cargar_datos():
 
         # 4. Personal (15 registros con claves únicas)
         tipos_capacidad = list(TipoCapacidad)
-<<<<<<< HEAD
-        personal_creado = []
-        for _ in range(60):
-=======
         for _ in range(15):
->>>>>>> e498285576739179defc20ae2c14a02967600a14
             persona = Personal(
                 dni=fake.unique.random_int(min=20000000, max=45000000),
                 nroLegajo=fake.unique.random_int(min=1000, max=9999),
