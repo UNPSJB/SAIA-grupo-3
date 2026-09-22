@@ -1,36 +1,36 @@
+from typing import Optional
 from pydantic import BaseModel, ConfigDict, field_validator
 from src.equipos.models import TipoEquipo
 from src.equipos import exceptions
-from typing import Optional
 
-# Los siguientes schemas contienen atributos sin muchas restricciones de tipo.
-# Podemos crear atributos con ciertas reglas mediante el uso de un "Field" adecuado.
-# https://docs.pydantic.dev/latest/concepts/fields/
-
+class SectorInfo(BaseModel):
+    id: int
+    nombre: str
+    model_config = ConfigDict(from_attributes=True)
 
 class EquipoBase(BaseModel):
+    numero_serie: str
     nombre: str
-    tipo: TipoEquipo  # solo permitiremos valores de este tipo.
-    ubicacion: str
+    tipo: TipoEquipo
+    sector_id: int  
 
-    @field_validator(
-        "tipo", mode="before"
-    )  # <- Más info. sobre mode: https://pydantic.dev/docs/validation/dev/concepts/validators/#field-validators
+    @field_validator("tipo", mode="before")
     @classmethod
     def is_valid_tipo_equipo(cls, v: str) -> str:
         if isinstance(v, str) and v.lower() not in TipoEquipo:
             raise exceptions.TipoEquipoInvalido(list(TipoEquipo))
-        return v.lower()
-
+        return v.lower() if isinstance(v, str) else v
 
 class EquipoCreate(EquipoBase):
     pass
 
 
 class EquipoUpdate(BaseModel):
+    numero_serie: Optional[str] = None
     nombre: Optional[str] = None
     tipo: Optional[TipoEquipo] = None
-    ubicacion: Optional[str] = None
+    sector_id: Optional[int] = None
+    activo: Optional[bool] = None
 
     @field_validator("tipo", mode="before")
     @classmethod
@@ -44,14 +44,14 @@ class EquipoUpdate(BaseModel):
 
 class Equipo(EquipoBase):
     id: int
+    activo: bool
+    sector: SectorInfo | None = None
 
-    # La siguiente opción nos permite instanciar schemas pydantic pasando modelos SQLAlchemy por parámetros.
-    # De otro modo solo podríamos usar diccionarios.
-    # Más info. sobre ConfigDict -> https://pydantic.dev/docs/validation/dev/api/pydantic/config
-    model_config = ConfigDict(from_attributes = True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EquipoDelete(EquipoBase):
     id: int
+    activo: bool
 
-    model_config = ConfigDict(from_attributes = True)
+    model_config = ConfigDict(from_attributes=True)

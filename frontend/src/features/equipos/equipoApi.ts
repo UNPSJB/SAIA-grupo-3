@@ -9,8 +9,14 @@ export interface PaginatedEquipos {
   pages: number;
 }
 
-export async function getEquipos(page = 1, size = 10): Promise<PaginatedEquipos> {
-  const res = await fetch(`${API_BASE_URL}/equipos?page=${page}&size=${size}`);
+export async function getEquipos(
+  page = 1, 
+  size = 10, 
+  mostrarInactivos = false,
+  ordenarPor = 'id',
+  orden = 'asc'
+): Promise<PaginatedEquipos> {
+  const res = await fetch(`${API_BASE_URL}/equipos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`);
   if (!res.ok) throw new Error('No se pudo listar los equipos.');
   return res.json();
 }
@@ -47,6 +53,12 @@ export async function deleteEquipo(id: number): Promise<void> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'No se pudo eliminar el equipo.');
+    throw new Error(errorData.detail || 'No se pudo dar de baja el equipo.');
   }
+}
+
+export async function getEquipoById(id: number): Promise<Equipo> {
+  const res = await fetch(`${API_BASE_URL}/equipos/${id}`);
+  if (!res.ok) throw new Error('Error al obtener el equipo');
+  return res.json();
 }

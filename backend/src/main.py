@@ -16,6 +16,7 @@ from src.equipos.router import router as equipos_router
 from src.documentacion.router import router as documentacion_router
 from src.insumos.router import router as insumos_router
 from src.unidadMedida.router import router as unidad_medida_router
+from src.sector.router import router as sector_router
 from fastapi.middleware.cors import CORSMiddleware
 
 ENV = settings.ENV.upper()
@@ -50,4 +51,8 @@ app.include_router(documentacion_router)
 app.include_router(equipos_router)
 app.include_router(insumos_router)
 app.include_router(unidad_medida_router)
+<<<<<<< HEAD
 app.include_router(tarea_router)
+=======
+app.include_router(sector_router)
+>>>>>>> e498285576739179defc20ae2c14a02967600a14
