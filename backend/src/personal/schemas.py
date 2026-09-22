@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
-from typing import List
+from typing import List, Optional
 from src.documentacion.schemas import Documento
 from src.personal.models import TipoCapacidad
 from src.personal import exceptions
@@ -40,10 +40,13 @@ class PersonalCreate(PersonalBase):
 
 
 class PersonalUpdate(PersonalBase):
-    pass
+    # Optional y separado de PersonalBase: solo se usa para reactivar a alguien
+    # dado de baja (se envía junto al resto de los datos, sin volverlos opcionales).
+    activo: Optional[bool] = None
 
 
 class Personal(PersonalBase):
+    activo: bool
     documentos: List[Documento]
 
     # from_atributes=True permite que Pydantic trabaje con modelos SQLAlchemy

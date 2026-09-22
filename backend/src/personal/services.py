@@ -1,6 +1,6 @@
 import logging
 from typing import Any, Dict, List
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 from src.personal.models import Personal
 from src.personal import schemas, exceptions
@@ -40,14 +40,20 @@ def crear_personal(db: Session, personal: schemas.PersonalCreate) -> schemas.Per
     return _personal
 
 
-def listar_personal(db: Session, page: int = 1, size: int = 10) -> Dict[str, Any]:
+def listar_personal(
+    db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False
+) -> Dict[str, Any]:
     skip = (page - 1) * size
+    query = select(Personal)
 
-    total = db.scalar(select(func.count()).select_from(Personal))
+    if not mostrar_inactivos:
+        query = query.where(Personal.activo == True)
 
-    items = db.scalars(select(Personal).offset(skip).limit(size)).all()
+    total = db.scalar(select(func.count()).select_from(query.subquery()))
 
-    pages = (total + size - 1) // size
+    items = db.scalars(query.offset(skip).limit(size)).all()
+
+    pages = (total + size - 1) // size if total else 0
 
     return {
         "items": items,
@@ -58,8 +64,15 @@ def listar_personal(db: Session, page: int = 1, size: int = 10) -> Dict[str, Any
     }
 
 
-def leer_personal(db: Session, personal_id: int) -> schemas.Personal:
-    db_persona = db.scalar(select(Personal).where(Personal.dni == personal_id))
+def leer_personal(
+    db: Session, personal_id: int, incluir_inactivos: bool = False
+) -> schemas.Personal:
+    """Busca a una persona. Si incluir_inactivos es False, solo trae personal activo."""
+    query = select(Personal).where(Personal.dni == personal_id)
+    if not incluir_inactivos:
+        query = query.where(Personal.activo == True)
+
+    db_persona = db.scalar(query)
     if db_persona is None:
         raise exceptions.PersonalNoEncontrado()
     return db_persona
@@ -68,10 +81,13 @@ def leer_personal(db: Session, personal_id: int) -> schemas.Personal:
 def modificar_personal(
     db: Session, personal_id: int, personal: schemas.PersonalUpdate
 ) -> Personal:
-    db_persona = leer_personal(db, personal_id)
+    # Pasamos incluir_inactivos=True para poder recuperar y reactivar a la persona.
+    db_persona = leer_personal(db, personal_id, incluir_inactivos=True)
     _validar_duplicados(db, personal, excluir_dni=personal_id)
     db.execute(
-        update(Personal).where(Personal.dni == personal_id).values(**personal.model_dump())
+        update(Personal)
+        .where(Personal.dni == personal_id)
+        .values(**personal.model_dump(exclude_unset=True))
     )
     db.commit()
     db.refresh(db_persona)
@@ -82,6 +98,7 @@ def eliminar_personal(db: Session, personal_id: int) -> schemas.Personal:
     db_persona = leer_personal(db, personal_id)
     if len(db_persona.documentos) > 0:
         raise exceptions.PersonalTieneDocumentacion()
-    db.execute(delete(Personal).where(Personal.dni == personal_id))
+    db_persona.activo = False
     db.commit()
+    db.refresh(db_persona)
     return db_persona
