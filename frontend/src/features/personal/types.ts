@@ -13,4 +13,5 @@ export interface Personal {
   apellido: string;
   tipo_capacidad: TipoCapacidad;
   email: string;
+  activo?: boolean;
 }

@@ -59,7 +59,7 @@ def cargar_datos():
         # 4. Generar Personal con campos únicos (DNI, Legajo, Email)
         tipos_capacidad = list(TipoCapacidad)
         personal_creado = []
-        for _ in range(6):
+        for _ in range(60):
             persona = Personal(
                 dni=fake.unique.random_int(min=20000000, max=45000000),
                 nroLegajo=fake.unique.random_int(min=1000, max=9999),

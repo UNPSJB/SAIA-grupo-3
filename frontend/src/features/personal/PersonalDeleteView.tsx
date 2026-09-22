@@ -27,7 +27,7 @@ export function PersonalDeleteView({ personal, onConfirmarEliminar, onCancelar }
     <Card className="border-danger shadow-sm mx-auto" style={{ maxWidth: '650px' }}>
       <Card.Header className="bg-danger text-white d-flex align-items-center gap-2 py-3">
         <i className="bi bi-exclamation-triangle-fill fs-5"></i>
-        <h5 className="mb-0">Eliminar Empleado</h5>
+        <h5 className="mb-0">Dar de Baja Empleado</h5>
       </Card.Header>
       <Card.Body className="p-4">
         {errorBackend && (
@@ -36,7 +36,7 @@ export function PersonalDeleteView({ personal, onConfirmarEliminar, onCancelar }
             <div>{errorBackend}</div>
           </Alert>
         )}
-        <p className="text-secondary fs-6">¿Estás seguro de que deseas eliminar a esta persona del sistema?</p>
+        <p className="text-secondary fs-6">¿Estás seguro de que deseas dar de baja a esta persona?</p>
         <div className="bg-light p-3 rounded border mb-4">
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">DNI:</span>
@@ -57,13 +57,13 @@ export function PersonalDeleteView({ personal, onConfirmarEliminar, onCancelar }
         </div>
         <Alert variant="warning" className="small mb-0">
           <i className="bi bi-info-circle me-1"></i>
-          <strong>Atención:</strong> Si el empleado tiene documentación asignada (carnet manipulador, libreta sanitaria, etc.), el sistema rechazará la eliminación.
+          <strong>Atención:</strong> Esta acción aplicará una baja lógica; el empleado dejará de estar visible en la nómina activa pero no se borrará del sistema. Si tiene documentación asignada (carnet manipulador, libreta sanitaria, etc.), el sistema rechazará la baja.
         </Alert>
       </Card.Body>
       <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onCancelar} disabled={eliminando}>Cancelar</Button>
         <Button variant="danger" onClick={handleEliminar} disabled={eliminando}>
-          {eliminando ? 'Eliminando...' : 'Confirmar Eliminación'}
+          {eliminando ? 'Procesando baja...' : 'Confirmar Baja'}
         </Button>
       </Card.Footer>
     </Card>

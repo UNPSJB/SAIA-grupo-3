@@ -6,25 +6,36 @@ export function usePersonal() {
   const [personal, setPersonal] = useState<Personal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [size] = useState(10); 
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [mostrarInactivos, setMostrarInactivos] = useState(false);
 
-  const cargarPersonal = useCallback(() => {
-    setLoading(true);
-    getPersonal()
-      .then((data) => {
-        setPersonal(data);
-        setError(null);
-      })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+  const cargarPersonal = useCallback(
+    (currentPage: number, currentSize: number, showInactive: boolean) => {
+      setLoading(true);
+      getPersonal(currentPage, currentSize, showInactive)
+        .then((data) => {
+          setPersonal(data.items);
+          setTotalPages(data.pages);
+          setTotal(data.total);
+          setPage(data.page);
+          setError(null);
+        })
+        .catch((err: Error) => setError(err.message))
+        .finally(() => setLoading(false));
+    },
+    []
+  );
 
   useEffect(() => {
-    cargarPersonal();
-  }, [cargarPersonal]);
+    cargarPersonal(page, size, mostrarInactivos);
+  }, [cargarPersonal, page, size, mostrarInactivos]);
 
   const eliminar = async (dni: number) => {
     await deletePersonal(dni);
-    setPersonal((prev) => prev.filter((p) => p.dni !== dni));
+    cargarPersonal(page, size, mostrarInactivos);
   };
 
   const guardar = async (datos: Personal, dniExistente?: number) => {
@@ -33,8 +44,36 @@ export function usePersonal() {
     } else {
       await createPersonal(datos);
     }
-    cargarPersonal();
+    cargarPersonal(page, size, mostrarInactivos);
   };
 
-  return { personal, loading, error, eliminar, guardar };
+  // Funciones de navegación
+  const nextPage = () => {
+    if (page < totalPages) setPage(prev => prev + 1);
+  };
+
+  const prevPage = () => {
+    if (page > 1) setPage(prev => prev - 1);
+  };
+
+  const changePage = (newPage: number) => {
+    setPage(newPage);
+  };
+
+
+return {
+    personal,
+    loading,
+    error,
+    eliminar,
+    guardar,
+    page,
+    totalPages,
+    total,
+    nextPage,
+    prevPage,
+    changePage,
+    mostrarInactivos,
+    setMostrarInactivos
+  };
 }

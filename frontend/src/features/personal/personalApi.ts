@@ -1,8 +1,22 @@
-import   { API_BASE_URL } from '../../shared/libreria/api'; 
+import   { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api'; 
 import type { Personal } from './types';
 
-export async function getPersonal(): Promise<Personal[]> {
-  const res = await fetch(`${API_BASE_URL}/personal`);
+export interface PaginatedPersonal {
+  items: Personal[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
+export async function getPersonal(
+  page = 1,
+  size = 10,
+  mostrarInactivos = false
+): Promise<PaginatedPersonal> {
+  const res = await fetch(
+    `${API_BASE_URL}/personal?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}`
+  );
   if (!res.ok) throw new Error('No se pudo listar el personal.');
   return res.json();
 }
@@ -15,7 +29,7 @@ export async function createPersonal(data: Personal): Promise<Personal> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al registrar personal.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al registrar personal.'));
   }
   return res.json();
 }
@@ -28,7 +42,7 @@ export async function updatePersonal(dni: number, data: Personal): Promise<Perso
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al actualizar personal.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al actualizar personal.'));
   }
   return res.json();
 }
@@ -39,6 +53,6 @@ export async function deletePersonal(dni: number): Promise<void> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'No se pudo eliminar el registro.');
+    throw new Error(errorData.detail || 'No se pudo dar de baja el registro.');
   }
 }
