@@ -4,3 +4,5 @@ export * from './EquipoView';
 export * from './EquipoDeleteView';
 export * from './EquipoList';
 export * from './types';
+export * from './useEquipo';
+export * from './equipoApi';

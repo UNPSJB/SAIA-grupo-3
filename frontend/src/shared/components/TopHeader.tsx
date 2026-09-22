@@ -1,27 +1,25 @@
+import { Button } from 'react-bootstrap';
+
 interface TopHeaderProps {
-  busqueda?: string;
-  onBusquedaChange?: (valor: string) => void;
+  onToggleSidebar: () => void;
 }
 
-export function TopHeader({ busqueda = '', onBusquedaChange }: TopHeaderProps) {
+export function TopHeader({ onToggleSidebar }: TopHeaderProps) {
   return (
     <header
-      className="position-fixed top-0 end-0 bg-white border-bottom px-4 d-flex align-items-center z-2 shadow-xs"
-      style={{ left: '260px', height: '64px' }}
+      className="position-fixed top-0 end-0 bg-white border-bottom px-3 px-md-4 d-flex align-items-center z-2 shadow-xs top-header"
+      style={{ height: '64px' }}
     >
-      {/* <div
-        className="d-flex align-items-center bg-light px-3 py-1 rounded-pill border"
-        style={{ width: '380px' }}
+      <Button
+        variant="light"
+        className="d-md-none me-3 border-0"
+        onClick={onToggleSidebar}
+        aria-label="Abrir menú"
       >
-        <i className="bi bi-search text-muted me-2"></i>
-        <input
-          type="text"
-          className="form-control bg-transparent border-0 p-0 shadow-none small"
-          placeholder="Buscar registros..."
-          value={busqueda}
-          onChange={(e) => onBusquedaChange && onBusquedaChange(e.target.value)}
-        />
-      </div> */}
+        <i className="bi bi-list fs-3 text-secondary"></i>
+      </Button>
+
+
     </header>
   );
 }

@@ -7,8 +7,12 @@ class EquipoNoEncontrado(NotFound):
     DETAIL = ErrorCode.EQUIPO_NO_ENCONTRADO
 
 
-class NombreDuplicado(BadRequest):
-    DETAIL = ErrorCode.NOMBRE_DUPLICADO
+class SectorNoEncontrado(NotFound):
+    DETAIL = ErrorCode.SECTOR_NO_ENCONTRADO
+
+
+class NumeroSerieDuplicado(BadRequest):
+    DETAIL = ErrorCode.NUMERO_SERIE_DUPLICADO
 
 
 class TipoEquipoInvalido(ValueError):

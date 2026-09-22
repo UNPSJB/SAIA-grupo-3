@@ -8,7 +8,13 @@ export const TIPOS_EQUIPOS: { value: TipoEquipo; label: string }[] = [
 
 export interface Equipo {
   id?: number;
+  numero_serie: string;
   nombre: string;
   tipo: TipoEquipo;
-  ubicacion: string;
+  sector_id: number;
+  activo?: boolean;
+  sector?: {           
+    id: number;
+    nombre: string;
+  };
 }

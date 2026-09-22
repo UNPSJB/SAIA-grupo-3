@@ -34,8 +34,8 @@ export function EquipoView({ equipo, onEditar, onVolver }: EquipoViewProps) {
       <Card.Body className="p-4">
         <div className="bg-light p-3 rounded border mb-2">
           <div className="row mb-2">
-            <span className="col-4 text-muted fw-semibold">ID:</span>
-            <span className="col-8 fw-bold">#{equipo.id}</span>
+            <span className="col-4 text-muted fw-semibold">N° de Serie:</span>
+            <span className="col-8 fw-bold font-monospace">{equipo.numero_serie}</span>
           </div>
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Nombre:</span>
@@ -44,14 +44,23 @@ export function EquipoView({ equipo, onEditar, onVolver }: EquipoViewProps) {
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Tipo:</span>
             <span className="col-8">
-              <Badge bg={getBadgeVariant(equipo.tipo)} className={equipo.tipo === 'herramienta' ? 'text-dark' : ''}>
+              <Badge
+                bg={getBadgeVariant(equipo.tipo)}
+                className={equipo.tipo === 'herramienta' ? 'text-dark' : ''}
+              >
                 {etiquetaTipo}
               </Badge>
             </span>
           </div>
           <div className="row">
-            <span className="col-4 text-muted fw-semibold">Ubicación:</span>
-            <span className="col-8">{equipo.ubicacion}</span>
+            <span className="col-4 text-muted fw-semibold">Sector Asignado:</span>
+            <span className="col-8">
+              {equipo.sector ? (
+                <span className="fw-medium text-dark">{equipo.sector.nombre}</span>
+              ) : (
+                <span className="text-muted">Sector #{equipo.sector_id}</span>
+              )}
+            </span>
           </div>
         </div>
       </Card.Body>
@@ -59,7 +68,7 @@ export function EquipoView({ equipo, onEditar, onVolver }: EquipoViewProps) {
         <Button variant="secondary" onClick={onVolver}>
           Volver
         </Button>
-        <Button variant="warning" onClick={onEditar}>
+        <Button variant="warning" onClick={onEditar} className="text-white">
           Editar
         </Button>
       </Card.Footer>

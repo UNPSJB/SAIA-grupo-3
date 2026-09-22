@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Equipo } from './types';
-import { getEquipos, createEquipo, updateEquipo, deleteEquipo } from './equipoApi';
+import type { Sector } from './types';
+import { getSectores, createSector, updateSector, deleteSector } from './sectorApi';
 
-export function useEquipo() {
-  const [equipos, setEquipos] = useState<Equipo[]>([]);
+export function useSector() {
+  const [sectores, setSectores] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -11,23 +11,24 @@ export function useEquipo() {
   const [size] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  
   const [mostrarInactivos, setMostrarInactivos] = useState(false);
-
-  // NUEVOS ESTADOS DE ORDENAMIENTO
   const [ordenarPor, setOrdenarPor] = useState('id');
   const [orden, setOrden] = useState<'asc' | 'desc'>('asc');
+  const [busqueda, setBusqueda] = useState(''); 
 
-  const cargarEquipos = useCallback((
+  const cargarSectores = useCallback((
     currentPage: number, 
     currentSize: number, 
     showInactive: boolean,
     sortCol: string,
-    sortDir: string
+    sortDir: string,
+    searchTerm: string
   ) => {
     setLoading(true);
-    getEquipos(currentPage, currentSize, showInactive, sortCol, sortDir)
+    getSectores(currentPage, currentSize, showInactive, sortCol, sortDir, searchTerm)
       .then((data) => {
-        setEquipos(data.items);
+        setSectores(data.items);
         setTotalPages(data.pages);
         setTotal(data.total);
         setPage(data.page);
@@ -38,10 +39,13 @@ export function useEquipo() {
   }, []);
 
   useEffect(() => {
-    cargarEquipos(page, size, mostrarInactivos, ordenarPor, orden);
-  }, [cargarEquipos, page, size, mostrarInactivos, ordenarPor, orden]);
+    setPage(1);
+  }, [busqueda]);
 
-  // Función para manejar el click en las columnas
+  useEffect(() => {
+    cargarSectores(page, size, mostrarInactivos, ordenarPor, orden, busqueda);
+  }, [cargarSectores, page, size, mostrarInactivos, ordenarPor, orden, busqueda]);
+
   const cambiarOrden = (columna: string) => {
     if (ordenarPor === columna) {
       setOrden(orden === 'asc' ? 'desc' : 'asc');
@@ -52,17 +56,17 @@ export function useEquipo() {
   };
 
   const eliminar = async (id: number) => {
-    await deleteEquipo(id);
-    cargarEquipos(page, size, mostrarInactivos, ordenarPor, orden);
+    await deleteSector(id);
+    cargarSectores(page, size, mostrarInactivos, ordenarPor, orden, busqueda);
   };
 
-  const guardar = async (datos: Equipo, idExistente?: number) => {
+  const guardar = async (datos: Sector, idExistente?: number) => {
     if (idExistente) {
-      await updateEquipo(idExistente, datos);
+      await updateSector(idExistente, datos);
     } else {
-      await createEquipo(datos);
+      await createSector(datos);
     }
-    cargarEquipos(page, size, mostrarInactivos, ordenarPor, orden);
+    cargarSectores(page, size, mostrarInactivos, ordenarPor, orden, busqueda);
   };
 
   const nextPage = () => { if (page < totalPages) setPage((prev) => prev + 1); };
@@ -70,9 +74,10 @@ export function useEquipo() {
   const changePage = (newPage: number) => setPage(newPage);
 
   return {
-    equipos, loading, error, eliminar, guardar,
+    sectores, loading, error, eliminar, guardar,
     page, totalPages, total, nextPage, prevPage, changePage,
     mostrarInactivos, setMostrarInactivos,
-    ordenarPor, orden, cambiarOrden 
+    ordenarPor, orden, cambiarOrden,
+    busqueda, setBusqueda
   };
 }
