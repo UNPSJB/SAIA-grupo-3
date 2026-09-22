@@ -1,4 +1,4 @@
-import   { API_BASE_URL } from '../../shared/libreria/api'; 
+import   { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api'; 
 import type { Personal } from './types';
 
 export interface PaginatedPersonal {
@@ -23,7 +23,7 @@ export async function createPersonal(data: Personal): Promise<Personal> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al registrar personal.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al registrar personal.'));
   }
   return res.json();
 }
@@ -36,7 +36,7 @@ export async function updatePersonal(dni: number, data: Personal): Promise<Perso
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al actualizar personal.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al actualizar personal.'));
   }
   return res.json();
 }

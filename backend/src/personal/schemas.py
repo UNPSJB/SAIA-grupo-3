@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from typing import List
 from src.documentacion.schemas import Documento
 from src.personal.models import TipoCapacidad
@@ -25,6 +25,14 @@ class PersonalBase(BaseModel):
         if v.lower() not in TipoCapacidad:
             raise exceptions.TipoCapacidadInvalido(list(TipoCapacidad))
         return v.lower()
+
+    @field_validator("dni")
+    @classmethod
+    def is_valid_dni(cls, v: int) -> int:
+        if not 0 < v <= 99999999:
+            raise ValueError("El DNI debe ser un número positivo de hasta 8 dígitos.")
+        return v
+    
 
 
 class PersonalCreate(PersonalBase):

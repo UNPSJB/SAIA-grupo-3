@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Form, Button } from 'react-bootstrap';
+import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { Personal, TipoCapacidad } from './types';
 import { TIPOS_CAPACIDAD } from './types';
 
@@ -17,6 +18,8 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
   const [email, setEmail] = useState('');
   const [tipoCapacidad, setTipoCapacidad] = useState<TipoCapacidad>('operar');
   const [enviando, setEnviando] = useState(false);
+  const [validated, setValidated] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
 
   useEffect(() => {
     if (personalInicial) {
@@ -29,22 +32,29 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
     }
   }, [personalInicial]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (dni === '' || nroLegajo === '') return;
+    setErrorEnvio(null);
+
+    const form = e.currentTarget;
+    if (!form.checkValidity() || dni === '' || nroLegajo === '') {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
 
     setEnviando(true);
     try {
-      await onGuardar({ 
-        dni: Number(dni), 
-        nroLegajo: Number(nroLegajo), 
-        nombre, 
-        apellido, 
-        email, 
-        tipo_capacidad: tipoCapacidad 
+      await onGuardar({
+        dni: Number(dni),
+        nroLegajo: Number(nroLegajo),
+        nombre,
+        apellido,
+        email,
+        tipo_capacidad: tipoCapacidad
       });
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al guardar los datos.');
+      setErrorEnvio(err instanceof Error ? err.message : 'Error al guardar los datos.');
     } finally {
       setEnviando(false);
     }
@@ -58,16 +68,37 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
         {esEdicion ? `Modificar Personal: ${apellido}, ${nombre}` : 'Registrar Nuevo Personal'}
       </Card.Header>
       <Card.Body className="p-4">
-        <Form onSubmit={handleSubmit}>
+        <Form noValidate validated={validated} onSubmit={handleSubmit}>
+          {errorEnvio && <ErrorAlert mensaje={errorEnvio} />}
           <div className="row">
             <Form.Group className="col-md-6 mb-3">
               <Form.Label>DNI</Form.Label>
-              <Form.Control type="number" required disabled={esEdicion} value={dni} onChange={(e) => setDni(e.target.value === '' ? '' : Number(e.target.value))} />
+              <Form.Control
+                type="number"
+                required
+                min={1}
+                max={99999999}
+                disabled={esEdicion}
+                value={dni}
+                onChange={(e) => setDni(e.target.value === '' ? '' : Number(e.target.value))}
+              />
+              <Form.Control.Feedback type="invalid">
+                Debe ser un número positivo de hasta 8 dígitos.
+              </Form.Control.Feedback>
               {esEdicion && <Form.Text className="text-muted">El DNI no puede modificarse.</Form.Text>}
             </Form.Group>
             <Form.Group className="col-md-6 mb-3">
               <Form.Label>N° de Legajo</Form.Label>
-              <Form.Control type="number" required value={nroLegajo} onChange={(e) => setNroLegajo(e.target.value === '' ? '' : Number(e.target.value))} />
+              <Form.Control
+                type="number"
+                required
+                min={1}
+                value={nroLegajo}
+                onChange={(e) => setNroLegajo(e.target.value === '' ? '' : Number(e.target.value))}
+              />
+              <Form.Control.Feedback type="invalid">
+                Debe ser un número positivo.
+              </Form.Control.Feedback>
             </Form.Group>
           </div>
           
