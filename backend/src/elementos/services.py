@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from typing import Dict, Any
 from sqlalchemy import select, update, func
 from sqlalchemy.orm import Session
@@ -56,7 +57,6 @@ def leer_elemento(db: Session, elemento_id: int, incluir_inactivos: bool = False
         raise exceptions.ElementoNoEncontrado()
     return db_elemento
 
-
 def modificar_elemento(
     db: Session, elemento_id: int, elemento: schemas.ElementoUpdate
 ) -> Elemento:
@@ -71,12 +71,42 @@ def modificar_elemento(
     )
     db.commit()
     db.refresh(db_elemento)
+    
+    # Si se modificó la frecuencia de recambio y el elemento ya tenía un recambio registrado, 
+    # recalculamos la próxima alerta para que las fechas no queden desincronizadas.
+    if "frecuencia_recambio" in datos_actualizar and db_elemento.fecha_ultimo_recambio:
+        if db_elemento.frecuencia_recambio is not None:
+            db_elemento.fecha_proximo_recambio = db_elemento.fecha_ultimo_recambio + timedelta(days=db_elemento.frecuencia_recambio)
+        else:
+            db_elemento.fecha_proximo_recambio = None
+        db.commit()
+        db.refresh(db_elemento)
+        
     return db_elemento
 
 def eliminar_elemento(db: Session, elemento_id: int) -> schemas.ElementoDelete:
     db_elemento = leer_elemento(db, elemento_id)
     
     db_elemento.activo = False
+    db.commit()
+    db.refresh(db_elemento)
+    
+    return db_elemento
+
+def registrar_recambio(db: Session, elemento_id: int, fecha_recambio: date) -> schemas.Elemento:
+    """
+    Registra el recambio físico y calcula automáticamente la próxima fecha de alerta según la frecuencia.
+    """
+    db_elemento = leer_elemento(db, elemento_id)
+    
+    db_elemento.fecha_ultimo_recambio = fecha_recambio
+    
+    # Recalcula automáticamente la próxima fecha si el elemento tiene frecuencia configurada
+    if db_elemento.frecuencia_recambio is not None:
+        db_elemento.fecha_proximo_recambio = fecha_recambio + timedelta(days=db_elemento.frecuencia_recambio)
+    else:
+        db_elemento.fecha_proximo_recambio = None
+        
     db.commit()
     db.refresh(db_elemento)
     

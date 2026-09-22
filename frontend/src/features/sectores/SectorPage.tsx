@@ -1,29 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; 
 import { Container } from 'react-bootstrap';
+import { useLocation } from 'react-router-dom'; 
 import { SectorList } from './SectorList';
 import { SectorForm } from './SectorForm';
 import { SectorView } from './SectorView';
 import { SectorDeleteView } from './SectorDeleteView';
-import { getSectorById } from './sectorApi';
 import { useSector } from './useSector';
+import { getSectorById } from './sectorApi';
 import type { Sector } from './types';
 
 type ModoVista = 'ver' | 'listado' | 'crear' | 'editar' | 'eliminar';
 
 export function SectorPage() {
+  const location = useLocation();
   const [modo, setModo] = useState<ModoVista>('listado');
   const [sectorSeleccionado, setSectorSeleccionado] = useState<Sector | null>(null);
   const { guardar, eliminar } = useSector();
+
+  // EFECTO CORREGIDO: Solo lee cosas de Sector
+  useEffect(() => {
+    if (location.state?.sectorIdSeleccionado) {
+      const buscarSector = async () => {
+        try {
+          const sectorCompleto = await getSectorById(location.state.sectorIdSeleccionado);
+          setSectorSeleccionado(sectorCompleto);
+          setModo('ver');
+          window.history.replaceState({}, document.title);
+        } catch (error) {
+          alert('Error al cargar los detalles del sector.');
+        }
+      };
+      
+      buscarSector();
+    }
+  }, [location.state]);
 
   const handleNuevo = () => {
     setSectorSeleccionado(null);
     setModo('crear');
   };
 
-const handleView = async (sector: Sector) => {
+  const handleView = async (sector: Sector) => {
     if (sector.id !== undefined) {
       try {
-        // Vamos al backend a buscar el sector completo con sus equipos anidados
         const sectorCompleto = await getSectorById(sector.id);
         setSectorSeleccionado(sectorCompleto);
         setModo('ver');

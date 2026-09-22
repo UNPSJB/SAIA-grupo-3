@@ -56,3 +56,17 @@ export async function deleteElemento(id: number): Promise<void> {
     throw new Error(errorData.detail || 'No se pudo dar de baja el elemento.');
   }
 }
+
+// NUEVA FUNCIÓN PARA EL RECAMBIO
+export async function registrarRecambioApi(id: number, fecha: string): Promise<Elemento> {
+  const res = await fetch(`${API_BASE_URL}/elementos/${id}/recambio`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fecha_recambio: fecha }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.detail || 'Error al registrar el recambio.');
+  }
+  return res.json();
+}

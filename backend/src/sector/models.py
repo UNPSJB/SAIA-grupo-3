@@ -13,9 +13,9 @@ class Sector(ModeloBase):
     nombre: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     activo: Mapped[bool] = mapped_column(default=True, nullable=False)
 
-    equipos: Mapped[list["Equipo"]] = relationship(
-        "Equipo", back_populates="sector"
-    )
+    equipos: Mapped[list["Equipo"]] = relationship("Equipo", back_populates="sector",
+            primaryjoin="and_(Sector.id == Equipo.sector_id, Equipo.activo == True)"
+        )
 
     # =========================================================================
     # EXTENSIONES FUTURAS:

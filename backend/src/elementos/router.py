@@ -36,7 +36,7 @@ def read_elemento(elemento_id: int, db: Session = Depends(get_db)):
 def update_elemento(
     elemento_id: int, elemento: schemas.ElementoUpdate, db: Session = Depends(get_db)
 ):
-    """Modifica los datos de un elemento existente. Permite actualizar el sector o el número de serie."""
+    """Modifica los datos de un elemento existente."""
     return services.modificar_elemento(db, elemento_id, elemento)
 
 
@@ -44,3 +44,11 @@ def update_elemento(
 def delete_elemento(elemento_id: int, db: Session = Depends(get_db)):
     """Aplica una baja lógica al elemento, pasándolo a estado inactivo sin borrarlo físicamente."""
     return services.eliminar_elemento(db, elemento_id)
+
+
+@router.post("/{elemento_id}/recambio", response_model=schemas.Elemento)
+def registrar_recambio_elemento(
+    elemento_id: int, payload: schemas.RegistroRecambioIn, db: Session = Depends(get_db)
+):
+    """Registra que se cambió físicamente el elemento y recalcula su próxima alerta."""
+    return services.registrar_recambio(db, elemento_id, payload.fecha_recambio)

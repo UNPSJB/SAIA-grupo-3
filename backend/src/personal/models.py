@@ -17,6 +17,7 @@ class Personal(ModeloBase):
     apellido: Mapped[str] = mapped_column(index=True)
     email: Mapped[str] = mapped_column(unique=True, index=True)
     tipo_capacidad: Mapped[TipoCapacidad] = mapped_column()
+    activo: Mapped[bool] = mapped_column(default=True, nullable=False)
     documentos: Mapped[Optional[List["src.documentacion.models.Documentacion"]]] = relationship(
         "src.documentacion.models.Documentacion", back_populates="personal"
     )

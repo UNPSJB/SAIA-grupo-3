@@ -10,6 +10,7 @@ from src.config import settings
 from src.logger import setup_logging
 
 # Importamos los routers desde nuestros modulos
+from src.tarea.router import router as tarea_router
 from src.personal.router import router as personal_router
 from src.equipos.router import router as equipos_router 
 from src.documentacion.router import router as documentacion_router
@@ -52,4 +53,5 @@ app.include_router(equipos_router)
 app.include_router(insumos_router)
 app.include_router(unidad_medida_router)
 app.include_router(sector_router)
+app.include_router(tarea_router)
 app.include_router(elementos_router)

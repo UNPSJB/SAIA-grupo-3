@@ -18,23 +18,10 @@ export function SectorList({
   onEliminarClick,
 }: SectorListProps) {
   const {
-    sectores,
-    loading,
-    error,
-    page,
-    totalPages,
-    total,
-    nextPage,
-    prevPage,
-    changePage,
-    mostrarInactivos,
-    setMostrarInactivos,
-    guardar,
-    ordenarPor,
-    orden,
-    cambiarOrden,
-    busqueda,
-    setBusqueda
+    sectores, loading, error, page, totalPages, total,
+    nextPage, prevPage, changePage, mostrarInactivos,
+    setMostrarInactivos, guardar, ordenarPor, orden,
+    cambiarOrden, busqueda, setBusqueda
   } = useSector();
 
   const renderIconoOrden = (columna: string) => {
@@ -53,22 +40,7 @@ export function SectorList({
     <>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <h4 className="text-secondary fw-normal mb-0 mt-md-2">Nómina de Sectores</h4>
-        
         <div className="d-flex flex-wrap align-items-center gap-3">
-          {/*
-          <InputGroup size="sm" className="shadow-sm border-0" style={{ width: '250px' }}>
-            <InputGroup.Text className="bg-white border-end-0">
-              <i className="bi bi-search text-muted"></i>
-            </InputGroup.Text>
-            <Form.Control
-              type="search"
-              placeholder="Buscar por nombre..."
-              className="border-start-0 ps-0 shadow-none"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-            />z
-          </InputGroup>
-          */}
           <Form.Check 
             type="switch"
             id="switch-inactivos-sectores"
@@ -77,13 +49,7 @@ export function SectorList({
             onChange={(e) => setMostrarInactivos(e.target.checked)}
             className="text-secondary mb-0"
           />
-
-          <Button
-            variant="success"
-            size="sm"
-            onClick={onNuevoClick}
-            className="d-flex align-items-center gap-1 shadow-sm"
-          >
+          <Button variant="success" size="sm" onClick={onNuevoClick} className="d-flex align-items-center gap-1 shadow-sm">
             <i className="bi bi-plus-lg"></i>
             <span>Nuevo Sector</span>
           </Button>
@@ -108,78 +74,35 @@ export function SectorList({
             <tbody>
               {sectores.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-4 text-muted">
-                    {busqueda 
-                      ? `No se encontraron sectores para "${busqueda}".`
-                      : "No hay sectores registrados para los filtros actuales."}
-                  </td>
+                  <td colSpan={4} className="text-center py-4 text-muted">No hay sectores registrados.</td>
                 </tr>
               ) : (
                 sectores.map((s) => (
                   <tr key={s.id} className={!s.activo ? 'opacity-50' : ''}>
-                    <td>
-                      <Badge bg="secondary" className="font-monospace px-2 py-1">
-                        #{s.id}
-                      </Badge>
-                    </td>
-                    <td>
-                      <strong>{s.nombre}</strong>
-                    </td>
-                    <td>
-                      {s.activo ? (
-                        <Badge bg="success">Activo</Badge>
-                      ) : (
-                        <Badge bg="danger">Inactivo</Badge>
-                      )}
-                    </td>
+                    <td><Badge bg="secondary" className="font-monospace px-2 py-1">#{s.id}</Badge></td>
+                    <td><strong>{s.nombre}</strong></td>
+                    <td>{s.activo ? <Badge bg="success">Activo</Badge> : <Badge bg="danger">Inactivo</Badge>}</td>
                     <td className="text-center">
                       <div className="d-flex justify-content-center gap-2">
                         {s.activo ? (
                           <>
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              className="text-white py-1 px-2 shadow-sm"
-                              title="Ver Detalle"
-                              onClick={() => onViewClick(s)}
-                            >
+                            <Button variant="primary" size="sm" className="text-white py-1 px-2 shadow-sm" title="Ver" onClick={() => onViewClick(s)}>
                               <i className="bi bi-eye-fill"></i>
                             </Button>
-                            <Button
-                              variant="warning"
-                              size="sm"
-                              className="text-white py-1 px-2 shadow-sm"
-                              title="Modificar"
-                              onClick={() => onEditarClick(s)}
-                            >
+                            <Button variant="warning" size="sm" className="text-white py-1 px-2 shadow-sm" title="Modificar" onClick={() => onEditarClick(s)}>
                               <i className="bi bi-pencil-fill"></i>
                             </Button>
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              className="py-1 px-2 shadow-sm"
-                              title="Eliminar"
-                              onClick={() => onEliminarClick(s)}
-                            >
-                              <i className="bi bi-trash3-fill"></i>
+                            <Button variant="danger" size="sm" className="py-1 px-2 shadow-sm" title="Eliminar" onClick={() => onEliminarClick(s)}>
+                              <i className="bi bi-trash-fill"></i>
                             </Button>
                           </>
                         ) : (
-                          <Button
-                            variant="success"
-                            size="sm"
-                            className="py-1 px-2 shadow-sm"
-                            title="Reactivar Sector"
-                            onClick={async () => {
+                          <Button variant="success" size="sm" className="py-1 px-2 shadow-sm" title="Reactivar" onClick={async () => {
                               if (confirm(`¿Reactivar el sector ${s.nombre}?`)) {
-                                try {
-                                  await guardar({ ...s, activo: true }, s.id);
-                                } catch (err: unknown) {
-                                  alert(err instanceof Error ? err.message : 'Error al reactivar el sector.');
-                                }
+                                try { await guardar({ ...s, activo: true }, s.id); } 
+                                catch (err: unknown) { alert(err instanceof Error ? err.message : 'Error al reactivar.'); }
                               }
-                            }}
-                          >
+                            }}>
                             <i className="bi bi-arrow-counterclockwise me-1"></i> Reactivar
                           </Button>
                         )}
@@ -194,19 +117,11 @@ export function SectorList({
 
         {totalPages > 0 && (
           <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
-            <span className="text-muted small mb-2 mb-md-0">
-              Mostrando página {page} de {totalPages} ({total} registros en total)
-            </span>
+            <span className="text-muted small mb-2 mb-md-0">Mostrando página {page} de {totalPages} ({total} registros)</span>
             <Pagination className="mb-0" size="sm">
               <Pagination.Prev onClick={prevPage} disabled={page === 1} />
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-                <Pagination.Item
-                  key={num}
-                  active={num === page}
-                  onClick={() => changePage(num)}
-                >
-                  {num}
-                </Pagination.Item>
+                <Pagination.Item key={num} active={num === page} onClick={() => changePage(num)}>{num}</Pagination.Item>
               ))}
               <Pagination.Next onClick={nextPage} disabled={page === totalPages} />
             </Pagination>
