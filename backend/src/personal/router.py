@@ -1,8 +1,9 @@
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.personal import schemas, services
+from src.pagination import PaginatedResponse
 
 # Creamos un logger para este módulo específico. Más info.: https://docs.python.org/3/library/logging.html
 logger = logging.getLogger(__name__)
@@ -17,10 +18,12 @@ def create_personal(personal: schemas.PersonalCreate, db: Session = Depends(get_
     return services.crear_personal(db, personal)
 
 
-@router.get("/", response_model=list[schemas.Personal])
-def read_personal(db: Session = Depends(get_db)):
-    logger.info("Consultando la lista del personal desde endpoint...")  # <- este mensaje se verá por la terminal
-    return services.listar_personal(db)
+@router.get("/", response_model=PaginatedResponse[schemas.Personal])
+def read_personal(db: Session = Depends(get_db),
+    page: int = Query(1, ge=1, description="Número de página"),
+    size: int = Query(10, ge=1, le=100, description="Cantidad de registros por página")
+):
+    return services.listar_personal(db, page, size)
 
 
 @router.get("/{personal_id}", response_model=schemas.Personal)

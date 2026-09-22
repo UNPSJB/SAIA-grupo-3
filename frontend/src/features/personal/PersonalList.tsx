@@ -1,4 +1,4 @@
-import { Table, Card, Button, Badge } from 'react-bootstrap';
+import { Table, Card, Button, Badge, Pagination } from 'react-bootstrap';
 import { usePersonal } from './usePersonal';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -13,7 +13,9 @@ interface PersonalListProps {
 }
 
 export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onEliminarClick }: PersonalListProps) {
-  const { personal, loading, error } = usePersonal();
+  const { personal, loading, error,
+    page, totalPages, total, nextPage, prevPage, changePage 
+   } = usePersonal();
 
   const getLabelCapacidad = (valor: Personal['tipo_capacidad']) => {
     const encontrado = TIPOS_CAPACIDAD.find((t) => t.value === valor);
@@ -93,6 +95,23 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
             </tbody>
           </Table>
         </Card.Body>
+
+        {totalPages > 0 && (
+          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
+            <span className="text-muted small mb-2 mb-md-0">
+              Mostrando página {page} de {totalPages} ({total} registros en total)
+            </span>
+            <Pagination className="mb-0" size="sm">
+              <Pagination.Prev onClick={prevPage} disabled={page === 1} />
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+                <Pagination.Item key={num} active={num === page} onClick={() => changePage(num)}>
+                  {num}
+                </Pagination.Item>
+              ))}
+              <Pagination.Next onClick={nextPage} disabled={page === totalPages} />
+            </Pagination>
+          </Card.Footer>
+        )}
       </Card>
     </>
   );

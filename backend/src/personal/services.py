@@ -1,6 +1,6 @@
 import logging
-from typing import List
-from sqlalchemy import delete, select, update
+from typing import Any, Dict, List
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 from src.personal.models import Personal
 from src.personal import schemas, exceptions
@@ -40,9 +40,22 @@ def crear_personal(db: Session, personal: schemas.PersonalCreate) -> schemas.Per
     return _personal
 
 
-def listar_personal(db: Session) -> List[schemas.Personal]:
-    logger.info("Listando personal desde services")  # <- este mensaje se verá por la terminal
-    return db.scalars(select(Personal)).all()
+def listar_personal(db: Session, page: int = 1, size: int = 10) -> Dict[str, Any]:
+    skip = (page - 1) * size
+
+    total = db.scalar(select(func.count()).select_from(Personal))
+
+    items = db.scalars(select(Personal).offset(skip).limit(size)).all()
+
+    pages = (total + size - 1) // size
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "size": size,
+        "pages": pages
+    }
 
 
 def leer_personal(db: Session, personal_id: int) -> schemas.Personal:

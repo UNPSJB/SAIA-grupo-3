@@ -1,8 +1,16 @@
 import   { API_BASE_URL } from '../../shared/libreria/api'; 
 import type { Personal } from './types';
 
-export async function getPersonal(): Promise<Personal[]> {
-  const res = await fetch(`${API_BASE_URL}/personal`);
+export interface PaginatedPersonal {
+  items: Personal[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
+export async function getPersonal(page = 1, size = 10): Promise<PaginatedPersonal> {
+  const res = await fetch(`${API_BASE_URL}/personal?page=${page}&size=${size}`);
   if (!res.ok) throw new Error('No se pudo listar el personal.');
   return res.json();
 }
