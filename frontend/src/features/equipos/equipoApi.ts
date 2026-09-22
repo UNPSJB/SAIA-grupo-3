@@ -56,3 +56,9 @@ export async function deleteEquipo(id: number): Promise<void> {
     throw new Error(errorData.detail || 'No se pudo dar de baja el equipo.');
   }
 }
+
+export async function getEquipoById(id: number): Promise<Equipo> {
+  const res = await fetch(`${API_BASE_URL}/equipos/${id}`);
+  if (!res.ok) throw new Error('Error al obtener el equipo');
+  return res.json();
+}

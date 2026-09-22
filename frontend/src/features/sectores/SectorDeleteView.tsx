@@ -8,11 +8,7 @@ interface SectorDeleteViewProps {
   onCancelar: () => void;
 }
 
-export function SectorDeleteView({
-  sector,
-  onConfirmarEliminar,
-  onCancelar,
-}: SectorDeleteViewProps) {
+export function SectorDeleteView({ sector, onConfirmarEliminar, onCancelar }: SectorDeleteViewProps) {
   const [eliminando, setEliminando] = useState(false);
   const [errorBackend, setErrorBackend] = useState<string | null>(null);
 
@@ -23,9 +19,7 @@ export function SectorDeleteView({
     try {
       await onConfirmarEliminar(sector.id);
     } catch (err: unknown) {
-      setErrorBackend(
-        err instanceof Error ? err.message : 'Error al procesar la baja del sector.'
-      );
+      setErrorBackend(err instanceof Error ? err.message : 'Error al procesar la baja.');
       setEliminando(false);
     }
   };
@@ -43,12 +37,10 @@ export function SectorDeleteView({
             <div>{errorBackend}</div>
           </Alert>
         )}
-        <p className="text-secondary fs-6">
-          ¿Estás seguro de que deseas dar de baja este sector?
-        </p>
+        <p className="text-secondary fs-6">¿Estás seguro de que deseas dar de baja este sector?</p>
         <div className="bg-light p-3 rounded border mb-4">
           <div className="row mb-2">
-            <span className="col-4 text-muted fw-semibold">ID de Sector:</span>
+            <span className="col-4 text-muted fw-semibold">ID:</span>
             <span className="col-8 fw-bold font-monospace">#{sector.id}</span>
           </div>
           <div className="row">
@@ -58,15 +50,13 @@ export function SectorDeleteView({
         </div>
         <Alert variant="warning" className="small mb-0">
           <i className="bi bi-info-circle me-1"></i>
-          <strong>Atención:</strong> Esta acción aplicará una baja lógica. Si el sector tiene equipos asignados, el sistema rechazará la operación.
+          <strong>Atención:</strong> Si el sector tiene equipos asignados, el sistema rechazará la operación.
         </Alert>
       </Card.Body>
       <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
-        <Button variant="secondary" onClick={onCancelar} disabled={eliminando}>
-          Cancelar
-        </Button>
+        <Button variant="secondary" onClick={onCancelar} disabled={eliminando}>Cancelar</Button>
         <Button variant="danger" onClick={handleEliminar} disabled={eliminando}>
-          {eliminando ? 'Procesando baja...' : 'Confirmar Baja'}
+          {eliminando ? 'Procesando...' : 'Confirmar Baja'}
         </Button>
       </Card.Footer>
     </Card>

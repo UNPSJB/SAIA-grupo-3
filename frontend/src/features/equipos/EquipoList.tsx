@@ -50,7 +50,6 @@ export function EquipoList({
     }
   };
 
-  // Función auxiliar para dibujar la flechita si la columna está activa
   const renderIconoOrden = (columna: string) => {
     if (ordenarPor !== columna) {
       return <i className="bi bi-chevron-expand text-muted ms-1" style={{ fontSize: '0.8rem' }}></i>;
@@ -69,7 +68,6 @@ export function EquipoList({
         <h4 className="mb-0 text-secondary">Inventario de Equipos</h4>
         
         <div className="d-flex align-items-center gap-3">
-          {/* SWITCH PARA MOSTRAR INACTIVOS */}
           <Form.Check 
             type="switch"
             id="switch-inactivos"
@@ -146,8 +144,6 @@ export function EquipoList({
                         <span className="text-muted">Sector #{e.sector_id}</span>
                       )}
                     </td>
-                    
-                    {/* COLUMNA DE ESTADO */}
                     <td>
                       {e.activo ? (
                         <Badge bg="success">Activo</Badge>

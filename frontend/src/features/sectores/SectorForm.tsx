@@ -13,9 +13,7 @@ export function SectorForm({ sectorInicial, onGuardar, onCancelar }: SectorFormP
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
-    if (sectorInicial) {
-      setNombre(sectorInicial.nombre);
-    }
+    if (sectorInicial) setNombre(sectorInicial.nombre);
   }, [sectorInicial]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,11 +22,9 @@ export function SectorForm({ sectorInicial, onGuardar, onCancelar }: SectorFormP
 
     setEnviando(true);
     try {
-      await onGuardar({
-        nombre: nombre.trim(),
-      });
+      await onGuardar({ nombre: nombre.trim() });
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al guardar los datos.');
+      alert(err instanceof Error ? err.message : 'Error al guardar.');
     } finally {
       setEnviando(false);
     }
@@ -39,9 +35,7 @@ export function SectorForm({ sectorInicial, onGuardar, onCancelar }: SectorFormP
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
       <Card.Header as="h5" className="bg-light text-secondary py-3">
-        {esEdicion
-          ? `Modificar Sector: ${sectorInicial?.nombre}`
-          : 'Registrar Nuevo Sector'}
+        {esEdicion ? `Modificar Sector: ${sectorInicial?.nombre}` : 'Registrar Nuevo Sector'}
       </Card.Header>
       <Card.Body className="p-4">
         <Form onSubmit={handleSubmit}>
@@ -50,22 +44,15 @@ export function SectorForm({ sectorInicial, onGuardar, onCancelar }: SectorFormP
             <Form.Control
               type="text"
               required
-              placeholder="Ej. Planta de Producción"
+              placeholder="Ej. Mantenimiento"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
             />
           </Form.Group>
-
           <div className="d-flex justify-content-end gap-2">
-            <Button variant="secondary" onClick={onCancelar} disabled={enviando}>
-              Cancelar
-            </Button>
+            <Button variant="secondary" onClick={onCancelar} disabled={enviando}>Cancelar</Button>
             <Button variant="primary" type="submit" disabled={enviando}>
-              {enviando
-                ? 'Guardando...'
-                : esEdicion
-                ? 'Actualizar Cambios'
-                : 'Guardar'}
+              {enviando ? 'Guardando...' : esEdicion ? 'Actualizar' : 'Guardar'}
             </Button>
           </div>
         </Form>
