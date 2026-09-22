@@ -1,7 +1,9 @@
+
 import { EquipoPage } from '../features/equipos';
 import { PersonalPage } from '../features/personal';
 import { InsumoPage } from '../features/insumos';
 import { UnidadMedidaPage } from '../features/unidadMedida/unidadMedidaPage';
+import { TareaPage } from '../features/tarea';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import App from './App';
 //import { ProfesoresPage } from '../features/profesores';
@@ -15,6 +17,7 @@ export function AppRouter() {
         <Route path="equipos" element={<EquipoPage/>} />
         <Route path="insumos" element={<InsumoPage />} />
         <Route path="unidades-medida" element={<UnidadMedidaPage />} />
+        <Route path="tarea" element={<TareaPage />} />
           {/* Redirige por defecto a profesores */}
           {/* <Route index element={<Navigate to="/profesores" replace />} /> */}
          {/*  <Route path="profesores" element={<ProfesoresPage />} /> */}
