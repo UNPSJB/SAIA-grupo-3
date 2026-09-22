@@ -10,3 +10,6 @@ class TipoUnidadInvalido(ValueError):
         posibles_tipos = ", ".join(posibles_tipos)
         message = f"{ErrorCode.TIPO_UNIDAD_INVALIDO} {posibles_tipos}."
         super().__init__(message)
+
+class UnidadDuplicada(ValueError):
+    DETAIL=ErrorCode.UNIDAD_DUPLICADA

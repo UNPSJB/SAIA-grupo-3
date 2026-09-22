@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, Field
 from src.unidadMedida.models import TipoUnidadMedida
 from src.insumos import exceptions
 from src.unidadMedida.schemas import UnidadMedida 
@@ -8,7 +8,7 @@ from src.unidadMedida.schemas import UnidadMedida
 
 class InsumoBase(BaseModel):
     nombre:str
-    cantidad: float
+    cantidad: float = Field(ge=0.0, description="La cantidad no puede ser negativa")
     unidad_medida_id: int 
 
 class InsumoCreate(InsumoBase):

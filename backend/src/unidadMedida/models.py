@@ -4,6 +4,7 @@ from enum import auto, StrEnum
 from src.models import ModeloBase
 
 
+
 class TipoUnidadMedida(StrEnum):
     PESO = auto()
     LONGITUD = auto()
@@ -17,4 +18,4 @@ class UnidadMedida(ModeloBase):
     tipo: Mapped[TipoUnidadMedida] = mapped_column(nullable=False)
     sufijo: Mapped[str] = mapped_column(nullable=False)
     insumos = relationship("Insumo", back_populates="unidadMedidaObj")
-    
+    """(Para la baja logica)  activo: Mapped[bool] = mapped_column(default=True)"""
