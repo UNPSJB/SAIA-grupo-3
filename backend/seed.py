@@ -7,6 +7,7 @@ from src.personal.models import Personal, TipoCapacidad
 from src.equipos.models import Equipo, TipoEquipo
 from src.unidadMedida.models import UnidadMedida, TipoUnidadMedida
 from src.insumos.models import Insumo
+from src.elementos.models import Elemento
 
 fake = Faker("es_AR")
 
@@ -85,6 +86,23 @@ def cargar_datos():
                 sector_id=random.choice(sectores).id,
             )
             db.add(equipo)
+
+        # 6. Elementos de limpieza (15 registros)
+        nombres_elementos = [
+            "Cepillo de cerdas suaves", "Cepillo de cerdas duras",
+            "Escobillón industrial", "Pala recogedora", "Trapo de microfibra",
+            "Paño absorbente", "Esponja abrasiva", "Esponja suave",
+            "Mopa de algodón", "Mopa de microfibra", "Secador de piso",
+            "Balde plástico", "Guantes reutilizables", "Cepillo para rincones",
+            "Raspador plástico",
+        ]
+        for nombre in nombres_elementos:
+            elemento = Elemento(
+                nombre=nombre,
+                frecuencia_recambio=random.choice([7, 15, 30, 60, 90, None]),
+                activo=True,
+            )
+            db.add(elemento)
 
         db.commit()
         print("✅ Base de datos poblada exitosamente con 15 registros por entidad y relaciones operativas.")
