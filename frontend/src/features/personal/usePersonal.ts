@@ -10,29 +10,32 @@ export function usePersonal() {
   const [size] = useState(10); 
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [mostrarInactivos, setMostrarInactivos] = useState(false);
 
-  const cargarPersonal = useCallback((currentPage: number, currentSize: number) => {
-    setLoading(true);
-    getPersonal(currentPage, currentSize)
-      .then((data) => {
-        setPersonal(data.items);
-        setTotalPages(data.pages);
-        setTotal(data.total);
-        setPage(data.page);
-        setError(null);
-      })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+  const cargarPersonal = useCallback(
+    (currentPage: number, currentSize: number, showInactive: boolean) => {
+      setLoading(true);
+      getPersonal(currentPage, currentSize, showInactive)
+        .then((data) => {
+          setPersonal(data.items);
+          setTotalPages(data.pages);
+          setTotal(data.total);
+          setPage(data.page);
+          setError(null);
+        })
+        .catch((err: Error) => setError(err.message))
+        .finally(() => setLoading(false));
+    },
+    []
+  );
 
   useEffect(() => {
-    cargarPersonal(page, size);
-  }, [cargarPersonal, page, size]);
+    cargarPersonal(page, size, mostrarInactivos);
+  }, [cargarPersonal, page, size, mostrarInactivos]);
 
   const eliminar = async (dni: number) => {
     await deletePersonal(dni);
-    setPersonal((prev) => prev.filter((p) => p.dni !== dni));
-    setTotal((prev) => Math.max(0, prev - 1)); // <-- Agregar esta línea
+    cargarPersonal(page, size, mostrarInactivos);
   };
 
   const guardar = async (datos: Personal, dniExistente?: number) => {
@@ -41,7 +44,7 @@ export function usePersonal() {
     } else {
       await createPersonal(datos);
     }
-    cargarPersonal(page, size);
+    cargarPersonal(page, size, mostrarInactivos);
   };
 
   // Funciones de navegación
@@ -65,10 +68,12 @@ return {
     eliminar,
     guardar,
     page,
-    totalPages,    
+    totalPages,
     total,
     nextPage,
     prevPage,
-    changePage
+    changePage,
+    mostrarInactivos,
+    setMostrarInactivos
   };
 }

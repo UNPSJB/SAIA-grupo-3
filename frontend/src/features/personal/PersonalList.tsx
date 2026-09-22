@@ -1,4 +1,4 @@
-import { Table, Card, Button, Badge, Pagination } from 'react-bootstrap';
+import { Table, Card, Button, Badge, Pagination, Form } from 'react-bootstrap';
 import { usePersonal } from './usePersonal';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -14,7 +14,8 @@ interface PersonalListProps {
 
 export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onEliminarClick }: PersonalListProps) {
   const { personal, loading, error,
-    page, totalPages, total, nextPage, prevPage, changePage 
+    page, totalPages, total, nextPage, prevPage, changePage,
+    mostrarInactivos, setMostrarInactivos, guardar
    } = usePersonal();
 
   const getLabelCapacidad = (valor: Personal['tipo_capacidad']) => {
@@ -38,10 +39,20 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4 className="mb-0 text-secondary">Nómina del Personal</h4>
-        <Button variant="success" size="sm" onClick={onNuevoClick} className="d-flex align-items-center gap-1 shadow-sm">
-          <i className="bi bi-plus-lg"></i>
-          <span>Nuevo Empleado</span>
-        </Button>
+        <div className="d-flex align-items-center gap-3">
+          <Form.Check
+            type="switch"
+            id="switch-inactivos-personal"
+            label="Ver dados de baja"
+            checked={mostrarInactivos}
+            onChange={(e) => setMostrarInactivos(e.target.checked)}
+            className="text-secondary mb-0"
+          />
+          <Button variant="success" size="sm" onClick={onNuevoClick} className="d-flex align-items-center gap-1 shadow-sm">
+            <i className="bi bi-plus-lg"></i>
+            <span>Nuevo Empleado</span>
+          </Button>
+        </div>
       </div>
 
       <Card className="shadow-sm border-0">
@@ -54,19 +65,20 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
                 <th>Apellido y Nombre</th>
                 <th>Email</th>
                 <th>Capacidad</th>
+                <th>Estado</th>
                 <th className="text-center" style={{ width: '120px' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {personal.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-4 text-muted">
-                    No hay personal registrado en el sistema.
+                  <td colSpan={7} className="text-center py-4 text-muted">
+                    No hay personal registrado para los filtros actuales.
                   </td>
                 </tr>
               ) : (
                 personal.map((p) => (
-                  <tr key={p.dni}>
+                  <tr key={p.dni} className={p.activo === false ? 'opacity-50' : ''}>
                     <td><Badge bg="secondary">#{p.nroLegajo}</Badge></td>
                     <td>{p.dni}</td>
                     <td><strong>{p.apellido}, {p.nombre}</strong></td>
@@ -76,17 +88,46 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
                         {getLabelCapacidad(p.tipo_capacidad)}
                       </Badge>
                     </td>
+                    <td>
+                      {p.activo === false ? (
+                        <Badge bg="danger">Inactivo</Badge>
+                      ) : (
+                        <Badge bg="success">Activo</Badge>
+                      )}
+                    </td>
                     <td className="text-center">
-                      <div className="d-flex justify-content-center gap-2">                      
-                        <Button variant="primary" size="sm" className="text-white py-1 px-2 shadow-sm" title="Ver" onClick={() => onViewClick(p)}>
-                          <i className="bi bi-eye-fill"></i>
-                        </Button>
-                        <Button variant="warning" size="sm" className="text-white py-1 px-2 shadow-sm" title="Modificar" onClick={() => onEditarClick(p)}>
-                          <i className="bi bi-pencil-fill"></i>
-                        </Button>
-                        <Button variant="danger" size="sm" className="py-1 px-2 shadow-sm" title="Eliminar" onClick={() => onEliminarClick(p)}>
-                          <i className="bi bi-trash3-fill"></i>
-                        </Button>
+                      <div className="d-flex justify-content-center gap-2">
+                        {p.activo === false ? (
+                          <Button
+                            variant="success"
+                            size="sm"
+                            className="py-1 px-2 shadow-sm"
+                            title="Reactivar Empleado"
+                            onClick={async () => {
+                              if (confirm(`¿Reactivar a ${p.apellido}, ${p.nombre}?`)) {
+                                try {
+                                  await guardar({ ...p, activo: true }, p.dni);
+                                } catch (err: unknown) {
+                                  alert(err instanceof Error ? err.message : 'Error al reactivar el personal.');
+                                }
+                              }
+                            }}
+                          >
+                            <i className="bi bi-arrow-counterclockwise me-1"></i> Reactivar
+                          </Button>
+                        ) : (
+                          <>
+                            <Button variant="primary" size="sm" className="text-white py-1 px-2 shadow-sm" title="Ver" onClick={() => onViewClick(p)}>
+                              <i className="bi bi-eye-fill"></i>
+                            </Button>
+                            <Button variant="warning" size="sm" className="text-white py-1 px-2 shadow-sm" title="Modificar" onClick={() => onEditarClick(p)}>
+                              <i className="bi bi-pencil-fill"></i>
+                            </Button>
+                            <Button variant="danger" size="sm" className="py-1 px-2 shadow-sm" title="Eliminar" onClick={() => onEliminarClick(p)}>
+                              <i className="bi bi-trash3-fill"></i>
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

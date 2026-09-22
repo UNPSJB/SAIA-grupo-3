@@ -9,8 +9,14 @@ export interface PaginatedPersonal {
   pages: number;
 }
 
-export async function getPersonal(page = 1, size = 10): Promise<PaginatedPersonal> {
-  const res = await fetch(`${API_BASE_URL}/personal?page=${page}&size=${size}`);
+export async function getPersonal(
+  page = 1,
+  size = 10,
+  mostrarInactivos = false
+): Promise<PaginatedPersonal> {
+  const res = await fetch(
+    `${API_BASE_URL}/personal?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}`
+  );
   if (!res.ok) throw new Error('No se pudo listar el personal.');
   return res.json();
 }
@@ -47,6 +53,6 @@ export async function deletePersonal(dni: number): Promise<void> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'No se pudo eliminar el registro.');
+    throw new Error(errorData.detail || 'No se pudo dar de baja el registro.');
   }
 }
