@@ -1,4 +1,5 @@
 
+import { PlanPage } from '../features/plan';
 import { EquipoPage } from '../features/equipos';
 import { PersonalPage } from '../features/personal';
 import { InsumoPage } from '../features/insumos';
@@ -20,6 +21,7 @@ export function AppRouter() {
         <Route path="unidades-medida" element={<UnidadMedidaPage />} />
         <Route path="tarea" element={<TareaPage />} />
         <Route path="sectores" element={<SectorPage/>} />
+        <Route path="plan" element={<PlanPage/>} />
           {/* Redirige por defecto a profesores */}
           {/* <Route index element={<Navigate to="/profesores" replace />} /> */}
          {/*  <Route path="profesores" element={<ProfesoresPage />} /> */}
