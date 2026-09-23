@@ -24,6 +24,7 @@ export function AppRouter() {
         <Route path="tarea" element={<TareaPage />} />
         <Route path="sectores" element={<SectorPage/>} />
         <Route path="elementos" element={<ElementoPage />} />
+        <Route path="planes" element={<PlanPage/>} />
           {/* Redirige por defecto a profesores */}
           {/* <Route index element={<Navigate to="/profesores" replace />} /> */}
          {/*  <Route path="profesores" element={<ProfesoresPage />} /> */}
