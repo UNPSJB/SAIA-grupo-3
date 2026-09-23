@@ -8,7 +8,7 @@ export default function App() {
   const [showSidebar, setShowSidebar] = useState(false);
 
   return (
-    <div className="min-vh-100 d-flex bg-light">
+    <div className="min-vh-100 d-flex bg-body-tertiary">
       <Sidebar show={showSidebar} onClose={() => setShowSidebar(false)} />
 
       <div className="flex-grow-1 main-content">

@@ -1,4 +1,5 @@
 import random
+from datetime import date, timedelta
 from faker import Faker
 from src.database import SessionLocal, engine
 from src.models import ModeloBase
@@ -7,9 +8,10 @@ from src.personal.models import Personal, TipoCapacidad
 from src.equipos.models import Equipo, TipoEquipo
 from src.unidadMedida.models import UnidadMedida, TipoUnidadMedida
 from src.insumos.models import Insumo
+from src.elementos.models import Elemento
+from src.tarea.models import Tarea
 
 fake = Faker("es_AR")
-
 
 def cargar_datos():
     # Creamos las tablas registradas en ModeloBase
@@ -17,14 +19,20 @@ def cargar_datos():
     
     db = SessionLocal()
     try:
-        # 1. Unidades de Medida base requeridas para los insumos
-        unidades = [
-            UnidadMedida(tipo=TipoUnidadMedida.PESO, sufijo="Kg"),
-            UnidadMedida(tipo=TipoUnidadMedida.CAPACIDAD, sufijo="Litros"),
-            UnidadMedida(tipo=TipoUnidadMedida.UNIDAD, sufijo="Unidades"),
-            UnidadMedida(tipo=TipoUnidadMedida.LONGITUD, sufijo="Metros"),
+        # 1. Unidades de Medida base requeridas para los insumos (15 registros)
+        unidades = []
+        nombres_unidades = [
+            (TipoUnidadMedida.PESO, "Kg"), (TipoUnidadMedida.PESO, "Gramos"), (TipoUnidadMedida.PESO, "Libras"),
+            (TipoUnidadMedida.CAPACIDAD, "Litros"), (TipoUnidadMedida.CAPACIDAD, "Mililitros"), (TipoUnidadMedida.CAPACIDAD, "Galones"),
+            (TipoUnidadMedida.UNIDAD, "Unidades"), (TipoUnidadMedida.UNIDAD, "Pares"), (TipoUnidadMedida.UNIDAD, "Cajas"),
+            (TipoUnidadMedida.UNIDAD, "Paquetes"), (TipoUnidadMedida.UNIDAD, "Botellas"), (TipoUnidadMedida.UNIDAD, "Bidones"),
+            (TipoUnidadMedida.LONGITUD, "Metros"), (TipoUnidadMedida.LONGITUD, "Centímetros"), (TipoUnidadMedida.LONGITUD, "Milímetros")
         ]
-        db.add_all(unidades)
+        
+        for tipo, sufijo in nombres_unidades:
+            unidad = UnidadMedida(tipo=tipo, sufijo=sufijo)
+            db.add(unidad)
+            unidades.append(unidad)
         db.flush()
 
         # 2. Sectores (15 registros)
@@ -37,10 +45,7 @@ def cargar_datos():
             "Cámara de Maduración", "Planta Piloto", "Zona de Carga"
         ]
         for nombre in nombres_base_sectores:
-            sector = Sector(
-                nombre=nombre,
-                activo=True
-            )
+            sector = Sector(nombre=nombre, activo=True)
             db.add(sector)
             sectores.append(sector)
         db.flush()
@@ -86,15 +91,64 @@ def cargar_datos():
             )
             db.add(equipo)
 
+        # 6. Elementos de limpieza (15 registros)
+        # Algunos tendrán recambios al día, otros estarán vencidos y otros próximos a vencer para probar el semáforo.
+        nombres_elementos = [
+            "Cepillo de cerdas suaves", "Cepillo de cerdas duras",
+            "Escobillón industrial", "Pala recogedora", "Trapo de microfibra",
+            "Paño absorbente", "Esponja abrasiva", "Esponja suave",
+            "Mopa de algodón", "Mopa de microfibra", "Secador de piso",
+            "Balde plástico", "Guantes reutilizables", "Cepillo para rincones",
+            "Raspador plástico"
+        ]
+        
+        hoy = date.today()
+        
+        for i, nombre in enumerate(nombres_elementos):
+            frecuencia = random.choice([7, 15, 30, 60, 90])
+            
+            # Generamos distintos escenarios para probar los colores del frontend
+            if i % 3 == 0:
+                # Escenario: Vencido (rojo)
+                ultimo = hoy - timedelta(days=frecuencia + random.randint(1, 10))
+            elif i % 3 == 1:
+                # Escenario: Próximo a vencer (amarillo, entre 0 y 5 días)
+                ultimo = hoy - timedelta(days=frecuencia - random.randint(0, 4))
+            else:
+                # Escenario: Vigente (verde, más de 5 días)
+                ultimo = hoy - timedelta(days=random.randint(1, max(1, frecuencia - 6)))
+                
+            proximo = ultimo + timedelta(days=frecuencia)
+            
+            elemento = Elemento(
+                nombre=nombre,
+                frecuencia_recambio=frecuencia,
+                fecha_ultimo_recambio=ultimo,
+                fecha_proximo_recambio=proximo,
+                activo=True,
+            )
+            db.add(elemento)
+
+        # 7. Tareas (15 registros)
+        nombres_tareas = [
+            "Limpieza profunda de pisos", "Desinfección de mesadas", "Vaciado y limpieza de tachos",
+            "Lavado de utensilios menores", "Limpieza de ventanas y vidrios", "Desengrasado de campanas",
+            "Sanitización de cámaras de frío", "Limpieza de rejillas y desagües", "Fregado de paredes",
+            "Desinfección de picaportes y áreas de contacto", "Limpieza de filtros de aire", "Barrido en seco del sector",
+            "Aplicación de espuma clorada", "Limpieza de básculas y balanzas", "Acondicionamiento de carros de transporte"
+        ]
+        for desc in nombres_tareas:
+            tarea = Tarea(descripcion=desc)
+            db.add(tarea)
+
         db.commit()
-        print("✅ Base de datos poblada exitosamente con 15 registros por entidad y relaciones operativas.")
+        print("✅ Base de datos poblada exitosamente con 15 registros por entidad y fechas para probar alertas.")
 
     except Exception as e:
         db.rollback()
         print(f"❌ Ocurrió un error al cargar los datos: {e}")
     finally:
         db.close()
-
 
 if __name__ == "__main__":
     cargar_datos()
