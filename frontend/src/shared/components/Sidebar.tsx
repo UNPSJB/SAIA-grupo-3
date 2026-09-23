@@ -42,7 +42,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   return (
     <>
       <aside
-        className="position-fixed top-0 start-0 bottom-0 bg-white border-end d-none d-md-flex flex-column z-3 shadow-sm"
+        className="position-fixed top-0 start-0 bottom-0 bg-body border-end d-none d-md-flex flex-column z-3 shadow-sm"
         style={{ width: '260px' }}
       >
         <MenuContent />
