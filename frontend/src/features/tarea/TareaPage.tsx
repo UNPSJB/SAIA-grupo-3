@@ -5,7 +5,7 @@ import { TareaForm } from './TareaForm';
 import { TareaView } from './TareaView';
 import { TareaDeleteView } from './TareaDeleteView';
 import { useTarea } from './useTarea';
-import type { Tarea } from './types';
+import type { Tarea, TareaCreate } from './types';
 
 type ModoVista = 'ver' | 'listado' | 'crear' | 'editar' | 'eliminar';
 
@@ -19,7 +19,7 @@ export function TareaPage() {
   const handleEditar = (tarea: Tarea) => { setTareaSeleccionada(tarea); setModo('editar'); };
   const handleEliminarClick = (tarea: Tarea) => { setTareaSeleccionada(tarea); setModo('eliminar'); };
 
-  const handleGuardar = async (datos: Tarea) => {
+  const handleGuardar = async (datos: TareaCreate) => {
     if (modo === 'editar' && tareaSeleccionada?.id) {
       await guardar(datos, tareaSeleccionada.id);
     } else {

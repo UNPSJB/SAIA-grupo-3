@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Plan, PlanCreate } from './types';
-import { getPlanes, createPlan } from './planApi';
+import type { Plan, PlanCreate, PlanUpdate } from './types';
+import { getPlanes, createPlan, updatePlan, deletePlan } from './planApi';
 
 export function usePlan() {
   const [planes, setPlanes] = useState<Plan[]>([]);
@@ -30,8 +30,17 @@ export function usePlan() {
     cargarPlanes(page, size, mostrarInactivos);
   }, [cargarPlanes, page, size, mostrarInactivos]);
 
-  const guardar = async (datos: PlanCreate) => {
-    await createPlan(datos);
+  const eliminar = async (id: number) => {
+    await deletePlan(id);
+    cargarPlanes(page, size, mostrarInactivos);
+  };
+
+  const guardar = async (datos: PlanCreate | PlanUpdate, idExistente?: number) => {
+    if (idExistente) {
+      await updatePlan(idExistente, datos as PlanUpdate);
+    } else {
+      await createPlan(datos as PlanCreate);
+    }
     cargarPlanes(page, size, mostrarInactivos);
   };
 
@@ -39,5 +48,5 @@ export function usePlan() {
   const prevPage = () => { if (page > 1) setPage(p => p - 1); };
   const changePage = (newPage: number) => setPage(newPage);
 
-  return { planes, loading, error, guardar, page, totalPages, total, nextPage, prevPage, changePage, mostrarInactivos, setMostrarInactivos };
+  return { planes, loading, error, guardar, eliminar, page, totalPages, total, nextPage, prevPage, changePage, mostrarInactivos, setMostrarInactivos };
 }

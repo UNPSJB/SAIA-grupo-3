@@ -22,3 +22,11 @@ def read_planes(
 @router.get("/{plan_id}", response_model=schemas.Plan)
 def read_plan(plan_id: int, db: Session = Depends(get_db)):
     return services.leer_plan(db, plan_id)
+
+@router.put("/{plan_id}", response_model=schemas.Plan)
+def update_plan(plan_id: int, plan: schemas.PlanUpdate, db: Session = Depends(get_db)):
+    return services.modificar_plan(db, plan_id, plan)
+
+@router.delete("/{plan_id}", response_model=schemas.Plan)
+def delete_plan(plan_id: int, db: Session = Depends(get_db)):
+    return services.eliminar_plan(db, plan_id)

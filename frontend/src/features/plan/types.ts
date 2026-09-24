@@ -3,22 +3,16 @@ import type { Personal } from '../personal';
 import type { Sector } from '../sectores';
 import type { Equipo } from '../equipos';
 
-export type FrecuenciaPlan = 'diario' | 'semanal' | 'mensual';
-
-export const FRECUENCIAS: { value: FrecuenciaPlan; label: string }[] = [
-  { value: 'diario', label: 'Diario' },
-  { value: 'semanal', label: 'Semanal' },
-  { value: 'mensual', label: 'Mensual' },
-];
-
 export interface Plan {
   id?: number;
   nombre: string;
-  frecuencia: FrecuenciaPlan;
+  descripcion: string;
   responsable_id: number;
   sector_id?: number | null;
   equipo_id?: number | null;
   activo?: boolean;
+  fecha_inicio?: string | null;
+  fecha_fin?: string | null;
   tareas?: Tarea[];
   responsable?: Personal;
   sector?: Sector;
@@ -27,11 +21,21 @@ export interface Plan {
 
 export interface PlanCreate {
   nombre: string;
-  frecuencia: FrecuenciaPlan;
+  descripcion: string;
   responsable_id: number;
   sector_id?: number | null;
   equipo_id?: number | null;
   tarea_ids: number[];
+}
+
+export interface PlanUpdate {
+  nombre?: string;
+  descripcion?: string;
+  responsable_id?: number;
+  sector_id?: number | null;
+  equipo_id?: number | null;
+  tarea_ids?: number[];
+  activo?: boolean;
 }
 
 export interface PaginatedPlanes {

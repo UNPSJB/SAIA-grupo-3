@@ -1,11 +1,11 @@
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing import List, Optional
-from src.plan.models import FrecuenciaPlan
+from datetime import date
 from src.tarea.schemas import Tarea
 
 class PlanBase(BaseModel):
     nombre: str = Field(..., max_length=100)
-    frecuencia: FrecuenciaPlan
+    descripcion: str = Field(..., max_length=250)
     responsable_id: int
     sector_id: Optional[int] = None
     equipo_id: Optional[int] = None
@@ -21,7 +21,7 @@ class PlanCreate(PlanBase):
 
 class PlanUpdate(BaseModel):
     nombre: Optional[str] = Field(None, max_length=100)
-    frecuencia: Optional[FrecuenciaPlan] = None
+    descripcion: Optional[str] = Field(None, max_length=250)
     responsable_id: Optional[int] = None
     sector_id: Optional[int] = None
     equipo_id: Optional[int] = None
@@ -31,6 +31,8 @@ class PlanUpdate(BaseModel):
 class Plan(PlanBase):
     id: int
     activo: bool
+    fecha_inicio: Optional[date] = None
+    fecha_fin: Optional[date] = None
     tareas: List[Tarea] = []
     
     model_config = ConfigDict(from_attributes=True)

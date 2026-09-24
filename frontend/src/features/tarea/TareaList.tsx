@@ -32,20 +32,24 @@ export function TareaList({ onNuevoClick, onViewClick, onEditarClick, onEliminar
             <thead className="table-light">
               <tr>
                 <th style={{ width: '80px' }}>ID</th>
-                <th>Descripción</th>
+                <th>Nombre</th>
+                <th>Frecuencia</th>
+                <th>Equipo</th>
                 <th className="text-center" style={{ width: '120px' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {tareas.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="text-center py-4 text-muted">No hay tareas registradas.</td>
+                  <td colSpan={5} className="text-center py-4 text-muted">No hay tareas registradas.</td>
                 </tr>
               ) : (
                 tareas.map((t) => (
                   <tr key={t.id}>
                     <td><Badge bg="secondary">#{t.id}</Badge></td>
-                    <td>{t.descripcion}</td>
+                    <td><strong>{t.nombre}</strong></td>
+                    <td className="text-capitalize">{t.frecuencia}</td>
+                    <td>{t.equipo ? t.equipo.nombre : <span className="text-muted">N/A</span>}</td>
                     <td className="text-center">
                       <div className="d-flex justify-content-center gap-2">
                         <Button variant="primary" size="sm" className="text-white py-1 px-2 shadow-sm" onClick={() => onViewClick(t)}>

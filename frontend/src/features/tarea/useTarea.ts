@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Tarea } from './types';
+import type { Tarea, TareaCreate } from './types';
 import { getTareas, createTarea, updateTarea, deleteTarea } from './tareaApi';
 
 export function useTarea() {
@@ -34,7 +34,7 @@ export function useTarea() {
     cargarTareas(page, size);
   };
 
-  const guardar = async (datos: Tarea, idExistente?: number) => {
+  const guardar = async (datos: TareaCreate, idExistente?: number) => {
     if (idExistente) {
       await updateTarea(idExistente, datos);
     } else {

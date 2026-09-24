@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../../shared/libreria/api';
-import type { Tarea, PaginatedTareas } from './types';
+import type { Tarea, TareaCreate, PaginatedTareas } from './types';
 
 export async function getTareas(page = 1, size = 10): Promise<PaginatedTareas> {
   const res = await fetch(`${API_BASE_URL}/tareas?page=${page}&size=${size}`);
@@ -7,7 +7,7 @@ export async function getTareas(page = 1, size = 10): Promise<PaginatedTareas> {
   return res.json();
 }
 
-export async function createTarea(data: Tarea): Promise<Tarea> {
+export async function createTarea(data: TareaCreate): Promise<Tarea> {
   const res = await fetch(`${API_BASE_URL}/tareas`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -20,7 +20,7 @@ export async function createTarea(data: Tarea): Promise<Tarea> {
   return res.json();
 }
 
-export async function updateTarea(id: number, data: Tarea): Promise<Tarea> {
+export async function updateTarea(id: number, data: Partial<TareaCreate>): Promise<Tarea> {
   const res = await fetch(`${API_BASE_URL}/tareas/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
