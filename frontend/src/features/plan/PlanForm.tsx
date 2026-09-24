@@ -4,7 +4,7 @@ import type { PlanCreate, Plan } from './types';
 import { getPersonal, type Personal } from '../personal';
 import { getSectores, type Sector } from '../sectores';
 import { getEquipos, type Equipo } from '../equipos';
-import { getTareas, createTarea } from '../tarea/tareaApi';
+import { getTareas, createTarea, updateTarea } from '../tarea/tareaApi';
 import { TareaForm } from '../tarea/TareaForm';
 import type { Tarea, TareaCreate } from '../tarea/types';
 
@@ -33,6 +33,8 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
 
   const [mostrarModalTarea, setMostrarModalTarea] = useState(false);
   const [mostrarModalSeleccion, setMostrarModalSeleccion] = useState(false);
+
+  const [tareaAEditar, setTareaAEditar] = useState<Tarea | null>(null);
 
   const cargarDependencias = () => {
     setCargandoDependencias(true);
@@ -72,15 +74,26 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
     setTareasSeleccionadas(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
   };
 
-  const handleCrearTareaDesdePlan = async (nuevaTarea: TareaCreate) => {
+  const handleGuardarTareaDesdePlan = async (datos: TareaCreate) => {
     try {
-      const creada = await createTarea(nuevaTarea);
-      setTareas([...tareas, creada]);
-      setTareasSeleccionadas([...tareasSeleccionadas, creada.id as number]);
+      if (tareaAEditar?.id) {
+        const actualizada = await updateTarea(tareaAEditar.id, datos);
+        setTareas(tareas.map(t => t.id === actualizada.id ? actualizada : t));
+      } else {
+        const creada = await createTarea(datos);
+        setTareas([...tareas, creada]);
+        setTareasSeleccionadas([...tareasSeleccionadas, creada.id as number]);
+      }
       setMostrarModalTarea(false);
+      setTareaAEditar(null);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al crear la tarea');
+      alert(err instanceof Error ? err.message : 'Error al guardar la tarea');
     }
+  };
+
+  const handleEditarTareaClick = (t: Tarea) => {
+    setTareaAEditar(t);
+    setMostrarModalTarea(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -180,7 +193,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
                   <Button variant="outline-primary" size="sm" onClick={() => setMostrarModalSeleccion(true)}>
                     <i className="bi bi-card-list"></i> Agregar Tarea
                   </Button>
-                  <Button variant="outline-success" size="sm" onClick={() => setMostrarModalTarea(true)}>
+                  <Button variant="outline-success" size="sm" onClick={() => { setTareaAEditar(null); setMostrarModalTarea(true); }}>
                     <i className="bi bi-plus-lg"></i> Nueva Tarea
                   </Button>
                 </div>
@@ -200,7 +213,10 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
                         return (
                           <tr key={`sel-${id}`}>
                             <td className="ps-3 py-2">{t.nombre}</td>
-                            <td className="text-end pe-3 py-2" style={{ width: '80px' }}>
+                            <td className="text-end pe-3 py-2" style={{ width: '120px' }}>
+                              <Button variant="outline-secondary" size="sm" className="me-1" onClick={() => handleEditarTareaClick(t)} title="Modificar">
+                                <i className="bi bi-pencil"></i>
+                              </Button>
                               <Button variant="outline-danger" size="sm" onClick={() => handleTareaToggle(id)} title="Quitar">
                                 <i className="bi bi-x-circle"></i>
                               </Button>
@@ -225,18 +241,20 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
       </Card>
 
 
-      <Modal show={mostrarModalTarea} onHide={() => setMostrarModalTarea(false)} size="lg">
+      <Modal show={mostrarModalTarea} onHide={() => { setMostrarModalTarea(false); setTareaAEditar(null); }} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Nueva Tarea</Modal.Title>
+          <Modal.Title>{tareaAEditar ? `Modificar Tarea #${tareaAEditar.id}` : 'Nueva Tarea'}</Modal.Title>
         </Modal.Header>
         <Modal.Body className="bg-light">
           <TareaForm
+            tareaInicial={tareaAEditar}
             equipoIdFijo={equipoId === '' ? null : Number(equipoId)}
-            onGuardar={handleCrearTareaDesdePlan}
-            onCancelar={() => setMostrarModalTarea(false)}
+            onGuardar={handleGuardarTareaDesdePlan}
+            onCancelar={() => { setMostrarModalTarea(false); setTareaAEditar(null); }}
           />
         </Modal.Body>
       </Modal>
+
 
 
       <Modal show={mostrarModalSeleccion} onHide={() => setMostrarModalSeleccion(false)} size="lg">
