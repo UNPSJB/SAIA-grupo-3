@@ -21,16 +21,16 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
   const [sectorId, setSectorId] = useState<number | ''>('');
   const [equipoId, setEquipoId] = useState<number | ''>('');
   const [tareasSeleccionadas, setTareasSeleccionadas] = useState<number[]>([]);
-  
+
   const [personal, setPersonal] = useState<Personal[]>([]);
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [tareas, setTareas] = useState<Tarea[]>([]);
-  
+
   const [cargandoDependencias, setCargandoDependencias] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
-  
+
   const [mostrarModalTarea, setMostrarModalTarea] = useState(false);
   const [mostrarModalSeleccion, setMostrarModalSeleccion] = useState(false);
 
@@ -113,10 +113,12 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
   };
 
   const equiposFiltrados = sectorId ? equipos.filter(e => e.sector_id === Number(sectorId)) : equipos;
-  
+  const personalOperarios = personal.filter(p => p.tipo_capacidad === 'operar');
+
+
   const tareasVisibles = tareas.filter(t => {
     if (equipoId) return t.equipo_id === Number(equipoId);
-    return true; 
+    return true;
   });
 
   return (
@@ -127,7 +129,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
         </Card.Header>
         <Card.Body className="p-4">
           {errorValidacion && <Alert variant="danger">{errorValidacion}</Alert>}
-          
+
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
               <Form.Label>Nombre del Plan</Form.Label>
@@ -143,7 +145,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
               <Form.Label>Responsable Asignado</Form.Label>
               <Form.Select required disabled={cargandoDependencias} value={responsableId} onChange={(e) => setResponsableId(e.target.value === '' ? '' : Number(e.target.value))}>
                 <option value="">Seleccione un empleado...</option>
-                {personal.map(p => <option key={p.dni} value={p.dni}>{p.apellido}, {p.nombre} (DNI: {p.dni})</option>)}
+                {personalOperarios.map(p => <option key={p.dni} value={p.dni}>{p.apellido}, {p.nombre} (DNI: {p.dni})</option>)}
               </Form.Select>
             </Form.Group>
 
@@ -154,13 +156,13 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
                   <Form.Label>Sector (Opcional si elige equipo)</Form.Label>
                   <Form.Select disabled={cargandoDependencias} value={sectorId} onChange={(e) => {
                     setSectorId(e.target.value === '' ? '' : Number(e.target.value));
-                    setEquipoId(''); 
+                    setEquipoId('');
                   }}>
                     <option value="">Todos los sectores...</option>
                     {sectores.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                   </Form.Select>
                 </Form.Group>
-                
+
                 <Form.Group className="col-md-6">
                   <Form.Label>Equipo</Form.Label>
                   <Form.Select disabled={cargandoDependencias} value={equipoId} onChange={(e) => setEquipoId(e.target.value === '' ? '' : Number(e.target.value))}>
@@ -183,7 +185,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
                   </Button>
                 </div>
               </div>
-              
+
               <div className="border rounded bg-white">
                 {tareasSeleccionadas.length === 0 ? (
                   <div className="text-muted p-3 small text-center">
@@ -228,7 +230,11 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
           <Modal.Title>Nueva Tarea</Modal.Title>
         </Modal.Header>
         <Modal.Body className="bg-light">
-          <TareaForm onGuardar={handleCrearTareaDesdePlan} onCancelar={() => setMostrarModalTarea(false)} />
+          <TareaForm
+            equipoIdFijo={equipoId === '' ? null : Number(equipoId)}
+            onGuardar={handleCrearTareaDesdePlan}
+            onCancelar={() => setMostrarModalTarea(false)}
+          />
         </Modal.Body>
       </Modal>
 
