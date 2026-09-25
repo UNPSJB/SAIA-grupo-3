@@ -3,8 +3,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import auto, StrEnum
 from src.models import ModeloBase
 
-
-
 class TipoUnidadMedida(StrEnum):
     PESO = auto()
     LONGITUD = auto()
@@ -17,5 +15,5 @@ class UnidadMedida(ModeloBase):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     tipo: Mapped[TipoUnidadMedida] = mapped_column(nullable=False)
     sufijo: Mapped[str] = mapped_column(nullable=False)
+    activo: Mapped[bool] = mapped_column(default=True)
     insumos = relationship("Insumo", back_populates="unidadMedidaObj")
-    """(Para la baja logica)  activo: Mapped[bool] = mapped_column(default=True)"""
