@@ -36,6 +36,13 @@ export function InsumoView({ insumo, onEditar, onVolver }: InsumoViewProps) {
                 : `ID: ${insumo.unidad_medida_id}`}
             </span>
           </div>
+          <div className="row">
+            <span className="col-4 text-muted fw-semibold">Estado:</span>
+            <span className="col-8">
+               {insumo.activo ? <Badge bg="success">Activo</Badge> 
+                : <Badge bg="danger">Inactivo</Badge>}
+            </span>
+          </div>
         </div>
       </Card.Body>
       <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
