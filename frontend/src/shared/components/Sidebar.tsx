@@ -18,113 +18,95 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     }
   }, [esRutaInsumos]);
 
+  const menuItems = [
+    { to: "/personal", label: "Personal" },
+    { to: "/sectores", label: "Sectores" },
+    { to: "/equipos", label: "Equipos" },
+    {
+      label: "Insumos",
+      esDesplegable: true,
+      subItems: [
+        {
+          to: "/insumos",
+          label: "Insumos / Ingredientes",
+          icono: "bi bi-box-seam",
+          end: true,
+        },
+        {
+          to: "/insumos-quimicos",
+          label: "Insumos Químicos",
+          icono: "bi bi-droplet-half",
+        },
+      ],
+    },
+    { to: "/unidades-medida", label: "Unidades de Medida" },
+  ];
+
   const MenuContent = () => (
     <>
       <div className="d-flex align-items-center gap-2 px-4 py-4 mb-2">
         <span className="fs-5 fw-bold text-dark tracking-tight">SAIA</span>
       </div>
       <nav className="nav nav-pills flex-column px-3 gap-1">
-        <NavLink
-          to="/personal"
-          onClick={onClose}
-          className={({ isActive }) =>
-            `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium ${
-              isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
-            }`
-          }
-        >
-          <span>Personal</span>
-        </NavLink>
-
-        <NavLink
-          to="/equipos"
-          onClick={onClose}
-          className={({ isActive }) =>
-            `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium ${
-              isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
-            }`
-          }
-        >
-          <span>Equipos</span>
-        </NavLink>
-
-        {/* Desplegable Insumos */}
-        <div>
-          <div
-            onClick={() => setOpenInsumos(!openInsumos)}
-            className={`nav-link d-flex justify-content-between align-items-center px-3 py-2 rounded-3 fw-medium user-select-none ${
-              esRutaInsumos ? 'text-dark' : 'text-secondary hover-bg-light'
-            }`}
-            style={{ cursor: 'pointer' }}
-            aria-controls="insumos-collapse"
-            aria-expanded={openInsumos}
-          >
-            {/* Ícono a la derecha y forzado a oscuro */}
-            <span>Insumos</span>
-            <i className={`bi bi-chevron-${openInsumos ? 'down' : 'right'} text-dark ms-auto small`}></i>
-
-          </div>
-
-          <Collapse in={openInsumos}>
-            {/* Div contenedor neutro para permitir que la animación funcione sin chocar con d-flex */}
-            <div id="insumos-collapse">
-              <div className="d-flex flex-column gap-1 mt-1">
-                <NavLink
-                  to="/insumos"
-                  end
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    `nav-link d-flex align-items-center gap-2 py-1 rounded-3 small fw-medium ${
-                      isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
-                    }`
-                  }
-                  style={{ paddingLeft: '3rem' }}
+        {menuItems.map((item) => {
+          if (item.esDesplegable) {
+            return (
+              <div key={item.label}>
+                <div
+                  onClick={() => setOpenInsumos(!openInsumos)}
+                  className={`nav-link d-flex justify-content-between align-items-center px-3 py-2 rounded-3 fw-medium user-select-none ${
+                    esRutaInsumos ? 'text-dark' : 'text-secondary hover-bg-light'
+                  }`}
+                  style={{ cursor: 'pointer' }}
+                  aria-controls="insumos-collapse"
+                  aria-expanded={openInsumos}
                 >
-                  <i className="bi bi-box-seam me-1"></i>
-                  <span>Insumos / Ingredientes</span>
-                </NavLink>
+                  <span>{item.label}</span>
+                  <i className={`bi bi-chevron-${openInsumos ? 'down' : 'right'} text-dark ms-auto small`}></i>
+                </div>
 
-                <NavLink
-                  to="/insumos-quimicos"
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    `nav-link d-flex align-items-center gap-2 py-1 rounded-3 small fw-medium ${
-                      isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
-                    }`
-                  }
-                  style={{ paddingLeft: '3rem' }}
-                >
-                  <i className="bi bi-droplet-half me-1"></i>
-                  <span>Insumos Químicos</span>
-                </NavLink>
+                <Collapse in={openInsumos}>
+                  <div id="insumos-collapse">
+                    <div className="d-flex flex-column gap-1 mt-1">
+                      {item.subItems?.map((sub) => (
+                        <NavLink
+                          key={sub.to}
+                          to={sub.to}
+                          end={sub.end}
+                          onClick={onClose}
+                          className={({ isActive }) =>
+                            `nav-link d-flex align-items-center gap-2 py-1 rounded-3 small fw-medium ${
+                              isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
+                            }`
+                          }
+                          style={{ paddingLeft: '2rem' }}
+                        >
+                          <i className={`${sub.icono} me-1`}></i>
+                          <span>{sub.label}</span>
+                        </NavLink>
+                      ))}
+                    </div>
+                  </div>
+                </Collapse>
               </div>
-            </div>
-          </Collapse>
-        </div>
-
-        <NavLink
-          to="/unidades-medida"
-          onClick={onClose}
-          className={({ isActive }) =>
-            `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium ${
-              isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
-            }`
+            );
           }
-        >
-          <span>Unidades de Medida</span>
-        </NavLink>
 
-        <NavLink
-          to="/sectores"
-          onClick={onClose}
-          className={({ isActive }) =>
-            `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium ${
-              isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
-            }`
-          }
-        >
-          <span>Sectores</span>
-        </NavLink>
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to!}
+              onClick={onClose}
+              className={({ isActive }) =>
+                `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium ${
+                  isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
+                }`
+              }
+            >
+              <span>{item.label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
     </>
   );
@@ -132,7 +114,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   return (
     <>
       <aside
-        className="position-fixed top-0 start-0 bottom-0 bg-white border-end d-none d-md-flex flex-column z-3 shadow-sm"
+        className="position-fixed top-0 start-0 bottom-0 bg-body border-end d-none d-md-flex flex-column z-3 shadow-sm"
         style={{ width: '260px' }}
       >
         <MenuContent />
