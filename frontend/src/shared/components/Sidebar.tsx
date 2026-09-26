@@ -21,7 +21,8 @@ export function Sidebar({ show, onClose }: SidebarProps) {
           { to: "/tarea", label: "Tareas" },
           { to: "/sectores", label: "Sectores" },
           { to: "/elementos", label: "Elementos de Limpieza"},
-          { to: "/planes", label: "Planes"}
+          { to: "/planes", label: "Planes"},
+          { to: "/checklist", label: "Checklist del Día"}
         ].map((item) => (
           <NavLink
             key={item.to}

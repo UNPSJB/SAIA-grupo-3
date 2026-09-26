@@ -10,6 +10,7 @@ import App from './App';
 import { SectorPage } from '../features/sectores/SectorPage';
 //import { ProfesoresPage } from '../features/profesores';
 import { ElementoPage } from '../features/elementos/ElementoPage';
+import { ChecklistPage } from '../features/checklist';
 
 
 export function AppRouter() {
@@ -25,6 +26,7 @@ export function AppRouter() {
         <Route path="sectores" element={<SectorPage/>} />
         <Route path="elementos" element={<ElementoPage />} />
         <Route path="planes" element={<PlanPage/>} />
+        <Route path="checklist" element={<ChecklistPage />} />
           {/* Redirige por defecto a profesores */}
           {/* <Route index element={<Navigate to="/profesores" replace />} /> */}
          {/*  <Route path="profesores" element={<ProfesoresPage />} /> */}
