@@ -33,11 +33,11 @@ export function TareaForm({ tareaInicial, equipoIdFijo, onGuardar, onCancelar }:
     Promise.all([
       getEquipos(1, 100),
       getElementos(1, 100),
-      getInsumos()
+      getInsumos(1,100)
     ]).then(([resEquipos, resElementos, resInsumos]) => {
       setEquipos(resEquipos.items);
       setElementos(resElementos.items);
-      setInsumos(resInsumos);
+      setInsumos(resInsumos.items);
     }).catch(() => {
       setErrorValidacion('Error al cargar las dependencias (Equipos, Elementos, Insumos).');
     }).finally(() => {

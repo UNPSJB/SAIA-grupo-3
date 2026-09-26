@@ -3,8 +3,6 @@ from src.unidadMedida.models import TipoUnidadMedida
 from src.unidadMedida import exceptions
 from typing import Optional
 
-
-#Unidad de medida
 class UnidadMedidaBase(BaseModel):
     tipo: TipoUnidadMedida
     sufijo: str 
@@ -16,18 +14,20 @@ class UnidadMedidaBase(BaseModel):
             raise exceptions.TipoUnidadInvalido(list(TipoUnidadMedida))
         return v.lower()
 
-class UnidadMedidaUpdate(BaseModel):
-    tipo: Optional[TipoUnidadMedida] = None
-    sufijo: Optional[str] = None
-
-
 class UnidadMedidaCreate(UnidadMedidaBase):
     pass
 
-class UnidadMedida(UnidadMedidaBase):
-    id:int
+class UnidadMedidaUpdate(BaseModel):
+    tipo: Optional[TipoUnidadMedida] = None
+    sufijo: Optional[str] = None
+    activo: Optional[bool] = None
 
+class UnidadMedida(UnidadMedidaBase):
+    id: int
+    activo: bool
     model_config = ConfigDict(from_attributes=True)
 
 class UnidadMedidaDelete(UnidadMedidaBase):
     id: int
+    activo: bool
+    model_config = ConfigDict(from_attributes=True)

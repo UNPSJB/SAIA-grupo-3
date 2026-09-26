@@ -1,18 +1,26 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.insumos import schemas, services
+from src.pagination import PaginatedResponse
 
 router = APIRouter(prefix="/insumos", tags=["insumos"])
 
-@router.get("", response_model=list[schemas.Insumo])
-def read_insumos(db: Session = Depends(get_db)):
-    print("Listando insumos desde router") 
-    return services.listar_insumos(db)
-
-@router.post("", response_model=schemas.Insumo)
+@router.post("/", response_model=schemas.Insumo)
 def create_insumo(insumo: schemas.InsumoCreate, db: Session = Depends(get_db)):
     return services.crear_insumo(db, insumo)
+
+@router.get("/", response_model=PaginatedResponse[schemas.Insumo])
+def read_insumos(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    size: int = Query(10, ge=1, le=100),
+    mostrar_inactivos: bool = Query(False),
+    ordenar_por: str = Query("id"),
+    orden: str = Query("asc"),
+    buscar: str = Query("")
+):
+    return services.listar_insumos(db, page, size, mostrar_inactivos, ordenar_por, orden, buscar)
 
 @router.get("/{insumo_id}", response_model=schemas.Insumo)
 def read_insumo_id(insumo_id: int, db: Session = Depends(get_db)):

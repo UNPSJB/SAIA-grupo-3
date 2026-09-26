@@ -3,6 +3,12 @@ export interface Insumo {
   nombre: string;
   cantidad: number;
   unidad_medida_id: number;
+  activo?: boolean;
+  unidadMedidaObj?: {
+    id: number;
+    tipo: string;
+    sufijo: string;
+  };
 }
 
 export interface InsumoCreate {
@@ -15,16 +21,5 @@ export interface InsumoUpdate {
   nombre?: string;
   cantidad?: number;
   unidad_medida_id?: number;
-}
-
-export interface Insumo {
-  id: number;
-  nombre: string;
-  cantidad: number;
-  unidad_medida_id: number;
-  unidadMedidaObj?: {
-    id: number;
-    tipo: string;
-    sufijo: string;
-  };
+  activo?: boolean;
 }

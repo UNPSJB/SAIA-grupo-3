@@ -3,6 +3,7 @@ import { PlanPage } from '../features/plan';
 import { EquipoPage } from '../features/equipos';
 import { PersonalPage } from '../features/personal';
 import { InsumoPage } from '../features/insumos';
+import { InsumoQuimicoPage } from '../features/insumosQuimicos';
 import { UnidadMedidaPage } from '../features/unidadMedida/unidadMedidaPage';
 import { TareaPage } from '../features/tarea';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -12,7 +13,6 @@ import { SectorPage } from '../features/sectores/SectorPage';
 import { ElementoPage } from '../features/elementos/ElementoPage';
 import { ChecklistPage } from '../features/checklist';
 
-
 export function AppRouter() {
   return (
     <BrowserRouter>
@@ -21,6 +21,7 @@ export function AppRouter() {
         <Route path="personal" element={<PersonalPage />} />
         <Route path="equipos" element={<EquipoPage/>} />
         <Route path="insumos" element={<InsumoPage />} />
+        <Route path="insumos-quimicos" element={<InsumoQuimicoPage />} />
         <Route path="unidades-medida" element={<UnidadMedidaPage />} />
         <Route path="tarea" element={<TareaPage />} />
         <Route path="sectores" element={<SectorPage/>} />
