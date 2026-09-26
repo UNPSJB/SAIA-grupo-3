@@ -1,16 +1,20 @@
 import random
 from datetime import date, timedelta
 from faker import Faker
+
 from src.database import SessionLocal, engine
 from src.models import ModeloBase
+
 from src.sector.models import Sector
 from src.personal.models import Personal, TipoCapacidad
 from src.equipos.models import Equipo, TipoEquipo
 from src.unidadMedida.models import UnidadMedida, TipoUnidadMedida
 from src.insumos.models import Insumo
 from src.elementos.models import Elemento
-from src.tarea.models import Tarea, FrecuenciaTarea
+from src.tarea.models import Tarea, FrecuenciaTarea, TareaInsumoQuimico
 from src.plan.models import Plan
+from src.documentacion.models import Documentacion, TipoDocumento
+from src.insumosQuimicos.models import InsumoQuimico, TipoQuimico
 
 fake = Faker("es_AR")
 
@@ -51,16 +55,31 @@ def cargar_datos():
             sectores.append(sector)
         db.flush()
 
-        # 3. Insumos (15 registros)
+        # 3. Insumos Generales (15 registros)
         insumos_creados = []
         for _ in range(15):
             insumo = Insumo(
-                nombre=f"{fake.word().capitalize()} Sanitizante {fake.unique.random_int(min=100, max=999)}",
+                nombre=f"{fake.word().capitalize()} General {fake.unique.random_int(min=100, max=999)}",
                 cantidad=round(random.uniform(10.0, 500.0), 2),
                 unidad_medida_id=random.choice(unidades).id,
             )
             db.add(insumo)
             insumos_creados.append(insumo)
+        db.flush()
+
+        # 3.5 Insumos Químicos (15 registros) - NUEVO
+        insumos_quimicos_creados = []
+        tipos_quimicos = list(TipoQuimico)
+        for _ in range(15):
+            insumo_q = InsumoQuimico(
+                nombre=f"{fake.word().capitalize()} Químico {fake.unique.random_int(min=1000, max=9999)}",
+                cantidad=round(random.uniform(5.0, 200.0), 2),
+                tipo_quimico=random.choice(tipos_quimicos),
+                unidad_medida_id=random.choice(unidades).id,
+                activo=True
+            )
+            db.add(insumo_q)
+            insumos_quimicos_creados.append(insumo_q)
         db.flush()
 
         # 4. Personal (15 registros con claves únicas)
@@ -78,6 +97,20 @@ def cargar_datos():
             db.add(persona)
             personal_creado.append(persona)
         db.flush()
+
+        # # 4.5 Documentación del Personal - NUEVO
+        # tipos_documento = list(TipoDocumento)
+        # for persona in personal_creado:
+        #     # Asignamos aleatoriamente entre 1 y 2 documentos a cada empleado
+        #     for _ in range(random.randint(1, 2)):
+        #         tipo_doc = random.choice(tipos_documento)
+        #         documento = Documentacion(
+        #             nombre=f"Certificado de {tipo_doc.value.replace('_', ' ').capitalize()}",
+        #             tipo_documento=tipo_doc,
+        #             personal_id=persona.dni
+        #         )
+        #         db.add(documento)
+        # db.flush()
 
         # 5. Equipos (15 registros vinculados por Foreign Key al sector)
         equipos_creados = []
@@ -117,15 +150,11 @@ def cargar_datos():
         for i, nombre in enumerate(nombres_elementos):
             frecuencia = random.choice([7, 15, 30, 60, 90])
             
-            # Generamos distintos escenarios para probar los colores del frontend
             if i % 3 == 0:
-                # Escenario: Vencido (rojo)
                 ultimo = hoy - timedelta(days=frecuencia + random.randint(1, 10))
             elif i % 3 == 1:
-                # Escenario: Próximo a vencer (amarillo, entre 0 y 5 días)
                 ultimo = hoy - timedelta(days=frecuencia - random.randint(0, 4))
             else:
-                # Escenario: Vigente (verde, más de 5 días)
                 ultimo = hoy - timedelta(days=random.randint(1, max(1, frecuencia - 6)))
                 
             proximo = ultimo + timedelta(days=frecuencia)
@@ -141,7 +170,7 @@ def cargar_datos():
             elementos_creados.append(elemento)
         db.flush()
 
-        # 7. Tareas (30 registros para tener suficiente variedad)
+        # 7. Tareas (30 registros)
         tareas_creadas = []
         tipos_frecuencia = list(FrecuenciaTarea)
         nombres_tareas = [
@@ -152,12 +181,10 @@ def cargar_datos():
             "Aplicación de espuma clorada", "Limpieza de básculas y balanzas", "Acondicionamiento de carros de transporte"
         ]
         
-        # Duplicamos y variamos para tener más tareas generales y específicas de equipo
         for _ in range(30):
             nombre_tarea = random.choice(nombres_tareas)
             equipo_asignado = random.choice(equipos_creados) if random.random() > 0.5 else None
             elementos_tarea = random.sample(elementos_creados, random.randint(1, 3))
-            insumos_tarea = random.sample(insumos_creados, random.randint(1, 3))
             
             tarea = Tarea(
                 nombre=f"{nombre_tarea} - {'Específica' if equipo_asignado else 'General'}",
@@ -167,7 +194,16 @@ def cargar_datos():
             )
             
             tarea.elementos.extend(elementos_tarea)
-            tarea.insumos.extend(insumos_tarea)
+            
+            # Vinculamos Insumos Químicos con cantidades específicas - CORREGIDO
+            insumos_quimicos_tarea = random.sample(insumos_quimicos_creados, random.randint(1, 3))
+            for iq in insumos_quimicos_tarea:
+                tarea_iq = TareaInsumoQuimico(
+                    insumo_quimico_id=iq.id,
+                    cantidad=round(random.uniform(0.5, 5.0), 2)
+                )
+                tarea.insumos_quimicos.append(tarea_iq)
+
             db.add(tarea)
             tareas_creadas.append(tarea)
         db.flush()
@@ -186,15 +222,12 @@ def cargar_datos():
             if asignar_a_equipo:
                 equipo = random.choice(equipos_creados)
                 equipo_id = equipo.id
-                # El plan puede contener tareas de este equipo o tareas sin equipo asignado (generales)
                 tareas_posibles = [t for t in tareas_creadas if t.equipo_id == equipo.id or t.equipo_id is None]
             else:
                 sector = random.choice(sectores)
                 sector_id = sector.id
-                # Si es de un sector, asignamos tareas generales
                 tareas_posibles = [t for t in tareas_creadas if t.equipo_id is None]
 
-            # Seleccionamos entre 2 y 5 tareas para el plan, o las que haya disponibles
             cantidad_tareas = min(len(tareas_posibles), random.randint(2, 5))
             tareas_del_plan = random.sample(tareas_posibles, cantidad_tareas) if tareas_posibles else []
 

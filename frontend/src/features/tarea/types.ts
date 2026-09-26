@@ -1,6 +1,6 @@
 import type { Equipo } from '../equipos/types';
 import type { Elemento } from '../elementos/types';
-import type { Insumo } from '../insumos/types';
+import type { InsumoQuimico } from '../insumosQuimicos/types';
 
 export type FrecuenciaTarea = 'diaria' | 'semanal' | 'mensual';
 
@@ -10,6 +10,12 @@ export const FRECUENCIAS_TAREA: { value: FrecuenciaTarea; label: string }[] = [
   { value: 'mensual', label: 'Mensual' },
 ];
 
+export interface TareaInsumoQuimico {
+  insumo_quimico_id: number;
+  cantidad: number;
+  insumo_quimico?: InsumoQuimico;
+}
+
 export interface Tarea {
   id?: number;
   nombre: string;
@@ -18,7 +24,7 @@ export interface Tarea {
   equipo_id?: number | null;
   equipo?: Equipo;
   elementos?: Elemento[];
-  insumos?: Insumo[];
+  insumos_quimicos?: TareaInsumoQuimico[];
 }
 
 export interface TareaCreate {
@@ -27,7 +33,7 @@ export interface TareaCreate {
   procedimiento: string;
   equipo_id?: number | null;
   elemento_ids: number[];
-  insumo_ids: number[];
+  insumos_quimicos: { insumo_quimico_id: number; cantidad: number }[];
 }
 
 export interface PaginatedTareas {

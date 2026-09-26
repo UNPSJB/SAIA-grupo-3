@@ -8,8 +8,6 @@ interface ChecklistViewProps {
   personalDni: number;
 }
 
-// Las fechas llegan como 'AAAA-MM-DD'. Se formatean a mano porque new Date()
-// las interpreta en UTC y en Argentina mostraría el día anterior.
 function formatearFecha(fecha: string): string {
   const [anio, mes, dia] = fecha.split('-');
   return `${dia}/${mes}/${anio}`;
@@ -21,9 +19,9 @@ function textoPeriodo(item: ItemChecklist): string {
 }
 
 export function ChecklistView({ personalDni }: ChecklistViewProps) {
-  const { checklist, loading, error, recargar } = useChecklist(personalDni);
+  // Extraemos finalizarTarea del hook
+  const { checklist, loading, error, recargar, finalizarTarea } = useChecklist(personalDni);
 
-  // El spinner solo se muestra en la primera carga, para que no parpadee al recargar.
   if (loading && !checklist) return <LoadingSpinner mensaje="Cargando checklist..." />;
   if (error) return <ErrorAlert mensaje={error} />;
   if (!checklist) return null;
@@ -64,11 +62,12 @@ export function ChecklistView({ personalDni }: ChecklistViewProps) {
                 <th>Frecuencia</th>
                 <th>Período</th>
                 <th>Estado</th>
+                <th className="text-center">Acción</th>
               </tr>
             </thead>
             <tbody>
               {checklist.items.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-4 text-muted">No hay tareas asignadas para hoy.</td></tr>
+                <tr><td colSpan={6} className="text-center py-4 text-muted">No hay tareas asignadas para hoy.</td></tr>
               ) : (
                 checklist.items.map((item) => (
                   <tr key={item.id}>
@@ -86,6 +85,23 @@ export function ChecklistView({ personalDni }: ChecklistViewProps) {
                         <Badge bg="success">Realizada</Badge>
                       ) : (
                         <Badge bg="warning" className="text-dark">Pendiente</Badge>
+                      )}
+                    </td>
+                    <td className="text-center">
+                      {item.estado === 'realizada' ? (
+                        <span className="text-success small fw-semibold">
+                          <i className="bi bi-check2-all fs-5"></i>
+                        </span>
+                      ) : (
+                        <Button
+                          variant="success"
+                          size="sm"
+                          className="py-1 px-2 shadow-sm"
+                          onClick={() => finalizarTarea(item.id)}
+                          disabled={loading}
+                        >
+                          <i className="bi bi-check-circle me-1"></i> Finalizar
+                        </Button>
                       )}
                     </td>
                   </tr>

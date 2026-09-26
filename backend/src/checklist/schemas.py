@@ -43,3 +43,6 @@ class Checklist(BaseModel):
     total: int
     realizadas: int
     pendientes: int
+
+class ItemFinalizarRequest(BaseModel):
+    personal_dni: int

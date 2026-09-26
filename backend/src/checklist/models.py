@@ -44,7 +44,7 @@ class ItemChecklist(ModeloBase):
         back_populates="item", order_by="MovimientoItemChecklist.fecha_hora"
     )
 
-# Bitácora de solo inserción: nunca se actualiza ni se borra una fila.
+
 class MovimientoItemChecklist(ModeloBase):
     __tablename__ = "movimientos_item_checklist"
 

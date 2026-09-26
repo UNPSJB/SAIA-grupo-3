@@ -29,3 +29,9 @@ export interface Checklist {
   realizadas: number;
   pendientes: number;
 }
+
+//--------------
+
+
+
+

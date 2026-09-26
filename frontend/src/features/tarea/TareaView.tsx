@@ -42,13 +42,20 @@ export function TareaView({ tarea, onEditar, onVolver }: TareaViewProps) {
             )}
           </div>
           <div className="col-md-6">
-            <h6 className="fw-bold border-bottom pb-2">Insumos Utilizados</h6>
-            {tarea.insumos && tarea.insumos.length > 0 ? (
+            <h6 className="fw-bold border-bottom pb-2">Insumos Químicos Utilizados</h6>
+            {tarea.insumos_quimicos && tarea.insumos_quimicos.length > 0 ? (
               <ul className="ps-3 mb-0">
-                {tarea.insumos.map(i => <li key={i.id}>{i.nombre} <Badge bg="light" text="dark" className="border ms-1">{i.unidadMedidaObj?.sufijo}</Badge></li>)}
+                {tarea.insumos_quimicos.map(i => (
+                  <li key={i.insumo_quimico_id}>
+                    {i.insumo_quimico?.nombre}{' '}
+                    <Badge bg="light" text="dark" className="border ms-1">
+                      {i.cantidad} {i.insumo_quimico?.unidadMedidaObj?.sufijo}
+                    </Badge>
+                  </li>
+                ))}
               </ul>
             ) : (
-              <span className="text-muted small">Sin insumos específicos.</span>
+              <span className="text-muted small">Sin químicos específicos.</span>
             )}
           </div>
         </div>

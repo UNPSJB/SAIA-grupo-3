@@ -1,14 +1,12 @@
 from typing import Dict, Any
 from sqlalchemy import delete, select, update, func
 from sqlalchemy.orm import Session
-from src.tarea.models import Tarea
+from src.tarea.models import Tarea, TareaInsumoQuimico
 from src.elementos.models import Elemento
-from src.insumos.models import Insumo
 from src.tarea import schemas, exceptions
 
 def crear_tarea(db: Session, tarea: schemas.TareaCreate) -> Tarea:
     elementos_db = db.scalars(select(Elemento).where(Elemento.id.in_(tarea.elemento_ids))).all() if tarea.elemento_ids else []
-    insumos_db = db.scalars(select(Insumo).where(Insumo.id.in_(tarea.insumo_ids))).all() if tarea.insumo_ids else []
 
     nueva_tarea = Tarea(
         nombre=tarea.nombre,
@@ -18,7 +16,11 @@ def crear_tarea(db: Session, tarea: schemas.TareaCreate) -> Tarea:
     )
     
     nueva_tarea.elementos.extend(elementos_db)
-    nueva_tarea.insumos.extend(insumos_db)
+    
+    for req in tarea.insumos_quimicos:
+        nueva_tarea.insumos_quimicos.append(
+            TareaInsumoQuimico(insumo_quimico_id=req.insumo_quimico_id, cantidad=req.cantidad)
+        )
     
     db.add(nueva_tarea)
     db.commit()
@@ -31,11 +33,7 @@ def listar_tareas(db: Session, page: int = 1, size: int = 10) -> Dict[str, Any]:
     items = db.scalars(select(Tarea).offset(skip).limit(size)).all()
     pages = (total + size - 1) // size if total else 0
     return {
-        "items": items,
-        "total": total,
-        "page": page,
-        "size": size,
-        "pages": pages
+        "items": items, "total": total, "page": page, "size": size, "pages": pages
     }
 
 def leer_tarea(db: Session, tarea_id: int) -> Tarea:
@@ -46,7 +44,7 @@ def leer_tarea(db: Session, tarea_id: int) -> Tarea:
 
 def modificar_tarea(db: Session, tarea_id: int, tarea: schemas.TareaUpdate) -> Tarea:
     db_tarea = leer_tarea(db, tarea_id)
-    datos_actualizar = tarea.model_dump(exclude_unset=True, exclude={'elemento_ids', 'insumo_ids'})
+    datos_actualizar = tarea.model_dump(exclude_unset=True, exclude={'elemento_ids', 'insumos_quimicos'})
     
     if datos_actualizar:
         db.execute(update(Tarea).where(Tarea.id == tarea_id).values(**datos_actualizar))
@@ -55,9 +53,15 @@ def modificar_tarea(db: Session, tarea_id: int, tarea: schemas.TareaUpdate) -> T
         elementos_db = db.scalars(select(Elemento).where(Elemento.id.in_(tarea.elemento_ids))).all()
         db_tarea.elementos = list(elementos_db)
         
-    if tarea.insumo_ids is not None:
-        insumos_db = db.scalars(select(Insumo).where(Insumo.id.in_(tarea.insumo_ids))).all()
-        db_tarea.insumos = list(insumos_db)
+    if tarea.insumos_quimicos is not None:
+        nuevos_insumos = []
+        for req in tarea.insumos_quimicos:
+            nuevos_insumos.append(TareaInsumoQuimico(
+                tarea_id=tarea_id, 
+                insumo_quimico_id=req.insumo_quimico_id, 
+                cantidad=req.cantidad
+            ))
+        db_tarea.insumos_quimicos = nuevos_insumos
 
     db.commit()
     db.refresh(db_tarea)

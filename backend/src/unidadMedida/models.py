@@ -12,6 +12,8 @@ class TipoUnidadMedida(StrEnum):
 class UnidadMedida(ModeloBase):
     __tablename__ = "unidad_medida"
 
+
+
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     tipo: Mapped[TipoUnidadMedida] = mapped_column(nullable=False)
     sufijo: Mapped[str] = mapped_column(nullable=False)

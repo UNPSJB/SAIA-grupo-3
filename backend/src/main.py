@@ -22,6 +22,8 @@ from src.elementos.router import router as elementos_router
 from src.insumosQuimicos.router import router as insumos_quimicos_router
 from fastapi.middleware.cors import CORSMiddleware
 from src.checklist.router import router as checklist_router
+from src.planRealizado.router import router as plan_realizado_router
+from src.tareaRealizada.router import router as tarea_realizada_router
 
 
 ENV = settings.ENV.upper()
@@ -62,3 +64,5 @@ app.include_router(elementos_router)
 app.include_router(plan_router)
 app.include_router(checklist_router)
 app.include_router(insumos_quimicos_router)
+app.include_router(plan_realizado_router)
+app.include_router(tarea_realizada_router)

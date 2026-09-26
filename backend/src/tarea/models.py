@@ -16,12 +16,13 @@ tarea_elemento_association = Table(
     Column("elemento_id", ForeignKey("elemento-limpieza.id", ondelete="CASCADE"), primary_key=True)
 )
 
-tarea_insumo_association = Table(
-    "tarea_insumo",
-    ModeloBase.metadata,
-    Column("tarea_id", ForeignKey("tareas.id", ondelete="CASCADE"), primary_key=True),
-    Column("insumo_id", ForeignKey("insumos.id", ondelete="CASCADE"), primary_key=True)
-)
+class TareaInsumoQuimico(ModeloBase):
+    __tablename__ = "tarea_insumos_quimicos"
+    tarea_id: Mapped[int] = mapped_column(ForeignKey("tareas.id", ondelete="CASCADE"), primary_key=True)
+    insumo_quimico_id: Mapped[int] = mapped_column(ForeignKey("insumos_quimicos.id", ondelete="CASCADE"), primary_key=True)
+    cantidad: Mapped[float] = mapped_column(nullable=False)
+
+    insumo_quimico = relationship("src.insumosQuimicos.models.InsumoQuimico")
 
 class Tarea(ModeloBase):
     __tablename__ = "tareas"
@@ -35,4 +36,5 @@ class Tarea(ModeloBase):
 
     equipo = relationship("src.equipos.models.Equipo")
     elementos = relationship("src.elementos.models.Elemento", secondary=tarea_elemento_association)
-    insumos = relationship("src.insumos.models.Insumo", secondary=tarea_insumo_association)
+    
+    insumos_quimicos: Mapped[List["TareaInsumoQuimico"]] = relationship(cascade="all, delete-orphan")

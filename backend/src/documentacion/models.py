@@ -18,7 +18,7 @@ class Documentacion(ModeloBase):
     tipo_documento: Mapped[TipoDocumento] = mapped_column() 
     personal_id: Mapped[int] = mapped_column(
         ForeignKey("personal.dni")
-    )  # Foreign key a Personal
+    )  
     personal: Mapped["src.personal.models.Personal"] = relationship(
         "src.personal.models.Personal", back_populates="documentos"
     )

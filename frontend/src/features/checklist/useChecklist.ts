@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Checklist } from './types';
-import { getChecklistDelDia } from './checklistApi';
+import { getChecklistDelDia, finalizarTareaApi } from './checklistApi'; // Actualizado
 
 export function useChecklist(personalDni: number) {
   const [checklist, setChecklist] = useState<Checklist | null>(null);
@@ -22,12 +22,20 @@ export function useChecklist(personalDni: number) {
     cargarChecklist();
   }, [cargarChecklist]);
 
-  // Si el plan se modificó (por ejemplo, en otra pestaña), al volver a esta
-  // ventana se vuelve a pedir el checklist para mostrarlo actualizado.
   useEffect(() => {
     window.addEventListener('focus', cargarChecklist);
     return () => window.removeEventListener('focus', cargarChecklist);
   }, [cargarChecklist]);
 
-  return { checklist, loading, error, recargar: cargarChecklist };
+  // Nueva función para finalizar tarea y recargar
+  const finalizarTarea = async (itemId: number) => {
+    try {
+      await finalizarTareaApi(itemId, personalDni);
+      await cargarChecklist();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al finalizar la tarea');
+    }
+  };
+
+  return { checklist, loading, error, recargar: cargarChecklist, finalizarTarea };
 }

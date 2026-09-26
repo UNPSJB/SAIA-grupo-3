@@ -7,6 +7,13 @@ from src.plan.models import Plan
 from src.checklist.models import ItemChecklist, EstadoItem
 from src.checklist.periodos import periodos_entre
 from src.checklist import schemas, exceptions
+from datetime import datetime
+from src.planRealizado.models import PlanRealizado
+from src.tareaRealizada.models import TareaRealizada
+from src.checklist.models import MovimientoItemChecklist, AccionMovimiento
+from datetime import datetime, date
+from sqlalchemy import select, func
+from fastapi import HTTPException, status
 
 CAPACIDADES_OPERAR = (TipoCapacidad.OPERAR, TipoCapacidad.OPERAR_ADMINISTRAR)
 
@@ -39,7 +46,7 @@ def _ultimo_item(db: Session, plan_id: int, tarea_id: int) -> ItemChecklist | No
 def sincronizar_plan(db: Session, plan: Plan, hoy: date) -> None:
     tareas_actuales = {tarea.id: tarea for tarea in plan.tareas}
 
-    # 1) Período en curso: ajustar los ítems pendientes a como está el plan hoy.
+
     for item in _items_abiertos(db, plan.id, hoy):
         tarea = tareas_actuales.get(item.tarea_id)
         sigue_vigente = plan.activo and tarea is not None and tarea.frecuencia == item.frecuencia
@@ -51,7 +58,7 @@ def sincronizar_plan(db: Session, plan: Plan, hoy: date) -> None:
     if not plan.activo:
         return
 
-    # 2) Generar los ítems que falten, desde el último generado (o el inicio del plan) hasta hoy.
+
     inicio_plan = plan.fecha_inicio or hoy
     for tarea in plan.tareas:
         ultimo = _ultimo_item(db, plan.id, tarea.id)
@@ -79,7 +86,7 @@ def armar_checklist(db: Session, personal_dni: int, hoy: date) -> schemas.Checkl
     personal = validar_operador(db, personal_dni)
 
     planes = db.scalars(select(Plan).where(Plan.responsable_id == personal_dni, Plan.activo == True)).all()
-    # También los planes donde tenía ítems abiertos, por si se lo quitaron o se dio de baja el plan.
+
     planes_con_items = db.scalars(
         select(Plan).join(ItemChecklist, ItemChecklist.plan_id == Plan.id).where(
             ItemChecklist.responsable_dni == personal_dni,
@@ -105,7 +112,7 @@ def armar_checklist(db: Session, personal_dni: int, hoy: date) -> schemas.Checkl
             if item.tarea_id in tareas_actuales and item.frecuencia == tareas_actuales[item.tarea_id].frecuencia
         ]
 
-    # Primero las pendientes, después por plan y por tarea.
+
     items.sort(key=lambda i: (i.estado == EstadoItem.REALIZADA, i.plan.nombre, i.tarea.nombre))
     realizadas = sum(1 for i in items if i.estado == EstadoItem.REALIZADA)
 
@@ -117,3 +124,67 @@ def armar_checklist(db: Session, personal_dni: int, hoy: date) -> schemas.Checkl
         realizadas=realizadas,
         pendientes=len(items) - realizadas,
     )
+
+
+
+def finalizar_item_checklist(db: Session, item_id: int, personal_dni: int) -> ItemChecklist:
+    item = db.get(ItemChecklist, item_id)
+    if not item:
+        raise exceptions.NotFound()
+    
+    if item.estado == EstadoItem.REALIZADA:
+        raise exceptions.BadRequest("La tarea ya se encuentra realizada.")
+
+
+    item.estado = EstadoItem.REALIZADA
+    item.realizada_por_dni = personal_dni
+    item.realizada_en = datetime.now()
+
+    db.add(MovimientoItemChecklist(
+        item_id=item.id,
+        accion=AccionMovimiento.REALIZADA,
+        personal_dni=personal_dni,
+        fecha_hora=datetime.now()
+    ))
+
+
+    hoy = date.today()
+    
+
+    plan_realizado = db.scalar(
+        select(PlanRealizado).where(
+            PlanRealizado.plan_origen_id == item.plan_id,
+            func.date(PlanRealizado.fecha_ejecucion) == hoy
+        )
+    )
+
+    if not plan_realizado:
+
+        plan_realizado = PlanRealizado(
+            plan_origen_id=item.plan.id,
+            nombre=item.plan.nombre,
+            descripcion=item.plan.descripcion,
+            responsable_id=item.plan.responsable_id,
+            sector_id=item.plan.sector_id,
+            equipo_id=item.plan.equipo_id
+        )
+        db.add(plan_realizado)
+        db.flush() 
+
+
+    tarea_realizada = TareaRealizada(
+        plan_realizado_id=plan_realizado.id,
+        tarea_origen_id=item.tarea.id,
+        nombre=item.tarea.nombre,
+        frecuencia=item.tarea.frecuencia,
+        procedimiento=item.tarea.procedimiento,
+        equipo_id=item.tarea.equipo_id,
+
+        elementos_utilizados=[{"id": e.id, "nombre": e.nombre} for e in item.tarea.elementos],
+        insumos_utilizados=[{"id": i.insumo_quimico_id, "cantidad": i.cantidad} for i in item.tarea.insumos_quimicos]
+    )
+    db.add(tarea_realizada)
+    
+    db.commit()
+    db.refresh(item)
+    return item
