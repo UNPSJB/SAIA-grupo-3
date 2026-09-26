@@ -20,6 +20,8 @@ from src.unidadMedida.router import router as unidad_medida_router
 from src.sector.router import router as sector_router
 from src.elementos.router import router as elementos_router
 from fastapi.middleware.cors import CORSMiddleware
+from src.checklist.router import router as checklist_router
+
 
 ENV = settings.ENV.upper()
 ROOT_PATH = getattr(settings, f"ROOT_PATH_{ENV}", "")
@@ -57,3 +59,4 @@ app.include_router(sector_router)
 app.include_router(tarea_router)
 app.include_router(elementos_router)
 app.include_router(plan_router)
+app.include_router(checklist_router)
