@@ -13,12 +13,19 @@ export async function getChecklistDelDia(personalDni: number): Promise<Checklist
 
 //-------
 
-// Agrega esta función al final del archivo
-export async function finalizarTareaApi(itemId: number, personalDni: number): Promise<void> {
+
+export async function finalizarTareaApi(itemId: number, personalDni: number, imagen: File | null): Promise<void> {
+  const formData = new FormData();
+  formData.append('personal_dni', personalDni.toString());
+  
+  if (imagen) {
+    formData.append('foto', imagen);
+  }
+
   const res = await fetch(`${API_BASE_URL}/checklist/items/${itemId}/finalizar`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ personal_dni: personalDni }),
+
+    body: formData,
   });
   
   if (!res.ok) {

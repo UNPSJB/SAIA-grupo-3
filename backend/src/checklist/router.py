@@ -1,5 +1,5 @@
 from datetime import date
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form, UploadFile, File
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.checklist import schemas, services
@@ -17,8 +17,15 @@ def read_checklist_del_dia(personal_dni: int, db: Session = Depends(get_db)):
 @router.post("/items/{item_id}/finalizar", response_model=schemas.ItemChecklist)
 def finalizar_tarea_checklist(
     item_id: int, 
-    payload: schemas.ItemFinalizarRequest, 
+    personal_dni: int = Form(...),
+    foto: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    """Marca un ítem como realizado y dispara la creación de su historial inmutable."""
-    return services.finalizar_item_checklist(db, item_id, payload.personal_dni)
+    """Marca un ítem como realizado y captura la foto opcional."""
+
+    foto_path = None
+    if foto:
+        foto_path = f"/uploads/{foto.filename}" 
+
+
+    return services.finalizar_item_checklist(db, item_id, personal_dni, foto_path)

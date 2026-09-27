@@ -127,7 +127,12 @@ def armar_checklist(db: Session, personal_dni: int, hoy: date) -> schemas.Checkl
 
 
 
-def finalizar_item_checklist(db: Session, item_id: int, personal_dni: int) -> ItemChecklist:
+def finalizar_item_checklist(
+    db: Session, 
+    item_id: int, 
+    personal_dni: int, 
+    foto_path: str | None = None
+) -> ItemChecklist:
     item = db.get(ItemChecklist, item_id)
     if not item:
         raise exceptions.NotFound()
@@ -135,22 +140,24 @@ def finalizar_item_checklist(db: Session, item_id: int, personal_dni: int) -> It
     if item.estado == EstadoItem.REALIZADA:
         raise exceptions.BadRequest("La tarea ya se encuentra realizada.")
 
-
     item.estado = EstadoItem.REALIZADA
     item.realizada_por_dni = personal_dni
     item.realizada_en = datetime.now()
+    
+   
+    item.foto_path = foto_path
 
     db.add(MovimientoItemChecklist(
         item_id=item.id,
         accion=AccionMovimiento.REALIZADA,
         personal_dni=personal_dni,
-        fecha_hora=datetime.now()
-    ))
+        fecha_hora=datetime.now(),
 
+        foto_path=foto_path
+    ))
 
     hoy = date.today()
     
-
     plan_realizado = db.scalar(
         select(PlanRealizado).where(
             PlanRealizado.plan_origen_id == item.plan_id,
@@ -159,7 +166,6 @@ def finalizar_item_checklist(db: Session, item_id: int, personal_dni: int) -> It
     )
 
     if not plan_realizado:
-
         plan_realizado = PlanRealizado(
             plan_origen_id=item.plan.id,
             nombre=item.plan.nombre,
@@ -171,7 +177,6 @@ def finalizar_item_checklist(db: Session, item_id: int, personal_dni: int) -> It
         db.add(plan_realizado)
         db.flush() 
 
-
     tarea_realizada = TareaRealizada(
         plan_realizado_id=plan_realizado.id,
         tarea_origen_id=item.tarea.id,
@@ -179,7 +184,6 @@ def finalizar_item_checklist(db: Session, item_id: int, personal_dni: int) -> It
         frecuencia=item.tarea.frecuencia,
         procedimiento=item.tarea.procedimiento,
         equipo_id=item.tarea.equipo_id,
-
         elementos_utilizados=[{"id": e.id, "nombre": e.nombre} for e in item.tarea.elementos],
         insumos_utilizados=[{"id": i.insumo_quimico_id, "cantidad": i.cantidad} for i in item.tarea.insumos_quimicos]
     )

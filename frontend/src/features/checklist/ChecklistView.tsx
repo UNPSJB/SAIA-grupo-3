@@ -1,4 +1,5 @@
-import { Table, Card, Button, Badge, ProgressBar } from 'react-bootstrap';
+import { useState } from 'react';
+import { Table, Card, Button, Badge, ProgressBar, Modal, Form } from 'react-bootstrap';
 import { useChecklist } from './useChecklist';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -19,14 +20,26 @@ function textoPeriodo(item: ItemChecklist): string {
 }
 
 export function ChecklistView({ personalDni }: ChecklistViewProps) {
-  // Extraemos finalizarTarea del hook
   const { checklist, loading, error, recargar, finalizarTarea } = useChecklist(personalDni);
+  const [itemAFinalizar, setItemAFinalizar] = useState<ItemChecklist | null>(null);
+  const [imagen, setImagen] = useState<File | null>(null);
 
   if (loading && !checklist) return <LoadingSpinner mensaje="Cargando checklist..." />;
   if (error) return <ErrorAlert mensaje={error} />;
   if (!checklist) return null;
 
   const porcentaje = checklist.total > 0 ? Math.round((checklist.realizadas / checklist.total) * 100) : 0;
+
+  const handleAbrirModal = (item: ItemChecklist) => {
+    setItemAFinalizar(item);
+    setImagen(null);
+  };
+
+  const handleConfirmarFinalizacion = async () => {
+    if (!itemAFinalizar) return;
+    await finalizarTarea(itemAFinalizar.id, imagen);
+    setItemAFinalizar(null);
+  };
 
   return (
     <>
@@ -73,9 +86,6 @@ export function ChecklistView({ personalDni }: ChecklistViewProps) {
                   <tr key={item.id}>
                     <td>
                       <strong>{item.tarea.nombre}</strong>
-                      <small className="d-block text-muted text-truncate" style={{ maxWidth: '300px' }} title={item.tarea.procedimiento}>
-                        {item.tarea.procedimiento}
-                      </small>
                     </td>
                     <td>{item.plan.nombre}</td>
                     <td><Badge bg="info" className="text-dark text-capitalize">{item.frecuencia}</Badge></td>
@@ -97,10 +107,10 @@ export function ChecklistView({ personalDni }: ChecklistViewProps) {
                           variant="success"
                           size="sm"
                           className="py-1 px-2 shadow-sm"
-                          onClick={() => finalizarTarea(item.id)}
+                          onClick={() => handleAbrirModal(item)}
                           disabled={loading}
                         >
-                          <i className="bi bi-check-circle me-1"></i> Finalizar
+                          <i className="bi bi-check-circle me-1"></i> Realizar
                         </Button>
                       )}
                     </td>
@@ -111,6 +121,55 @@ export function ChecklistView({ personalDni }: ChecklistViewProps) {
           </Table>
         </Card.Body>
       </Card>
+
+      {/* Modal de Detalle y Finalización de Tarea */}
+      <Modal show={!!itemAFinalizar} onHide={() => setItemAFinalizar(null)} centered size="lg">
+        <Modal.Header closeButton className="bg-light">
+          <Modal.Title className="fs-5 text-secondary">
+            <i className="bi bi-card-checklist me-2"></i> Detalle de Tarea
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="p-4">
+          {itemAFinalizar && (
+            <>
+              <h5 className="fw-bold mb-1">{itemAFinalizar.tarea.nombre}</h5>
+              <div className="d-flex gap-2 mb-3">
+                <Badge bg="primary">{itemAFinalizar.plan.nombre}</Badge>
+                <Badge bg="info" className="text-dark text-capitalize">{itemAFinalizar.frecuencia}</Badge>
+              </div>
+              
+              <div className="bg-light p-3 rounded border mb-4">
+                <h6 className="fw-bold border-bottom pb-2 mb-3">Procedimiento a seguir</h6>
+                <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
+                  {itemAFinalizar.tarea.procedimiento}
+                </p>
+              </div>
+
+              <Form.Group className="mb-2">
+                <Form.Label className="fw-semibold">
+                  <i className="bi bi-camera me-1"></i> Adjuntar evidencia fotográfica (Opcional)
+                </Form.Label>
+                <Form.Control 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const file = e.target.files?.[0] || null;
+                    setImagen(file);
+                  }}
+                />
+              </Form.Group>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="border-top-0 pt-0 px-4 pb-4">
+          <Button variant="secondary" onClick={() => setItemAFinalizar(null)} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button variant="success" onClick={handleConfirmarFinalizacion} disabled={loading}>
+            {loading ? 'Completando...' : 'Realizar Tarea'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
