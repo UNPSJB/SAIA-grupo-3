@@ -11,10 +11,12 @@ export function useAuditoria() {
   const [size] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [desde, setDesde] = useState('');
+  const [hasta, setHasta] = useState('');
 
   const cargarHistorial = useCallback(() => {
     setLoading(true);
-    getPlanesRealizados(page, size)
+    getPlanesRealizados(page, size, desde, hasta)
       .then((data) => {
         setPlanesRealizados(data.items);
         setTotalPages(data.pages);
@@ -24,17 +26,25 @@ export function useAuditoria() {
       })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [page, size]);
+  }, [page, size, desde, hasta]);
+
+  useEffect(() => { setPage(1); }, [desde, hasta]);
 
   useEffect(() => {
     cargarHistorial();
   }, [cargarHistorial]);
 
+  const limpiarFiltros = () => {
+    setDesde('');
+    setHasta('');
+  };
+
   const nextPage = () => { if (page < totalPages) setPage(p => p + 1); };
   const prevPage = () => { if (page > 1) setPage(p => p - 1); };
   const changePage = (newPage: number) => setPage(newPage);
 
-  return { 
+  return {
+    desde, setDesde, hasta, setHasta, limpiarFiltros, 
     planesRealizados, loading, error, 
     page, totalPages, total, nextPage, prevPage, changePage, 
     recargar: cargarHistorial 
