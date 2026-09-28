@@ -22,6 +22,7 @@ class TareaRealizada(ModeloBase):
     frecuencia: Mapped[FrecuenciaTarea] = mapped_column(nullable=False)
     procedimiento: Mapped[str] = mapped_column(String(2000), nullable=False)
     fecha_registro: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
+    foto_path: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     
     equipo_id: Mapped[Optional[int]] = mapped_column(ForeignKey("equipos.id"), nullable=True)
     

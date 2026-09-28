@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path 
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -22,3 +23,5 @@ class Settings(BaseSettings):
 
 # Instancia global que reutilizaremos en el proyecto
 settings = Settings()
+
+UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"

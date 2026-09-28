@@ -19,5 +19,6 @@ class TareaRealizada(TareaRealizadaBase):
     id: int
     plan_realizado_id: int
     fecha_registro: datetime
+    foto_path: Optional[str] = None 
 
     model_config = ConfigDict(from_attributes=True)

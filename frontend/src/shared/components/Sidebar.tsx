@@ -44,6 +44,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: "/elementos", label: "Elementos de Limpieza" },
     { to: "/planes", label: "Planes" },
     { to: "/checklist", label: "Checklist del Día" },
+    { to: "/auditoria", label: "Historial de Checklist" },
   ];
 
   const MenuContent = () => (

@@ -140,23 +140,22 @@ def finalizar_item_checklist(
     if item.estado == EstadoItem.REALIZADA:
         raise exceptions.BadRequest("La tarea ya se encuentra realizada.")
 
+    ahora = datetime.now()
+
     item.estado = EstadoItem.REALIZADA
     item.realizada_por_dni = personal_dni
-    item.realizada_en = datetime.now()
-    
-   
+    item.realizada_en = ahora
     item.foto_path = foto_path
 
     db.add(MovimientoItemChecklist(
         item_id=item.id,
         accion=AccionMovimiento.REALIZADA,
         personal_dni=personal_dni,
-        fecha_hora=datetime.now(),
-
+        fecha_hora=ahora,
         foto_path=foto_path
     ))
 
-    hoy = date.today()
+    hoy = ahora.date()
     
     plan_realizado = db.scalar(
         select(PlanRealizado).where(
@@ -171,6 +170,7 @@ def finalizar_item_checklist(
             nombre=item.plan.nombre,
             descripcion=item.plan.descripcion,
             responsable_id=item.plan.responsable_id,
+            fecha_ejecucion=ahora,
             sector_id=item.plan.sector_id,
             equipo_id=item.plan.equipo_id
         )
@@ -183,6 +183,8 @@ def finalizar_item_checklist(
         nombre=item.tarea.nombre,
         frecuencia=item.tarea.frecuencia,
         procedimiento=item.tarea.procedimiento,
+        fecha_registro=ahora,
+        foto_path=foto_path,
         equipo_id=item.tarea.equipo_id,
         elementos_utilizados=[{"id": e.id, "nombre": e.nombre} for e in item.tarea.elementos],
         insumos_utilizados=[{"id": i.insumo_quimico_id, "cantidad": i.cantidad} for i in item.tarea.insumos_quimicos]

@@ -9,9 +9,8 @@ interface AuditoriaListProps {
 }
 
 function formatearFecha(fechaIso: string) {
-  return new Date(fechaIso).toLocaleString('es-AR', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
+  return new Date(fechaIso).toLocaleDateString('es-AR', {
+    day: '2-digit', month: '2-digit', year: 'numeric'
   });
 }
 
@@ -30,7 +29,7 @@ export function AuditoriaList({ onViewClick }: AuditoriaListProps) {
               <th>ID Ejecución</th>
               <th>Fecha de Ejecución</th>
               <th>Plan Original</th>
-              <th>Responsable (DNI)</th>
+              <th>Responsable</th>
               <th className="text-center">Acción</th>
             </tr>
           </thead>
@@ -43,7 +42,10 @@ export function AuditoriaList({ onViewClick }: AuditoriaListProps) {
                   <td><Badge bg="secondary">#{p.id}</Badge></td>
                   <td>{formatearFecha(p.fecha_ejecucion)}</td>
                   <td><strong>{p.nombre}</strong></td>
-                  <td>{p.responsable_id}</td>
+                  <td>
+                    <div>{p.responsable.apellido}, {p.responsable.nombre}</div>
+                    <small className="text-muted">DNI {p.responsable.dni}</small>
+                  </td>
                   <td className="text-center">
                     <Button variant="primary" size="sm" className="text-white py-1 px-2 shadow-sm" onClick={() => onViewClick(p)} title="Ver Detalle de Tareas">
                       <i className="bi bi-eye-fill me-1"></i> Ver Detalles

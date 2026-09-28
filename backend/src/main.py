@@ -1,10 +1,11 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from src.database import engine
 from src.models import ModeloBase
 
 # Importamos la configuración validada por Pydantic
-from src.config import settings
+from src.config import settings, UPLOADS_DIR
 
 # Importamos configuracion de logger
 from src.logger import setup_logging
@@ -66,3 +67,6 @@ app.include_router(checklist_router)
 app.include_router(insumos_quimicos_router)
 app.include_router(plan_realizado_router)
 app.include_router(tarea_realizada_router)
+
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")

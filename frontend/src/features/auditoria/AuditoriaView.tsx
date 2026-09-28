@@ -1,5 +1,7 @@
-import { Card, Button, Badge, ListGroup } from 'react-bootstrap';
-import type { PlanRealizado } from './types';
+import { useState } from 'react';
+import { Card, Button, Badge, ListGroup, Modal } from 'react-bootstrap';
+import { API_BASE_URL } from '../../shared/libreria/api';
+import type { PlanRealizado, TareaRealizada } from './types';
 
 interface AuditoriaViewProps {
   plan: PlanRealizado;
@@ -7,6 +9,7 @@ interface AuditoriaViewProps {
 }
 
 export function AuditoriaView({ plan, onVolver }: AuditoriaViewProps) {
+  const [tareaConFoto, setTareaConFoto] = useState<TareaRealizada | null>(null);
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '900px' }}>
       <Card.Header className="bg-light text-secondary d-flex align-items-center gap-2 py-3">
@@ -20,14 +23,17 @@ export function AuditoriaView({ plan, onVolver }: AuditoriaViewProps) {
             <span className="col-sm-9 fw-bold">{plan.nombre}</span>
           </div>
           <div className="row mb-2">
-            <span className="col-sm-3 text-muted fw-semibold">Fecha Ejecución:</span>
+            <span className="col-sm-3 text-muted fw-semibold">Fecha:</span>
             <span className="col-sm-9">
-              {new Date(plan.fecha_ejecucion).toLocaleString('es-AR')}
+              {new Date(plan.fecha_ejecucion).toLocaleDateString('es-AR')}
             </span>
           </div>
           <div className="row">
-            <span className="col-sm-3 text-muted fw-semibold">Responsable (DNI):</span>
-            <span className="col-sm-9">{plan.responsable_id}</span>
+            <span className="col-sm-3 text-muted fw-semibold">Responsable:</span>
+            <span className="col-sm-9">
+              {plan.responsable.apellido}, {plan.responsable.nombre}
+              <span className="text-muted ms-2">(DNI {plan.responsable.dni})</span>
+            </span>
           </div>
         </div>
 
@@ -40,12 +46,31 @@ export function AuditoriaView({ plan, onVolver }: AuditoriaViewProps) {
               <ListGroup.Item key={tarea.id} className="py-3">
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <strong className="text-success"><i className="bi bi-check-circle-fill me-2"></i>{tarea.nombre}</strong>
-                  <Badge bg="info" className="text-dark text-capitalize">{tarea.frecuencia}</Badge>
+                  <div className="d-flex align-items-center gap-2">
+                    <small className="text-muted">
+                      <i className="bi bi-clock me-1"></i>
+                      {new Date(tarea.fecha_registro).toLocaleString('es-AR', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                      })}
+                    </small>
+                    <Badge bg="info" className="text-dark text-capitalize">{tarea.frecuencia}</Badge>
+                  </div>
                 </div>
                 <div className="text-muted small bg-light p-2 rounded border-0">
                   <strong>Procedimiento empleado:</strong>
                   <p className="mb-0 mt-1" style={{ whiteSpace: 'pre-wrap' }}>{tarea.procedimiento}</p>
                 </div>
+                {tarea.foto_path && (
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => setTareaConFoto(tarea)}
+                  >
+                    <i className="bi bi-image me-1"></i> Ver foto
+                  </Button>
+                )}
               </ListGroup.Item>
             ))}
           </ListGroup>
@@ -54,6 +79,23 @@ export function AuditoriaView({ plan, onVolver }: AuditoriaViewProps) {
       <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>Volver al Listado</Button>
       </Card.Footer>
+      <Modal show={tareaConFoto !== null} onHide={() => setTareaConFoto(null)} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title className="fs-5">
+            <i className="bi bi-image me-2"></i>{tareaConFoto?.nombre}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center">
+          {tareaConFoto?.foto_path && (
+            <img
+              src={`${API_BASE_URL}${tareaConFoto.foto_path}`}
+              alt={`Foto de ${tareaConFoto.nombre}`}
+              className="img-fluid rounded"
+              style={{ maxHeight: '70vh' }}
+            />
+          )}
+        </Modal.Body>
+      </Modal>
     </Card>
   );
 }

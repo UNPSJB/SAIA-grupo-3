@@ -1,8 +1,13 @@
+import shutil
+import uuid
 from datetime import date
-from fastapi import APIRouter, Depends, Form, UploadFile, File
+from pathlib import Path
+from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
+from src.config import UPLOADS_DIR
 from src.database import get_db
 from src.checklist import schemas, services
+
 
 router = APIRouter(prefix="/checklist", tags=["checklist"])
 
@@ -24,8 +29,15 @@ def finalizar_tarea_checklist(
     """Marca un ítem como realizado y captura la foto opcional."""
 
     foto_path = None
-    if foto:
-        foto_path = f"/uploads/{foto.filename}" 
+    if foto and foto.filename:
+        if not (foto.content_type or "").startswith("image/"):
+            raise HTTPException(status_code=400, detail="El archivo debe ser una imagen.")
 
+        extension = Path(foto.filename).suffix.lower()
+        nombre_archivo = f"{uuid.uuid4().hex}{extension}"
+        with open(UPLOADS_DIR / nombre_archivo, "wb") as destino:
+            shutil.copyfileobj(foto.file, destino)
+
+        foto_path = f"/uploads/{nombre_archivo}"
 
     return services.finalizar_item_checklist(db, item_id, personal_dni, foto_path)

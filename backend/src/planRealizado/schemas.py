@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, ConfigDict
 from src.tareaRealizada.schemas import TareaRealizadaCreate, TareaRealizada
+from src.checklist.schemas import PersonalResumen 
 
 class PlanRealizadoBase(BaseModel):
     plan_origen_id: Optional[int] = None
@@ -18,6 +19,7 @@ class PlanRealizadoCreate(PlanRealizadoBase):
 class PlanRealizado(PlanRealizadoBase):
     id: int
     fecha_ejecucion: datetime
+    responsable: PersonalResumen
     tareas_realizadas: List[TareaRealizada] = []
 
     model_config = ConfigDict(from_attributes=True)
