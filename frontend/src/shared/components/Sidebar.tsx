@@ -19,11 +19,12 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   }, [esRutaInsumos]);
 
   const menuItems = [
-    { to: "/personal", label: "Personal" },
-    { to: "/sectores", label: "Sectores" },
-    { to: "/equipos", label: "Equipos" },
+    { to: "/personal", label: "Personal", icono: "bi bi-people" },
+    { to: "/sectores", label: "Sectores", icono: "bi bi-diagram-3" },
+    { to: "/equipos", label: "Equipos", icono: "bi bi-tools" },
     {
       label: "Insumos",
+      icono: "bi bi-boxes",
       esDesplegable: true,
       subItems: [
         {
@@ -39,12 +40,12 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         },
       ],
     },
-    { to: "/unidades-medida", label: "Unidades de Medida" },
-    { to: "/tarea", label: "Tareas" },
-    { to: "/elementos", label: "Elementos de Limpieza" },
-    { to: "/planes", label: "Planes" },
-    { to: "/checklist", label: "Checklist del Día" },
-    { to: "/auditoria", label: "Historial de Checklist" },
+    { to: "/unidades-medida", label: "Unidades de Medida", icono: "bi bi-rulers" },
+    { to: "/tarea", label: "Tareas", icono: "bi bi-list-task" },
+    { to: "/elementos", label: "Elementos de Limpieza", icono: "bi bi-bucket-fill" },
+    { to: "/planes", label: "Planes", icono: "bi bi-clipboard2-check" },
+    { to: "/checklist", label: "Checklist del Día", icono: "bi bi-check2-square" },
+    { to: "/auditoria", label: "Historial de Checklist", icono: "bi bi-clock-history" },
   ];
 
   const MenuContent = () => (
@@ -66,7 +67,10 @@ export function Sidebar({ show, onClose }: SidebarProps) {
                   aria-controls="insumos-collapse"
                   aria-expanded={openInsumos}
                 >
-                  <span>{item.label}</span>
+                  <span className="d-flex align-items-center gap-3">
+                    <i className={item.icono}></i>
+                    {item.label}
+                  </span>
                   <i className={`bi bi-chevron-${openInsumos ? 'down' : 'right'} text-dark ms-auto small`}></i>
                 </div>
 
@@ -108,6 +112,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
                 }`
               }
             >
+              <i className={item.icono}></i>
               <span>{item.label}</span>
             </NavLink>
           );
