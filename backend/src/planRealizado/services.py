@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Dict, Any
 from sqlalchemy import select, func, delete
 from sqlalchemy.orm import Session
@@ -34,9 +35,14 @@ def crear_plan_realizado(db: Session, plan_create: schemas.PlanRealizadoCreate) 
     db.refresh(nuevo_plan_realizado)
     return nuevo_plan_realizado
 
-def listar_planes_realizados(db: Session, page: int = 1, size: int = 10) -> Dict[str, Any]:
+def listar_planes_realizados(db: Session, page: int = 1, size: int = 10, desde: date | None = None, hasta: date | None = None) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(PlanRealizado).order_by(PlanRealizado.fecha_ejecucion.desc())
+
+    if desde:
+        query = query.where(func.date(PlanRealizado.fecha_ejecucion) >= desde)
+    if hasta:
+        query = query.where(func.date(PlanRealizado.fecha_ejecucion) <= hasta)
     
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()

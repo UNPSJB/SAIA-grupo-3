@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, Query
+from datetime import date
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.planRealizado import schemas, services
@@ -15,9 +17,14 @@ def create_plan_realizado(plan: schemas.PlanRealizadoCreate, db: Session = Depen
 def read_planes_realizados(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
-    size: int = Query(10, ge=1, le=100)
+    size: int = Query(10, ge=1, le=100),
+    desde: Optional[date] = Query(None, description="Fecha inicial del rango (incluida)"),
+    hasta: Optional[date] = Query(None, description="Fecha final del rango (incluida)")
 ):
-    return services.listar_planes_realizados(db, page, size)
+    if desde and hasta and desde > hasta:
+        raise HTTPException(status_code=400, detail="El rango de fechas no es válido: 'desde' es posterior a 'hasta'.")
+
+    return services.listar_planes_realizados(db, page, size, desde, hasta)
 
 @router.get("/{plan_realizado_id}", response_model=schemas.PlanRealizado)
 def read_plan_realizado(plan_realizado_id: int, db: Session = Depends(get_db)):
