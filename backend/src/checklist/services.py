@@ -14,6 +14,9 @@ from src.checklist.models import MovimientoItemChecklist, AccionMovimiento
 from datetime import datetime, date
 from sqlalchemy import select, func
 from fastapi import HTTPException, status
+from src.consumoQuimico.models import ConsumoQuimico #agruegue esta linea
+from src.insumosQuimicos.models import InsumoQuimico #agruegue esta linea
+from src.exceptions import BadRequest
 
 CAPACIDADES_OPERAR = (TipoCapacidad.OPERAR, TipoCapacidad.OPERAR_ADMINISTRAR)
 
@@ -190,7 +193,45 @@ def finalizar_item_checklist(
         insumos_utilizados=[{"id": i.insumo_quimico_id, "cantidad": i.cantidad} for i in item.tarea.insumos_quimicos]
     )
     db.add(tarea_realizada)
+    #HICE ESTE CAMBIO PARA EL TEMA DE INSUMO QUIMICO
     
+    #DESCUENTO AUTOMÁTICO DE INSUMOS ---
+    errores_stock = []
+    insumos_a_descontar = []
+
+    # Validacion (Revisamos todos los stocks antes de descontar)
+    for req in item.tarea.insumos_quimicos:
+        insumo_db = db.get(InsumoQuimico, req.insumo_quimico_id)
+        if insumo_db:
+            if insumo_db.cantidad < req.cantidad:
+                # Si falta, lo anotamos en la lista de errores
+                errores_stock.append(
+                    f"'{insumo_db.nombre}' (necesitas {req.cantidad}, tenés {insumo_db.cantidad})"
+                )
+            else:
+                # Si alcanza, se guarda para descontarlo despues
+                insumos_a_descontar.append((insumo_db, req.cantidad))
+
+    # Si la lista de errores tiene algo, abortamos y mostramos todos juntos
+    if errores_stock:
+        mensaje_completo = "Stock insuficiente de insumos: " + " / ".join(errores_stock)
+        raise BadRequest(DETAIL=mensaje_completo)
+
+    for insumo_db, cantidad_usada in insumos_a_descontar:
+        # Descontamos stock
+        insumo_db.cantidad -= cantidad_usada
+        
+        # Registramos el historial de consumo
+        nuevo_consumo = ConsumoQuimico(
+            insumo_quimico_id=insumo_db.id,
+            cantidad_utilizada=cantidad_usada,
+            fecha=hoy, 
+            tarea_limpieza=item.tarea.nombre,
+            operario_id=personal_dni,
+            activo=True
+        )
+        db.add(nuevo_consumo)
+
     db.commit()
     db.refresh(item)
     return item

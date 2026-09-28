@@ -13,6 +13,7 @@ import { SectorPage } from '../features/sectores/SectorPage';
 import { ElementoPage } from '../features/elementos/ElementoPage';
 import { ChecklistPage } from '../features/checklist';
 import { AuditoriaPage } from '../features/auditoria';
+import { ReporteConsumosPage } from '../features/consumoQuimicos/ConsumoQuimicoPage';
 
 export function AppRouter() {
   return (
@@ -25,6 +26,7 @@ export function AppRouter() {
         <Route path="insumos-quimicos" element={<InsumoQuimicoPage />} />
         <Route path="unidades-medida" element={<UnidadMedidaPage />} />
         <Route path="tarea" element={<TareaPage />} />
+        <Route path="reportes/consumos" element={<ReporteConsumosPage />} />
         <Route path="sectores" element={<SectorPage/>} />
         <Route path="elementos" element={<ElementoPage />} />
         <Route path="planes" element={<PlanPage/>} />

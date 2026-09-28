@@ -22,8 +22,8 @@ export function AuditoriaPage() {
 
   return (
     <Container className="py-2">
-      <h2 className="mb-4 border-bottom pb-2 text-secondary">
-        <i className="bi bi-shield-check me-2"></i>Auditoría y Registros Históricos
+     <h2 className="mb-4 border-bottom pb-2 text-secondary">
+        Auditoría y Registros Históricos
       </h2>
       
       {modo === 'listado' && <AuditoriaList onViewClick={handleView} />}
