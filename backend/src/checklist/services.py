@@ -17,6 +17,7 @@ from fastapi import HTTPException, status
 from src.consumoQuimico.models import ConsumoQuimico #agruegue esta linea
 from src.insumosQuimicos.models import InsumoQuimico #agruegue esta linea
 from src.exceptions import BadRequest
+from fastapi import HTTPException
 
 CAPACIDADES_OPERAR = (TipoCapacidad.OPERAR, TipoCapacidad.OPERAR_ADMINISTRAR)
 
@@ -215,7 +216,10 @@ def finalizar_item_checklist(
     # Si la lista de errores tiene algo, abortamos y mostramos todos juntos
     if errores_stock:
         mensaje_completo = "Stock insuficiente de insumos: " + " / ".join(errores_stock)
-        raise BadRequest(DETAIL=mensaje_completo)
+        raise HTTPException(
+            status_code=400,
+            detail=mensaje_completo
+        )
 
     for insumo_db, cantidad_usada in insumos_a_descontar:
         # Descontamos stock
