@@ -46,6 +46,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: "/planes", label: "Planes", icono: "bi bi-clipboard2-check" },
     { to: "/checklist", label: "Checklist del Día", icono: "bi bi-check2-square" },
     { to: "/auditoria", label: "Historial de Checklist", icono: "bi bi-clock-history" },
+    { to: "/reportes/consumos", label: "Consumo de insumos químicos", icono: "bi bi-bar-chart-line" },
   ];
 
   const MenuContent = () => (
@@ -107,12 +108,13 @@ export function Sidebar({ show, onClose }: SidebarProps) {
               to={item.to!}
               onClick={onClose}
               className={({ isActive }) =>
-                `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium ${
+                `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium text-wrap overflow-hidden ${
                   isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
                 }`
               }
+              style={{ wordBreak: 'break-word', lineHeight: '1.2' }}
             >
-              <i className={item.icono}></i>
+              <i className={`${item.icono} flex-shrink-0 fs-5`}></i> 
               <span>{item.label}</span>
             </NavLink>
           );
@@ -130,7 +132,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         <MenuContent />
       </aside>
 
-      <Offcanvas show={show} onHide={onClose} placement="start" responsive="md">
+      <Offcanvas show={show} onHide={onClose} placement="start" className="d-md-none">
         <Offcanvas.Header closeButton>
           <Offcanvas.Title className="fw-bold">Menú</Offcanvas.Title>
         </Offcanvas.Header>

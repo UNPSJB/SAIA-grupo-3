@@ -30,6 +30,6 @@ export async function finalizarTareaApi(itemId: number, personalDni: number, ima
   
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(mensajeDeError(errorData.detail, 'No se pudo finalizar la tarea.'));
+    throw new Error(errorData.detail || 'No se pudo finalizar la tarea.');
   }
 }
