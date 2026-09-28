@@ -2,6 +2,9 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing import List, Optional
 from datetime import date
 from src.tarea.schemas import Tarea
+from src.sector.schemas import Sector
+from src.equipos.schemas import Equipo
+from src.checklist.schemas import PersonalResumen
 
 class PlanBase(BaseModel):
     nombre: str = Field(..., max_length=100)
@@ -34,5 +37,8 @@ class Plan(PlanBase):
     fecha_inicio: Optional[date] = None
     fecha_fin: Optional[date] = None
     tareas: List[Tarea] = []
+    responsable: Optional[PersonalResumen] = None
+    sector: Optional[Sector] = None
+    equipo: Optional[Equipo] = None
     
     model_config = ConfigDict(from_attributes=True)
