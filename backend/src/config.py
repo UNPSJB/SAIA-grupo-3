@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     ROOT_PATH_DEVELOPMENT: str = ""
     ROOT_PATH_PRODUCTION: str = ""
     LOG_LEVEL: str = "INFO"
+    SCHEDULER_ACTIVO: bool = True
 
     # Configuración para que lea automáticamente el archivo .env
     model_config = SettingsConfigDict(

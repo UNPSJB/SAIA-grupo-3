@@ -26,6 +26,8 @@ from src.checklist.router import router as checklist_router
 from src.planRealizado.router import router as plan_realizado_router
 from src.tareaRealizada.router import router as tarea_realizada_router
 from src.consumoQuimico.router import router as consumo_quimico_router
+from src.notificaciones.router import router as notificaciones_router
+from src.notificaciones.scheduler import iniciar_scheduler, detener_scheduler
 
 ENV = settings.ENV.upper()
 ROOT_PATH = getattr(settings, f"ROOT_PATH_{ENV}", "")
@@ -36,6 +38,8 @@ setup_logging()
 async def db_creation_lifespan(app: FastAPI):
     ModeloBase.metadata.create_all(bind=engine)
     yield
+    if settings.SCHEDULER_ACTIVO:
+        detener_scheduler()
 
 
 app = FastAPI(root_path=ROOT_PATH, lifespan=db_creation_lifespan)
@@ -68,6 +72,7 @@ app.include_router(insumos_quimicos_router)
 app.include_router(plan_realizado_router)
 app.include_router(tarea_realizada_router)
 app.include_router(consumo_quimico_router)
+app.include_router(notificaciones_router)
 
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
