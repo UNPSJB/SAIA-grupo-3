@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.documentacion import schemas, services
@@ -18,9 +18,14 @@ def create_documento(documento: schemas.DocumentoCreate, db: Session = Depends(g
 
 
 @router.get("/", response_model=list[schemas.Documento])
-def read_documentos(db: Session = Depends(get_db)):
+def read_documentos(
+    db: Session = Depends(get_db),
+    personal_id: int | None = Query(
+        None, ge=1, description="Filtrar documentos por personal"
+    ),
+):
     logger.info("Listando documentos desde router") # <- este mensaje se verá por la terminal
-    return services.listar_documentos(db)
+    return services.listar_documentos(db, personal_id)
 
 
 @router.get("/{documento_id}", response_model=schemas.Documento)

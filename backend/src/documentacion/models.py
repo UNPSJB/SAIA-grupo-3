@@ -1,4 +1,5 @@
-from sqlalchemy import ForeignKey
+from datetime import date
+from sqlalchemy import Date, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import auto, StrEnum
 from src.models import ModeloBase
@@ -8,6 +9,7 @@ class TipoDocumento(StrEnum):
     LIBRETA_SANITARIA = auto()
     PSICOFISICO = auto()
     CERTIFICADO_SALUD = auto()
+    CAPACITACION = auto()
 
 
 class Documentacion(ModeloBase):
@@ -16,6 +18,7 @@ class Documentacion(ModeloBase):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     nombre: Mapped[str] = mapped_column(index=True)
     tipo_documento: Mapped[TipoDocumento] = mapped_column() 
+    fecha_vencimiento: Mapped[date | None] = mapped_column(Date, nullable=True)
     personal_id: Mapped[int] = mapped_column(
         ForeignKey("personal.dni")
     )  
