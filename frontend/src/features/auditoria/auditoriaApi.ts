@@ -1,4 +1,4 @@
-import { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api';
+import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
 import type { PaginatedPlanesRealizados, PlanRealizado } from './types';
 
 export async function getPlanesRealizados(page = 1, size = 10, desde = '', hasta = ''): Promise<PaginatedPlanesRealizados> {
@@ -6,7 +6,7 @@ export async function getPlanesRealizados(page = 1, size = 10, desde = '', hasta
   if (desde) url += `&desde=${desde}`;
   if (hasta) url += `&hasta=${hasta}`;
 
-  const res = await fetch(url);
+  const res = await fetchWithAuth(url);
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(mensajeDeError(errorData.detail, 'Error al obtener el historial de planes realizados.'));
@@ -15,7 +15,7 @@ export async function getPlanesRealizados(page = 1, size = 10, desde = '', hasta
 }
 
 export async function getPlanRealizadoById(id: number): Promise<PlanRealizado> {
-  const res = await fetch(`${API_BASE_URL}/planes-realizados/${id}`);
+  const res = await fetchWithAuth(`${API_BASE_URL}/planes-realizados/${id}`);
   if (!res.ok) throw new Error('Error al obtener el detalle del plan.');
   return res.json();
 }

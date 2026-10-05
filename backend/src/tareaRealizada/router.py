@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 from src.database import get_db
 from src.tareaRealizada import schemas, services
 from src.pagination import PaginatedResponse
+from src.auth.router_base import PermissionedRouter
 
-router = APIRouter(prefix="/tareas-realizadas", tags=["tareas_realizadas"])
+router = PermissionedRouter(prefix="/tareas-realizadas", tags=["tareas-realizadas"])
 
 @router.get("/", response_model=PaginatedResponse[schemas.TareaRealizada])
 def read_tareas_realizadas(

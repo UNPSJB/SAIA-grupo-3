@@ -1,5 +1,6 @@
 import { Table, Card, Button, Badge, Pagination, Form } from 'react-bootstrap';
 import { useElemento } from './useElemento';
+import { useAuth } from '../../shared/hooks/useAuth'; 
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { Elemento } from './types';
@@ -17,6 +18,11 @@ export function ElementoList({
   onEditarClick,
   onEliminarClick,
 }: ElementoListProps) {
+  
+  // 1. Extraemos el usuario actual
+  const { currentUser } = useAuth();
+
+  // 2. Extraemos las herramientas de los elementos
   const {
     elementos, loading, error, page, totalPages, total,
     nextPage, prevPage, changePage, mostrarInactivos,
@@ -68,15 +74,19 @@ export function ElementoList({
             onChange={(e) => setMostrarInactivos(e.target.checked)}
             className="text-secondary mb-0"
           />
-          <Button
-            variant="success"
-            size="sm"
-            onClick={onNuevoClick}
-            className="d-flex align-items-center gap-1 shadow-sm"
-          >
-            <i className="bi bi-plus-lg"></i>
-            <span>Nuevo Elemento</span>
-          </Button>
+          
+          {/* Ocultamos el botón "Nuevo" si no es administrador */}
+          {currentUser?.administrar && (
+            <Button
+              variant="success"
+              size="sm"
+              onClick={onNuevoClick}
+              className="d-flex align-items-center gap-1 shadow-sm"
+            >
+              <i className="bi bi-plus-lg"></i>
+              <span>Nuevo Elemento</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -134,7 +144,7 @@ export function ElementoList({
                         <div className="d-flex justify-content-center gap-2">
                           {e.activo ? (
                             <>
-                              {/* NUEVO BOTÓN DE RECAMBIO */}
+                              {/* Botones PÚBLICOS (Ver y Recambio) */}
                               <Button
                                 variant="info"
                                 size="sm"
@@ -161,43 +171,54 @@ export function ElementoList({
                               >
                                 <i className="bi bi-eye-fill"></i>
                               </Button>
-                              <Button
-                                variant="warning"
-                                size="sm"
-                                className="text-white py-1 px-2 shadow-sm"
-                                title="Modificar"
-                                onClick={() => onEditarClick(e)}
-                              >
-                                <i className="bi bi-pencil-fill"></i>
-                              </Button>
-                              <Button
-                                variant="danger"
-                                size="sm"
-                                className="py-1 px-2 shadow-sm"
-                                title="Eliminar"
-                                onClick={() => onEliminarClick(e)}
-                              >
-                                <i className="bi bi-trash3-fill"></i>
-                              </Button>
+
+                              {/* Botones RESTRINGIDOS (Editar y Eliminar, solo Admins) */}
+                              {currentUser?.administrar && (
+                                <>
+                                  <Button
+                                    variant="warning"
+                                    size="sm"
+                                    className="text-white py-1 px-2 shadow-sm"
+                                    title="Modificar"
+                                    onClick={() => onEditarClick(e)}
+                                  >
+                                    <i className="bi bi-pencil-fill"></i>
+                                  </Button>
+                                  <Button
+                                    variant="danger"
+                                    size="sm"
+                                    className="py-1 px-2 shadow-sm"
+                                    title="Eliminar"
+                                    onClick={() => onEliminarClick(e)}
+                                  >
+                                    <i className="bi bi-trash3-fill"></i>
+                                  </Button>
+                                </>
+                              )}
                             </>
                           ) : (
-                            <Button
-                              variant="success"
-                              size="sm"
-                              className="py-1 px-2 shadow-sm"
-                              title="Reactivar elemento"
-                              onClick={async () => {
-                                if (confirm(`¿Reactivar el elemento ${e.nombre}?`)) {
-                                  try {
-                                    await guardar({ ...e, activo: true }, e.id);
-                                  } catch (err: unknown) {
-                                    alert(err instanceof Error ? err.message : 'Error al reactivar.');
-                                  }
-                                }
-                              }}
-                            >
-                              <i className="bi bi-arrow-counterclockwise me-1"></i> Reactivar
-                            </Button>
+                            // Si está inactivo, solo el admin puede reactivarlo
+                            <>
+                              {currentUser?.administrar && (
+                                <Button
+                                  variant="success"
+                                  size="sm"
+                                  className="py-1 px-2 shadow-sm"
+                                  title="Reactivar elemento"
+                                  onClick={async () => {
+                                    if (confirm(`¿Reactivar el elemento ${e.nombre}?`)) {
+                                      try {
+                                        await guardar({ ...e, activo: true }, e.id);
+                                      } catch (err: unknown) {
+                                        alert(err instanceof Error ? err.message : 'Error al reactivar.');
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <i className="bi bi-arrow-counterclockwise me-1"></i> Reactivar
+                                </Button>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>

@@ -1,4 +1,4 @@
-import { Table, Card, Button, Badge, Pagination, Form, InputGroup } from 'react-bootstrap';
+import { Table, Card, Button, Badge, Pagination, Form } from 'react-bootstrap';
 import { useSector } from './useSector';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -21,7 +21,7 @@ export function SectorList({
     sectores, loading, error, page, totalPages, total,
     nextPage, prevPage, changePage, mostrarInactivos,
     setMostrarInactivos, guardar, ordenarPor, orden,
-    cambiarOrden, busqueda, setBusqueda
+    cambiarOrden, busqueda
   } = useSector();
 
   const renderIconoOrden = (columna: string) => {

@@ -1,3 +1,4 @@
+import logging
 from datetime import date
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -5,8 +6,11 @@ from sqlalchemy.orm import Session
 from src.database import get_db
 from src.planRealizado import schemas, services
 from src.pagination import PaginatedResponse
+from src.auth.router_base import PermissionedRouter
 
-router = APIRouter(prefix="/planes-realizados", tags=["planes_realizados"])
+
+logger = logging.getLogger(__name__)
+router = PermissionedRouter(prefix="/planes-realizados", tags=["planes-realizados"])
 
 @router.post("/", response_model=schemas.PlanRealizado)
 def create_plan_realizado(plan: schemas.PlanRealizadoCreate, db: Session = Depends(get_db)):

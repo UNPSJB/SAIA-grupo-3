@@ -3,11 +3,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.insumosQuimicos import schemas, services
+from src.auth.router_base import PermissionedRouter
 from src.pagination import PaginatedResponse
 
-logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/insumos-quimicos", tags=["insumos_quimicos"])
+logger = logging.getLogger(__name__)
+router = PermissionedRouter(prefix="/insumos-quimicos", tags=["insumos-quimicos"])
 
 
 @router.post("/", response_model=schemas.InsumoQuimico)

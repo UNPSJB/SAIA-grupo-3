@@ -4,12 +4,11 @@ from sqlalchemy.orm import Session
 from src.database import get_db
 from src.equipos import schemas, services
 from src.pagination import PaginatedResponse
+from src.auth.router_base import PermissionedRouter
 
-# Creamos un logger para este módulo específico
+
 logger = logging.getLogger(__name__)
-
-# Definimos el router con su prefijo y tag para la documentación Swagger
-router = APIRouter(prefix="/equipos", tags=["equipos"])
+router = PermissionedRouter(prefix="/equipos", tags=["equipos"])
 
 
 @router.post("/", response_model=schemas.Equipo)

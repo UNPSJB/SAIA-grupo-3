@@ -3,7 +3,6 @@ import { usePersonal } from './usePersonal';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { Personal } from './types';
-import { TIPOS_CAPACIDAD } from './types';
 
 interface PersonalListProps {
   onNuevoClick: () => void;
@@ -12,33 +11,56 @@ interface PersonalListProps {
   onEliminarClick: (personal: Personal) => void;
 }
 
-export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onEliminarClick }: PersonalListProps) {
-  const { personal, loading, error,
-    page, totalPages, total, nextPage, prevPage, changePage,
-    mostrarInactivos, setMostrarInactivos, guardar
-   } = usePersonal();
+export function PersonalList({
+  onNuevoClick,
+  onViewClick,
+  onEditarClick,
+  onEliminarClick,
+}: PersonalListProps) {
+  const {
+    personal,
+    loading,
+    error,
+    page,
+    totalPages,
+    total,
+    nextPage,
+    prevPage,
+    changePage,
+    mostrarInactivos,
+    setMostrarInactivos,
+    guardar,
+  } = usePersonal();
 
-  const getLabelCapacidad = (valor: Personal['tipo_capacidad']) => {
-    const encontrado = TIPOS_CAPACIDAD.find((t) => t.value === valor);
-    return encontrado ? encontrado.label : valor;
-  };
-
-  const getBadgeVariant = (valor: Personal['tipo_capacidad']) => {
-    switch (valor) {
-      case 'administrar': return 'primary';
-      case 'operar': return 'info';
-      case 'operar_administrar': return 'success';
-      default: return 'secondary';
+  const getCapacidad = (p: Personal) => {
+    if (p.operar && p.administrar) {
+      return { label: 'Operar y administrar', variant: 'success' };
     }
+
+    if (p.operar) {
+      return { label: 'Operar', variant: 'info' };
+    }
+
+    if (p.administrar) {
+      return { label: 'Administrar', variant: 'primary' };
+    }
+
+    return { label: 'Sin permisos', variant: 'secondary' };
   };
 
-  if (loading) return <LoadingSpinner mensaje="Cargando personal..." />;
-  if (error) return <ErrorAlert mensaje={error} />;
+  if (loading) {
+    return <LoadingSpinner mensaje="Cargando personal..." />;
+  }
+
+  if (error) {
+    return <ErrorAlert mensaje={error} />;
+  }
 
   return (
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4 className="mb-0 text-secondary">Nómina del Personal</h4>
+
         <div className="d-flex align-items-center gap-3">
           <Form.Check
             type="switch"
@@ -48,7 +70,13 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
             onChange={(e) => setMostrarInactivos(e.target.checked)}
             className="text-secondary mb-0"
           />
-          <Button variant="success" size="sm" onClick={onNuevoClick} className="d-flex align-items-center gap-1 shadow-sm">
+
+          <Button
+            variant="success"
+            size="sm"
+            onClick={onNuevoClick}
+            className="d-flex align-items-center gap-1 shadow-sm"
+          >
             <i className="bi bi-plus-lg"></i>
             <span>Nuevo Empleado</span>
           </Button>
@@ -64,11 +92,14 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
                 <th>DNI</th>
                 <th>Apellido y Nombre</th>
                 <th>Email</th>
-                <th>Capacidad</th>
+                <th>Permisos</th>
                 <th>Estado</th>
-                <th className="text-center" style={{ width: '120px' }}>Acciones</th>
+                <th className="text-center" style={{ width: '120px' }}>
+                  Acciones
+                </th>
               </tr>
             </thead>
+
             <tbody>
               {personal.length === 0 ? (
                 <tr>
@@ -77,61 +108,103 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
                   </td>
                 </tr>
               ) : (
-                personal.map((p) => (
-                  <tr key={p.dni} className={p.activo === false ? 'opacity-50' : ''}>
-                    <td><Badge bg="secondary">#{p.nroLegajo}</Badge></td>
-                    <td>{p.dni}</td>
-                    <td><strong>{p.apellido}, {p.nombre}</strong></td>
-                    <td>{p.email}</td>
-                    <td>
-                      <Badge bg={getBadgeVariant(p.tipo_capacidad)}>
-                        {getLabelCapacidad(p.tipo_capacidad)}
-                      </Badge>
-                    </td>
-                    <td>
-                      {p.activo === false ? (
-                        <Badge bg="danger">Inactivo</Badge>
-                      ) : (
-                        <Badge bg="success">Activo</Badge>
-                      )}
-                    </td>
-                    <td className="text-center">
-                      <div className="d-flex justify-content-center gap-2">
+                personal.map((p) => {
+                  const capacidad = getCapacidad(p);
+
+                  return (
+                    <tr
+                      key={p.id}
+                      className={p.activo === false ? 'opacity-50' : ''}
+                    >
+                      <td>
+                        <Badge bg="secondary">#{p.nroLegajo}</Badge>
+                      </td>
+                      <td>{p.dni}</td>
+                      <td>
+                        <strong>
+                          {p.apellido}, {p.nombre}
+                        </strong>
+                      </td>
+                      <td>{p.email}</td>
+                      <td>
+                        <Badge bg={capacidad.variant}>
+                          {capacidad.label}
+                        </Badge>
+                      </td>
+                      <td>
                         {p.activo === false ? (
-                          <Button
-                            variant="success"
-                            size="sm"
-                            className="py-1 px-2 shadow-sm"
-                            title="Reactivar Empleado"
-                            onClick={async () => {
-                              if (confirm(`¿Reactivar a ${p.apellido}, ${p.nombre}?`)) {
-                                try {
-                                  await guardar({ ...p, activo: true }, p.dni);
-                                } catch (err: unknown) {
-                                  alert(err instanceof Error ? err.message : 'Error al reactivar el personal.');
-                                }
-                              }
-                            }}
-                          >
-                            <i className="bi bi-arrow-counterclockwise me-1"></i> Reactivar
-                          </Button>
+                          <Badge bg="danger">Inactivo</Badge>
                         ) : (
-                          <>
-                            <Button variant="primary" size="sm" className="text-white py-1 px-2 shadow-sm" title="Ver" onClick={() => onViewClick(p)}>
-                              <i className="bi bi-eye-fill"></i>
-                            </Button>
-                            <Button variant="warning" size="sm" className="text-white py-1 px-2 shadow-sm" title="Modificar" onClick={() => onEditarClick(p)}>
-                              <i className="bi bi-pencil-fill"></i>
-                            </Button>
-                            <Button variant="danger" size="sm" className="py-1 px-2 shadow-sm" title="Eliminar" onClick={() => onEliminarClick(p)}>
-                              <i className="bi bi-trash3-fill"></i>
-                            </Button>
-                          </>
+                          <Badge bg="success">Activo</Badge>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="text-center">
+                        <div className="d-flex justify-content-center gap-2">
+                          {p.activo === false ? (
+                            <Button
+                              variant="success"
+                              size="sm"
+                              className="py-1 px-2 shadow-sm"
+                              title="Reactivar Empleado"
+                              onClick={async () => {
+                                if (
+                                  confirm(
+                                    `¿Reactivar a ${p.apellido}, ${p.nombre}?`
+                                  )
+                                ) {
+                                  try {
+                                    await guardar({ ...p, activo: true }, p.id);
+                                  } catch (err: unknown) {
+                                    alert(
+                                      err instanceof Error
+                                        ? err.message
+                                        : 'Error al reactivar el personal.'
+                                    );
+                                  }
+                                }
+                              }}
+                            >
+                              <i className="bi bi-arrow-counterclockwise me-1"></i>
+                              Reactivar
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                className="text-white py-1 px-2 shadow-sm"
+                                title="Ver"
+                                onClick={() => onViewClick(p)}
+                              >
+                                <i className="bi bi-eye-fill"></i>
+                              </Button>
+
+                              <Button
+                                variant="warning"
+                                size="sm"
+                                className="text-white py-1 px-2 shadow-sm"
+                                title="Modificar"
+                                onClick={() => onEditarClick(p)}
+                              >
+                                <i className="bi bi-pencil-fill"></i>
+                              </Button>
+
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                className="py-1 px-2 shadow-sm"
+                                title="Eliminar"
+                                onClick={() => onEliminarClick(p)}
+                              >
+                                <i className="bi bi-trash3-fill"></i>
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </Table>
@@ -140,16 +213,29 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
         {totalPages > 0 && (
           <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
             <span className="text-muted small mb-2 mb-md-0">
-              Mostrando página {page} de {totalPages} ({total} registros en total)
+              Mostrando página {page} de {totalPages} ({total} registros en
+              total)
             </span>
+
             <Pagination className="mb-0" size="sm">
               <Pagination.Prev onClick={prevPage} disabled={page === 1} />
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-                <Pagination.Item key={num} active={num === page} onClick={() => changePage(num)}>
-                  {num}
-                </Pagination.Item>
-              ))}
-              <Pagination.Next onClick={nextPage} disabled={page === totalPages} />
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (num) => (
+                  <Pagination.Item
+                    key={num}
+                    active={num === page}
+                    onClick={() => changePage(num)}
+                  >
+                    {num}
+                  </Pagination.Item>
+                )
+              )}
+
+              <Pagination.Next
+                onClick={nextPage}
+                disabled={page === totalPages}
+              />
             </Pagination>
           </Card.Footer>
         )}

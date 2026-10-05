@@ -7,8 +7,13 @@ class DetailedHTTPException(HTTPException):
     STATUS_CODE = status.HTTP_500_INTERNAL_SERVER_ERROR
     DETAIL = "Error del servidor"
 
-    def __init__(self, **kwargs: Dict[str, Any]) -> None:
-        super().__init__(status_code=self.STATUS_CODE, detail=self.DETAIL, **kwargs)
+    def __init__(self, detail: Any = None, **kwargs: Any) -> None:
+        mensaje = self.DETAIL if detail is None else detail
+        super().__init__(
+            status_code=self.STATUS_CODE,
+            detail=mensaje,
+            **kwargs,
+        )
 
 
 class PermissionDenied(DetailedHTTPException):

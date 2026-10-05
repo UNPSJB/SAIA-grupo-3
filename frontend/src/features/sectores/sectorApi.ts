@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
 import type { Sector } from './types';
 
 export interface PaginatedSectores {
@@ -23,13 +23,13 @@ export async function getSectores(
     url += `&buscar=${encodeURIComponent(buscar)}`;
   }
   
-  const res = await fetch(url);
+  const res = await fetchWithAuth(url);
   if (!res.ok) throw new Error('No se pudo listar los sectores.');
   return res.json();
 }
 
 export async function createSector(data: Sector): Promise<Sector> {
-  const res = await fetch(`${API_BASE_URL}/sectores`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/sectores`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -42,7 +42,7 @@ export async function createSector(data: Sector): Promise<Sector> {
 }
 
 export async function updateSector(id: number, data: Sector): Promise<Sector> {
-  const res = await fetch(`${API_BASE_URL}/sectores/${id}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/sectores/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -55,7 +55,7 @@ export async function updateSector(id: number, data: Sector): Promise<Sector> {
 }
 
 export async function deleteSector(id: number): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/sectores/${id}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/sectores/${id}`, {
     method: 'DELETE',
   });
   if (!res.ok) {
@@ -65,7 +65,7 @@ export async function deleteSector(id: number): Promise<void> {
 }
 
 export async function getSectorById(id: number): Promise<Sector> {
-  const res = await fetch(`${API_BASE_URL}/sectores/${id}`);
+  const res = await fetchWithAuth(`${API_BASE_URL}/sectores/${id}`);
   if (!res.ok) throw new Error('Error al obtener el detalle del sector');
   return res.json();
 }

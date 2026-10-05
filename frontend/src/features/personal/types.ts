@@ -1,17 +1,32 @@
-export type TipoCapacidad = 'administrar' | 'operar' | 'operar_administrar';
-
-export const TIPOS_CAPACIDAD: { value: TipoCapacidad; label: string }[] = [
-  { value: 'administrar', label: 'Administrar' },
-  { value: 'operar', label: 'Operar' },
-  { value: 'operar_administrar', label: 'Operar y Administrar' },
-];
-
 export interface Personal {
-  dni: number;
-  nroLegajo: number;
+  id: number;
   nombre: string;
   apellido: string;
-  tipo_capacidad: TipoCapacidad;
+  dni: string;
+  nroLegajo: string;
   email: string;
-  activo?: boolean;
+  username: string;
+  operar: boolean;
+  administrar: boolean;
+  activo: boolean;
+  role_name: string;
+  role_id: number;
+  capacidades: string[];
 }
+
+export interface PersonalCreateInput {
+  nombre: string;
+  apellido: string;
+  dni: string;
+  nroLegajo: string;
+  email: string;
+  username: string;
+  password: string;
+  operar: boolean;
+  administrar: boolean;
+}
+
+export type PersonalUpdateInput = Partial<PersonalCreateInput> & {
+  password?: string;
+  activo?: boolean;
+};

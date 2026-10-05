@@ -13,7 +13,7 @@ class ConsumoQuimico(ModeloBase):
     cantidad_utilizada: Mapped[float] = mapped_column(nullable=False)
     fecha: Mapped[date] = mapped_column(default=date.today, nullable=False)
     tarea_limpieza: Mapped[str] = mapped_column(String(200), nullable=False) 
-    operario_id: Mapped[int] = mapped_column(ForeignKey("personal.dni"), nullable=True)
+    operario_id: Mapped[int] = mapped_column(ForeignKey("personal.id"), nullable=True)
     activo: Mapped[bool] = mapped_column(default=True, nullable=False)
     insumo: Mapped["InsumoQuimico"] = relationship("InsumoQuimico")
     operario: Mapped["Personal"] = relationship("Personal")

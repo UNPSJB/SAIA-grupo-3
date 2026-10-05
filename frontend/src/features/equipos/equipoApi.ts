@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
 import type { Equipo } from './types';
 
 export interface PaginatedEquipos {
@@ -16,13 +16,13 @@ export async function getEquipos(
   ordenarPor = 'id',
   orden = 'asc'
 ): Promise<PaginatedEquipos> {
-  const res = await fetch(`${API_BASE_URL}/equipos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`);
+  const res = await fetchWithAuth(`${API_BASE_URL}/equipos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`);
   if (!res.ok) throw new Error('No se pudo listar los equipos.');
   return res.json();
 }
 
 export async function createEquipo(data: Equipo): Promise<Equipo> {
-  const res = await fetch(`${API_BASE_URL}/equipos`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/equipos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -35,7 +35,7 @@ export async function createEquipo(data: Equipo): Promise<Equipo> {
 }
 
 export async function updateEquipo(id: number, data: Equipo): Promise<Equipo> {
-  const res = await fetch(`${API_BASE_URL}/equipos/${id}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/equipos/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -48,7 +48,7 @@ export async function updateEquipo(id: number, data: Equipo): Promise<Equipo> {
 }
 
 export async function deleteEquipo(id: number): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/equipos/${id}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/equipos/${id}`, {
     method: 'DELETE',
   });
   if (!res.ok) {
@@ -58,7 +58,7 @@ export async function deleteEquipo(id: number): Promise<void> {
 }
 
 export async function getEquipoById(id: number): Promise<Equipo> {
-  const res = await fetch(`${API_BASE_URL}/equipos/${id}`);
+  const res = await fetchWithAuth(`${API_BASE_URL}/equipos/${id}`);
   if (!res.ok) throw new Error('Error al obtener el equipo');
   return res.json();
 }

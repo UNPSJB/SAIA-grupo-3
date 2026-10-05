@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Form, Button, Alert, Modal, Table, InputGroup, Badge } from 'react-bootstrap';
+import { Card, Form, Button, Alert, Modal, Table, InputGroup } from 'react-bootstrap';
 import type { Tarea, TareaCreate, FrecuenciaTarea } from './types';
 import { FRECUENCIAS_TAREA } from './types';
 import { getEquipos, type Equipo } from '../equipos';

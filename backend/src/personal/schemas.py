@@ -1,54 +1,39 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
-from typing import List, Optional
-from src.documentacion.schemas import Documento
-from src.personal.models import TipoCapacidad
-from src.personal import exceptions
-
-# Los siguientes schemas contienen atributos sin muchas restricciones de tipo.
-# Podemos crear atributos con ciertas reglas mediante el uso de un "Field" adecuado.
-# https://docs.pydantic.dev/latest/concepts/fields/
-
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
+from typing import Optional, Set
 
 class PersonalBase(BaseModel):
-    nombre: str
-    apellido: str
+    nombre: str = Field(..., min_length=1, max_length=50)
+    apellido: str = Field(..., min_length=1, max_length=50)
+    dni: str = Field(..., min_length=1, max_length=20)
+    nroLegajo: str = Field(..., min_length=1, max_length=20)
     email: EmailStr
-    dni: int
-    nroLegajo: int
-    tipo_capacidad: TipoCapacidad  # solo permitiremos valores de este tipo.
-
-    @field_validator(
-        "tipo_capacidad", mode="before"
-    )  # <- Más info. sobre mode: https://pydantic.dev/docs/validation/dev/concepts/validators/#field-validators
-    @classmethod
-    def is_valid_tipo_capacidad(cls, v: str) -> str:
-        if v.lower() not in TipoCapacidad:
-            raise exceptions.TipoCapacidadInvalido(list(TipoCapacidad))
-        return v.lower()
-
-    @field_validator("dni")
-    @classmethod
-    def is_valid_dni(cls, v: int) -> int:
-        if not 0 < v <= 99999999:
-            raise ValueError("El DNI debe ser un número positivo de hasta 8 dígitos.")
-        return v
-    
-
+    username: str = Field(..., min_length=3, max_length=50)
+    operar: bool = False
+    administrar: bool = False
 
 class PersonalCreate(PersonalBase):
-    pass
+    password: str = Field(..., min_length=4)
 
-
-class PersonalUpdate(PersonalBase):
-    # Optional y separado de PersonalBase: solo se usa para reactivar a alguien
-    # dado de baja (se envía junto al resto de los datos, sin volverlos opcionales).
+class PersonalUpdate(BaseModel):
+    nombre: Optional[str] = Field(None, min_length=1, max_length=50)
+    apellido: Optional[str] = Field(None, min_length=1, max_length=50)
+    dni: Optional[str] = Field(None, min_length=1, max_length=20)
+    nroLegajo: Optional[str] = Field(None, min_length=1, max_length=20)
+    email: Optional[EmailStr] = None
+    username: Optional[str] = Field(None, min_length=3, max_length=50)
+    operar: Optional[bool] = None
+    administrar: Optional[bool] = None
     activo: Optional[bool] = None
-
+    password: Optional[str] = Field(None, min_length=4)
 
 class Personal(PersonalBase):
+    # Los registros existentes pueden contener dominios de prueba o históricos.
+    # EmailStr sigue validando los correos al crear o modificar personal.
+    email: str
+    id: int
     activo: bool
-    documentos: List[Documento]
-
-    # from_atributes=True permite que Pydantic trabaje con modelos SQLAlchemy
-    # más info.: https://docs.pydantic.dev/latest/api/config/#pydantic.config.ConfigDict.from_attributes
-    model_config = ConfigDict(from_attributes= True)
+    role_name: str
+    role_id: int
+    capacidades: Set[str]
+    
+    model_config = ConfigDict(from_attributes=True)

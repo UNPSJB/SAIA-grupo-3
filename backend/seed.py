@@ -1,258 +1,449 @@
-import random
-from datetime import date, timedelta
-from faker import Faker
+"""Carga datos de demostración de forma repetible y sin borrar datos.
 
+Ejecutar desde backend/:  .venv/bin/python seed.py
+"""
+from __future__ import annotations
+
+from datetime import date, datetime, time, timedelta
+
+from faker import Faker
+from sqlalchemy import func, select
+
+# Importar la app registra todos los modelos en la metadata SQLAlchemy.
+from src.main import app  # noqa: F401
 from src.database import SessionLocal, engine
 from src.models import ModeloBase
-
-from src.sector.models import Sector
-from src.personal.models import Personal, TipoCapacidad
-from src.equipos.models import Equipo, TipoEquipo
+from src.auth.utils import get_password_hash
+from src.personal.models import Personal
 from src.unidadMedida.models import UnidadMedida, TipoUnidadMedida
+from src.sector.models import Sector
+from src.equipos.models import Equipo, TipoEquipo
 from src.insumos.models import Insumo
+from src.insumosQuimicos.models import InsumoQuimico, TipoQuimico
 from src.elementos.models import Elemento
-from src.tarea.models import Tarea, FrecuenciaTarea, TareaInsumoQuimico
+from src.tarea.models import Tarea, TareaInsumoQuimico, FrecuenciaTarea
 from src.plan.models import Plan
 from src.documentacion.models import Documentacion, TipoDocumento
-from src.insumosQuimicos.models import InsumoQuimico, TipoQuimico
+from src.checklist.models import ItemChecklist, EstadoItem, MovimientoItemChecklist, AccionMovimiento
+from src.planRealizado.models import PlanRealizado
+from src.tareaRealizada.models import TareaRealizada
+from src.consumoQuimico.models import ConsumoQuimico
 
 fake = Faker("es_AR")
+Faker.seed(20261005)
 
-def cargar_datos():
-    # Creamos las tablas registradas en ModeloBase
+CANTIDAD = 15
+PASSWORD_ADMIN = "admin123"
+PASSWORD_OPERARIO = "opera123"
+
+
+def obtener_o_crear(db, modelo, filtros: dict, valores: dict):
+    registro = db.scalar(select(modelo).filter_by(**filtros))
+    creado = registro is None
+    if creado:
+        registro = modelo(**filtros, **valores)
+        db.add(registro)
+        db.flush()
+    else:
+        for clave, valor in valores.items():
+            setattr(registro, clave, valor)
+    return registro, creado
+
+
+def crear_personal(db):
+    """Garantiza los usuarios de users.py y completa 15 personas de prueba."""
+    hashes = {
+        "admin": get_password_hash(PASSWORD_ADMIN),
+        "operario": get_password_hash(PASSWORD_OPERARIO),
+    }
+    especificaciones = [
+        {
+            "username": "admin",
+            "nombre": "Administrador",
+            "apellido": "SAIA",
+            "dni": "99999999",
+            "nroLegajo": "ADMIN01",
+            "email": "admin@saia.com",
+            "operar": True,
+            "administrar": True,
+            "hashed_password": hashes["admin"],
+            "activo": True,
+        },
+        {
+            "username": "opera",
+            "nombre": "Operador",
+            "apellido": "SAIA",
+            "dni": "40123456",
+            "nroLegajo": "OPE002",
+            "email": "maria.gomez@ejemplo.com",
+            "operar": True,
+            "administrar": False,
+            "hashed_password": hashes["operario"],
+            "activo": True,
+        },
+    ]
+    for numero in range(3, CANTIDAD + 1):
+        username = f"operario.demo{numero - 2:02d}"
+        especificaciones.append({
+            "username": username,
+            "nombre": fake.first_name(),
+            "apellido": fake.last_name(),
+            "dni": f"990000{numero - 1:04d}",
+            "nroLegajo": f"DEMO-{numero - 1:04d}",
+            "email": f"{username}@example.com",
+            "operar": True,
+            "administrar": False,
+            "hashed_password": hashes["operario"],
+            "activo": True,
+        })
+
+    usuarios = []
+    for valores in especificaciones:
+        username = valores.pop("username")
+        persona, _ = obtener_o_crear(db, Personal, {"username": username}, valores)
+        usuarios.append(persona)
+    return usuarios
+
+
+def quitar_etiquetas_anteriores(db) -> None:
+    """Limpia los nombres del seed anterior sin borrar registros ni relaciones."""
+    prefijo = "[DEMO SAIA] "
+    campos = [
+        (Sector, "nombre"), (Equipo, "nombre"), (Insumo, "nombre"),
+        (InsumoQuimico, "nombre"), (Elemento, "nombre"), (Tarea, "nombre"),
+        (Plan, "nombre"), (Documentacion, "nombre"),
+        (PlanRealizado, "nombre"), (TareaRealizada, "nombre"),
+        (ConsumoQuimico, "tarea_limpieza"),
+    ]
+    for modelo, campo in campos:
+        for registro in db.scalars(select(modelo)).all():
+            valor = getattr(registro, campo, None)
+            if isinstance(valor, str) and valor.startswith(prefijo):
+                setattr(registro, campo, valor[len(prefijo):])
+    for tarea in db.scalars(select(Tarea)).all():
+        if tarea.procedimiento:
+            tarea.procedimiento = tarea.procedimiento.replace(prefijo, "")
+    db.flush()
+
+
+def cargar_seed() -> None:
     ModeloBase.metadata.create_all(bind=engine)
-    
-    db = SessionLocal()
-    try:
-        # 1. Unidades de Medida base requeridas para los insumos (15 registros)
-        unidades = []
-        nombres_unidades = [
-            (TipoUnidadMedida.PESO, "Kg"), (TipoUnidadMedida.PESO, "Gramos"), (TipoUnidadMedida.PESO, "Libras"),
-            (TipoUnidadMedida.CAPACIDAD, "Litros"), (TipoUnidadMedida.CAPACIDAD, "Mililitros"), (TipoUnidadMedida.CAPACIDAD, "Galones"),
-            (TipoUnidadMedida.UNIDAD, "Unidades"), (TipoUnidadMedida.UNIDAD, "Pares"), (TipoUnidadMedida.UNIDAD, "Cajas"),
-            (TipoUnidadMedida.UNIDAD, "Paquetes"), (TipoUnidadMedida.UNIDAD, "Botellas"), (TipoUnidadMedida.UNIDAD, "Bidones"),
-            (TipoUnidadMedida.LONGITUD, "Metros"), (TipoUnidadMedida.LONGITUD, "Centímetros"), (TipoUnidadMedida.LONGITUD, "Milímetros")
-        ]
-        
-        for tipo, sufijo in nombres_unidades:
-            unidad = UnidadMedida(tipo=tipo, sufijo=sufijo)
-            db.add(unidad)
-            unidades.append(unidad)
-        db.flush()
+    hoy = date.today()
+    ayer = hoy - timedelta(days=1)
 
-        # 2. Sectores (15 registros)
-        sectores = []
-        nombres_base_sectores = [
-            "Envasado Primario", "Línea de Cocción A", "Cámara Frigorífica 1",
-            "Laboratorio Central", "Depósito de Insumos", "Control de Calidad",
-            "Mantenimiento General", "Área de Empaque", "Sector Molienda",
-            "Zona de Despacho", "Silos de Harina", "Tratamiento de Agua",
-            "Cámara de Maduración", "Planta Piloto", "Zona de Carga"
-        ]
-        for nombre in nombres_base_sectores:
-            sector = Sector(nombre=nombre, activo=True)
-            db.add(sector)
-            sectores.append(sector)
-        db.flush()
+    with SessionLocal() as db:
+        try:
+            quitar_etiquetas_anteriores(db)
+            personas = crear_personal(db)
 
-        # 3. Insumos Generales (15 registros)
-        insumos_creados = []
-        for _ in range(15):
-            insumo = Insumo(
-                nombre=f"{fake.word().capitalize()} General {fake.unique.random_int(min=100, max=999)}",
-                cantidad=round(random.uniform(10.0, 500.0), 2),
-                unidad_medida_id=random.choice(unidades).id,
-            )
-            db.add(insumo)
-            insumos_creados.append(insumo)
-        db.flush()
-
-        # 3.5 Insumos Químicos (15 registros) - NUEVO
-        insumos_quimicos_creados = []
-        tipos_quimicos = list(TipoQuimico)
-        for _ in range(15):
-            insumo_q = InsumoQuimico(
-                nombre=f"{fake.word().capitalize()} Químico {fake.unique.random_int(min=1000, max=9999)}",
-                cantidad=round(random.uniform(5.0, 200.0), 2),
-                tipo_quimico=random.choice(tipos_quimicos),
-                unidad_medida_id=random.choice(unidades).id,
-                activo=True
-            )
-            db.add(insumo_q)
-            insumos_quimicos_creados.append(insumo_q)
-        db.flush()
-
-        # 4. Personal (15 registros con claves únicas)
-        personal_creado = []
-        tipos_capacidad = list(TipoCapacidad)
-        for _ in range(15):
-            persona = Personal(
-                dni=fake.unique.random_int(min=20000000, max=45000000),
-                nroLegajo=fake.unique.random_int(min=1000, max=9999),
-                nombre=fake.first_name(),
-                apellido=fake.last_name(),
-                email=fake.unique.email(),
-                tipo_capacidad=random.choice(tipos_capacidad),
-            )
-            db.add(persona)
-            personal_creado.append(persona)
-        db.flush()
-
-        # # 4.5 Documentación del Personal - NUEVO
-        # tipos_documento = list(TipoDocumento)
-        # for persona in personal_creado:
-        #     # Asignamos aleatoriamente entre 1 y 2 documentos a cada empleado
-        #     for _ in range(random.randint(1, 2)):
-        #         tipo_doc = random.choice(tipos_documento)
-        #         documento = Documentacion(
-        #             nombre=f"Certificado de {tipo_doc.value.replace('_', ' ').capitalize()}",
-        #             tipo_documento=tipo_doc,
-        #             personal_id=persona.dni
-        #         )
-        #         db.add(documento)
-        # db.flush()
-
-        # 5. Equipos (15 registros vinculados por Foreign Key al sector)
-        equipos_creados = []
-        tipos_equipos = list(TipoEquipo)
-        nombres_equipos = [
-            "Balanza de Precisión", "Mezcladora", "Horno Convector",
-            "Envasadora al Vacío", "Termómetro Infrarrojo", "Autoclave",
-            "Cinta Transportadora", "Calibrador Digital", "Detector de Metales",
-            "Bomba Centrífuga", "Molino Industrial", "Tamiz Vibratorio",
-            "Selladora Térmica", "Compresor de Aire", "Tanque Homogeneizador"
-        ]
-        for i in range(15):
-            equipo = Equipo(
-                nombre=nombres_equipos[i],
-                tipo=random.choice(tipos_equipos),
-                numero_serie=f"SN-{fake.unique.bothify(text='??-####').upper()}",
-                activo=True,
-                sector_id=random.choice(sectores).id,
-            )
-            db.add(equipo)
-            equipos_creados.append(equipo)
-        db.flush()
-
-        # 6. Elementos de limpieza (15 registros)
-        elementos_creados = []
-        nombres_elementos = [
-            "Cepillo de cerdas suaves", "Cepillo de cerdas duras",
-            "Escobillón industrial", "Pala recogedora", "Trapo de microfibra",
-            "Paño absorbente", "Esponja abrasiva", "Esponja suave",
-            "Mopa de algodón", "Mopa de microfibra", "Secador de piso",
-            "Balde plástico", "Guantes reutilizables", "Cepillo para rincones",
-            "Raspador plástico"
-        ]
-        
-        hoy = date.today()
-        
-        for i, nombre in enumerate(nombres_elementos):
-            frecuencia = random.choice([7, 15, 30, 60, 90])
-            
-            if i % 3 == 0:
-                ultimo = hoy - timedelta(days=frecuencia + random.randint(1, 10))
-            elif i % 3 == 1:
-                ultimo = hoy - timedelta(days=frecuencia - random.randint(0, 4))
-            else:
-                ultimo = hoy - timedelta(days=random.randint(1, max(1, frecuencia - 6)))
-                
-            proximo = ultimo + timedelta(days=frecuencia)
-            
-            elemento = Elemento(
-                nombre=nombre,
-                frecuencia_recambio=frecuencia,
-                fecha_ultimo_recambio=ultimo,
-                fecha_proximo_recambio=proximo,
-                activo=True,
-            )
-            db.add(elemento)
-            elementos_creados.append(elemento)
-        db.flush()
-
-        # 7. Tareas (30 registros)
-        tareas_creadas = []
-        tipos_frecuencia = list(FrecuenciaTarea)
-        nombres_tareas = [
-            "Limpieza profunda de pisos", "Desinfección de mesadas", "Vaciado y limpieza de tachos",
-            "Lavado de utensilios menores", "Limpieza de ventanas y vidrios", "Desengrasado de campanas",
-            "Sanitización de cámaras de frío", "Limpieza de rejillas y desagües", "Fregado de paredes",
-            "Desinfección de picaportes y áreas de contacto", "Limpieza de filtros de aire", "Barrido en seco del sector",
-            "Aplicación de espuma clorada", "Limpieza de básculas y balanzas", "Acondicionamiento de carros de transporte"
-        ]
-        
-        for _ in range(30):
-            nombre_tarea = random.choice(nombres_tareas)
-            equipo_asignado = random.choice(equipos_creados) if random.random() > 0.5 else None
-            elementos_tarea = random.sample(elementos_creados, random.randint(1, 3))
-            
-            tarea = Tarea(
-                nombre=f"{nombre_tarea} - {'Específica' if equipo_asignado else 'General'}",
-                frecuencia=random.choice(tipos_frecuencia),
-                procedimiento=f"Procedimiento estandarizado para {nombre_tarea}. 1) Despejar el área. 2) Aplicar los insumos asignados respetando los tiempos de contacto. 3) Fregar con los elementos de limpieza. 4) Enjuagar y verificar que no queden residuos.",
-                equipo_id=equipo_asignado.id if equipo_asignado else None
-            )
-            
-            tarea.elementos.extend(elementos_tarea)
-            
-            # Vinculamos Insumos Químicos con cantidades específicas - CORREGIDO
-            insumos_quimicos_tarea = random.sample(insumos_quimicos_creados, random.randint(1, 3))
-            for iq in insumos_quimicos_tarea:
-                tarea_iq = TareaInsumoQuimico(
-                    insumo_quimico_id=iq.id,
-                    cantidad=round(random.uniform(0.5, 5.0), 2)
+            definiciones_unidad = [
+                (TipoUnidadMedida.UNIDAD, "un"),
+                (TipoUnidadMedida.UNIDAD, "par"),
+                (TipoUnidadMedida.UNIDAD, "caja"),
+                (TipoUnidadMedida.UNIDAD, "paquete"),
+                (TipoUnidadMedida.UNIDAD, "rollo"),
+                (TipoUnidadMedida.PESO, "mg"),
+                (TipoUnidadMedida.PESO, "g"),
+                (TipoUnidadMedida.PESO, "kg"),
+                (TipoUnidadMedida.PESO, "lb"),
+                (TipoUnidadMedida.CAPACIDAD, "ml"),
+                (TipoUnidadMedida.CAPACIDAD, "L"),
+                (TipoUnidadMedida.CAPACIDAD, "cc"),
+                (TipoUnidadMedida.CAPACIDAD, "gal"),
+                (TipoUnidadMedida.LONGITUD, "cm"),
+                (TipoUnidadMedida.LONGITUD, "m"),
+            ]
+            unidades = []
+            for tipo, sufijo in definiciones_unidad:
+                unidad, _ = obtener_o_crear(
+                    db, UnidadMedida, {"sufijo": sufijo},
+                    {"tipo": tipo, "activo": True},
                 )
-                tarea.insumos_quimicos.append(tarea_iq)
+                unidades.append(unidad)
 
-            db.add(tarea)
-            tareas_creadas.append(tarea)
-        db.flush()
+            sectores = []
+            for numero in range(1, CANTIDAD + 1):
+                sector, _ = obtener_o_crear(
+                    db, Sector,
+                    {"nombre": f"Sector {numero:02d}"},
+                    {"activo": True},
+                )
+                sectores.append(sector)
 
-        # 8. Planes de Limpieza (15 registros)
-        for i in range(15):
-            es_activo = random.choice([True, False])
-            fecha_inicio = hoy - timedelta(days=random.randint(30, 365))
-            fecha_fin = fecha_inicio + timedelta(days=random.randint(10, 25)) if not es_activo else None
-            
-            asignar_a_equipo = random.choice([True, False])
-            sector_id = None
-            equipo_id = None
-            tareas_posibles = []
+            equipos = []
+            tipos_equipo = list(TipoEquipo)
+            for numero in range(1, CANTIDAD + 1):
+                equipo, _ = obtener_o_crear(
+                    db, Equipo,
+                    {"numero_serie": f"DEMO-EQ-{numero:04d}"},
+                    {
+                        "nombre": f"{fake.word().capitalize()} {numero:02d}",
+                        "tipo": tipos_equipo[(numero - 1) % len(tipos_equipo)],
+                        "activo": True,
+                        "sector_id": sectores[numero - 1].id,
+                    },
+                )
+                equipos.append(equipo)
 
-            if asignar_a_equipo:
-                equipo = random.choice(equipos_creados)
-                equipo_id = equipo.id
-                tareas_posibles = [t for t in tareas_creadas if t.equipo_id == equipo.id or t.equipo_id is None]
-            else:
-                sector = random.choice(sectores)
-                sector_id = sector.id
-                tareas_posibles = [t for t in tareas_creadas if t.equipo_id is None]
+            insumos = []
+            for numero in range(1, CANTIDAD + 1):
+                unidad = unidades[(numero - 1) % len(unidades)]
+                insumo, _ = obtener_o_crear(
+                    db, Insumo,
+                    {"nombre": f"Insumo general {numero:02d}"},
+                    {
+                        "cantidad": float(100 + numero * 7),
+                        "unidad_medida_id": unidad.id,
+                        "activo": True,
+                    },
+                )
+                insumos.append(insumo)
 
-            cantidad_tareas = min(len(tareas_posibles), random.randint(2, 5))
-            tareas_del_plan = random.sample(tareas_posibles, cantidad_tareas) if tareas_posibles else []
+            quimicos = []
+            tipos_quimicos = list(TipoQuimico)
+            unidades_capacidad = [
+                unidad for unidad in unidades
+                if unidad.tipo == TipoUnidadMedida.CAPACIDAD
+            ]
+            for numero in range(1, CANTIDAD + 1):
+                unidad = unidades_capacidad[(numero - 1) % len(unidades_capacidad)]
+                quimico, _ = obtener_o_crear(
+                    db, InsumoQuimico,
+                    {"nombre": f"Químico {numero:02d}"},
+                    {
+                        "cantidad": float(100 + numero * 10),
+                        "tipo_quimico": tipos_quimicos[(numero - 1) % len(tipos_quimicos)],
+                        "activo": True,
+                        "unidad_medida_id": unidad.id,
+                    },
+                )
+                quimicos.append(quimico)
 
-            plan = Plan(
-                nombre=f"Plan Operativo {fake.word().capitalize()} {i+1}",
-                descripcion="Plan de limpieza diseñado para mantener los estándares de higiene en este sector/equipo, cumpliendo la normativa vigente.",
-                activo=es_activo,
-                fecha_inicio=fecha_inicio,
-                fecha_fin=fecha_fin,
-                responsable_id=random.choice(personal_creado).dni,
-                sector_id=sector_id,
-                equipo_id=equipo_id
-            )
-            
-            plan.tareas.extend(tareas_del_plan)
-            db.add(plan)
+            elementos = []
+            for numero in range(1, CANTIDAD + 1):
+                elemento, _ = obtener_o_crear(
+                    db, Elemento,
+                    {"nombre": f"Elemento de limpieza {numero:02d}"},
+                    {
+                        "frecuencia_recambio": 30 + (numero % 6) * 15,
+                        "fecha_ultimo_recambio": ayer,
+                        "fecha_proximo_recambio": hoy + timedelta(days=30 + numero),
+                        "activo": True,
+                    },
+                )
+                elementos.append(elemento)
 
-        db.commit()
-        print("✅ Base de datos poblada exitosamente con 15 registros por entidad y relaciones completas.")
+            tareas = []
+            for numero in range(1, CANTIDAD + 1):
+                nombre_tarea = f"Tarea diaria {numero:02d}"
+                tarea, _ = obtener_o_crear(
+                    db, Tarea, {"nombre": nombre_tarea},
+                    {
+                        "frecuencia": FrecuenciaTarea.DIARIA,
+                        "procedimiento": (
+                            "Limpiar y desinfectar la zona asignada. "
+                            f"Revisar el elemento de limpieza {numero:02d} y registrar "
+                            "el consumo real del químico usado."
+                        ),
+                        "equipo_id": equipos[numero - 1].id,
+                    },
+                )
+                tarea.frecuencia = FrecuenciaTarea.DIARIA
+                tarea.equipo_id = equipos[numero - 1].id
+                tarea.elementos = [elementos[numero - 1]]
 
-    except Exception as e:
-        db.rollback()
-        print(f"❌ Ocurrió un error al cargar los datos: {e}")
-    finally:
-        db.close()
+                requisito = next(
+                    (r for r in tarea.insumos_quimicos
+                     if r.insumo_quimico_id == quimicos[numero - 1].id),
+                    None,
+                )
+                if requisito is None:
+                    tarea.insumos_quimicos.append(
+                        TareaInsumoQuimico(
+                            insumo_quimico_id=quimicos[numero - 1].id,
+                            cantidad=1.5 + (numero % 4) * 0.5,
+                        )
+                    )
+                else:
+                    requisito.cantidad = 1.5 + (numero % 4) * 0.5
+                tareas.append(tarea)
+
+            planes = []
+            operadores = personas[1:]
+            for numero in range(1, CANTIDAD + 1):
+                operador = personas[1]
+                nombre_plan = f"Plan POES {numero:02d}"
+                plan, _ = obtener_o_crear(
+                    db, Plan,
+                    {"nombre": nombre_plan},
+                    {
+                        "responsable_id": operador.id,
+                        "descripcion": f"Plan de prueba diario {numero:02d} generado con Faker.",
+                        "activo": True,
+                        "fecha_inicio": ayer,
+                        "fecha_fin": None,
+                        "sector_id": sectores[(numero - 1) % CANTIDAD].id,
+                        "equipo_id": equipos[(numero - 1) % CANTIDAD].id,
+                    },
+                )
+                plan.activo = True
+                plan.fecha_inicio = ayer
+                plan.fecha_fin = None
+                plan.sector_id = sectores[(numero - 1) % CANTIDAD].id
+                plan.equipo_id = equipos[(numero - 1) % CANTIDAD].id
+                if tareas[numero - 1] not in plan.tareas:
+                    plan.tareas.append(tareas[numero - 1])
+                planes.append(plan)
+
+            tipos_documento = list(TipoDocumento)
+            for numero in range(1, CANTIDAD + 1):
+                operador = operadores[(numero - 1) % len(operadores)]
+                nombre_doc = f"Documento {numero:02d}"
+                documento = db.scalar(
+                    select(Documentacion).where(Documentacion.nombre == nombre_doc)
+                )
+                if documento is None:
+                    documento = Documentacion(
+                        nombre=nombre_doc,
+                        tipo_documento=tipos_documento[(numero - 1) % len(tipos_documento)],
+                        personal_id=operador.id,
+                    )
+                    db.add(documento)
+                else:
+                    documento.tipo_documento = tipos_documento[(numero - 1) % len(tipos_documento)]
+                    documento.personal_id = operador.id
+
+            db.flush()
+
+            # Datos de ayer para que el historial y el reporte no aparezcan vacíos.
+            for numero, plan in enumerate(planes, start=1):
+                tarea = tareas[numero - 1]
+                operador = personas[1]
+                quimico = quimicos[numero - 1]
+                momento = datetime.combine(ayer, time(hour=10, minute=numero % 60))
+
+                item = db.scalar(
+                    select(ItemChecklist).where(
+                        ItemChecklist.plan_id == plan.id,
+                        ItemChecklist.tarea_id == tarea.id,
+                        ItemChecklist.periodo_inicio == ayer,
+                    )
+                )
+                if item is None:
+                    item = ItemChecklist(
+                        plan_id=plan.id,
+                        tarea_id=tarea.id,
+                        responsable_id=operador.id,
+                        realizada_por_id=operador.id,
+                        frecuencia=FrecuenciaTarea.DIARIA,
+                        periodo_inicio=ayer,
+                        periodo_fin=ayer,
+                        estado=EstadoItem.REALIZADA,
+                        realizada_en=momento,
+                    )
+                    db.add(item)
+                else:
+                    item.responsable_id = operador.id
+                    item.realizada_por_id = operador.id
+                    item.estado = EstadoItem.REALIZADA
+                    item.realizada_en = momento
+                db.flush()
+
+                movimiento = db.scalar(
+                    select(MovimientoItemChecklist).where(
+                        MovimientoItemChecklist.item_id == item.id,
+                        MovimientoItemChecklist.accion == AccionMovimiento.REALIZADA,
+                    )
+                )
+                if movimiento is None:
+                    db.add(MovimientoItemChecklist(
+                        item_id=item.id,
+                        accion=AccionMovimiento.REALIZADA,
+                        personal_id=operador.id,
+                        fecha_hora=momento,
+                    ))
+                else:
+                    movimiento.personal_id = operador.id
+                    movimiento.fecha_hora = momento
+
+                plan_realizado = db.scalar(
+                    select(PlanRealizado).where(
+                        PlanRealizado.plan_origen_id == plan.id,
+                        func.date(PlanRealizado.fecha_ejecucion) == ayer.isoformat(),
+                    )
+                )
+                if plan_realizado is None:
+                    plan_realizado = PlanRealizado(
+                        plan_origen_id=plan.id,
+                        nombre=plan.nombre,
+                        descripcion=plan.descripcion,
+                        fecha_ejecucion=momento,
+                        responsable_id=operador.id,
+                        sector_id=plan.sector_id,
+                        equipo_id=plan.equipo_id,
+                    )
+                    db.add(plan_realizado)
+                    db.flush()
+                else:
+                    plan_realizado.nombre = plan.nombre
+                    plan_realizado.descripcion = plan.descripcion
+                    plan_realizado.responsable_id = operador.id
+                    plan_realizado.sector_id = plan.sector_id
+                    plan_realizado.equipo_id = plan.equipo_id
+
+                tarea_realizada = db.scalar(
+                    select(TareaRealizada).where(
+                        TareaRealizada.plan_realizado_id == plan_realizado.id,
+                        TareaRealizada.tarea_origen_id == tarea.id,
+                    )
+                )
+                if tarea_realizada is None:
+                    tarea_realizada = TareaRealizada(
+                        plan_realizado_id=plan_realizado.id,
+                        tarea_origen_id=tarea.id,
+                        nombre=tarea.nombre,
+                        frecuencia=tarea.frecuencia,
+                        procedimiento=tarea.procedimiento,
+                        fecha_registro=momento,
+                        equipo_id=tarea.equipo_id,
+                        elementos_utilizados=[{"id": elementos[numero - 1].id,
+                                               "nombre": elementos[numero - 1].nombre}],
+                        insumos_utilizados=[{"id": quimico.id, "cantidad": 1.0}],
+                    )
+                    db.add(tarea_realizada)
+
+                nombre_consumo = f"Tarea diaria {numero:02d}"
+                consumo = db.scalar(
+                    select(ConsumoQuimico).where(
+                        ConsumoQuimico.insumo_quimico_id == quimico.id,
+                        ConsumoQuimico.fecha == ayer,
+                        ConsumoQuimico.tarea_limpieza == nombre_consumo,
+                    )
+                )
+                if consumo is None:
+                    db.add(ConsumoQuimico(
+                        insumo_quimico_id=quimico.id,
+                        cantidad_utilizada=1.0,
+                        fecha=ayer,
+                        tarea_limpieza=nombre_consumo,
+                        operario_id=operador.id,
+                        activo=True,
+                    ))
+                else:
+                    consumo.operario_id = operador.id
+                    consumo.cantidad_utilizada = 1.0
+                    consumo.activo = True
+
+            db.commit()
+            print("Seed SAIA cargado correctamente. No se borraron datos.")
+            print("Se crearon/actualizaron 15 registros por catálogo principal y 15 registros históricos.")
+            print(f"Administrador: admin / {PASSWORD_ADMIN}")
+            print(f"Operario con 15 tareas diarias: opera / {PASSWORD_OPERARIO}")
+            print("El checklist de hoy se genera al abrirlo; ayer queda cargado para el historial.")
+        except Exception:
+            db.rollback()
+            raise
+
 
 if __name__ == "__main__":
-    cargar_datos()
+    cargar_seed()

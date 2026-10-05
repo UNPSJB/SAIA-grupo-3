@@ -22,7 +22,7 @@ class Plan(ModeloBase):
     fecha_inicio: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     fecha_fin: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
-    responsable_id: Mapped[int] = mapped_column(ForeignKey("personal.dni"), nullable=False)
+    responsable_id: Mapped[int] = mapped_column(ForeignKey("personal.id"), nullable=False)
     
     sector_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sectores.id"), nullable=True)
     equipo_id: Mapped[Optional[int]] = mapped_column(ForeignKey("equipos.id"), nullable=True)

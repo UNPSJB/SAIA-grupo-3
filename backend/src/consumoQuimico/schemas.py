@@ -26,9 +26,11 @@ class InsumoQuimicoInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class OperarioInfo(BaseModel):
-    dni: int
+    id: int    # Antes decía dni: int
     nombre: str
     apellido: str
+    dni: str
+    
     model_config = ConfigDict(from_attributes=True)
 
 class ConsumoQuimico(ConsumoQuimicoBase):

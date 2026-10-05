@@ -1,7 +1,7 @@
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
 import type { UnidadMedida } from './types';
 
-const API_URL = `${API_BASE_URL}/unidadMedida`;
+const API_URL = `${API_BASE_URL}/unidades-medida`;
 
 export interface PaginatedUnidades {
   items: UnidadMedida[];
@@ -17,7 +17,7 @@ export const getUnidadesMedida = async (
   let url = `${API_URL}?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`;
   if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
   
-  const response = await fetch(url);
+  const response = await fetchWithAuth(url);
   if (!response.ok) throw new Error('Error al obtener las unidades de medida');
   return response.json();
 };
@@ -25,7 +25,7 @@ export const getUnidadesMedida = async (
 export const createUnidadMedida = async (unidad: { tipo: string; sufijo: string }): Promise<UnidadMedida> => {
   let response;
   try {
-    response = await fetch(API_URL, {
+    response = await fetchWithAuth(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(unidad),
@@ -48,7 +48,7 @@ export const createUnidadMedida = async (unidad: { tipo: string; sufijo: string 
 export const updateUnidadMedida = async (id: number, unidad: { tipo?: string; sufijo?: string; activo?: boolean }): Promise<UnidadMedida> => {
   let response;
   try {
-    response = await fetch(`${API_URL}/${id}`, {
+    response = await fetchWithAuth(`${API_URL}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(unidad),
@@ -69,7 +69,7 @@ export const updateUnidadMedida = async (id: number, unidad: { tipo?: string; su
 };
 
 export const deleteUnidadMedida = async (id: number): Promise<void> => {
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await fetchWithAuth(`${API_URL}/${id}`, {
     method: 'DELETE',
   });
   if (!response.ok) throw new Error('Error al eliminar la unidad de medida');

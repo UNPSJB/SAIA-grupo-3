@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
 import type { Elemento } from './types';
 
 export interface PaginatedElementos {
@@ -16,13 +16,13 @@ export async function getElementos(
   ordenarPor = 'id',
   orden = 'asc'
 ): Promise<PaginatedElementos> {
-  const res = await fetch(`${API_BASE_URL}/elementos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`);
+  const res = await fetchWithAuth(`${API_BASE_URL}/elementos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`);
   if (!res.ok) throw new Error('No se pudo listar los elementos.');
   return res.json();
 }
 
 export async function createElemento(data: Elemento): Promise<Elemento> {
-  const res = await fetch(`${API_BASE_URL}/elementos`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/elementos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -35,7 +35,7 @@ export async function createElemento(data: Elemento): Promise<Elemento> {
 }
 
 export async function updateElemento(id: number, data: Elemento): Promise<Elemento> {
-  const res = await fetch(`${API_BASE_URL}/elementos/${id}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/elementos/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -48,7 +48,7 @@ export async function updateElemento(id: number, data: Elemento): Promise<Elemen
 }
 
 export async function deleteElemento(id: number): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/elementos/${id}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/elementos/${id}`, {
     method: 'DELETE',
   });
   if (!res.ok) {
@@ -59,7 +59,7 @@ export async function deleteElemento(id: number): Promise<void> {
 
 // NUEVA FUNCIÓN PARA EL RECAMBIO
 export async function registrarRecambioApi(id: number, fecha: string): Promise<Elemento> {
-  const res = await fetch(`${API_BASE_URL}/elementos/${id}/recambio`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/elementos/${id}/recambio`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fecha_recambio: fecha }),

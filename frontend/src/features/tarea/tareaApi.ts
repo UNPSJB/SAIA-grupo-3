@@ -1,14 +1,14 @@
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
 import type { Tarea, TareaCreate, PaginatedTareas } from './types';
 
 export async function getTareas(page = 1, size = 10): Promise<PaginatedTareas> {
-  const res = await fetch(`${API_BASE_URL}/tareas?page=${page}&size=${size}`);
+  const res = await fetchWithAuth(`${API_BASE_URL}/tareas?page=${page}&size=${size}`);
   if (!res.ok) throw new Error('No se pudo listar las tareas.');
   return res.json();
 }
 
 export async function createTarea(data: TareaCreate): Promise<Tarea> {
-  const res = await fetch(`${API_BASE_URL}/tareas`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/tareas`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -21,7 +21,7 @@ export async function createTarea(data: TareaCreate): Promise<Tarea> {
 }
 
 export async function updateTarea(id: number, data: Partial<TareaCreate>): Promise<Tarea> {
-  const res = await fetch(`${API_BASE_URL}/tareas/${id}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/tareas/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -34,7 +34,7 @@ export async function updateTarea(id: number, data: Partial<TareaCreate>): Promi
 }
 
 export async function deleteTarea(id: number): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/tareas/${id}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/tareas/${id}`, {
     method: 'DELETE',
   });
   if (!res.ok) {

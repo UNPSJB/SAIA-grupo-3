@@ -3,11 +3,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.documentacion import schemas, services
+from src.auth.router_base import PermissionedRouter
 
-# Creamos un logger para este módulo específico. Más info.: https://docs.python.org/3/library/logging.html
+
 logger = logging.getLogger(__name__)
-
-router = APIRouter(prefix="/documentos", tags=["documentos"])
+router = PermissionedRouter(prefix="/documentacion", tags=["documentacion"])
 
 # Rutas para Documentos
 

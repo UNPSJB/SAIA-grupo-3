@@ -36,24 +36,62 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
 
   const [tareaAEditar, setTareaAEditar] = useState<Tarea | null>(null);
 
-  const cargarDependencias = () => {
-    setCargandoDependencias(true);
-    Promise.all([
-      getPersonal(1, 100),
-      getSectores(1, 100),
-      getEquipos(1, 100),
-      getTareas(1, 100)
-    ]).then(([resPersonal, resSectores, resEquipos, resTareas]) => {
-      setPersonal(resPersonal.items);
-      setSectores(resSectores.items);
-      setEquipos(resEquipos.items);
-      setTareas(resTareas.items);
-    }).catch(() => {
-      setErrorValidacion('Error al cargar los datos.');
-    }).finally(() => {
-      setCargandoDependencias(false);
-    });
-  };
+  const cargarDependencias = async () => {
+  setCargandoDependencias(true);
+  setErrorValidacion(null);
+
+  const resultados = await Promise.allSettled([
+    getPersonal(1, 100),
+    getSectores(1, 100),
+    getEquipos(1, 100),
+    getTareas(1, 100),
+  ]);
+
+  const [resPersonal, resSectores, resEquipos, resTareas] = resultados;
+  const errores: string[] = [];
+
+  if (resPersonal.status === 'fulfilled') {
+    setPersonal(resPersonal.value.items);
+  } else {
+    console.error('Error cargando Personal:', resPersonal.reason);
+    errores.push(
+      `Personal: ${resPersonal.reason instanceof Error ? resPersonal.reason.message : String(resPersonal.reason)}`
+    );
+  }
+
+  if (resSectores.status === 'fulfilled') {
+    setSectores(resSectores.value.items);
+  } else {
+    console.error('Error cargando sectores:', resSectores.reason);
+    errores.push(
+      `Sectores: ${resSectores.reason instanceof Error ? resSectores.reason.message : String(resSectores.reason)}`
+    );
+  }
+
+  if (resEquipos.status === 'fulfilled') {
+    setEquipos(resEquipos.value.items);
+  } else {
+    console.error('Error cargando equipos:', resEquipos.reason);
+    errores.push(
+      `Equipos: ${resEquipos.reason instanceof Error ? resEquipos.reason.message : String(resEquipos.reason)}`
+    );
+  }
+
+  if (resTareas.status === 'fulfilled') {
+    setTareas(resTareas.value.items);
+  } else {
+    console.error('Error cargando tareas:', resTareas.reason);
+    errores.push(
+      `Tareas: ${resTareas.reason instanceof Error ? resTareas.reason.message : String(resTareas.reason)}`
+    );
+  }
+
+  if (errores.length > 0) {
+    setErrorValidacion(errores.join(' | '));
+  }
+
+  setCargandoDependencias(false);
+};
 
   useEffect(() => {
     cargarDependencias();
@@ -126,7 +164,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
   };
 
   const equiposFiltrados = sectorId ? equipos.filter(e => e.sector_id === Number(sectorId)) : equipos;
-  const personalOperarios = personal.filter(p => p.tipo_capacidad === 'operar');
+  const personalOperarios = personal.filter((p) => p.operar);
 
 
   const tareasVisibles = tareas.filter(t => {
@@ -157,8 +195,8 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
             <Form.Group className="mb-4">
               <Form.Label>Responsable Asignado</Form.Label>
               <Form.Select required disabled={cargandoDependencias} value={responsableId} onChange={(e) => setResponsableId(e.target.value === '' ? '' : Number(e.target.value))}>
-                <option value="">Seleccione un empleado...</option>
-                {personalOperarios.map(p => <option key={p.dni} value={p.dni}>{p.apellido}, {p.nombre} (DNI: {p.dni})</option>)}
+                {personalOperarios.map((p) => (
+                <option key={p.id} value={p.id}>{p.apellido}, {p.nombre} (DNI: {p.dni})</option>))}
               </Form.Select>
             </Form.Group>
 

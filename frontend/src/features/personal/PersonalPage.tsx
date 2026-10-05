@@ -1,24 +1,35 @@
 import { useState } from 'react';
 import { Container } from 'react-bootstrap';
-import { PersonalView} from './PersonalView';
+import { PersonalView } from './PersonalView';
 import { PersonalList } from './PersonalList';
 import { PersonalForm } from './PersonalForm';
 import { PersonalDeleteView } from './PersonalDeleteView';
 import { usePersonal } from './usePersonal';
-import type { Personal } from './types';
+import type {
+  Personal,
+  PersonalCreateInput,
+  PersonalUpdateInput,
+} from './types';
 
 type ModoVista = 'ver' | 'listado' | 'crear' | 'editar' | 'eliminar';
 
 export function PersonalPage() {
   const [modo, setModo] = useState<ModoVista>('listado');
-  const [personalSeleccionado, setPersonalSeleccionado] = useState<Personal | null>(null);
+  const [personalSeleccionado, setPersonalSeleccionado] =
+    useState<Personal | null>(null);
+
   const { guardar, eliminar } = usePersonal();
+
+  const volverAlListado = () => {
+    setModo('listado');
+    setPersonalSeleccionado(null);
+  };
 
   const handleNuevo = () => {
     setPersonalSeleccionado(null);
     setModo('crear');
   };
-  
+
   const handleView = (personal: Personal) => {
     setPersonalSeleccionado(personal);
     setModo('ver');
@@ -34,28 +45,28 @@ export function PersonalPage() {
     setModo('eliminar');
   };
 
-  const handleGuardar = async (datos: Personal) => {
+  const handleGuardar = async (
+    datos: PersonalCreateInput | PersonalUpdateInput
+  ) => {
     if (modo === 'editar' && personalSeleccionado) {
-      await guardar(datos, personalSeleccionado.dni);
+      await guardar(datos, personalSeleccionado.id);
     } else {
       await guardar(datos);
     }
+
     volverAlListado();
   };
 
-  const handleConfirmarBaja = async (dni: number) => {
-    await eliminar(dni);
+  const handleConfirmarBaja = async (id: number) => {
+    await eliminar(id);
     volverAlListado();
-  };
-
-  const volverAlListado = () => {
-    setModo('listado');
-    setPersonalSeleccionado(null);
   };
 
   return (
     <Container className="py-2">
-      <h2 className="mb-4 border-bottom pb-2 text-secondary">Gestión de Personal</h2>
+      <h2 className="mb-4 border-bottom pb-2 text-secondary">
+        Gestión de Personal
+      </h2>
 
       {modo === 'ver' && personalSeleccionado && (
         <PersonalView

@@ -17,7 +17,7 @@ class PlanRealizado(ModeloBase):
     descripcion: Mapped[str] = mapped_column(String(250), nullable=False)
     fecha_ejecucion: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
 
-    responsable_id: Mapped[int] = mapped_column(ForeignKey("personal.dni"), nullable=False)
+    responsable_id: Mapped[int] = mapped_column(ForeignKey("personal.id"), nullable=False)
     sector_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sectores.id"), nullable=True)
     equipo_id: Mapped[Optional[int]] = mapped_column(ForeignKey("equipos.id"), nullable=True)
 

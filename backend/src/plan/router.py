@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session
 from src.database import get_db
 from src.plan import schemas, services
 from src.pagination import PaginatedResponse
+from src.auth.router_base import PermissionedRouter
 
-router = APIRouter(prefix="/planes", tags=["planes_limpieza"])
+
+router = PermissionedRouter(prefix="/planes", tags=["planes-limpieza"])
 
 @router.post("/", response_model=schemas.Plan)
 def create_plan(plan: schemas.PlanCreate, db: Session = Depends(get_db)):

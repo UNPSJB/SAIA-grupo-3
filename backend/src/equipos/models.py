@@ -4,8 +4,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import auto, StrEnum
 from src.models import ModeloBase
 
+
 if TYPE_CHECKING:
-    from src.sector.models import Sector
+   from src.sector.models import Sector
+
 
 
 class TipoEquipo(StrEnum):

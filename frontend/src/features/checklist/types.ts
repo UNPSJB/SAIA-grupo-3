@@ -1,17 +1,26 @@
-import type { FrecuenciaTarea } from '../tarea/types';
+import type { FrecuenciaTarea, TareaInsumoQuimico } from '../tarea/types';
 
 export type EstadoItem = 'pendiente' | 'realizada';
 
 export interface PersonalResumen {
-  dni: number;
+  id: number;
+  dni: string;
   nombre: string;
   apellido: string;
 }
 
 export interface ItemChecklist {
   id: number;
-  plan: { id: number; nombre: string };
-  tarea: { id: number; nombre: string; procedimiento: string };
+  plan: {
+    id: number;
+    nombre: string;
+  };
+  tarea: {
+    id: number;
+    nombre: string;
+    procedimiento: string;
+    insumos_quimicos?: TareaInsumoQuimico[];
+  };
   frecuencia: FrecuenciaTarea;
   periodo_inicio: string;
   periodo_fin: string;
@@ -29,9 +38,3 @@ export interface Checklist {
   realizadas: number;
   pendientes: number;
 }
-
-//--------------
-
-
-
-

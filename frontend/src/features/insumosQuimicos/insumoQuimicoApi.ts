@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
 import type { InsumoQuimico, InsumoQuimicoCreate, InsumoQuimicoUpdate } from './types';
 
 export interface PaginatedInsumosQuimicos {
@@ -22,19 +22,19 @@ export async function getInsumosQuimicos(
   if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
   if (tipoQuimico) url += `&tipo_quimico=${encodeURIComponent(tipoQuimico)}`;
 
-  const res = await fetch(url);
+  const res = await fetchWithAuth(url);
   if (!res.ok) throw new Error('No se pudo listar los insumos químicos.');
   return res.json();
 }
 
 export async function getInsumoQuimicoById(id: number): Promise<InsumoQuimico> {
-  const res = await fetch(`${API_BASE_URL}/insumos-quimicos/${id}`);
+  const res = await fetchWithAuth(`${API_BASE_URL}/insumos-quimicos/${id}`);
   if (!res.ok) throw new Error('Error al obtener el insumo químico.');
   return res.json();
 }
 
 export async function createInsumoQuimico(data: InsumoQuimicoCreate): Promise<InsumoQuimico> {
-  const res = await fetch(`${API_BASE_URL}/insumos-quimicos`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/insumos-quimicos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -47,7 +47,7 @@ export async function createInsumoQuimico(data: InsumoQuimicoCreate): Promise<In
 }
 
 export async function updateInsumoQuimico(id: number, data: InsumoQuimicoUpdate): Promise<InsumoQuimico> {
-  const res = await fetch(`${API_BASE_URL}/insumos-quimicos/${id}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/insumos-quimicos/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -60,7 +60,7 @@ export async function updateInsumoQuimico(id: number, data: InsumoQuimicoUpdate)
 }
 
 export async function deleteInsumoQuimico(id: number): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/insumos-quimicos/${id}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/insumos-quimicos/${id}`, {
     method: 'DELETE',
   });
   if (!res.ok) {

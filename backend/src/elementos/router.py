@@ -1,15 +1,11 @@
-import logging
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.elementos import schemas, services
 from src.pagination import PaginatedResponse
+from src.auth.router_base import PermissionedRouter
 
-# Creamos un logger para este módulo específico
-logger = logging.getLogger(__name__)
-
-# Definimos el router con su prefijo y tag para la documentación Swagger
-router = APIRouter(prefix="/elementos", tags=["elementos"])
+router = PermissionedRouter(prefix="/elementos", tags=["elementos"])
 
 
 @router.post("/", response_model=schemas.Elemento)

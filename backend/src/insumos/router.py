@@ -1,10 +1,13 @@
+import logging
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.insumos import schemas, services
 from src.pagination import PaginatedResponse
+from src.auth.router_base import PermissionedRouter
 
-router = APIRouter(prefix="/insumos", tags=["insumos"])
+logger = logging.getLogger(__name__)
+router = PermissionedRouter(prefix="/insumos", tags=["insumos"])
 
 @router.post("/", response_model=schemas.Insumo)
 def create_insumo(insumo: schemas.InsumoCreate, db: Session = Depends(get_db)):

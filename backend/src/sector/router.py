@@ -4,10 +4,11 @@ from sqlalchemy.orm import Session
 from src.database import get_db
 from src.sector import schemas, services
 from src.pagination import PaginatedResponse
+from src.auth.router_base import PermissionedRouter
+
 
 logger = logging.getLogger(__name__)
-
-router = APIRouter(prefix="/sectores", tags=["sectores"])
+router = PermissionedRouter(prefix="/sectores", tags=["sectores"])
 
 
 @router.post("/", response_model=schemas.Sector)

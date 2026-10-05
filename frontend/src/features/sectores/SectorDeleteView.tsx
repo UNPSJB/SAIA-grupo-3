@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Button, Alert, Badge } from 'react-bootstrap';
+import { Card, Button, Alert } from 'react-bootstrap';
 import type { Sector } from './types';
 
 interface SectorDeleteViewProps {

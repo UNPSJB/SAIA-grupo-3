@@ -4,9 +4,11 @@ from sqlalchemy.orm import Session
 from src.database import get_db
 from src.unidadMedida import schemas, services
 from src.pagination import PaginatedResponse
+from src.auth.router_base import PermissionedRouter
+
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/unidadMedida", tags=["unidad_medida"])
+router = PermissionedRouter(prefix="/unidades-medida", tags=["unidades-medida"])
 
 @router.get("", response_model=PaginatedResponse[schemas.UnidadMedida])
 def read_unidades(

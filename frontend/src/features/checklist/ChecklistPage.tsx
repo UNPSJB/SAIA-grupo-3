@@ -1,48 +1,49 @@
-import { useState, useEffect } from 'react';
-import { Container, Card, Form } from 'react-bootstrap';
+import { useEffect, useState } from 'react';
+import { Alert, Spinner } from 'react-bootstrap';
+
+import { useAuth } from '../../shared/hooks/useAuth';
 import { ChecklistView } from './ChecklistView';
-import { getPersonal, type Personal, type TipoCapacidad } from '../personal';
-import { ErrorAlert } from '../../shared/components/ErrorAlert';
 
-const CAPACIDADES_OPERAR: TipoCapacidad[] = ['operar', 'operar_administrar'];
-
-// TEMPORAL: mientras no exista el login, se elige a mano de qué personal ver el checklist.
-// Con login, personalDni va a salir del usuario autenticado y este selector desaparece.
 export function ChecklistPage() {
-  const [operadores, setOperadores] = useState<Personal[]>([]);
-  const [personalDni, setPersonalDni] = useState<number | null>(null);
+  const { currentUser, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getPersonal(1, 100)
-      .then((res) => setOperadores(res.items.filter((p) => CAPACIDADES_OPERAR.includes(p.tipo_capacidad))))
-      .catch(() => setError('Error al cargar el personal.'));
-  }, []);
+    if (!isLoading && !currentUser) {
+      setError('No se pudo obtener el usuario autenticado.');
+    } else {
+      setError(null);
+    }
+  }, [currentUser, isLoading]);
+
+  if (isLoading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center p-5">
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </Spinner>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="container-fluid p-4">
+        <Alert variant="danger">
+          {error ?? 'No hay un usuario autenticado.'}
+        </Alert>
+      </div>
+    );
+  }
 
   return (
-    <Container className="py-2">
-      <h2 className="mb-4 border-bottom pb-2 text-secondary">Checklist del Día</h2>
-
-      {error && <ErrorAlert mensaje={error} />}
-
-      <Card className="shadow-sm border-0 mb-4">
-        <Card.Body>
-          <Form.Group>
-            <Form.Label className="fw-semibold">Personal</Form.Label>
-            <Form.Select
-              value={personalDni ?? ''}
-              onChange={(e) => setPersonalDni(e.target.value === '' ? null : Number(e.target.value))}
-            >
-              <option value="">Seleccione un operador...</option>
-              {operadores.map((p) => (
-                <option key={p.dni} value={p.dni}>{p.apellido}, {p.nombre} (DNI: {p.dni})</option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-        </Card.Body>
-      </Card>
-
-      {personalDni !== null && <ChecklistView key={personalDni} personalDni={personalDni} />}
-    </Container>
+    <div className="container-fluid">
+      <ChecklistView
+        key={currentUser.id}
+        personalId={currentUser.id}
+      />
+    </div>
   );
 }
+
+export default ChecklistPage;

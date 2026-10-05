@@ -1,27 +1,41 @@
 from datetime import date, datetime
 from typing import List, Optional
-from pydantic import BaseModel, ConfigDict
-from src.tarea.models import FrecuenciaTarea
-from src.checklist.models import EstadoItem
 
-# Resúmenes: solo los datos que el checklist necesita mostrar,
-# en lugar de devolver el plan / la tarea / el personal completos.
+from pydantic import BaseModel, ConfigDict, Field
+
+from src.checklist.models import EstadoItem
+from src.tarea.models import FrecuenciaTarea
+from src.tarea.schemas import TareaInsumoQuimicoSchema
+
+
 class PersonalResumen(BaseModel):
-    dni: int
+    id: int
     nombre: str
     apellido: str
+    dni: str
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class PlanResumen(BaseModel):
     id: int
     nombre: str
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class TareaResumen(BaseModel):
     id: int
     nombre: str
     procedimiento: str
+
+    # Incluye los químicos configurados para la tarea y sus unidades.
+    insumos_quimicos: List[TareaInsumoQuimicoSchema] = Field(
+        default_factory=list,
+    )
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class ItemChecklist(BaseModel):
     id: int
@@ -34,7 +48,9 @@ class ItemChecklist(BaseModel):
     realizada_por: Optional[PersonalResumen] = None
     realizada_en: Optional[datetime] = None
     foto_path: Optional[str] = None
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class Checklist(BaseModel):
     fecha: date
@@ -44,5 +60,11 @@ class Checklist(BaseModel):
     realizadas: int
     pendientes: int
 
+
+class InsumoQuimicoConsumido(BaseModel):
+    insumo_quimico_id: int
+    cantidad_utilizada: float = Field(ge=0)
+
+
 class ItemFinalizarRequest(BaseModel):
-    personal_dni: int
+    consumos: List[InsumoQuimicoConsumido] = Field(default_factory=list)
