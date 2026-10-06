@@ -13,7 +13,8 @@ from src.insumos.models import Insumo
 from src.elementos.models import Elemento
 from src.tarea.models import Tarea, FrecuenciaTarea, TareaInsumoQuimico
 from src.plan.models import Plan
-from src.documentacion.models import Documentacion, TipoDocumento
+from src.documentacion.models import Documentacion
+from src.tipoDocumento.models import TipoDocumento
 from src.insumosQuimicos.models import InsumoQuimico, TipoQuimico
 
 fake = Faker("es_AR")
@@ -24,6 +25,17 @@ def cargar_datos():
     
     db = SessionLocal()
     try:
+        tipos_documento = [
+            "Carnet de manipulador",
+            "Libreta sanitaria",
+            "Apto psicofísico",
+            "Certificado de salud",
+            "Capacitación",
+        ]
+        for nombre in tipos_documento:
+            db.add(TipoDocumento(nombre=nombre, activo=True))
+        db.flush()
+
         # 1. Unidades de Medida base requeridas para los insumos (15 registros)
         unidades = []
         nombres_unidades = [
@@ -97,20 +109,6 @@ def cargar_datos():
             db.add(persona)
             personal_creado.append(persona)
         db.flush()
-
-        # # 4.5 Documentación del Personal - NUEVO
-        # tipos_documento = list(TipoDocumento)
-        # for persona in personal_creado:
-        #     # Asignamos aleatoriamente entre 1 y 2 documentos a cada empleado
-        #     for _ in range(random.randint(1, 2)):
-        #         tipo_doc = random.choice(tipos_documento)
-        #         documento = Documentacion(
-        #             nombre=f"Certificado de {tipo_doc.value.replace('_', ' ').capitalize()}",
-        #             tipo_documento=tipo_doc,
-        #             personal_id=persona.dni
-        #         )
-        #         db.add(documento)
-        # db.flush()
 
         # 5. Equipos (15 registros vinculados por Foreign Key al sector)
         equipos_creados = []

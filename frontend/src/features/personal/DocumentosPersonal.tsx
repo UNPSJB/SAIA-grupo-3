@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Badge, Button, Card, Form, Modal, Table } from 'react-bootstrap';
+import { Button, Card, Form, Modal, Table } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
+import { getTiposDocumento } from '../tipoDocumento/tipoDocumentoApi';
 import {
   createDocumento,
   deleteDocumento,
@@ -9,14 +10,9 @@ import {
   type DocumentoDatos,
 } from './documentacionApi';
 import type { Documento, TipoDocumento } from './types';
-import { TIPOS_DOCUMENTO } from './types';
 
 interface DocumentosPersonalProps {
   personalId: number;
-}
-
-function nombreTipoDocumento(tipo: TipoDocumento): string {
-  return TIPOS_DOCUMENTO.find((opcion) => opcion.value === tipo)?.label ?? tipo;
 }
 
 function formatearFecha(fecha: string | null): string {
@@ -27,22 +23,23 @@ function formatearFecha(fecha: string | null): string {
 
 export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
   const [documentos, setDocumentos] = useState<Documento[]>([]);
+  const [tiposDocumento, setTiposDocumento] = useState<TipoDocumento[]>([]);
   const [personalCargadoId, setPersonalCargadoId] = useState<number | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [documentoEditando, setDocumentoEditando] = useState<Documento | null>(null);
-  const [nombre, setNombre] = useState('');
-  const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>('carnet_manipulador');
+  const [tipoDocumentoId, setTipoDocumentoId] = useState<number | ''>('');
   const [fechaVencimiento, setFechaVencimiento] = useState('');
   const [validado, setValidado] = useState(false);
 
   useEffect(() => {
     let componenteActivo = true;
-    getDocumentosPersonal(personalId)
-      .then((datos) => {
+    Promise.all([getDocumentosPersonal(personalId), getTiposDocumento(1, 100)])
+      .then(([datos, tipos]) => {
         if (componenteActivo) {
           setDocumentos(datos);
+          setTiposDocumento(tipos.items.filter((tipo) => tipo.activo));
           setError(null);
         }
       })
@@ -62,8 +59,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
 
   const abrirFormulario = (documento?: Documento) => {
     setDocumentoEditando(documento ?? null);
-    setNombre(documento?.nombre ?? '');
-    setTipoDocumento(documento?.tipo_documento ?? 'carnet_manipulador');
+    setTipoDocumentoId(documento?.tipo_documento_id ?? tiposDocumento[0]?.id ?? '');
     setFechaVencimiento(documento?.fecha_vencimiento ?? '');
     setValidado(false);
     setError(null);
@@ -88,8 +84,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
     setGuardando(true);
     setError(null);
     const datos: DocumentoDatos = {
-      nombre: nombre.trim(),
-      tipo_documento: tipoDocumento,
+      tipo_documento_id: Number(tipoDocumentoId),
       fecha_vencimiento: fechaVencimiento,
     };
 
@@ -115,7 +110,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
   };
 
   const handleEliminar = async (documento: Documento) => {
-    if (!window.confirm(`¿Eliminar el documento "${documento.nombre}"?`)) return;
+    if (!window.confirm(`¿Eliminar el documento "${documento.tipo_documento.nombre}"?`)) return;
     setError(null);
     try {
       await deleteDocumento(documento.id);
@@ -154,8 +149,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
             <Table striped hover responsive className="mb-0 align-middle">
               <thead className="table-light">
                 <tr>
-                  <th>Documento</th>
-                  <th>Tipo</th>
+                  <th>Tipo de documento</th>
                   <th>Fecha de vencimiento</th>
                   <th className="text-center">Acciones</th>
                 </tr>
@@ -163,15 +157,14 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
               <tbody>
                 {documentos.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-4 text-muted">
+                    <td colSpan={3} className="text-center py-4 text-muted">
                       No hay documentos cargados para esta persona.
                     </td>
                   </tr>
                 ) : (
                   documentos.map((documento) => (
                     <tr key={documento.id}>
-                      <td><strong>{documento.nombre}</strong></td>
-                      <td><Badge bg="info" className="text-dark">{nombreTipoDocumento(documento.tipo_documento)}</Badge></td>
+                      <td><strong>{documento.tipo_documento.nombre}</strong></td>
                       <td>{formatearFecha(documento.fecha_vencimiento)}</td>
                       <td className="text-center">
                         <div className="d-flex justify-content-center gap-2">
@@ -179,7 +172,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
                             variant="warning"
                             size="sm"
                             title="Editar o renovar"
-                            aria-label={`Editar o renovar ${documento.nombre}`}
+                            aria-label={`Editar o renovar ${documento.tipo_documento.nombre}`}
                             onClick={() => abrirFormulario(documento)}
                           >
                             <i className="bi bi-pencil-fill"></i>
@@ -188,7 +181,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
                             variant="danger"
                             size="sm"
                             title="Eliminar"
-                            aria-label={`Eliminar ${documento.nombre}`}
+                            aria-label={`Eliminar ${documento.tipo_documento.nombre}`}
                             onClick={() => void handleEliminar(documento)}
                           >
                             <i className="bi bi-trash3-fill"></i>
@@ -214,27 +207,25 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
           <Modal.Body>
             {error && <ErrorAlert mensaje={error} />}
             <Form.Group className="mb-3">
-              <Form.Label>Nombre del documento</Form.Label>
-              <Form.Control
-                type="text"
-                required
-                maxLength={100}
-                value={nombre}
-                onChange={(evento) => setNombre(evento.target.value)}
-              />
-              <Form.Control.Feedback type="invalid">
-                Ingresá el nombre del documento.
-              </Form.Control.Feedback>
-            </Form.Group>
-            <Form.Group className="mb-3">
               <Form.Label>Tipo de documento</Form.Label>
               <Form.Select
                 required
-                value={tipoDocumento}
-                onChange={(evento) => setTipoDocumento(evento.target.value as TipoDocumento)}
+                value={tipoDocumentoId}
+                onChange={(evento) =>
+                  setTipoDocumentoId(
+                    evento.target.value ? Number(evento.target.value) : ''
+                  )
+                }
               >
-                {TIPOS_DOCUMENTO.map((tipo) => (
-                  <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                <option value="">Seleccioná un tipo</option>
+                {[
+                  ...tiposDocumento,
+                  ...(documentoEditando
+                    && !tiposDocumento.some((tipo) => tipo.id === documentoEditando.tipo_documento_id)
+                    ? [documentoEditando.tipo_documento]
+                    : []),
+                ].map((tipo) => (
+                  <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
                 ))}
               </Form.Select>
             </Form.Group>

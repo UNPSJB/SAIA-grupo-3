@@ -5,6 +5,7 @@ import { PersonalPage } from '../features/personal';
 import { InsumoPage } from '../features/insumos';
 import { InsumoQuimicoPage } from '../features/insumosQuimicos';
 import { UnidadMedidaPage } from '../features/unidadMedida/unidadMedidaPage';
+import { TipoDocumentoPage } from '../features/tipoDocumento/TipoDocumentoPage';
 import { TareaPage } from '../features/tarea';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import App from './App';
@@ -25,6 +26,7 @@ export function AppRouter() {
         <Route path="insumos" element={<InsumoPage />} />
         <Route path="insumos-quimicos" element={<InsumoQuimicoPage />} />
         <Route path="unidades-medida" element={<UnidadMedidaPage />} />
+        <Route path="tipos-documento" element={<TipoDocumentoPage />} />
         <Route path="tarea" element={<TareaPage />} />
         <Route path="reportes/consumos" element={<ReporteConsumosPage />} />
         <Route path="sectores" element={<SectorPage/>} />

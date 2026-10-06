@@ -5,6 +5,8 @@ from src.documentacion.models import Documentacion
 from src.documentacion import schemas, exceptions
 from src.personal.models import Personal
 from src.personal import exceptions as personal_exceptions
+from src.tipoDocumento.models import TipoDocumento
+from src.tipoDocumento import exceptions as tipo_documento_exceptions
 
 
 # operaciones CRUD para Documentos
@@ -16,6 +18,15 @@ def crear_documento(db: Session, documento: schemas.DocumentoCreate) -> schemas.
     )
     if personal is None:
         raise personal_exceptions.PersonalNoEncontrado()
+
+    tipo_documento = db.scalar(
+        select(TipoDocumento).where(
+            TipoDocumento.id == documento.tipo_documento_id,
+            TipoDocumento.activo == True,
+        )
+    )
+    if tipo_documento is None:
+        raise tipo_documento_exceptions.TipoDocumentoNoEncontrado()
 
     _documento = Documentacion(**documento.model_dump())
     db.add(_documento)
@@ -44,6 +55,16 @@ def modificar_documento(
     db: Session, documento_id: int, documento: schemas.DocumentoUpdate
 ) -> Documentacion:
     db_documento = leer_documento(db, documento_id)
+    tipo_documento = db.scalar(
+        select(TipoDocumento).where(
+            TipoDocumento.id == documento.tipo_documento_id,
+            (TipoDocumento.activo == True)
+            | (TipoDocumento.id == db_documento.tipo_documento_id),
+        )
+    )
+    if tipo_documento is None:
+        raise tipo_documento_exceptions.TipoDocumentoNoEncontrado()
+
     db.execute(
         update(Documentacion)
         .where(Documentacion.id == documento_id)
@@ -56,8 +77,9 @@ def modificar_documento(
 
 def eliminar_documento(db: Session, documento_id: int) -> schemas.DocumentoDelete:
     db_documento = leer_documento(db, documento_id)
+    documento_eliminado = schemas.DocumentoDelete.model_validate(db_documento)
     db.execute(
         delete(Documentacion).where(Documentacion.id == documento_id)
     )
     db.commit()
-    return db_documento
+    return documento_eliminado

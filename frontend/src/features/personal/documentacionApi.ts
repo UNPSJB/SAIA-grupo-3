@@ -2,8 +2,7 @@ import { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api';
 import type { Documento } from './types';
 
 export interface DocumentoDatos {
-  nombre: string;
-  tipo_documento: Documento['tipo_documento'];
+  tipo_documento_id: number;
   fecha_vencimiento: string;
 }
 
