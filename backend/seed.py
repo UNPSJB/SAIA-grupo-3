@@ -110,6 +110,19 @@ def cargar_datos():
             personal_creado.append(persona)
         db.flush()
 
+        # 4.5 Documentación con vencimientos variados
+        tipos_doc = db.query(TipoDocumento).all()
+        hoy = date.today()
+        for persona in personal_creado:
+            for tipo in random.sample(tipos_doc, k=2):
+                db.add(Documentacion(
+                    personal_id=persona.dni,
+                    tipo_documento_id=tipo.id,
+                    # entre 15 días vencido y 120 días a futuro
+                    fecha_vencimiento=hoy + timedelta(days=random.randint(-15, 120)),
+                ))
+        db.flush()
+
         # 5. Equipos (15 registros vinculados por Foreign Key al sector)
         equipos_creados = []
         tipos_equipos = list(TipoEquipo)

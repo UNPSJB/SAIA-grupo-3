@@ -38,6 +38,8 @@ setup_logging()
 @asynccontextmanager
 async def db_creation_lifespan(app: FastAPI):
     ModeloBase.metadata.create_all(bind=engine)
+    if settings.SCHEDULER_ACTIVO:
+        iniciar_scheduler()
     yield
     if settings.SCHEDULER_ACTIVO:
         detener_scheduler()
