@@ -122,3 +122,8 @@ body:not([data-bs-theme="dark"]) {
 [data-bs-theme="dark"] .text-dark {
   color: var(--bs-body-color) !important;
 }
+
+/* Campanita de notificaciones: sin la flecha del dropdown */
+.campanita-toggle::after {
+  display: none;
+}

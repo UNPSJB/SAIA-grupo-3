@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Personal } from './types';
 import { getPersonal, createPersonal, updatePersonal, deletePersonal } from './personalApi';
 
-export function usePersonal() {
+export function usePersonal(proximosAVencer = false) {
   const [personal, setPersonal] = useState<Personal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,10 +12,10 @@ export function usePersonal() {
   const [total, setTotal] = useState(0);
   const [mostrarInactivos, setMostrarInactivos] = useState(false);
 
-  const cargarPersonal = useCallback(
-    (currentPage: number, currentSize: number, showInactive: boolean) => {
+    const cargarPersonal = useCallback(
+    (currentPage: number, currentSize: number, showInactive: boolean, soloVencimientos: boolean) => {
       setLoading(true);
-      getPersonal(currentPage, currentSize, showInactive)
+      getPersonal(currentPage, currentSize, showInactive, soloVencimientos)
         .then((data) => {
           setPersonal(data.items);
           setTotalPages(data.pages);
@@ -30,12 +30,12 @@ export function usePersonal() {
   );
 
   useEffect(() => {
-    cargarPersonal(page, size, mostrarInactivos);
-  }, [cargarPersonal, page, size, mostrarInactivos]);
+    cargarPersonal(page, size, mostrarInactivos, proximosAVencer);
+  }, [cargarPersonal, page, size, mostrarInactivos, proximosAVencer]);
 
   const eliminar = async (dni: number) => {
     await deletePersonal(dni);
-    cargarPersonal(page, size, mostrarInactivos);
+    cargarPersonal(page, size, mostrarInactivos, proximosAVencer);
   };
 
   const guardar = async (datos: Personal, dniExistente?: number) => {
@@ -44,7 +44,7 @@ export function usePersonal() {
     } else {
       await createPersonal(datos);
     }
-    cargarPersonal(page, size, mostrarInactivos);
+    cargarPersonal(page, size, mostrarInactivos, proximosAVencer);
   };
 
   // Funciones de navegación

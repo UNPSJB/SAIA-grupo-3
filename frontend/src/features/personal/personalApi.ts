@@ -12,10 +12,11 @@ export interface PaginatedPersonal {
 export async function getPersonal(
   page = 1,
   size = 10,
-  mostrarInactivos = false
+  mostrarInactivos = false,
+  proximosAVencer = false
 ): Promise<PaginatedPersonal> {
   const res = await fetch(
-    `${API_BASE_URL}/personal?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}`
+    `${API_BASE_URL}/personal?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&proximos_a_vencer=${proximosAVencer}`
   );
   if (!res.ok) throw new Error('No se pudo listar el personal.');
   return res.json();

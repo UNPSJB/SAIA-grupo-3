@@ -1,4 +1,5 @@
 import { Table, Card, Button, Badge, Pagination, Form } from 'react-bootstrap';
+import { useSearchParams } from 'react-router-dom';
 import { usePersonal } from './usePersonal';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -13,10 +14,17 @@ interface PersonalListProps {
 }
 
 export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onEliminarClick }: PersonalListProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const proximosAVencer = searchParams.get('vencimiento') === 'proximos';
+
   const { personal, loading, error,
     page, totalPages, total, nextPage, prevPage, changePage,
     mostrarInactivos, setMostrarInactivos, guardar
-   } = usePersonal();
+  } = usePersonal(proximosAVencer);
+
+  const cambiarFiltroVencimiento = (activo: boolean) => {
+    setSearchParams(activo ? { vencimiento: 'proximos' } : {});
+  };
 
   const getLabelCapacidad = (valor: Personal['tipo_capacidad']) => {
     const encontrado = TIPOS_CAPACIDAD.find((t) => t.value === valor);
@@ -40,6 +48,14 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4 className="mb-0 text-secondary">Nómina del Personal</h4>
         <div className="d-flex align-items-center gap-3">
+          <Form.Check
+            type="switch"
+            id="switch-vencimientos-personal"
+            label={<><i className="bi bi-exclamation-triangle-fill text-warning me-1"></i>Próximos a vencer</>}
+            checked={proximosAVencer}
+            onChange={(e) => cambiarFiltroVencimiento(e.target.checked)}
+            className="text-secondary mb-0"
+          />
           <Form.Check
             type="switch"
             id="switch-inactivos-personal"
@@ -73,7 +89,9 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
               {personal.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-4 text-muted">
-                    No hay personal registrado para los filtros actuales.
+                    {proximosAVencer
+                      ? 'No hay personal con documentación vencida o por vencer.'
+                      : 'No hay personal registrado para los filtros actuales.'}
                   </td>
                 </tr>
               ) : (
