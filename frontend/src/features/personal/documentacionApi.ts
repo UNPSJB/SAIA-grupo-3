@@ -57,3 +57,11 @@ export async function deleteDocumento(documentoId: number): Promise<void> {
     throw new Error(await mensajeError(res, 'No se pudo eliminar el documento.'));
   }
 }
+
+export async function getAllDocumentos(): Promise<Documento[]> {
+  const res = await fetch(`${API_BASE_URL}/documentos`);
+  if (!res.ok) {
+    throw new Error(await mensajeError(res, 'No se pudieron obtener los documentos globales.'));
+  }
+  return res.json();
+}

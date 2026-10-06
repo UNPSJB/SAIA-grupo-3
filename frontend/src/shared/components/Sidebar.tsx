@@ -9,19 +9,43 @@ interface SidebarProps {
 
 export function Sidebar({ show, onClose }: SidebarProps) {
   const location = useLocation();
+  
+  // Detección de rutas activas para abrir los menús automáticamente
   const esRutaInsumos = location.pathname.startsWith('/insumos');
+  const esRutaVencimientos = location.search.includes('vencimiento=proximos') || location.pathname === '/equipos';
+
   const [openInsumos, setOpenInsumos] = useState(esRutaInsumos);
+  const [openVencimientos, setOpenVencimientos] = useState(esRutaVencimientos);
 
   useEffect(() => {
-    if (esRutaInsumos) {
-      setOpenInsumos(true);
-    }
+    if (esRutaInsumos) setOpenInsumos(true);
   }, [esRutaInsumos]);
+
+  useEffect(() => {
+    if (esRutaVencimientos) setOpenVencimientos(true);
+  }, [esRutaVencimientos]);
 
   const menuItems = [
     { to: "/personal", label: "Personal", icono: "bi bi-people" },
     { to: "/sectores", label: "Sectores", icono: "bi bi-diagram-3" },
     { to: "/equipos", label: "Equipos", icono: "bi bi-tools" },
+    {
+      label: "Vencimientos",
+      icono: "bi bi-calendar-x",
+      esDesplegable: true,
+      subItems: [
+        {
+          to: "/personal?vencimiento=proximos",
+          label: "Personal",
+          icono: "bi bi-person-vcard",
+        },
+        {
+          to: "/equipos",
+          label: "Calibración",
+          icono: "bi bi-tools",
+        },
+      ],
+    },
     {
       label: "Insumos",
       icono: "bi bi-boxes",
@@ -58,26 +82,34 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       <nav className="nav nav-pills flex-column px-3 gap-1">
         {menuItems.map((item) => {
           if (item.esDesplegable) {
+            // Lógica para asignar el estado de apertura/cierre dinámico según el nombre del ítem
+            const isOpen = item.label === "Insumos" ? openInsumos : openVencimientos;
+            const toggleMenu = () => {
+              if (item.label === "Insumos") setOpenInsumos(!openInsumos);
+              if (item.label === "Vencimientos") setOpenVencimientos(!openVencimientos);
+            };
+            const isRutaActiva = item.label === "Insumos" ? esRutaInsumos : esRutaVencimientos;
+
             return (
               <div key={item.label}>
                 <div
-                  onClick={() => setOpenInsumos(!openInsumos)}
+                  onClick={toggleMenu}
                   className={`nav-link d-flex justify-content-between align-items-center px-3 py-2 rounded-3 fw-medium user-select-none ${
-                    esRutaInsumos ? 'text-dark' : 'text-secondary hover-bg-light'
+                    isRutaActiva ? 'text-dark' : 'text-secondary hover-bg-light'
                   }`}
                   style={{ cursor: 'pointer' }}
-                  aria-controls="insumos-collapse"
-                  aria-expanded={openInsumos}
+                  aria-controls={`collapse-${item.label.toLowerCase()}`}
+                  aria-expanded={isOpen}
                 >
                   <span className="d-flex align-items-center gap-3">
                     <i className={item.icono}></i>
                     {item.label}
                   </span>
-                  <i className={`bi bi-chevron-${openInsumos ? 'down' : 'right'} text-dark ms-auto small`}></i>
+                  <i className={`bi bi-chevron-${isOpen ? 'down' : 'right'} text-dark ms-auto small`}></i>
                 </div>
 
-                <Collapse in={openInsumos}>
-                  <div id="insumos-collapse">
+                <Collapse in={isOpen}>
+                  <div id={`collapse-${item.label.toLowerCase()}`}>
                     <div className="d-flex flex-column gap-1 mt-1">
                       {item.subItems?.map((sub) => (
                         <NavLink
@@ -85,11 +117,12 @@ export function Sidebar({ show, onClose }: SidebarProps) {
                           to={sub.to}
                           end={sub.end}
                           onClick={onClose}
-                          className={({ isActive }) =>
-                            `nav-link d-flex align-items-center gap-2 py-1 rounded-3 small fw-medium ${
-                              isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
-                            }`
-                          }
+                          className={({ isActive }) => {
+                            // React Router NavLink no evalúa isActive automáticamente si hay parámetros de búsqueda (como ?vencimientos=proximos). Esto fuerza el pintado.
+                            const isSearchActive = sub.to.includes('?') && location.search === sub.to.substring(sub.to.indexOf('?'));
+                            const activeClass = isActive || isSearchActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light';
+                            return `nav-link d-flex align-items-center gap-2 py-1 rounded-3 small fw-medium ${activeClass}`;
+                          }}
                           style={{ paddingLeft: '2rem' }}
                         >
                           <i className={`${sub.icono} me-1`}></i>
@@ -110,7 +143,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
               onClick={onClose}
               className={({ isActive }) =>
                 `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium text-wrap overflow-hidden ${
-                  isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
+                  isActive && !location.search.includes('vencimiento=proximos') ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
                 }`
               }
               style={{ wordBreak: 'break-word', lineHeight: '1.2' }}
