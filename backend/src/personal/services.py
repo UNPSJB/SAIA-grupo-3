@@ -4,6 +4,8 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 from src.personal.models import Personal
 from src.personal import schemas, exceptions
+from src.documentacion.vencimientos import dnis_con_vencimientos
+
 
 # Creamos un logger para este módulo específico. Más info.: https://docs.python.org/3/library/logging.html
 logger = logging.getLogger(__name__)
@@ -41,7 +43,7 @@ def crear_personal(db: Session, personal: schemas.PersonalCreate) -> schemas.Per
 
 
 def listar_personal(
-    db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False
+    db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False, proximos_a_vencer: bool = False
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(Personal)
@@ -49,6 +51,9 @@ def listar_personal(
     if not mostrar_inactivos:
         query = query.where(Personal.activo == True)
 
+    if proximos_a_vencer:
+        query = query.where(Personal.dni.in_(dnis_con_vencimientos(db)))
+    
     total = db.scalar(select(func.count()).select_from(query.subquery()))
 
     items = db.scalars(query.offset(skip).limit(size)).all()

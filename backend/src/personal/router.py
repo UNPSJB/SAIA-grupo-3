@@ -22,8 +22,9 @@ def read_personal(db: Session = Depends(get_db),
     page: int = Query(1, ge=1, description="Número de página"),
     size: int = Query(10, ge=1, le=100, description="Cantidad de registros por página"),
     mostrar_inactivos: bool = Query(False, description="Incluir personal dado de baja")
+    proximos_a_vencer: bool = Query(False, description="Solo personal con documentación vencida o por vencer"),
 ):
-    return services.listar_personal(db, page, size, mostrar_inactivos)
+    return services.listar_personal(db, page, size, mostrar_inactivos, proximos_a_vencer)
 
 
 @router.get("/{personal_id}", response_model=schemas.Personal)
