@@ -41,6 +41,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       ],
     },
     { to: "/unidades-medida", label: "Unidades de Medida", icono: "bi bi-rulers" },
+    { to: "/tipos-documento", label: "Tipos de documentos", icono: "bi bi-file-earmark-text" },
     { to: "/tarea", label: "Tareas", icono: "bi bi-list-task" },
     { to: "/elementos", label: "Elementos de Limpieza", icono: "bi bi-bucket-fill" },
     { to: "/planes", label: "Planes", icono: "bi bi-clipboard2-check" },

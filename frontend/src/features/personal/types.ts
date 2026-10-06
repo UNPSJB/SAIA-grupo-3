@@ -6,6 +6,21 @@ export const TIPOS_CAPACIDAD: { value: TipoCapacidad; label: string }[] = [
   { value: 'operar_administrar', label: 'Operar y Administrar' },
 ];
 
+export interface TipoDocumento {
+  id: number;
+  nombre: string;
+  activo: boolean;
+}
+
+export interface Documento {
+  id: number;
+  tipo_documento_id: number;
+  tipo_documento: TipoDocumento;
+  fecha_vencimiento: string | null;
+  personal_id: number;
+  nombre_personal: string;
+}
+
 export interface Personal {
   dni: number;
   nroLegajo: number;
