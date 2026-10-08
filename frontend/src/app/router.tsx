@@ -16,6 +16,7 @@ import { ChecklistPage } from '../features/checklist';
 import { AuditoriaPage } from '../features/auditoria';
 import { ReporteConsumosPage } from '../features/consumoQuimicos/ConsumoQuimicoPage';
 import { VencimientosPage } from '../features/personal';
+import { IncidentesPage } from '../features/incidentes';
 
 export function AppRouter() {
   return (
@@ -34,6 +35,7 @@ export function AppRouter() {
         <Route path="elementos" element={<ElementoPage />} />
         <Route path="planes" element={<PlanPage/>} />
         <Route path="checklist" element={<ChecklistPage />} />
+        <Route path="incidentes" element={<IncidentesPage />} />
         <Route path="auditoria" element={<AuditoriaPage />} />
         <Route path="/personal/vencimientos" element={<VencimientosPage />} />
 

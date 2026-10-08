@@ -1,5 +1,5 @@
 import random
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from faker import Faker
 
 from src.database import SessionLocal, engine
@@ -16,6 +16,7 @@ from src.plan.models import Plan
 from src.documentacion.models import Documentacion
 from src.tipoDocumento.models import TipoDocumento
 from src.insumosQuimicos.models import InsumoQuimico, TipoQuimico
+from src.incidente.models import Incidente
 
 fake = Faker("es_AR")
 
@@ -97,17 +98,42 @@ def cargar_datos():
         # 4. Personal (15 registros con claves únicas)
         personal_creado = []
         tipos_capacidad = list(TipoCapacidad)
-        for _ in range(15):
+        for i in range(15):
             persona = Personal(
                 dni=fake.unique.random_int(min=20000000, max=45000000),
                 nroLegajo=fake.unique.random_int(min=1000, max=9999),
                 nombre=fake.first_name(),
                 apellido=fake.last_name(),
                 email=fake.unique.email(),
-                tipo_capacidad=random.choice(tipos_capacidad),
+                tipo_capacidad=(
+                    TipoCapacidad.OPERAR if i == 0 else random.choice(tipos_capacidad)
+                ),
             )
             db.add(persona)
             personal_creado.append(persona)
+        db.flush()
+
+        # 4.2 Incidentes de ejemplo reportados por personal con permiso para operar
+        operadores = [
+            persona
+            for persona in personal_creado
+            if persona.tipo_capacidad
+            in (TipoCapacidad.OPERAR, TipoCapacidad.OPERAR_ADMINISTRAR)
+        ]
+        incidentes_ejemplo = [
+            "Se detectó una pérdida de agua debajo de la pileta del área de lavado.",
+            "Se observó presencia de insectos en el sector de almacenamiento.",
+            "Un cliente devolvió un producto por inconvenientes con el envase.",
+        ]
+        ahora = datetime.now()
+        for i, descripcion in enumerate(incidentes_ejemplo):
+            db.add(
+                Incidente(
+                    descripcion=descripcion,
+                    fecha_hora=ahora - timedelta(hours=i * 5),
+                    reportado_por_dni=random.choice(operadores).dni,
+                )
+            )
         db.flush()
 
         # 4.5 Documentación con vencimientos variados

@@ -70,6 +70,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: "/elementos", label: "Elementos de Limpieza", icono: "bi bi-bucket-fill" },
     { to: "/planes", label: "Planes", icono: "bi bi-clipboard2-check" },
     { to: "/checklist", label: "Checklist del Día", icono: "bi bi-check2-square" },
+    { to: "/incidentes", label: "Incidentes", icono: "bi bi-exclamation-triangle" },
     { to: "/auditoria", label: "Historial de Checklist", icono: "bi bi-clock-history" },
     { to: "/reportes/consumos", label: "Consumo de insumos químicos", icono: "bi bi-bar-chart-line" },
   ];
