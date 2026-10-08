@@ -13,6 +13,8 @@ export interface Equipo {
   tipo: TipoEquipo;
   sector_id: number;
   activo?: boolean;
+  fecha_ultima_calibracion?: string | null;
+  periodicidad_dias?: number | null;
   sector?: {           
     id: number;
     nombre: string;

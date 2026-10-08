@@ -18,6 +18,7 @@ from src.consumoQuimico.models import ConsumoQuimico #agruegue esta linea
 from src.insumosQuimicos.models import InsumoQuimico #agruegue esta linea
 from src.exceptions import BadRequest
 from fastapi import HTTPException
+from src.equipos.models import Equipo
 
 CAPACIDADES_OPERAR = (TipoCapacidad.OPERAR, TipoCapacidad.OPERAR_ADMINISTRAR)
 
@@ -129,8 +130,6 @@ def armar_checklist(db: Session, personal_dni: int, hoy: date) -> schemas.Checkl
         pendientes=len(items) - realizadas,
     )
 
-
-
 def finalizar_item_checklist(
     db: Session, 
     item_id: int, 
@@ -143,9 +142,21 @@ def finalizar_item_checklist(
     
     if item.estado == EstadoItem.REALIZADA:
         raise exceptions.BadRequest("La tarea ya se encuentra realizada.")
-
     ahora = datetime.now()
-
+    hoy = ahora.date()
+    equipo_id_asignado = item.tarea.equipo_id or item.plan.equipo_id
+    
+    if equipo_id_asignado:
+        equipo_db = db.get(Equipo, equipo_id_asignado)
+        if equipo_db and equipo_db.fecha_ultima_calibracion and equipo_db.periodicidad_dias:
+            fecha_vencimiento = equipo_db.fecha_ultima_calibracion + timedelta(days=equipo_db.periodicidad_dias)
+            if fecha_vencimiento < hoy:
+               if fecha_vencimiento < hoy:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"No se puede realizar la tarea: El equipo '{equipo_db.nombre}' tiene su calibración vencida desde el {fecha_vencimiento.strftime('%d/%m/%Y')}."
+                )
+            
     item.estado = EstadoItem.REALIZADA
     item.realizada_por_dni = personal_dni
     item.realizada_en = ahora
@@ -158,9 +169,7 @@ def finalizar_item_checklist(
         fecha_hora=ahora,
         foto_path=foto_path
     ))
-
     hoy = ahora.date()
-    
     plan_realizado = db.scalar(
         select(PlanRealizado).where(
             PlanRealizado.plan_origen_id == item.plan_id,
@@ -194,26 +203,17 @@ def finalizar_item_checklist(
         insumos_utilizados=[{"id": i.insumo_quimico_id, "cantidad": i.cantidad} for i in item.tarea.insumos_quimicos]
     )
     db.add(tarea_realizada)
-    #HICE ESTE CAMBIO PARA EL TEMA DE INSUMO QUIMICO
-    
-    #DESCUENTO AUTOMÁTICO DE INSUMOS ---
     errores_stock = []
     insumos_a_descontar = []
-
-    # Validacion (Revisamos todos los stocks antes de descontar)
     for req in item.tarea.insumos_quimicos:
         insumo_db = db.get(InsumoQuimico, req.insumo_quimico_id)
         if insumo_db:
             if insumo_db.cantidad < req.cantidad:
-                # Si falta, lo anotamos en la lista de errores
                 errores_stock.append(
                     f"'{insumo_db.nombre}' (necesitas {req.cantidad}, tenés {insumo_db.cantidad})"
                 )
             else:
-                # Si alcanza, se guarda para descontarlo despues
                 insumos_a_descontar.append((insumo_db, req.cantidad))
-
-    # Si la lista de errores tiene algo, abortamos y mostramos todos juntos
     if errores_stock:
         mensaje_completo = "Stock insuficiente de insumos: " + " / ".join(errores_stock)
         raise HTTPException(
@@ -222,10 +222,7 @@ def finalizar_item_checklist(
         )
 
     for insumo_db, cantidad_usada in insumos_a_descontar:
-        # Descontamos stock
         insumo_db.cantidad -= cantidad_usada
-        
-        # Registramos el historial de consumo
         nuevo_consumo = ConsumoQuimico(
             insumo_quimico_id=insumo_db.id,
             cantidad_utilizada=cantidad_usada,

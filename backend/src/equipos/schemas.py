@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, field_validator
 from src.equipos.models import TipoEquipo
@@ -13,6 +14,9 @@ class EquipoBase(BaseModel):
     nombre: str
     tipo: TipoEquipo
     sector_id: int  
+
+    fecha_ultima_calibracion: Optional[date] = None
+    periodicidad_dias: Optional[int] = None
 
     @field_validator("tipo", mode="before")
     @classmethod
@@ -31,6 +35,9 @@ class EquipoUpdate(BaseModel):
     tipo: Optional[TipoEquipo] = None
     sector_id: Optional[int] = None
     activo: Optional[bool] = None
+
+    fecha_ultima_calibracion: Optional[date] = None
+    periodicidad_dias: Optional[int] = None
 
     @field_validator("tipo", mode="before")
     @classmethod
