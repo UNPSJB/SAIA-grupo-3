@@ -6,7 +6,7 @@
 [data-bs-theme="light"] body,
 body:not([data-bs-theme="dark"]) {
   background-color: #f8fafc;
-  color: #1e293b;
+  color: #ee0000; /*#1e293b*/
 }
 
 .shadow-xs {
