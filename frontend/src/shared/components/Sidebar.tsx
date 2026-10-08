@@ -12,7 +12,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   
   // Detección de rutas activas para abrir los menús automáticamente
   const esRutaInsumos = location.pathname.startsWith('/insumos');
-  const esRutaVencimientos = location.search.includes('vencimiento=proximos') || location.pathname === '/equipos';
+  const esRutaVencimientos =  location.pathname === '/personal/vencimientos' ||  location.search.includes('vencimiento=proximos') ||  location.pathname === '/equipos';
 
   const [openInsumos, setOpenInsumos] = useState(esRutaInsumos);
   const [openVencimientos, setOpenVencimientos] = useState(esRutaVencimientos);
@@ -35,7 +35,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       esDesplegable: true,
       subItems: [
         {
-          to: "/personal?vencimiento=proximos",
+          to: "/personal/vencimientos",
           label: "Personal",
           icono: "bi bi-person-vcard",
         },
@@ -140,6 +140,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
             <NavLink
               key={item.to}
               to={item.to!}
+              end={item.to === '/personal'}
               onClick={onClose}
               className={({ isActive }) =>
                 `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium text-wrap overflow-hidden ${

@@ -1,5 +1,6 @@
 from datetime import date
 from pydantic import BaseModel, ConfigDict, Field
+from src.documentacion.constants import EstadoVencimiento
 from src.tipoDocumento.schemas import TipoDocumento
 
 
@@ -27,3 +28,23 @@ class Documento(DocumentoBase):
 
 class DocumentoDelete(Documento):
     pass
+
+
+class EmpleadoResumen(BaseModel):
+
+    dni: int
+    nroLegajo: int
+    nombre: str
+    apellido: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+class Vencimiento(BaseModel):
+    id: int
+    fecha_vencimiento: date
+    tipo_documento: TipoDocumento
+    personal: EmpleadoResumen
+    estado: EstadoVencimiento
+    dias_restantes: int  # negativo si ya venció
+
+    model_config = ConfigDict(from_attributes=True)

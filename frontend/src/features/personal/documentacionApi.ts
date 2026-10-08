@@ -1,5 +1,5 @@
 import { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api';
-import type { Documento } from './types';
+import type { Documento, EstadoVencimiento, PaginatedVencimientos } from './types';
 
 export interface DocumentoDatos {
   tipo_documento_id: number;
@@ -7,7 +7,7 @@ export interface DocumentoDatos {
 }
 
 async function mensajeError(res: Response, mensajePorDefecto: string): Promise<string> {
-  const errorData = await res.json();
+  const errorData = await res.json().catch(() => ({}));
   return mensajeDeError(errorData.detail, mensajePorDefecto);
 }
 
@@ -58,10 +58,21 @@ export async function deleteDocumento(documentoId: number): Promise<void> {
   }
 }
 
-export async function getAllDocumentos(): Promise<Documento[]> {
-  const res = await fetch(`${API_BASE_URL}/documentos`);
+export async function getVencimientos(
+  page = 1,
+  size = 10,
+  estado: EstadoVencimiento | '' = '',
+  buscar = '',
+  ordenarPor = 'fecha_vencimiento',
+  orden = 'asc'
+): Promise<PaginatedVencimientos> {
+  let url = `${API_BASE_URL}/documentos/vencimientos?page=${page}&size=${size}&ordenar_por=${ordenarPor}&orden=${orden}`;
+  if (estado) url += `&estado=${estado}`;
+  if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
+
+  const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudieron obtener los documentos globales.'));
+    throw new Error(await mensajeError(res, 'No se pudo obtener el listado de vencimientos.'));
   }
   return res.json();
 }

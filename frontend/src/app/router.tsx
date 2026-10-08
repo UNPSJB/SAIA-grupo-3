@@ -15,6 +15,7 @@ import { ElementoPage } from '../features/elementos/ElementoPage';
 import { ChecklistPage } from '../features/checklist';
 import { AuditoriaPage } from '../features/auditoria';
 import { ReporteConsumosPage } from '../features/consumoQuimicos/ConsumoQuimicoPage';
+import { VencimientosPage } from '../features/personal';
 
 export function AppRouter() {
   return (
@@ -34,6 +35,7 @@ export function AppRouter() {
         <Route path="planes" element={<PlanPage/>} />
         <Route path="checklist" element={<ChecklistPage />} />
         <Route path="auditoria" element={<AuditoriaPage />} />
+        <Route path="/personal/vencimientos" element={<VencimientosPage />} />
 
           {/* Redirige por defecto a profesores */}
           {/* <Route index element={<Navigate to="/profesores" replace />} /> */}

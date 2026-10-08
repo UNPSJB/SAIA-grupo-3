@@ -1,4 +1,4 @@
-import   { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api'; 
+import   { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api';
 import type { Personal } from './types';
 
 export interface PaginatedPersonal {
@@ -19,6 +19,15 @@ export async function getPersonal(
     `${API_BASE_URL}/personal?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&proximos_a_vencer=${proximosAVencer}`
   );
   if (!res.ok) throw new Error('No se pudo listar el personal.');
+  return res.json();
+}
+
+export async function getPersonalByDni(dni: number): Promise<Personal> {
+  const res = await fetch(`${API_BASE_URL}/personal/${dni}`);
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(mensajeDeError(errorData.detail, 'No se pudo obtener el legajo del empleado.'));
+  }
   return res.json();
 }
 
