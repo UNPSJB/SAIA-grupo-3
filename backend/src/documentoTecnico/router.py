@@ -18,7 +18,10 @@ from src.pagination import PaginatedResponse
 from src.personal.models import Personal
 
 # GET: cualquier usuario logueado. POST/PUT/PATCH: solo con permiso de administrar.
-router = PermissionedRouter(prefix="/documentos-tecnicos", tags=["documentos_tecnicos"])
+router = PermissionedRouter(prefix="/documentos-tecnicos", 
+                            tags=["documentos_tecnicos"], 
+                            dependencies=[Depends(tiene_permiso_administrar)] # quitar para que luego puedan ver los operarios
+                            )
 
 CARPETA_DOCUMENTOS = ARCHIVOS_DIR / "documentos-tecnicos"
 
