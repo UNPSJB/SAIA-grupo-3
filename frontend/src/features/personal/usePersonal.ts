@@ -11,7 +11,7 @@ import {
   deletePersonal,
 } from './personalApi';
 
-export function usePersonal() {
+export function usePersonal(proximosAVencer = false) {
   const [personal, setPersonal] = useState<Personal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,11 +21,10 @@ export function usePersonal() {
   const [total, setTotal] = useState(0);
   const [mostrarInactivos, setMostrarInactivos] = useState(false);
 
-  const cargarPersonal = useCallback(
-    (currentPage: number, currentSize: number, showInactive: boolean) => {
+    const cargarPersonal = useCallback(
+    (currentPage: number, currentSize: number, showInactive: boolean, soloVencimientos: boolean) => {
       setLoading(true);
-
-      getPersonal(currentPage, currentSize, showInactive)
+      getPersonal(currentPage, currentSize, showInactive, soloVencimientos)
         .then((data) => {
           setPersonal(data.items);
           setTotalPages(data.pages);
@@ -40,12 +39,12 @@ export function usePersonal() {
   );
 
   useEffect(() => {
-    cargarPersonal(page, size, mostrarInactivos);
-  }, [cargarPersonal, page, size, mostrarInactivos]);
+    cargarPersonal(page, size, mostrarInactivos, proximosAVencer);
+  }, [cargarPersonal, page, size, mostrarInactivos, proximosAVencer]);
 
   const eliminar = async (id: number) => {
     await deletePersonal(id);
-    cargarPersonal(page, size, mostrarInactivos);
+    cargarPersonal(page, size, mostrarInactivos, proximosAVencer);
   };
 
   const guardar = async (
@@ -58,7 +57,7 @@ export function usePersonal() {
       await createPersonal(datos as PersonalCreateInput);
     }
 
-    cargarPersonal(page, size, mostrarInactivos);
+    cargarPersonal(page, size, mostrarInactivos, proximosAVencer);
   };
 
   const nextPage = () => {

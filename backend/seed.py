@@ -23,7 +23,9 @@ from src.insumosQuimicos.models import InsumoQuimico, TipoQuimico
 from src.elementos.models import Elemento
 from src.tarea.models import Tarea, TareaInsumoQuimico, FrecuenciaTarea
 from src.plan.models import Plan
-from src.documentacion.models import Documentacion, TipoDocumento
+from src.documentacion.models import Documentacion
+from src.tipoDocumento.models import TipoDocumento
+from src.incidente.models import Incidente
 from src.checklist.models import ItemChecklist, EstadoItem, MovimientoItemChecklist, AccionMovimiento
 from src.planRealizado.models import PlanRealizado
 from src.tareaRealizada.models import TareaRealizada
@@ -111,7 +113,7 @@ def quitar_etiquetas_anteriores(db) -> None:
     campos = [
         (Sector, "nombre"), (Equipo, "nombre"), (Insumo, "nombre"),
         (InsumoQuimico, "nombre"), (Elemento, "nombre"), (Tarea, "nombre"),
-        (Plan, "nombre"), (Documentacion, "nombre"),
+        (Plan, "nombre"),
         (PlanRealizado, "nombre"), (TareaRealizada, "nombre"),
         (ConsumoQuimico, "tarea_limpieza"),
     ]
@@ -295,23 +297,24 @@ def cargar_seed() -> None:
                     plan.tareas.append(tareas[numero - 1])
                 planes.append(plan)
 
-            tipos_documento = list(TipoDocumento)
+            tipos_documento = []
+            for nombre in ["Carnet de manipulador", "Libreta sanitaria", "Apto psicofísico", "Certificado de salud", "Capacitación"]:
+                tipo, _ = obtener_o_crear(db, TipoDocumento, {"nombre": nombre}, {"activo": True})
+                tipos_documento.append(tipo)
             for numero in range(1, CANTIDAD + 1):
                 operador = operadores[(numero - 1) % len(operadores)]
-                nombre_doc = f"Documento {numero:02d}"
-                documento = db.scalar(
-                    select(Documentacion).where(Documentacion.nombre == nombre_doc)
-                )
-                if documento is None:
-                    documento = Documentacion(
-                        nombre=nombre_doc,
-                        tipo_documento=tipos_documento[(numero - 1) % len(tipos_documento)],
-                        personal_id=operador.id,
-                    )
-                    db.add(documento)
-                else:
-                    documento.tipo_documento = tipos_documento[(numero - 1) % len(tipos_documento)]
-                    documento.personal_id = operador.id
+                tipo = tipos_documento[(numero - 1) % len(tipos_documento)]
+                obtener_o_crear(db, Documentacion,
+                    {"personal_id": operador.id, "tipo_documento_id": tipo.id},
+                    {"fecha_vencimiento": hoy + timedelta(days=(numero % 3) * 45 - 15)})
+            for numero, descripcion in enumerate([
+                "Se detectó una pérdida de agua debajo de la pileta del área de lavado.",
+                "Se observó presencia de insectos en el sector de almacenamiento.",
+                "Un cliente devolvió un producto por inconvenientes con el envase.",
+            ]):
+                obtener_o_crear(db, Incidente, {"descripcion": descripcion},
+                    {"reportado_por_dni": operadores[numero].dni,
+                     "fecha_hora": datetime.combine(ayer, time(hour=10 + numero))})
 
             db.flush()
 

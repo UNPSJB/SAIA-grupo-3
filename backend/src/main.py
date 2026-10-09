@@ -16,6 +16,7 @@ from src.tarea.router import router as tarea_router
 from src.personal.router import router as personal_router
 from src.equipos.router import router as equipos_router 
 from src.documentacion.router import router as documentacion_router
+from src.tipoDocumento.router import router as tipo_documento_router
 from src.insumos.router import router as insumos_router
 from src.unidadMedida.router import router as unidad_medida_router
 from src.sector.router import router as sector_router
@@ -27,6 +28,9 @@ from src.planRealizado.router import router as plan_realizado_router
 from src.tareaRealizada.router import router as tarea_realizada_router
 from src.consumoQuimico.router import router as consumo_quimico_router
 from src.auth import router as auth_router
+from src.notificaciones.router import router as notificaciones_router
+from src.incidente.router import router as incidente_router
+from src.notificaciones.scheduler import iniciar_scheduler, detener_scheduler
 
 ENV = settings.ENV.upper()
 ROOT_PATH = getattr(settings, f"ROOT_PATH_{ENV}", "")
@@ -36,7 +40,11 @@ setup_logging()
 @asynccontextmanager
 async def db_creation_lifespan(app: FastAPI):
     ModeloBase.metadata.create_all(bind=engine)
+    if settings.SCHEDULER_ACTIVO:
+        iniciar_scheduler()
     yield
+    if settings.SCHEDULER_ACTIVO:
+        detener_scheduler()
 
 
 app = FastAPI(root_path=ROOT_PATH, lifespan=db_creation_lifespan)
@@ -57,6 +65,7 @@ app.add_middleware(
 # asociamos los routers a nuestra app
 app.include_router(personal_router)
 app.include_router(documentacion_router)
+app.include_router(tipo_documento_router)
 app.include_router(equipos_router)
 app.include_router(insumos_router)
 app.include_router(unidad_medida_router)
@@ -70,6 +79,8 @@ app.include_router(plan_realizado_router)
 app.include_router(tarea_realizada_router)
 app.include_router(consumo_quimico_router)
 app.include_router(auth_router.router)
+app.include_router(notificaciones_router)
+app.include_router(incidente_router)
 
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")

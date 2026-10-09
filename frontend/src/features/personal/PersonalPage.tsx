@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Container } from 'react-bootstrap';
 import { PersonalView } from './PersonalView';
 import { PersonalList } from './PersonalList';
@@ -24,6 +25,11 @@ export function PersonalPage() {
     setModo('listado');
     setPersonalSeleccionado(null);
   };
+  const location = useLocation();
+  useEffect(() => {
+    setModo('listado');
+    setPersonalSeleccionado(null);
+  }, [location.key]);
 
   const handleNuevo = () => {
     setPersonalSeleccionado(null);
@@ -78,6 +84,7 @@ export function PersonalPage() {
 
       {modo === 'listado' && (
         <PersonalList
+          key={location.search}
           onViewClick={handleView}
           onNuevoClick={handleNuevo}
           onEditarClick={handleEditar}

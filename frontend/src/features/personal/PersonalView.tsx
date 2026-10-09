@@ -1,5 +1,6 @@
 import { Card, Button, Badge } from 'react-bootstrap';
 import type { Personal } from './types';
+import { DocumentosPersonal } from './DocumentosPersonal';
 
 interface PersonalViewProps {
   personal: Personal;
@@ -27,6 +28,7 @@ const puedeOperar = capacidades.includes('operar');
           : 'Sin permisos';
 
   return (
+    <div className="mx-auto" style={{ maxWidth: '850px' }}>
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
       <Card.Header className="bg-light text-secondary d-flex align-items-center gap-2 py-3">
         <i className="bi bi-person-vcard fs-5"></i>
@@ -77,5 +79,7 @@ const puedeOperar = capacidades.includes('operar');
         </Button>
       </Card.Footer>
     </Card>
+    <DocumentosPersonal personalId={personal.id} />
+    </div>
   );
 }

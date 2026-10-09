@@ -1,4 +1,5 @@
 import { Table, Card, Button, Badge, Pagination, Form } from 'react-bootstrap';
+import { useSearchParams } from 'react-router-dom';
 import { usePersonal } from './usePersonal';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -11,26 +12,18 @@ interface PersonalListProps {
   onEliminarClick: (personal: Personal) => void;
 }
 
-export function PersonalList({
-  onNuevoClick,
-  onViewClick,
-  onEditarClick,
-  onEliminarClick,
-}: PersonalListProps) {
-  const {
-    personal,
-    loading,
-    error,
-    page,
-    totalPages,
-    total,
-    nextPage,
-    prevPage,
-    changePage,
-    mostrarInactivos,
-    setMostrarInactivos,
-    guardar,
-  } = usePersonal();
+export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onEliminarClick }: PersonalListProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const proximosAVencer = searchParams.get('vencimiento') === 'proximos';
+
+  const { personal, loading, error,
+    page, totalPages, total, nextPage, prevPage, changePage,
+    mostrarInactivos, setMostrarInactivos, guardar
+  } = usePersonal(proximosAVencer);
+
+  const cambiarFiltroVencimiento = (activo: boolean) => {
+    setSearchParams(activo ? { vencimiento: 'proximos' } : {});
+  };
 
   const getCapacidad = (p: Personal) => {
     if (p.operar && p.administrar) {
@@ -62,6 +55,14 @@ export function PersonalList({
         <h4 className="mb-0 text-secondary">Nómina del Personal</h4>
 
         <div className="d-flex align-items-center gap-3">
+          <Form.Check
+            type="switch"
+            id="switch-vencimientos-personal"
+            label={<><i className="bi bi-exclamation-triangle-fill text-warning me-1"></i>Próximos a vencer</>}
+            checked={proximosAVencer}
+            onChange={(e) => cambiarFiltroVencimiento(e.target.checked)}
+            className="text-secondary mb-0"
+          />
           <Form.Check
             type="switch"
             id="switch-inactivos-personal"
@@ -104,7 +105,9 @@ export function PersonalList({
               {personal.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-4 text-muted">
-                    No hay personal registrado para los filtros actuales.
+                    {proximosAVencer
+                      ? 'No hay personal con documentación vencida o por vencer.'
+                      : 'No hay personal registrado para los filtros actuales.'}
                   </td>
                 </tr>
               ) : (

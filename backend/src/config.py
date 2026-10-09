@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     ROOT_PATH_DEVELOPMENT: str = ""
     ROOT_PATH_PRODUCTION: str = ""
     LOG_LEVEL: str = "INFO"
+    SCHEDULER_ACTIVO: bool = True
 
     SECRET_KEY: str = "tu-clave-secreta-para-access-token"
     REFRESH_SECRET_KEY: str = "tu-clave-secreta-para-refresh-token"

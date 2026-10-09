@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from src.personal.models import Personal
 from src.personal import schemas, exceptions
 from src.auth.utils import get_password_hash # CORRECCIÓN 1: Faltaba esta importación
+from src.documentacion.vencimientos import ids_con_vencimientos
+
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +18,7 @@ def _validar_duplicados(
     query_legajo = select(Personal).where(Personal.nroLegajo == personal.nroLegajo)
     query_email = select(Personal).where(Personal.email == personal.email)
     query_username = select(Personal).where(Personal.username == personal.username)
-    
+
     if excluir_id is not None:
         query_dni = query_dni.where(Personal.id != excluir_id) # CORRECCIÓN 2: Era ID, no DNI
         query_legajo = query_legajo.where(Personal.id != excluir_id)
@@ -34,7 +36,7 @@ def _validar_duplicados(
 
 def crear_personal(db: Session, personal: schemas.PersonalCreate) -> Personal:
     _validar_duplicados(db, personal) # CORRECCIÓN: Código simplificado llamando a la función
-    
+
     datos = personal.model_dump()
     password = datos.pop("password")
     hashed_password = get_password_hash(password)
@@ -67,13 +69,16 @@ def leer_personal_por_username(db: Session, username: str):
 
 
 def listar_personal(
-    db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False
+    db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False, proximos_a_vencer: bool = False
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(Personal)
 
     if not mostrar_inactivos:
         query = query.where(Personal.activo == True)
+
+    if proximos_a_vencer:
+        query = query.where(Personal.id.in_(ids_con_vencimientos(db)))
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()
@@ -92,7 +97,7 @@ def leer_personal(db: Session, personal_id: int, incluir_inactivos: bool = False
     query = select(Personal).where(Personal.id == personal_id)
     if not incluir_inactivos:
         query = query.where(Personal.activo == True)
-        
+
     db_personal = db.scalar(query)
     if db_personal is None:
         raise exceptions.PersonalNoEncontrado()
@@ -104,7 +109,7 @@ def modificar_personal(
 ) -> Personal:
     db_persona = leer_personal(db, personal_id, incluir_inactivos=True)
     _validar_duplicados(db, personal, excluir_id=personal_id)
-    
+
     # CORRECCIÓN 3: Soportamos si en el PUT te mandan una nueva contraseña
     valores = personal.model_dump(exclude_unset=True)
     if "password" in valores:

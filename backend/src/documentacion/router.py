@@ -1,9 +1,12 @@
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.documentacion import schemas, services
 from src.auth.router_base import PermissionedRouter
+from src.documentacion.constants import EstadoVencimiento
+from src.documentacion.vencimientos import listar_vencimientos
+from src.pagination import PaginatedResponse
 
 
 logger = logging.getLogger(__name__)
@@ -18,9 +21,28 @@ def create_documento(documento: schemas.DocumentoCreate, db: Session = Depends(g
 
 
 @router.get("/", response_model=list[schemas.Documento])
-def read_documentos(db: Session = Depends(get_db)):
+def read_documentos(
+    db: Session = Depends(get_db),
+    personal_id: int | None = Query(
+        None, ge=1, description="Filtrar documentos por personal"
+    ),
+):
     logger.info("Listando documentos desde router") # <- este mensaje se verá por la terminal
-    return services.listar_documentos(db)
+    return services.listar_documentos(db, personal_id)
+
+
+@router.get("/vencimientos", response_model=PaginatedResponse[schemas.Vencimiento])
+def read_vencimientos(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1, description="Número de página"),
+    size: int = Query(10, ge=1, le=100, description="Cantidad de registros por página"),
+    estado: EstadoVencimiento | None = Query(None, description="vencido, por_vencer o vigente"),
+    buscar: str = Query("", description="Búsqueda por apellido, nombre, DNI o tipo de documento"),
+    ordenar_por: str = Query("fecha_vencimiento", description="fecha_vencimiento, empleado, dni o tipo_documento"),
+    orden: str = Query("asc", description="asc o desc"),
+):
+    logger.info(f"Listando vencimientos (página {page}, tamaño {size}, estado {estado})")
+    return listar_vencimientos(db, page, size, estado, buscar, ordenar_por, orden)
 
 
 @router.get("/{documento_id}", response_model=schemas.Documento)

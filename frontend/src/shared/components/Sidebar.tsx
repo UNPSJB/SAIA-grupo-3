@@ -33,6 +33,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     '/insumos-quimicos',
     '/unidades-medida',
     '/elementos',
+    '/tipos-documento',
   ].some(
     (ruta) =>
       location.pathname === ruta ||
@@ -48,11 +49,14 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   }, [esRutaMaestros]);
 
   const menuItems: MenuItem[] = [
+    { to: '/incidentes', label: 'Incidentes', icono: 'bi bi-exclamation-triangle' },
+    { to: '/personal/vencimientos', label: 'Vencimientos de personal', icono: 'bi bi-calendar-x' },
     {
       label: 'Datos maestros',
       icono: 'bi bi-database',
       esDesplegable: true,
-      subItems: [
+        subItems: [
+          { to: '/tipos-documento', label: 'Tipos de documentos', icono: 'bi bi-file-earmark-text' },
         {
           to: '/personal',
           label: 'Personal',
@@ -137,7 +141,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       <nav className="nav nav-pills flex-column px-3 gap-1 mb-auto">
         {menuItems
           .filter((item) => {
-            if (item.to === '/checklist') {
+            if (item.to === '/checklist' || item.to === '/incidentes') {
               return currentUser?.operar === true;
             }
 

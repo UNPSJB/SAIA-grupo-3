@@ -6,3 +6,4 @@ export * from './types';
 export * from './PersonalList';
 export * from './usePersonal';
 export * from './personalApi';
+export * from './VencimientosPage';

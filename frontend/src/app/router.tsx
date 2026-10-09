@@ -13,12 +13,15 @@ import { PersonalPage } from '../features/personal';
 import { InsumoPage } from '../features/insumos';
 import { InsumoQuimicoPage } from '../features/insumosQuimicos';
 import { UnidadMedidaPage } from '../features/unidadMedida/unidadMedidaPage';
+import { TipoDocumentoPage } from '../features/tipoDocumento/TipoDocumentoPage';
 import { TareaPage } from '../features/tarea';
 import { SectorPage } from '../features/sectores/SectorPage';
 import { ElementoPage } from '../features/elementos/ElementoPage';
 import { ChecklistPage } from '../features/checklist';
 import { AuditoriaPage } from '../features/auditoria';
 import { ReporteConsumosPage } from '../features/consumoQuimicos/ConsumoQuimicoPage';
+import { VencimientosPage } from '../features/personal';
+import { IncidentesPage } from '../features/incidentes';
 
 export function AppRouter() {
   return (
@@ -40,11 +43,14 @@ export function AppRouter() {
             {/* Operación diaria: requiere capacidad operar */}
             <Route element={<ProtectedRoute requireOperate />}>
               <Route path="checklist" element={<ChecklistPage />} />
+              <Route path="incidentes" element={<IncidentesPage />} />
             </Route>
 
             {/* Administración */}
             <Route element={<ProtectedRoute requireAdmin />}>
               <Route path="personal" element={<PersonalPage />} />
+              <Route path="personal/vencimientos" element={<VencimientosPage />} />
+              <Route path="tipos-documento" element={<TipoDocumentoPage />} />
               <Route path="equipos" element={<EquipoPage />} />
               <Route path="insumos" element={<InsumoPage />} />
               <Route path="insumos-quimicos" element={<InsumoQuimicoPage />} />

@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Button } from 'react-bootstrap';
+import { useAuth } from '../hooks/useAuth';
+import { NotificacionesBell } from '../../features/notificaciones';
+
 
 interface TopHeaderProps {
   onToggleSidebar: () => void;
 }
 
 export function TopHeader({ onToggleSidebar }: TopHeaderProps) {
+  const { currentUser } = useAuth();
   // Leemos si el usuario ya tenía un tema guardado, o usamos 'light' por defecto
   const [tema, setTema] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
@@ -35,8 +39,10 @@ export function TopHeader({ onToggleSidebar }: TopHeaderProps) {
         <i className="bi bi-list fs-3 text-secondary"></i>
       </Button>
 
-      {/* Botón para alternar modo claro / oscuro */}
-      <div className="ms-auto">
+      <div className="ms-auto d-flex align-items-center gap-2">
+        {/* Botón campanita de notificaciones */}
+        {currentUser?.administrar && <NotificacionesBell />}
+        {/* Botón para alternar modo claro / oscuro */}
         <Button
           variant="outline-secondary"
           size="sm"
