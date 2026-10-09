@@ -21,7 +21,7 @@ import { ChecklistPage } from '../features/checklist';
 import { AuditoriaPage } from '../features/auditoria';
 import { ReporteConsumosPage } from '../features/consumoQuimicos/ConsumoQuimicoPage';
 import { VencimientosPage } from '../features/personal';
-import { IncidentesPage } from '../features/incidentes';
+import { IncidentePage } from '../features/incidentes';
 import { CalibracionPage } from '../features/vencimientos/CalibracionPage';
 
 export function AppRouter() {
@@ -44,7 +44,7 @@ export function AppRouter() {
             {/* Operación diaria: requiere capacidad operar */}
             <Route element={<ProtectedRoute requireOperate />}>
               <Route path="checklist" element={<ChecklistPage />} />
-              <Route path="incidentes" element={<IncidentesPage />} />
+              <Route path="incidentes" element={<IncidentePage />} />
             </Route>
 
             {/* Administración */}

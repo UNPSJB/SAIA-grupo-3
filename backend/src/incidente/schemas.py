@@ -8,7 +8,6 @@ from src.checklist.schemas import PersonalResumen
 
 class IncidenteCreate(BaseModel):
     descripcion: str = Field(min_length=1, max_length=1000)
-    reportado_por_dni: str
 
     @field_validator("descripcion", mode="before")
     @classmethod

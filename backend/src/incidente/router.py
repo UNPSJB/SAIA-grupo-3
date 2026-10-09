@@ -30,15 +30,6 @@ def _guardar_imagen(foto: UploadFile | None) -> str | None:
     return f"/uploads/{nombre_archivo}"
 
 
-def _validar_descripcion(descripcion: str) -> str:
-    descripcion = descripcion.strip()
-    if not descripcion:
-        raise HTTPException(
-            status_code=422, detail="La descripción del incidente es obligatoria."
-        )
-    return descripcion
-
-
 @router.post("/", response_model=schemas.Incidente, dependencies=[Depends(tiene_permiso_operar)])
 def create_incidente(
     descripcion: str = Form(..., min_length=1, max_length=1000),
@@ -47,14 +38,10 @@ def create_incidente(
     db: Session = Depends(get_db),
 ):
     reportado_por_dni = current_personal.dni
-    incidente = schemas.IncidenteCreate(
-        descripcion=_validar_descripcion(descripcion),
-        reportado_por_dni=reportado_por_dni,
-    )
-    services.validar_reportante(db, reportado_por_dni)
+    incidente = schemas.IncidenteCreate(descripcion=descripcion)
     imagen_path = _guardar_imagen(foto)
     try:
-        return services.crear_incidente(db, incidente, imagen_path)
+        return services.crear_incidente(db, incidente, reportado_por_dni, imagen_path)
     except Exception:
         if imagen_path is not None:
             (UPLOADS_DIR / Path(imagen_path).name).unlink(missing_ok=True)
@@ -82,9 +69,7 @@ def update_incidente(
     foto: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-    incidente = schemas.IncidenteUpdate(
-        descripcion=_validar_descripcion(descripcion)
-    )
+    incidente = schemas.IncidenteUpdate(descripcion=descripcion)
     imagen_anterior = services.leer_incidente(db, incidente_id).imagen_path
     imagen_nueva = _guardar_imagen(foto)
     try:

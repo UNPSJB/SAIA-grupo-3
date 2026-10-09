@@ -23,12 +23,13 @@ def validar_reportante(db: Session, personal_dni: str) -> Personal:
 def crear_incidente(
     db: Session,
     incidente: schemas.IncidenteCreate,
+    reportado_por_dni: str,
     imagen_path: str | None = None,
 ) -> models.Incidente:
-    validar_reportante(db, incidente.reportado_por_dni)
+    validar_reportante(db, reportado_por_dni)
     db_incidente = models.Incidente(
         descripcion=incidente.descripcion,
-        reportado_por_dni=incidente.reportado_por_dni,
+        reportado_por_dni=reportado_por_dni,
         imagen_path=imagen_path,
     )
     db.add(db_incidente)
