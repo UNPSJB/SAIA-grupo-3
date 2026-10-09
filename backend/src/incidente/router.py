@@ -10,7 +10,8 @@ from src.database import get_db
 from src.incidente import schemas, services
 from src.pagination import PaginatedResponse
 from src.auth.router_base import PermissionedRouter
-from src.auth.dependencies import tiene_permiso_operar
+from src.auth.dependencies import get_current_personal, tiene_permiso_operar
+from src.exceptions import PermissionDenied
 from src.personal.models import Personal
 
 
@@ -53,13 +54,28 @@ def read_incidentes(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
+    current_personal: Personal = Depends(get_current_personal),
 ):
-    return services.listar_incidentes(db, page, size)
+    # El operario solo ve sus incidentes; administración ve todos.
+    dni = None if current_personal.administrar else current_personal.dni
+    return services.listar_incidentes(db, page, size, reportado_por_dni=dni)
 
 
 @router.get("/{incidente_id}", response_model=schemas.Incidente)
-def read_incidente(incidente_id: int, db: Session = Depends(get_db)):
-    return services.leer_incidente(db, incidente_id)
+def read_incidente(
+    incidente_id: int,
+    db: Session = Depends(get_db),
+    current_personal: Personal = Depends(get_current_personal),
+):
+    incidente = services.leer_incidente(db, incidente_id)
+    # El operario solo puede ver sus propios incidentes.
+    # Administración puede ver el de cualquier operario.
+    if (
+        not current_personal.administrar
+        and incidente.reportado_por_dni != current_personal.dni
+    ):
+        raise PermissionDenied()
+    return incidente
 
 
 @router.put("/{incidente_id}", response_model=schemas.Incidente)

@@ -38,9 +38,16 @@ def crear_incidente(
     return db_incidente
 
 
-def listar_incidentes(db: Session, page: int = 1, size: int = 10) -> Dict[str, Any]:
+def listar_incidentes(
+    db: Session,
+    page: int = 1,
+    size: int = 10,
+    reportado_por_dni: str | None = None,
+) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(models.Incidente).order_by(models.Incidente.fecha_hora.desc())
+    if reportado_por_dni is not None:
+        query = query.where(models.Incidente.reportado_por_dni == reportado_por_dni)
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()
     pages = (total + size - 1) // size if total else 0
