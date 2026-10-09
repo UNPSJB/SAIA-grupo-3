@@ -1,4 +1,7 @@
-import { Table, Card, Button, Badge, Pagination, Form } from 'react-bootstrap';
+import { SortableHeader } from '../../shared/components/SortableHeader';
+import { ListPagination } from '../../shared/components/ListPagination';
+import { ListControls } from '../../shared/components/ListControls';
+import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
 import { usePersonal } from './usePersonal';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -12,17 +15,44 @@ interface PersonalListProps {
   onEliminarClick: (personal: Personal) => void;
 }
 
-export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onEliminarClick }: PersonalListProps) {
+export function PersonalList({
+  onNuevoClick,
+  onViewClick,
+  onEditarClick,
+  onEliminarClick,
+}: PersonalListProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const proximosAVencer = searchParams.get('vencimiento') === 'proximos';
 
-  const { personal, loading, error,
-    page, totalPages, total, nextPage, prevPage, changePage,
-    mostrarInactivos, setMostrarInactivos, guardar
+  const {
+    personal,
+    loading,
+    error,
+    page,
+    totalPages,
+    total,
+    changePage,
+    mostrarInactivos,
+    setMostrarInactivos,
+    guardar,
+    busqueda,
+    setBusqueda,
+    ordenarPor,
+    orden,
+    cambiarOrden,
   } = usePersonal(proximosAVencer);
 
   const cambiarFiltroVencimiento = (activo: boolean) => {
-    setSearchParams(activo ? { vencimiento: 'proximos' } : {});
+    setSearchParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        if (activo) next.set('vencimiento', 'proximos');
+        else next.delete('vencimiento');
+        next.set('page', '1');
+        return next;
+      },
+      { replace: true },
+    );
   };
 
   const getCapacidad = (p: Personal) => {
@@ -41,60 +71,87 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
     return { label: 'Sin permisos', variant: 'secondary' };
   };
 
-  if (loading) {
-    return <LoadingSpinner mensaje="Cargando personal..." />;
-  }
-
-  if (error) {
-    return <ErrorAlert mensaje={error} />;
-  }
-
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 className="mb-0 text-secondary">Nómina del Personal</h4>
+      {loading && <LoadingSpinner mensaje="Cargando listado..." />}
+      {error && <ErrorAlert mensaje={error} />}
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina del Personal">
+        <Form.Check
+          type="switch"
+          id="switch-vencimientos-personal"
+          label={
+            <>
+              <i className="bi bi-exclamation-triangle-fill text-warning me-1"></i>Próximos a vencer
+            </>
+          }
+          checked={proximosAVencer}
+          onChange={(e) => cambiarFiltroVencimiento(e.target.checked)}
+          className="text-secondary mb-0"
+        />
+        <Form.Check
+          type="switch"
+          id="switch-inactivos-personal"
+          label="Ver dados de baja"
+          checked={mostrarInactivos}
+          onChange={(e) => setMostrarInactivos(e.target.checked)}
+          className="text-secondary mb-0"
+        />
 
-        <div className="d-flex align-items-center gap-3">
-          <Form.Check
-            type="switch"
-            id="switch-vencimientos-personal"
-            label={<><i className="bi bi-exclamation-triangle-fill text-warning me-1"></i>Próximos a vencer</>}
-            checked={proximosAVencer}
-            onChange={(e) => cambiarFiltroVencimiento(e.target.checked)}
-            className="text-secondary mb-0"
-          />
-          <Form.Check
-            type="switch"
-            id="switch-inactivos-personal"
-            label="Ver dados de baja"
-            checked={mostrarInactivos}
-            onChange={(e) => setMostrarInactivos(e.target.checked)}
-            className="text-secondary mb-0"
-          />
-
-          <Button
-            variant="success"
-            size="sm"
-            onClick={onNuevoClick}
-            className="d-flex align-items-center gap-1 shadow-sm"
-          >
-            <i className="bi bi-plus-lg"></i>
-            <span>Nuevo Empleado</span>
-          </Button>
-        </div>
-      </div>
-
+        <Button
+          variant="success"
+          onClick={onNuevoClick}
+          className="d-flex align-items-center gap-1 shadow-sm"
+        >
+          <i className="bi bi-plus-lg"></i>
+          <span>Nuevo Empleado</span>
+        </Button>
+      </ListControls>
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
             <thead className="table-light">
               <tr>
-                <th>Legajo</th>
-                <th>DNI</th>
-                <th>Apellido y Nombre</th>
-                <th>Email</th>
+                <SortableHeader
+                  column="nroLegajo"
+                  ordenarPor={ordenarPor}
+                  orden={orden}
+                  cambiarOrden={cambiarOrden}
+                >
+                  Legajo
+                </SortableHeader>
+                <SortableHeader
+                  column="dni"
+                  ordenarPor={ordenarPor}
+                  orden={orden}
+                  cambiarOrden={cambiarOrden}
+                >
+                  DNI
+                </SortableHeader>
+                <SortableHeader
+                  column="apellido"
+                  ordenarPor={ordenarPor}
+                  orden={orden}
+                  cambiarOrden={cambiarOrden}
+                >
+                  Apellido y Nombre
+                </SortableHeader>
+                <SortableHeader
+                  column="email"
+                  ordenarPor={ordenarPor}
+                  orden={orden}
+                  cambiarOrden={cambiarOrden}
+                >
+                  Email
+                </SortableHeader>
                 <th>Permisos</th>
-                <th>Estado</th>
+                <SortableHeader
+                  column="activo"
+                  ordenarPor={ordenarPor}
+                  orden={orden}
+                  cambiarOrden={cambiarOrden}
+                >
+                  Estado
+                </SortableHeader>
                 <th className="text-center" style={{ width: '120px' }}>
                   Acciones
                 </th>
@@ -115,10 +172,7 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
                   const capacidad = getCapacidad(p);
 
                   return (
-                    <tr
-                      key={p.id}
-                      className={p.activo === false ? 'opacity-50' : ''}
-                    >
+                    <tr key={p.id}>
                       <td>
                         <Badge bg="secondary">#{p.nroLegajo}</Badge>
                       </td>
@@ -130,9 +184,7 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
                       </td>
                       <td>{p.email}</td>
                       <td>
-                        <Badge bg={capacidad.variant}>
-                          {capacidad.label}
-                        </Badge>
+                        <Badge bg={capacidad.variant}>{capacidad.label}</Badge>
                       </td>
                       <td>
                         {p.activo === false ? (
@@ -150,18 +202,14 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
                               className="py-1 px-2 shadow-sm"
                               title="Reactivar Empleado"
                               onClick={async () => {
-                                if (
-                                  confirm(
-                                    `¿Reactivar a ${p.apellido}, ${p.nombre}?`
-                                  )
-                                ) {
+                                if (confirm(`¿Reactivar a ${p.apellido}, ${p.nombre}?`)) {
                                   try {
                                     await guardar({ ...p, activo: true }, p.id);
                                   } catch (err: unknown) {
                                     alert(
                                       err instanceof Error
                                         ? err.message
-                                        : 'Error al reactivar el personal.'
+                                        : 'Error al reactivar el personal.',
                                     );
                                   }
                                 }
@@ -215,31 +263,12 @@ export function PersonalList({ onNuevoClick, onViewClick, onEditarClick, onElimi
 
         {totalPages > 0 && (
           <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
-            <span className="text-muted small mb-2 mb-md-0">
-              Mostrando página {page} de {totalPages} ({total} registros en
-              total)
-            </span>
-
-            <Pagination className="mb-0" size="sm">
-              <Pagination.Prev onClick={prevPage} disabled={page === 1} />
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (num) => (
-                  <Pagination.Item
-                    key={num}
-                    active={num === page}
-                    onClick={() => changePage(num)}
-                  >
-                    {num}
-                  </Pagination.Item>
-                )
-              )}
-
-              <Pagination.Next
-                onClick={nextPage}
-                disabled={page === totalPages}
-              />
-            </Pagination>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              changePage={changePage}
+            />
           </Card.Footer>
         )}
       </Card>

@@ -1,20 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Alert, Spinner } from 'react-bootstrap';
+import { Alert, Container, Spinner } from 'react-bootstrap';
 
 import { useAuth } from '../../shared/hooks/useAuth';
 import { ChecklistView } from './ChecklistView';
 
 export function ChecklistPage() {
   const { currentUser, isLoading } = useAuth();
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isLoading && !currentUser) {
-      setError('No se pudo obtener el usuario autenticado.');
-    } else {
-      setError(null);
-    }
-  }, [currentUser, isLoading]);
 
   if (isLoading) {
     return (
@@ -29,20 +19,16 @@ export function ChecklistPage() {
   if (!currentUser) {
     return (
       <div className="container-fluid p-4">
-        <Alert variant="danger">
-          {error ?? 'No hay un usuario autenticado.'}
-        </Alert>
+        <Alert variant="danger">No hay un usuario autenticado.</Alert>
       </div>
     );
   }
 
   return (
-    <div className="container-fluid">
-      <ChecklistView
-        key={currentUser.id}
-        personalId={currentUser.id}
-      />
-    </div>
+    <Container className="py-2">
+      <h2 className="mb-4 border-bottom pb-2 text-secondary">Checklist del Día</h2>
+      <ChecklistView key={currentUser.id} personalId={currentUser.id} />
+    </Container>
   );
 }
 

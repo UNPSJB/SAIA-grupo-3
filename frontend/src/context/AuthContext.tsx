@@ -1,12 +1,18 @@
-import React, {createContext,useCallback,useEffect,useState} from 'react';
-import type {AuthContextType,LoginData,AuthUser} from '../features/auth/types';
-import {API_BASE_URL,fetchWithAuth,renovarSesion,setAccessToken} from '../shared/libreria/api';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import type { LoginData, AuthUser } from '../features/auth/types';
+import {
+  API_BASE_URL,
+  fetchWithAuth,
+  renovarSesion,
+  setAccessToken,
+  SESSION_EXPIRED_EVENT,
+  clearSession,
+} from '../shared/libreria/api';
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from './authContextValue';
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const generation = useRef(0);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,14 +25,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     const user = (await response.json()) as AuthUser;
-    setCurrentUser(user);
-    setError(null);
     return user;
+  }, []);
+
+  useEffect(() => {
+    const expire = () => {
+      generation.current++;
+      setIsLoading(false);
+      setCurrentUser(null);
+      setError('La sesión venció. Iniciá sesión nuevamente.');
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, expire);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, expire);
   }, []);
 
   // Al iniciar o recargar la app, recupera la sesión desde la cookie httpOnly.
   useEffect(() => {
     let cancelado = false;
+    const currentGeneration = generation.current;
 
     const restaurarSesion = async () => {
       setIsLoading(true);
@@ -35,13 +51,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const tokenData = await renovarSesion();
 
         if (!tokenData) {
-          if (!cancelado) setCurrentUser(null);
+          if (!cancelado && currentGeneration === generation.current) setCurrentUser(null);
           return;
         }
 
-        const response = await fetchWithAuth(
-          `${API_BASE_URL}/personal/${tokenData.user_id}`,
-        );
+        const response = await fetchWithAuth(`${API_BASE_URL}/personal/${tokenData.user_id}`);
 
         if (!response.ok) {
           throw new Error('No se pudieron recuperar los datos del usuario.');
@@ -49,15 +63,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         const user = (await response.json()) as AuthUser;
 
-        if (!cancelado) {
+        if (!cancelado && currentGeneration === generation.current) {
           setCurrentUser(user);
           setError(null);
         }
       } catch {
-        setAccessToken(null);
-        if (!cancelado) setCurrentUser(null);
+        if (currentGeneration === generation.current) setAccessToken(null);
+        if (!cancelado && currentGeneration === generation.current) setCurrentUser(null);
       } finally {
-        if (!cancelado) setIsLoading(false);
+        if (!cancelado && currentGeneration === generation.current) setIsLoading(false);
       }
     };
 
@@ -70,6 +84,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = useCallback(
     async (loginData: LoginData): Promise<boolean> => {
+      const currentGeneration = ++generation.current;
+      clearSession();
       setIsLoading(true);
       setError(null);
 
@@ -92,20 +108,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         const tokenData = await response.json();
+        if (currentGeneration !== generation.current) return false;
         setAccessToken(tokenData.access_token);
 
         // Si falla la carga del perfil, login devuelve false.
-        await fetchCurrentUser(tokenData.user_id);
+        const user = await fetchCurrentUser(tokenData.user_id);
+        if (currentGeneration !== generation.current) return false;
+        setCurrentUser(user);
         return true;
       } catch (err: unknown) {
+        if (currentGeneration !== generation.current) return false;
         setAccessToken(null);
         setCurrentUser(null);
-        setError(
-          err instanceof Error ? err.message : 'Error al iniciar sesión.',
-        );
+        setError(err instanceof Error ? err.message : 'Error al iniciar sesión.');
         return false;
       } finally {
-        setIsLoading(false);
+        if (currentGeneration === generation.current) setIsLoading(false);
       }
     },
     [fetchCurrentUser],
@@ -114,20 +132,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const refreshCurrentUser = useCallback(async (): Promise<void> => {
     if (!currentUser) return;
 
+    const currentGeneration = generation.current;
     const user = await fetchCurrentUser(currentUser.id);
-    setCurrentUser(user);
+    if (currentGeneration === generation.current) setCurrentUser(user);
   }, [currentUser, fetchCurrentUser]);
 
   const logout = useCallback(async (): Promise<void> => {
+    generation.current++;
+    clearSession();
+    setCurrentUser(null);
+    setIsLoading(false);
+    setError(null);
     try {
-      await fetch(`${API_BASE_URL}/auth/token`, {
+      const response = await fetch(`${API_BASE_URL}/auth/token`, {
         method: 'DELETE',
         credentials: 'include',
       });
-    } finally {
-      setAccessToken(null);
-      setCurrentUser(null);
-      setError(null);
+      if (!response.ok) throw new Error('No se pudo cerrar la sesión.');
+    } catch {
+      setError(
+        'No se pudo cerrar la sesión en el servidor. Reintentá cuando se restablezca la conexión.',
+      );
     }
   }, []);
 

@@ -12,59 +12,60 @@ export interface PaginatedUnidades {
 }
 
 export const getUnidadesMedida = async (
-  page = 1, size = 10, mostrarInactivos = false, ordenarPor = 'id', orden = 'asc', buscar = ''
+  page = 1,
+  size = 10,
+  mostrarInactivos = false,
+  ordenarPor = 'id',
+  orden = 'asc',
+  buscar = '',
 ): Promise<PaginatedUnidades> => {
   let url = `${API_URL}?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`;
   if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
-  
+
   const response = await fetchWithAuth(url);
   if (!response.ok) throw new Error('Error al obtener las unidades de medida');
   return response.json();
 };
 
-export const createUnidadMedida = async (unidad: { tipo: string; sufijo: string }): Promise<UnidadMedida> => {
-  let response;
-  try {
-    response = await fetchWithAuth(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(unidad),
-    });
-  } catch (err) {
-    throw new Error('Ya existe un insumo con ese sufijo');
-  }
+export const createUnidadMedida = async (unidad: {
+  tipo: string;
+  sufijo: string;
+}): Promise<UnidadMedida> => {
+  const response = await fetchWithAuth(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(unidad),
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const msg = Array.isArray(errorData.detail) 
-      ? errorData.detail[0].msg 
-      : (errorData.detail || 'Error al crear la unidad de medida');
+    const msg = Array.isArray(errorData.detail)
+      ? errorData.detail[0].msg
+      : errorData.detail || 'Error al crear la unidad de medida';
     throw new Error(msg);
   }
-  
+
   return response.json();
 };
 
-export const updateUnidadMedida = async (id: number, unidad: { tipo?: string; sufijo?: string; activo?: boolean }): Promise<UnidadMedida> => {
-  let response;
-  try {
-    response = await fetchWithAuth(`${API_URL}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(unidad),
-    });
-  } catch (err) {
-    throw new Error('Ya existe un insumo con ese sufijo');
-  }
+export const updateUnidadMedida = async (
+  id: number,
+  unidad: { tipo?: string; sufijo?: string; activo?: boolean },
+): Promise<UnidadMedida> => {
+  const response = await fetchWithAuth(`${API_URL}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(unidad),
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const msg = Array.isArray(errorData.detail) 
-      ? errorData.detail[0].msg 
-      : (errorData.detail || 'Error al actualizar la unidad de medida');
+    const msg = Array.isArray(errorData.detail)
+      ? errorData.detail[0].msg
+      : errorData.detail || 'Error al actualizar la unidad de medida';
     throw new Error(msg);
   }
-  
+
   return response.json();
 };
 

@@ -1,14 +1,10 @@
+import { SortableHeader } from '../../shared/components/SortableHeader';
+import { useForm } from 'react-hook-form';
+import { useListState } from '../../shared/hooks/useListState';
+import { ListControls } from '../../shared/components/ListControls';
+import { FormErrors } from '../../shared/components/FormErrors';
 import { useState } from 'react';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  Form,
-  Modal,
-  ProgressBar,
-  Table,
-} from 'react-bootstrap';
+import { Alert, Badge, Button, Card, Form, Modal, ProgressBar, Table } from 'react-bootstrap';
 
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -34,19 +30,15 @@ function textoPeriodo(item: ItemChecklist): string {
 }
 
 export function ChecklistView({ personalId }: ChecklistViewProps) {
-  const {
-    checklist,
-    loading,
-    error,
-    recargar,
-    finalizarTarea,
-  } = useChecklist(personalId);
+  const { checklist, loading, error, recargar, finalizarTarea } = useChecklist(personalId);
 
-  const [itemAFinalizar, setItemAFinalizar] =
-    useState<ItemChecklist | null>(null);
+  const [itemAFinalizar, setItemAFinalizar] = useState<ItemChecklist | null>(null);
   const [imagen, setImagen] = useState<File | null>(null);
-  const [cantidadesConsumo, setCantidadesConsumo] =
-    useState<Record<number, string>>({});
+  const form = useForm<{ cantidades: Record<string, string> }>({
+    defaultValues: { cantidades: {} },
+    shouldUnregister: true,
+  });
+  const filters = useListState('tarea');
   const [errorConsumo, setErrorConsumo] = useState<string | null>(null);
 
   const handleAbrirModal = (item: ItemChecklist) => {
@@ -55,51 +47,41 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
     setErrorConsumo(null);
 
     const cantidadesIniciales = Object.fromEntries(
-      (item.tarea.insumos_quimicos ?? []).map((requisito) => [
-        requisito.insumo_quimico_id,
-        '',
-      ]),
+      (item.tarea.insumos_quimicos ?? []).map((requisito) => [requisito.insumo_quimico_id, '']),
     );
 
-    setCantidadesConsumo(cantidadesIniciales);
+    form.reset({ cantidades: cantidadesIniciales });
   };
 
-  const handleConfirmarFinalizacion = async () => {
-    if (!itemAFinalizar) return;
+  const handleConfirmarFinalizacion = form.handleSubmit(
+    async ({ cantidades: cantidadesConsumo }) => {
+      if (!itemAFinalizar) return;
 
-    const requisitos = itemAFinalizar.tarea.insumos_quimicos ?? [];
+      const requisitos = itemAFinalizar.tarea.insumos_quimicos ?? [];
 
-    const faltaCantidad = requisitos.some((requisito) => {
-      const cantidad =
-        cantidadesConsumo[requisito.insumo_quimico_id];
+      const faltaCantidad = requisitos.some((requisito) => {
+        const cantidad = cantidadesConsumo[requisito.insumo_quimico_id];
 
-      return cantidad === undefined || cantidad.trim() === '';
-    });
+        return cantidad === undefined || cantidad.trim() === '';
+      });
 
-    if (faltaCantidad) {
-      setErrorConsumo(
-        'Ingresá el consumo aproximado de cada producto químico.',
-      );
-      return;
-    }
+      if (faltaCantidad) {
+        setErrorConsumo('Ingresá el consumo aproximado de cada producto químico.');
+        return;
+      }
 
-    const consumos: ConsumoTareaInput[] = requisitos.map((requisito) => ({
-      insumo_quimico_id: requisito.insumo_quimico_id,
-      cantidad_utilizada: Number(
-        cantidadesConsumo[requisito.insumo_quimico_id],
-      ),
-    }));
+      const consumos: ConsumoTareaInput[] = requisitos.map((requisito) => ({
+        insumo_quimico_id: requisito.insumo_quimico_id,
+        cantidad_utilizada: Number(cantidadesConsumo[requisito.insumo_quimico_id]),
+      }));
 
-    const finalizada = await finalizarTarea(
-      itemAFinalizar.id,
-      imagen,
-      consumos,
-    );
+      const finalizada = await finalizarTarea(itemAFinalizar.id, imagen, consumos);
 
-    if (finalizada) {
-      setItemAFinalizar(null);
-    }
-  };
+      if (finalizada) {
+        setItemAFinalizar(null);
+      }
+    },
+  );
 
   if (loading && !checklist) {
     return <LoadingSpinner mensaje="Cargando checklist..." />;
@@ -113,42 +95,38 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
     return null;
   }
 
+  const visibles = checklist.items
+    .filter((item) =>
+      `${item.tarea.nombre} ${item.plan.nombre} ${item.frecuencia} ${item.estado}`
+        .toLocaleLowerCase()
+        .includes(filters.busqueda.toLocaleLowerCase()),
+    )
+    .sort((left, right) => {
+      const value = (item: ItemChecklist) =>
+        filters.ordenarPor === 'plan'
+          ? item.plan.nombre
+          : filters.ordenarPor === 'estado'
+            ? item.estado
+            : item.tarea.nombre;
+      return (
+        value(left).localeCompare(value(right), 'es') * (filters.orden === 'desc' ? -1 : 1) ||
+        left.id - right.id
+      );
+    });
   const porcentaje =
-    checklist.total > 0
-      ? Math.round((checklist.realizadas / checklist.total) * 100)
-      : 0;
+    checklist.total > 0 ? Math.round((checklist.realizadas / checklist.total) * 100) : 0;
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <div>
-          <h4 className="mb-0 text-secondary">
-            {checklist.responsable.apellido},{' '}
-            {checklist.responsable.nombre}
-          </h4>
-          <small className="text-muted">
-            Checklist del {formatearFecha(checklist.fecha)}
-          </small>
-        </div>
-
-        <Button
-          variant="outline-secondary"
-          size="sm"
-          onClick={recargar}
-          disabled={loading}
-          className="d-flex align-items-center gap-1 shadow-sm"
-        >
-          <i className="bi bi-arrow-clockwise" />
-          <span>Actualizar</span>
-        </Button>
+      <div className="mb-3">
+        <h4 className="mb-1 text-secondary fw-normal">
+          {checklist.responsable.apellido}, {checklist.responsable.nombre}
+        </h4>
+        <small className="text-muted">Checklist del {formatearFecha(checklist.fecha)}</small>
       </div>
 
       {error && (
-        <Alert
-          variant="danger"
-          dismissible
-          onClose={() => void recargar()}
-        >
+        <Alert variant="danger" dismissible onClose={() => void recargar()}>
           {error}
         </Alert>
       )}
@@ -162,57 +140,64 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
             <span>{checklist.pendientes} pendientes</span>
           </div>
 
-          <ProgressBar
-            now={porcentaje}
-            label={`${porcentaje}%`}
-            variant="success"
-          />
+          <ProgressBar now={porcentaje} label={`${porcentaje}%`} variant="success" />
         </div>
       )}
 
+      <ListControls {...filters}>
+        <Button
+          variant="success"
+          onClick={recargar}
+          disabled={loading || form.formState.isSubmitting}
+          className="d-flex align-items-center gap-1 shadow-sm"
+        >
+          <i className="bi bi-arrow-clockwise" aria-hidden="true" />
+          <span>Actualizar</span>
+        </Button>
+      </ListControls>
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
             <thead className="table-light">
               <tr>
-                <th>Tarea</th>
-                <th>Plan</th>
+                <SortableHeader column="tarea" {...filters}>
+                  Tarea
+                </SortableHeader>
+                <SortableHeader column="plan" {...filters}>
+                  Plan
+                </SortableHeader>
                 <th>Frecuencia</th>
                 <th>Período</th>
-                <th>Estado</th>
+                <SortableHeader column="estado" {...filters}>
+                  Estado
+                </SortableHeader>
                 <th className="text-center">Acción</th>
               </tr>
             </thead>
 
             <tbody>
-              {checklist.items.length === 0 ? (
+              {visibles.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="text-center py-4 text-muted"
-                  >
-                    No hay tareas asignadas para hoy.
+                  <td colSpan={6} className="text-center py-4 text-muted">
+                    {filters.busqueda
+                      ? 'No hay tareas para la búsqueda actual.'
+                      : 'No hay tareas asignadas para hoy.'}
                   </td>
                 </tr>
               ) : (
-                checklist.items.map((item) => (
+                visibles.map((item) => (
                   <tr key={item.id}>
                     <td>
                       <strong>{item.tarea.nombre}</strong>
                     </td>
                     <td>{item.plan.nombre}</td>
                     <td>
-                      <Badge
-                        bg="info"
-                        className="text-dark text-capitalize"
-                      >
+                      <Badge bg="info" className="text-dark text-capitalize">
                         {item.frecuencia}
                       </Badge>
                     </td>
                     <td>
-                      <small className="text-muted">
-                        {textoPeriodo(item)}
-                      </small>
+                      <small className="text-muted">{textoPeriodo(item)}</small>
                     </td>
                     <td>
                       {item.estado === 'realizada' ? (
@@ -234,7 +219,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
                           size="sm"
                           className="py-1 px-2 shadow-sm"
                           onClick={() => handleAbrirModal(item)}
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                         >
                           <i className="bi bi-check-circle me-1" />
                           Realizar
@@ -263,32 +248,21 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
         </Modal.Header>
 
         <Modal.Body className="p-4">
+          <FormErrors errors={form.formState.errors} />
           {itemAFinalizar && (
             <>
-              <h5 className="fw-bold mb-1">
-                {itemAFinalizar.tarea.nombre}
-              </h5>
+              <h5 className="fw-bold mb-1">{itemAFinalizar.tarea.nombre}</h5>
 
               <div className="d-flex gap-2 mb-3">
-                <Badge bg="primary">
-                  {itemAFinalizar.plan.nombre}
-                </Badge>
-                <Badge
-                  bg="info"
-                  className="text-dark text-capitalize"
-                >
+                <Badge bg="primary">{itemAFinalizar.plan.nombre}</Badge>
+                <Badge bg="info" className="text-dark text-capitalize">
                   {itemAFinalizar.frecuencia}
                 </Badge>
               </div>
 
               <div className="bg-light p-3 rounded border mb-4">
-                <h6 className="fw-bold border-bottom pb-2 mb-3">
-                  Procedimiento a seguir
-                </h6>
-                <p
-                  className="mb-0"
-                  style={{ whiteSpace: 'pre-wrap' }}
-                >
+                <h6 className="fw-bold border-bottom pb-2 mb-3">Procedimiento a seguir</h6>
+                <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
                   {itemAFinalizar.tarea.procedimiento}
                 </p>
               </div>
@@ -305,51 +279,38 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
                     </Alert>
                   )}
 
-                  {itemAFinalizar.tarea.insumos_quimicos?.map(
-                    (requisito) => {
-                      const insumo = requisito.insumo_quimico;
-                      const unidad =
-                        insumo?.unidadMedidaObj?.sufijo ?? '';
+                  {itemAFinalizar.tarea.insumos_quimicos?.map((requisito) => {
+                    const insumo = requisito.insumo_quimico;
+                    const unidad = insumo?.unidadMedidaObj?.sufijo ?? '';
 
-                      return (
-                        <Form.Group
-                          className="mb-3"
-                          key={requisito.insumo_quimico_id}
-                        >
-                          <Form.Label>
-                            {insumo?.nombre ??
-                              `Producto ${requisito.insumo_quimico_id}`}
-                            {unidad ? ` (${unidad})` : ''}
-                            <span className="text-muted">
-                              {' '}
-                              — referencia del plan: {requisito.cantidad}{' '}
-                              {unidad}
-                            </span>
-                          </Form.Label>
+                    return (
+                      <Form.Group className="mb-3" key={requisito.insumo_quimico_id}>
+                        <Form.Label>
+                          {insumo?.nombre ?? `Producto ${requisito.insumo_quimico_id}`}
+                          {unidad ? ` (${unidad})` : ''}
+                          <span className="text-muted">
+                            {' '}
+                            — referencia del plan: {requisito.cantidad} {unidad}
+                          </span>
+                        </Form.Label>
 
-                          <Form.Control
-                            type="number"
-                            min="0"
-                            step="any"
-                            value={
-                              cantidadesConsumo[
-                                requisito.insumo_quimico_id
-                              ] ?? ''
-                            }
-                            onChange={(event) => {
-                              setErrorConsumo(null);
-                              setCantidadesConsumo((actuales) => ({
-                                ...actuales,
-                                [requisito.insumo_quimico_id]:
-                                  event.target.value,
-                              }));
-                            }}
-                            placeholder="Cantidad realmente utilizada"
-                          />
-                        </Form.Group>
-                      );
-                    },
-                  )}
+                        <Form.Control
+                          type="number"
+                          min="0"
+                          step="any"
+                          {...form.register(`cantidades.${requisito.insumo_quimico_id}`, {
+                            validate: (value) =>
+                              (value !== '' &&
+                                value !== undefined &&
+                                Number.isFinite(Number(value)) &&
+                                Number(value) >= 0) ||
+                              'Ingresá una cantidad válida mayor o igual a cero.',
+                          })}
+                          placeholder="Cantidad realmente utilizada"
+                        />
+                      </Form.Group>
+                    );
+                  })}
                 </div>
               )}
 
@@ -362,9 +323,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
                 <Form.Control
                   type="file"
                   accept="image/*"
-                  onChange={(
-                    event: React.ChangeEvent<HTMLInputElement>,
-                  ) => {
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                     setImagen(event.target.files?.[0] ?? null);
                   }}
                 />
@@ -377,7 +336,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
           <Button
             variant="secondary"
             onClick={() => setItemAFinalizar(null)}
-            disabled={loading}
+            disabled={loading || form.formState.isSubmitting}
           >
             Cancelar
           </Button>
@@ -385,7 +344,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
           <Button
             variant="success"
             onClick={() => void handleConfirmarFinalizacion()}
-            disabled={loading}
+            disabled={loading || form.formState.isSubmitting}
           >
             {loading ? 'Completando...' : 'Realizar tarea'}
           </Button>

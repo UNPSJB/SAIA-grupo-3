@@ -1,6 +1,5 @@
 from enum import StrEnum, auto
 
-# Con cuántos días de anticipación un documento se considera "por vencer"
 DIAS_AVISO_VENCIMIENTO = 30
 
 

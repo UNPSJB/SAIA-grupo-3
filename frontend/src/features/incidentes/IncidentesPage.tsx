@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { SortableHeader } from '../../shared/components/SortableHeader';
+import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
+import { Navigate } from 'react-router-dom';
+import { useForm, useController } from 'react-hook-form';
+import { FormErrors } from '../../shared/components/FormErrors';
+import { ListControls } from '../../shared/components/ListControls';
+import { usePagedList } from '../../shared/hooks/usePagedList';
+import { permissions } from '../../shared/libreria/permissions';
+import { useState, useEffect } from 'react';
 import { Badge, Button, Card, Container, Form, Pagination, Table } from 'react-bootstrap';
 
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -6,96 +14,60 @@ import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { API_BASE_URL } from '../../shared/libreria/api';
 import { useAuth } from '../../shared/hooks/useAuth';
 import {
+  getIncidenteById,
   eliminarIncidente,
-  getIncidentes,
   guardarIncidente,
   type Incidente,
 } from './incidentesApi';
 
-
 export function IncidentesPage() {
-  const [incidentes, setIncidentes] = useState<Incidente[]>([]);
+  const route = useCrudRoute('/incidentes', getIncidenteById);
+  const list = usePagedList<Incidente>(
+    'incidentes',
+    route.mode === 'listado',
+    '',
+    'fecha_hora',
+    'desc',
+  );
+  const { items: incidentes, page, total, totalPages, loading, error, setPage } = list;
   const { currentUser } = useAuth();
+  const { canAdmin } = permissions(currentUser);
+  const form = useForm<{ descripcion: string }>({ defaultValues: { descripcion: '' } });
+  const {
+    field: {
+      value: descripcion,
+      onChange: setDescripcion,
+      ref: descripcionRef,
+      onBlur: descripcionBlur,
+    },
+  } = useController({
+    name: 'descripcion',
+    control: form.control,
+    rules: {
+      validate: (value) => !!value.trim() || 'Ingresá una descripción.',
+      maxLength: { value: 1000, message: 'Máximo 1000 caracteres.' },
+    },
+  });
+  const enviando = form.formState.isSubmitting;
   const operadores = currentUser?.operar ? [currentUser] : [];
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [modoEdicion, setModoEdicion] = useState(false);
-  const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<Incidente | null>(null);
-  const [descripcion, setDescripcion] = useState('');
-  const [reportanteDni, setReportanteDni] = useState('');
-  const [foto, setFoto] = useState<File | null>(null);
-  const [enviando, setEnviando] = useState(false);
-
-  const cargarIncidentes = useCallback(async () => {
-    try {
-      const respuesta = await getIncidentes(page, 10);
-      setIncidentes(respuesta.items);
-      setTotal(respuesta.total);
-      setTotalPages(respuesta.pages);
-      setError(null);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al cargar incidentes.');
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
-
+  const modoEdicion = route.mode === 'crear' || route.mode === 'editar';
+  const incidenteSeleccionado = route.item;
+  const reportanteDni =
+    incidenteSeleccionado?.reportado_por_dni.toString() || currentUser?.dni || '';
+  const { reset } = form;
   useEffect(() => {
-    let vigente = true;
-    getIncidentes(page, 10)
-      .then((respuesta) => {
-        if (!vigente) return;
-        setIncidentes(respuesta.items);
-        setTotal(respuesta.total);
-        setTotalPages(respuesta.pages);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (vigente) {
-          setError(err instanceof Error ? err.message : 'Error al cargar incidentes.');
-        }
-      })
-      .finally(() => {
-        if (vigente) setLoading(false);
-      });
-    return () => {
-      vigente = false;
-    };
-  }, [page]);
+    reset({ descripcion: route.item?.descripcion || '' });
+  }, [route.item, reset]);
+  const [foto, setFoto] = useState<File | null>(null);
 
+  const cargarIncidentes = list.refetch;
 
+  const iniciarCreacion = () => route.open();
+  const iniciarEdicion = (item: Incidente) => route.open(item, 'editar');
+  const cancelarEdicion = route.back;
 
-  const iniciarCreacion = () => {
-    setIncidenteSeleccionado(null);
-    setDescripcion('');
-    setReportanteDni(currentUser?.dni ?? '');
-    setFoto(null);
-    setFormError(null);
-    setModoEdicion(true);
-  };
-
-  const iniciarEdicion = (incidente: Incidente) => {
-    setIncidenteSeleccionado(incidente);
-    setDescripcion(incidente.descripcion);
-    setReportanteDni(incidente.reportado_por_dni.toString());
-    setFoto(null);
-    setFormError(null);
-    setModoEdicion(true);
-  };
-
-  const cancelarEdicion = () => {
-    setModoEdicion(false);
-    setIncidenteSeleccionado(null);
-    setFormError(null);
-  };
-
-  const handleGuardar = async (evento: React.FormEvent<HTMLFormElement>) => {
-    evento.preventDefault();
-    setEnviando(true);
+  const handleGuardar = form.handleSubmit(async () => {
     setFormError(null);
     try {
       await guardarIncidente(
@@ -104,17 +76,14 @@ export function IncidentesPage() {
           reportadoPorDni: incidenteSeleccionado ? undefined : reportanteDni,
           foto,
         },
-        incidenteSeleccionado?.id
+        incidenteSeleccionado?.id,
       );
-      setModoEdicion(false);
-      setIncidenteSeleccionado(null);
+      route.back();
       await cargarIncidentes();
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : 'Error al guardar el incidente.');
-    } finally {
-      setEnviando(false);
     }
-  };
+  });
 
   const handleEliminar = async (incidente: Incidente) => {
     if (!window.confirm('¿Eliminar este incidente? Esta acción no se puede deshacer.')) return;
@@ -126,21 +95,41 @@ export function IncidentesPage() {
         await cargarIncidentes();
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al eliminar el incidente.');
+      form.setError('root', {
+        message: err instanceof Error ? err.message : 'Error al eliminar el incidente.',
+      });
     }
   };
 
-  if (loading && page === 1 && !modoEdicion && incidentes.length === 0) {
-    return <LoadingSpinner mensaje="Cargando incidentes..." />;
-  }
+  if (route.mode === 'editar' && !canAdmin) return <Navigate to="/incidentes" replace />;
 
   return (
     <Container className="py-2">
       <h2 className="mb-4 border-bottom pb-2 text-secondary">Registro de incidentes</h2>
 
+      {route.loading && <LoadingSpinner mensaje="Cargando incidente..." />}
+      {route.error && (
+        <>
+          <ErrorAlert mensaje={route.error} />
+          <Button onClick={route.back}>Volver</Button>
+        </>
+      )}
+      {route.mode === 'ver' && incidenteSeleccionado && (
+        <Card body>
+          <h5>Detalle del incidente</h5>
+          <p>{incidenteSeleccionado.descripcion}</p>
+          <p>{new Date(incidenteSeleccionado.fecha_hora).toLocaleString()}</p>
+          <Button onClick={route.back}>Volver</Button>{' '}
+          {canAdmin && (
+            <Button variant="warning" onClick={() => iniciarEdicion(incidenteSeleccionado)}>
+              Editar
+            </Button>
+          )}
+        </Card>
+      )}
       {!modoEdicion && error && <ErrorAlert mensaje={error} />}
 
-      {modoEdicion ? (
+      {modoEdicion && !route.loading && !route.error ? (
         <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '700px' }}>
           <Card.Header as="h5" className="bg-light text-secondary py-3">
             {incidenteSeleccionado ? 'Modificar incidente' : 'Registrar incidente'}
@@ -148,20 +137,15 @@ export function IncidentesPage() {
           <Card.Body className="p-4">
             {formError && <ErrorAlert mensaje={formError} />}
             {!incidenteSeleccionado && (
-              <p className="small text-muted">
-                El incidente se registra a nombre de tu usuario.
-              </p>
+              <p className="small text-muted">El incidente se registra a nombre de tu usuario.</p>
             )}
-            <Form onSubmit={handleGuardar}>
+            <Form noValidate onSubmit={handleGuardar}>
+              {loading && <LoadingSpinner mensaje="Cargando incidentes..." />}
+              <FormErrors errors={form.formState.errors} />
               {!incidenteSeleccionado && (
                 <Form.Group className="mb-3">
                   <Form.Label>Reportado por</Form.Label>
-                  <Form.Select
-                    required
-                    disabled
-                    value={reportanteDni}
-                    onChange={(evento) => setReportanteDni(evento.target.value)}
-                  >
+                  <Form.Select required disabled value={reportanteDni}>
                     <option value="">Seleccione un operador...</option>
                     {operadores.map((persona) => (
                       <option key={persona.dni} value={persona.dni}>
@@ -193,6 +177,9 @@ export function IncidentesPage() {
                   required
                   maxLength={1000}
                   value={descripcion}
+                  ref={descripcionRef}
+                  onBlur={descripcionBlur}
+                  isInvalid={!!form.formState.errors.descripcion}
                   onChange={(evento) => setDescripcion(evento.target.value)}
                   placeholder="Describa brevemente el incidente..."
                 />
@@ -233,23 +220,33 @@ export function IncidentesPage() {
             </Form>
           </Card.Body>
         </Card>
-      ) : (
+      ) : route.mode === 'listado' ? (
         <>
-          <div className="d-flex justify-content-end mb-3">
+          {loading && <LoadingSpinner mensaje="Cargando incidentes..." />}
+          <FormErrors errors={form.formState.errors} />
+          <ListControls {...list}>
             <Button variant="success" onClick={iniciarCreacion}>
               <i className="bi bi-plus-lg me-1"></i>Registrar incidente
             </Button>
-          </div>
+          </ListControls>
           <Card className="shadow-sm border-0">
             <Card.Body className="p-0">
               <Table striped hover responsive className="mb-0 align-middle">
                 <thead className="table-light">
                   <tr>
-                    <th>Fecha y hora</th>
-                    <th>Descripción</th>
-                    <th>Reportado por</th>
+                    <SortableHeader column="fecha_hora" {...list}>
+                      Fecha y hora
+                    </SortableHeader>
+                    <SortableHeader column="descripcion" {...list}>
+                      Descripción
+                    </SortableHeader>
+                    <SortableHeader column="reportado_por_dni" {...list}>
+                      Reportado por
+                    </SortableHeader>
                     <th>Foto</th>
-                    <th className="text-center" style={{ width: '120px' }}>Acciones</th>
+                    <th className="text-center" style={{ width: '120px' }}>
+                      Acciones
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -263,10 +260,18 @@ export function IncidentesPage() {
                     incidentes.map((incidente) => (
                       <tr key={incidente.id}>
                         <td>{new Date(incidente.fecha_hora).toLocaleString()}</td>
-                        <td className="text-break">{incidente.descripcion}</td>
+                        <td className="text-break">
+                          <Button variant="link" onClick={() => route.open(incidente)}>
+                            {incidente.descripcion}
+                          </Button>
+                        </td>
                         <td>
-                          <span>{incidente.reportado_por.apellido}, {incidente.reportado_por.nombre}</span>
-                          <div><small className="text-muted">DNI: {incidente.reportado_por_dni}</small></div>
+                          <span>
+                            {incidente.reportado_por.apellido}, {incidente.reportado_por.nombre}
+                          </span>
+                          <div>
+                            <small className="text-muted">DNI: {incidente.reportado_por_dni}</small>
+                          </div>
                         </td>
                         <td>
                           {incidente.imagen_path ? (
@@ -282,24 +287,26 @@ export function IncidentesPage() {
                           )}
                         </td>
                         <td className="text-center">
-                          {currentUser?.administrar && <div className="d-flex justify-content-center gap-2">
-                            <Button
-                              variant="warning"
-                              size="sm"
-                              title="Modificar"
-                              onClick={() => iniciarEdicion(incidente)}
-                            >
-                              <i className="bi bi-pencil-fill"></i>
-                            </Button>
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              title="Eliminar"
-                              onClick={() => void handleEliminar(incidente)}
-                            >
-                              <i className="bi bi-trash3-fill"></i>
-                            </Button>
-                          </div>}
+                          {canAdmin && (
+                            <div className="d-flex justify-content-center gap-2">
+                              <Button
+                                variant="warning"
+                                size="sm"
+                                title="Modificar"
+                                onClick={() => iniciarEdicion(incidente)}
+                              >
+                                <i className="bi bi-pencil-fill"></i>
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                title="Eliminar"
+                                onClick={() => void handleEliminar(incidente)}
+                              >
+                                <i className="bi bi-trash3-fill"></i>
+                              </Button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -326,7 +333,7 @@ export function IncidentesPage() {
             )}
           </Card>
         </>
-      )}
+      ) : null}
     </Container>
   );
 }

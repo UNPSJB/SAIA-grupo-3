@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react';
+import { SearchableSelect } from '../../shared/components/SearchableSelect';
+import { useForm, useController } from 'react-hook-form';
+import { FormErrors } from '../../shared/components/FormErrors';
+import { useEffect } from 'react';
 import { Card, Form, Button } from 'react-bootstrap';
 import type { Insumo, InsumoCreate } from './types';
-import { useUnidadMedida } from '../unidadMedida/useUnidadMedida';
+import { useOptions } from '../../shared/hooks/useOptions';
+import type { UnidadMedida } from '../unidadMedida/types';
 
 interface InsumoFormProps {
   insumoInicial?: Insumo | null;
@@ -10,12 +14,68 @@ interface InsumoFormProps {
 }
 
 export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormProps) {
-  const [nombre, setNombre] = useState('');
-  const [cantidad, setCantidad] = useState<number | ''>('');
-  const [unidadMedidaId, setUnidadMedidaId] = useState<number | ''>('');
-  const [enviando, setEnviando] = useState(false);
+  const esEdicion = Boolean(insumoInicial);
+  const form = useForm<{ nombre: string; cantidad: number | ''; unidadMedidaId: number | '' }>({
+    defaultValues: { nombre: '', cantidad: '', unidadMedidaId: '' },
+  });
+  const enviando = form.formState.isSubmitting;
+  const {
+    field: {
+      value: nombre,
+      onChange: setNombre,
+      onBlur: nombreBlur,
+      ref: nombreRef,
+      name: nombreName,
+    },
+  } = useController({
+    name: 'nombre',
+    control: form.control,
+    rules: {
+      validate: (value) =>
+        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
+        'Este campo es obligatorio.',
+    },
+  });
+  const {
+    field: {
+      value: cantidad,
+      onChange: setCantidad,
+      onBlur: cantidadBlur,
+      ref: cantidadRef,
+      name: cantidadName,
+    },
+  } = useController({
+    name: 'cantidad',
+    control: form.control,
+    rules: {
+      validate: (value) =>
+        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
+        'Este campo es obligatorio.',
+    },
+  });
+  const {
+    field: {
+      value: unidadMedidaId,
+      onChange: setUnidadMedidaId,
+      onBlur: unidadMedidaIdBlur,
+      ref: unidadMedidaIdRef,
+      name: unidadMedidaIdName,
+    },
+  } = useController({
+    name: 'unidadMedidaId',
+    control: form.control,
+    rules: {
+      validate: (value) =>
+        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
+        'Este campo es obligatorio.',
+    },
+  });
 
-  const { unidades, loading: loadingUnidades } = useUnidadMedida();
+  const {
+    items: unidades,
+    loading: loadingUnidades,
+    error: optionsError,
+  } = useOptions<UnidadMedida>('unidades-medida');
 
   useEffect(() => {
     if (insumoInicial) {
@@ -23,13 +83,12 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
       setCantidad(insumoInicial.cantidad);
       setUnidadMedidaId(insumoInicial.unidad_medida_id);
     }
-  }, [insumoInicial]);
+  }, [insumoInicial, setNombre, setCantidad, setUnidadMedidaId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = form.handleSubmit(async () => {
+    form.clearErrors('root');
     if (nombre === '' || cantidad === '' || unidadMedidaId === '') return;
 
-    setEnviando(true);
     try {
       await onGuardar({
         nombre,
@@ -37,13 +96,11 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
         unidad_medida_id: Number(unidadMedidaId),
       });
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al guardar el insumo.');
-    } finally {
-      setEnviando(false);
+      form.setError('root', {
+        message: err instanceof Error ? err.message : 'Error al guardar el insumo.',
+      });
     }
-  };
-
-  const esEdicion = Boolean(insumoInicial);
+  });
 
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
@@ -51,49 +108,71 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
         {esEdicion ? `Modificar Insumo: ${insumoInicial?.nombre}` : 'Registrar Nuevo Insumo'}
       </Card.Header>
       <Card.Body className="p-4">
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
+        <Form noValidate onSubmit={handleSubmit}>
+          <FormErrors errors={form.formState.errors} />
+          {optionsError && (
+            <div role="alert" className="text-danger">
+              {optionsError}
+            </div>
+          )}
+          <Form.Group controlId="InsumoForm-nombre" className="mb-3">
             <Form.Label>Nombre</Form.Label>
-            <Form.Control 
-              type="text" 
-              required 
-              value={nombre} 
-              onChange={(e) => setNombre(e.target.value)} 
+            <Form.Control
+              type="text"
+              required
+              ref={nombreRef}
+              onBlur={nombreBlur}
+              name={nombreName}
+              value={nombre}
+              isInvalid={!!form.formState.errors.nombre}
+              onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej: Manzanas"
             />
           </Form.Group>
 
-          <Form.Group className="mb-3">
+          <Form.Group controlId="InsumoForm-cantidad" className="mb-3">
             <Form.Label>Cantidad</Form.Label>
-            <Form.Control 
-              type="number" 
+            <Form.Control
+              type="number"
               step="any"
-              required 
-              value={cantidad} 
-              onChange={(e) => setCantidad(e.target.value === '' ? '' : Number(e.target.value))} 
+              required
+              ref={cantidadRef}
+              onBlur={cantidadBlur}
+              name={cantidadName}
+              value={cantidad}
+              isInvalid={!!form.formState.errors.cantidad}
+              onChange={(e) => setCantidad(e.target.value === '' ? '' : Number(e.target.value))}
               placeholder="Ej: 10"
             />
           </Form.Group>
 
-          <Form.Group className="mb-4">
+          <Form.Group controlId="InsumoForm-unidadMedidaId" className="mb-4">
             <Form.Label>Unidad de Medida</Form.Label>
-            <Form.Select 
-              required 
-              value={unidadMedidaId} 
-              onChange={(e) => setUnidadMedidaId(e.target.value === '' ? '' : Number(e.target.value))}
+            <SearchableSelect
+              required
+              ref={unidadMedidaIdRef}
+              onBlur={unidadMedidaIdBlur}
+              name={unidadMedidaIdName}
+              value={unidadMedidaId}
+              isInvalid={!!form.formState.errors.unidadMedidaId}
+              onChange={(e) =>
+                setUnidadMedidaId(e.target.value === '' ? '' : Number(e.target.value))
+              }
               disabled={loadingUnidades}
             >
               <option value="">Seleccioná una unidad...</option>
-              {unidades.map((u: any) => (
+              {unidades.map((u) => (
                 <option key={u.id} value={u.id}>
-                 {u.sufijo}
+                  {u.sufijo}
                 </option>
               ))}
-            </Form.Select>
+            </SearchableSelect>
           </Form.Group>
 
           <div className="d-flex justify-content-end gap-2">
-            <Button variant="secondary" onClick={onCancelar} disabled={enviando}>Cancelar</Button>
+            <Button variant="secondary" onClick={onCancelar} disabled={enviando}>
+              Cancelar
+            </Button>
             <Button variant="primary" type="submit" disabled={enviando}>
               {enviando ? 'Guardando...' : esEdicion ? 'Actualizar Cambios' : 'Guardar'}
             </Button>

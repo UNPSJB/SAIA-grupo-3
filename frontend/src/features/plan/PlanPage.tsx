@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Container } from 'react-bootstrap';
+import { Container, Button } from 'react-bootstrap';
 import { PlanList } from './PlanList';
 import { PlanForm } from './PlanForm';
 import { PlanView } from './PlanView';
@@ -7,66 +6,71 @@ import { PlanDeleteView } from './PlanDeleteView';
 import { usePlan } from './usePlan';
 import { getPlanById, updatePlan } from './planApi';
 import type { Plan, PlanCreate } from './types';
-
-type ModoVista = 'ver' | 'listado' | 'crear' | 'editar' | 'eliminar';
+import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
+import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { ErrorAlert } from '../../shared/components/ErrorAlert';
 
 export function PlanPage() {
-  const [modo, setModo] = useState<ModoVista>('listado');
-  const [planSeleccionado, setPlanSeleccionado] = useState<Plan | null>(null);
-  const { guardar, eliminar } = usePlan();
-
-  const handleNuevo = () => { setPlanSeleccionado(null); setModo('crear'); };
-  const handleView = (plan: Plan) => { setPlanSeleccionado(plan); setModo('ver'); };
-  const handleEditar = (plan: Plan) => { setPlanSeleccionado(plan); setModo('editar'); };
-  const handleEliminarClick = (plan: Plan) => { setPlanSeleccionado(plan); setModo('eliminar'); };
-
+  const route = useCrudRoute<Plan>('/planes', getPlanById);
+  const { mode, item, open, back, error, loading } = route;
+  const { guardar, eliminar } = usePlan(false);
   const handleGuardar = async (datos: PlanCreate) => {
-    if (modo === 'editar' && planSeleccionado?.id) {
-      await guardar(datos, planSeleccionado.id);
-    } else {
-      await guardar(datos);
-    }
-    volverAlListado();
+    await guardar(datos, mode === 'editar' ? item?.id : undefined);
+    back();
   };
-
   const handleConfirmarBaja = async (id: number) => {
     await eliminar(id);
-    volverAlListado();
+    back();
   };
-
   const handleDesvincularTarea = async (tareaId: number) => {
-    if (!planSeleccionado?.id) return;
-    if (confirm('¿Estás seguro de que deseas desvincular esta tarea del plan?')) {
-      try {
-        const nuevosIds = planSeleccionado.tareas?.filter(t => t.id !== tareaId).map(t => t.id as number) || [];
-        await updatePlan(planSeleccionado.id, { tarea_ids: nuevosIds });
-        const planActualizado = await getPlanById(planSeleccionado.id);
-        setPlanSeleccionado(planActualizado);
-      } catch (err: unknown) {
-        alert(err instanceof Error ? err.message : 'Error al desvincular la tarea.');
-      }
+    if (!item?.id || !confirm('¿Desvincular esta tarea del plan?')) return;
+    try {
+      await updatePlan(item.id, {
+        tarea_ids: item.tareas?.filter((t) => t.id !== tareaId).map((t) => t.id as number) || [],
+      });
+      await route.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error al desvincular.');
     }
-  };
-
-  const volverAlListado = () => {
-    setModo('listado');
-    setPlanSeleccionado(null);
   };
 
   return (
     <Container className="py-2">
       <h2 className="mb-4 border-bottom pb-2 text-secondary">Gestión de Planes</h2>
-      {modo === 'ver' && planSeleccionado && (
-        <PlanView 
-          plan={planSeleccionado} 
-          onEditar={() => handleEditar(planSeleccionado)} 
-          onVolver={volverAlListado} 
+      {loading && <LoadingSpinner mensaje="Cargando detalle..." />}
+      {error && (
+        <>
+          <ErrorAlert mensaje={error} />
+          <Button onClick={back}>Volver al listado</Button>
+        </>
+      )}
+      {mode === 'listado' && (
+        <PlanList
+          onViewClick={(item) => open(item)}
+          onNuevoClick={() => open()}
+          onEditarClick={(item) => open(item, 'editar')}
+          onEliminarClick={(item) => open(item, 'eliminar')}
+        />
+      )}
+      {mode === 'ver' && item && (
+        <PlanView
+          plan={item}
+          onEditar={() => open(item, 'editar')}
+          onVolver={back}
           onDesvincularTarea={handleDesvincularTarea}
         />
       )}
-      {modo === 'listado' && <PlanList onViewClick={handleView} onNuevoClick={handleNuevo} onEditarClick={handleEditar} onEliminarClick={handleEliminarClick} />}
-      {(modo === 'crear' || modo === 'editar') && <PlanForm planInicial={planSeleccionado} onGuardar={handleGuardar} onCancelar={volverAlListado} />}
-      {modo === 'eliminar' && planSeleccionado && planSeleccionado.id !== undefined && <PlanDeleteView plan={planSeleccionado} onConfirmarEliminar={handleConfirmarBaja} onCancelar={volverAlListado} />}
+      {(mode === 'crear' || (mode === 'editar' && item)) && (
+        <PlanForm
+          key={item?.id ?? 'nuevo'}
+          planInicial={mode === 'crear' ? null : item}
+          onGuardar={handleGuardar}
+          onCancelar={back}
+        />
+      )}
+      {mode === 'eliminar' && item && item.id !== undefined && (
+        <PlanDeleteView plan={item} onConfirmarEliminar={handleConfirmarBaja} onCancelar={back} />
+      )}
     </Container>
   );
 }

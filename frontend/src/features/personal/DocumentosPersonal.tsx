@@ -1,4 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useForm } from 'react-hook-form';
+import { FormErrors } from '../../shared/components/FormErrors';
+import { SearchableSelect } from '../../shared/components/SearchableSelect';
+import { loadAllPages } from '../../shared/libreria/options';
+import { useEffect, useState } from 'react';
 import { Button, Card, Form, Modal, Table } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { getTiposDocumento } from '../tipoDocumento/tipoDocumentoApi';
@@ -25,17 +29,18 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [tiposDocumento, setTiposDocumento] = useState<TipoDocumento[]>([]);
   const [personalCargadoId, setPersonalCargadoId] = useState<number | null>(null);
-  const [guardando, setGuardando] = useState(false);
+  const form = useForm<{ tipoDocumentoId: string; fechaVencimiento: string }>();
+  const guardando = form.formState.isSubmitting;
   const [error, setError] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [documentoEditando, setDocumentoEditando] = useState<Documento | null>(null);
-  const [tipoDocumentoId, setTipoDocumentoId] = useState<number | ''>('');
-  const [fechaVencimiento, setFechaVencimiento] = useState('');
-  const [validado, setValidado] = useState(false);
 
   useEffect(() => {
     let componenteActivo = true;
-    Promise.all([getDocumentosPersonal(personalId), getTiposDocumento(1, 100)])
+    Promise.all([
+      getDocumentosPersonal(personalId),
+      loadAllPages((page) => getTiposDocumento(page, 100)),
+    ])
       .then(([datos, tipos]) => {
         if (componenteActivo) {
           setDocumentos(datos);
@@ -59,9 +64,10 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
 
   const abrirFormulario = (documento?: Documento) => {
     setDocumentoEditando(documento ?? null);
-    setTipoDocumentoId(documento?.tipo_documento_id ?? tiposDocumento[0]?.id ?? '');
-    setFechaVencimiento(documento?.fecha_vencimiento ?? '');
-    setValidado(false);
+    form.reset({
+      tipoDocumentoId: String(documento?.tipo_documento_id ?? tiposDocumento[0]?.id ?? ''),
+      fechaVencimiento: documento?.fecha_vencimiento ?? '',
+    });
     setError(null);
     setMostrarFormulario(true);
   };
@@ -72,16 +78,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
     setDocumentoEditando(null);
   };
 
-  const handleGuardar = async (evento: FormEvent<HTMLFormElement>) => {
-    evento.preventDefault();
-    const formulario = evento.currentTarget;
-    if (!formulario.checkValidity()) {
-      evento.stopPropagation();
-      setValidado(true);
-      return;
-    }
-
-    setGuardando(true);
+  const handleGuardar = form.handleSubmit(async ({ tipoDocumentoId, fechaVencimiento }) => {
     setError(null);
     const datos: DocumentoDatos = {
       tipo_documento_id: Number(tipoDocumentoId),
@@ -92,9 +89,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
       if (documentoEditando) {
         const actualizado = await updateDocumento(documentoEditando.id, datos);
         setDocumentos((actuales) =>
-          actuales.map((documento) =>
-            documento.id === actualizado.id ? actualizado : documento
-          )
+          actuales.map((documento) => (documento.id === actualizado.id ? actualizado : documento)),
         );
       } else {
         const creado = await createDocumento(personalId, datos);
@@ -104,19 +99,15 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
       setDocumentoEditando(null);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar el documento.');
-    } finally {
-      setGuardando(false);
     }
-  };
+  });
 
   const handleEliminar = async (documento: Documento) => {
     if (!window.confirm(`¿Eliminar el documento "${documento.tipo_documento.nombre}"?`)) return;
     setError(null);
     try {
       await deleteDocumento(documento.id);
-      setDocumentos((actuales) =>
-        actuales.filter((actual) => actual.id !== documento.id)
-      );
+      setDocumentos((actuales) => actuales.filter((actual) => actual.id !== documento.id));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al eliminar el documento.');
     }
@@ -141,7 +132,9 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
         </Card.Header>
         <Card.Body className="p-0">
           {error && !mostrarFormulario && (
-            <div className="p-3 pb-0"><ErrorAlert mensaje={error} /></div>
+            <div className="p-3 pb-0">
+              <ErrorAlert mensaje={error} />
+            </div>
           )}
           {cargando ? (
             <p className="text-muted text-center my-4">Cargando documentos...</p>
@@ -164,7 +157,9 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
                 ) : (
                   documentos.map((documento) => (
                     <tr key={documento.id}>
-                      <td><strong>{documento.tipo_documento.nombre}</strong></td>
+                      <td>
+                        <strong>{documento.tipo_documento.nombre}</strong>
+                      </td>
                       <td>{formatearFecha(documento.fecha_vencimiento)}</td>
                       <td className="text-center">
                         <div className="d-flex justify-content-center gap-2">
@@ -198,44 +193,46 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
       </Card>
 
       <Modal show={mostrarFormulario} onHide={cerrarFormulario} centered>
-        <Form noValidate validated={validado} onSubmit={handleGuardar}>
+        <Form noValidate onSubmit={handleGuardar}>
           <Modal.Header closeButton>
             <Modal.Title>
               {documentoEditando ? 'Editar o renovar documento' : 'Agregar documento'}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
+            <FormErrors errors={form.formState.errors} />
             {error && <ErrorAlert mensaje={error} />}
             <Form.Group className="mb-3">
               <Form.Label>Tipo de documento</Form.Label>
-              <Form.Select
+              <SearchableSelect
                 required
-                value={tipoDocumentoId}
-                onChange={(evento) =>
-                  setTipoDocumentoId(
-                    evento.target.value ? Number(evento.target.value) : ''
-                  )
-                }
+                {...form.register('tipoDocumentoId', {
+                  required: 'Seleccioná un tipo de documento.',
+                })}
               >
                 <option value="">Seleccioná un tipo</option>
                 {[
                   ...tiposDocumento,
-                  ...(documentoEditando
-                    && !tiposDocumento.some((tipo) => tipo.id === documentoEditando.tipo_documento_id)
+                  ...(documentoEditando &&
+                  !tiposDocumento.some((tipo) => tipo.id === documentoEditando.tipo_documento_id)
                     ? [documentoEditando.tipo_documento]
                     : []),
                 ].map((tipo) => (
-                  <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
+                  <option key={tipo.id} value={tipo.id}>
+                    {tipo.nombre}
+                  </option>
                 ))}
-              </Form.Select>
+              </SearchableSelect>
             </Form.Group>
             <Form.Group>
               <Form.Label>Fecha de vencimiento</Form.Label>
               <Form.Control
                 type="date"
                 required
-                value={fechaVencimiento}
-                onChange={(evento) => setFechaVencimiento(evento.target.value)}
+                {...form.register('fechaVencimiento', {
+                  required: 'Ingresá una fecha de vencimiento válida.',
+                })}
+                isInvalid={!!form.formState.errors.fechaVencimiento}
               />
               <Form.Control.Feedback type="invalid">
                 Ingresá una fecha de vencimiento válida.

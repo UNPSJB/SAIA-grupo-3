@@ -1,4 +1,7 @@
-import { Table, Card, Button, Badge, Pagination, Form } from 'react-bootstrap';
+import { SortableHeader } from '../../shared/components/SortableHeader';
+import { ListPagination } from '../../shared/components/ListPagination';
+import { ListControls } from '../../shared/components/ListControls';
+import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
 import { useInsumoQuimico } from './useInsumoQuimico';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -25,8 +28,6 @@ export function InsumoQuimicoList({
     page,
     totalPages,
     total,
-    nextPage,
-    prevPage,
     changePage,
     mostrarInactivos,
     setMostrarInactivos,
@@ -34,6 +35,8 @@ export function InsumoQuimicoList({
     ordenarPor,
     orden,
     cambiarOrden,
+    busqueda,
+    setBusqueda,
   } = useInsumoQuimico();
 
   const getLabelTipo = (valor: TipoQuimico) => {
@@ -54,63 +57,85 @@ export function InsumoQuimicoList({
     }
   };
 
-  const renderIconoOrden = (columna: string) => {
-    if (ordenarPor !== columna) {
-      return <i className="bi bi-chevron-expand text-muted ms-1" style={{ fontSize: '0.8rem' }}></i>;
-    }
-    return orden === 'asc' ? (
-      <i className="bi bi-chevron-up ms-1 text-primary" style={{ fontSize: '0.8rem' }}></i>
-    ) : (
-      <i className="bi bi-chevron-down ms-1 text-primary" style={{ fontSize: '0.8rem' }}></i>
-    );
-  };
-
-  if (loading && page === 1) return <LoadingSpinner mensaje="Cargando insumos químicos..." />;
-  if (error) return <ErrorAlert mensaje={error} />;
-
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 className="mb-0 text-secondary">Nómina de Insumos Químicos</h4>
-
-        <div className="d-flex align-items-center gap-3">
-          <Form.Check
-            type="switch"
-            id="switch-inactivos-quimicos"
-            label="Ver dados de baja"
-            checked={mostrarInactivos}
-            onChange={(e) => setMostrarInactivos(e.target.checked)}
-            className="text-secondary mb-0"
-          />
-          <Button
-            variant="success"
-            size="sm"
-            onClick={onNuevoClick}
-            className="d-flex align-items-center gap-1 shadow-sm"
-          >
-            <i className="bi bi-plus-lg"></i>
-            <span>Nuevo Químico</span>
-          </Button>
-        </div>
-      </div>
-
+      {loading && <LoadingSpinner mensaje="Cargando listado..." />}
+      {error && <ErrorAlert mensaje={error} />}
+      <ListControls
+        busqueda={busqueda}
+        setBusqueda={setBusqueda}
+        title="Nómina de Insumos Químicos"
+      >
+        <Form.Check
+          type="switch"
+          id="switch-inactivos-quimicos"
+          label="Ver dados de baja"
+          checked={mostrarInactivos}
+          onChange={(e) => setMostrarInactivos(e.target.checked)}
+          className="text-secondary mb-0"
+        />
+        <Button
+          variant="success"
+          onClick={onNuevoClick}
+          className="d-flex align-items-center gap-1 shadow-sm"
+        >
+          <i className="bi bi-plus-lg"></i>
+          <span>Nuevo Químico</span>
+        </Button>
+      </ListControls>
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
             <thead className="table-light">
               <tr>
-                <th style={{ cursor: 'pointer', userSelect: 'none', width: '100px' }} onClick={() => cambiarOrden('id')}>
-                  ID {renderIconoOrden('id')}
-                </th>
-                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('nombre')}>
-                  Nombre {renderIconoOrden('nombre')}
-                </th>
-                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('tipo_quimico')}>
-                  Tipo {renderIconoOrden('tipo_quimico')}
-                </th>
-                <th>Cantidad</th>
-                <th>Unidad de Medida</th>
-                <th>Estado</th>
+                <SortableHeader
+                  column="id"
+                  ordenarPor={ordenarPor}
+                  orden={orden}
+                  cambiarOrden={cambiarOrden}
+                >
+                  ID
+                </SortableHeader>
+                <SortableHeader
+                  column="nombre"
+                  ordenarPor={ordenarPor}
+                  orden={orden}
+                  cambiarOrden={cambiarOrden}
+                >
+                  Nombre
+                </SortableHeader>
+                <SortableHeader
+                  column="tipo_quimico"
+                  ordenarPor={ordenarPor}
+                  orden={orden}
+                  cambiarOrden={cambiarOrden}
+                >
+                  Tipo
+                </SortableHeader>
+                <SortableHeader
+                  column="cantidad"
+                  ordenarPor={ordenarPor}
+                  orden={orden}
+                  cambiarOrden={cambiarOrden}
+                >
+                  Cantidad
+                </SortableHeader>
+                <SortableHeader
+                  column="unidad_medida_id"
+                  ordenarPor={ordenarPor}
+                  orden={orden}
+                  cambiarOrden={cambiarOrden}
+                >
+                  Unidad de Medida
+                </SortableHeader>
+                <SortableHeader
+                  column="activo"
+                  ordenarPor={ordenarPor}
+                  orden={orden}
+                  cambiarOrden={cambiarOrden}
+                >
+                  Estado
+                </SortableHeader>
                 <th className="text-center" style={{ width: '120px' }}>
                   Acciones
                 </th>
@@ -125,7 +150,7 @@ export function InsumoQuimicoList({
                 </tr>
               ) : (
                 insumosQuimicos.map((item) => (
-                  <tr key={item.id} className={!item.activo ? 'opacity-50' : ''}>
+                  <tr key={item.id}>
                     <td>
                       <Badge bg="secondary" className="font-monospace">
                         #{item.id}
@@ -137,7 +162,12 @@ export function InsumoQuimicoList({
                     <td>
                       <Badge
                         bg={getBadgeVariant(item.tipo_quimico)}
-                        className={item.tipo_quimico === 'detergente' || item.tipo_quimico === 'desengrasante' ? 'text-dark' : ''}
+                        className={
+                          item.tipo_quimico === 'detergente' ||
+                          item.tipo_quimico === 'desengrasante'
+                            ? 'text-dark'
+                            : ''
+                        }
                       >
                         {getLabelTipo(item.tipo_quimico)}
                       </Badge>
@@ -213,22 +243,12 @@ export function InsumoQuimicoList({
 
         {totalPages > 0 && (
           <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
-            <span className="text-muted small mb-2 mb-md-0">
-              Mostrando página {page} de {totalPages} ({total} registros en total)
-            </span>
-            <Pagination className="mb-0" size="sm">
-              <Pagination.Prev onClick={prevPage} disabled={page === 1} />
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-                <Pagination.Item
-                  key={num}
-                  active={num === page}
-                  onClick={() => changePage(num)}
-                >
-                  {num}
-                </Pagination.Item>
-              ))}
-              <Pagination.Next onClick={nextPage} disabled={page === totalPages} />
-            </Pagination>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              changePage={changePage}
+            />
           </Card.Footer>
         )}
       </Card>

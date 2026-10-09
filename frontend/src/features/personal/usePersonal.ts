@@ -1,55 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
-import type {
-  Personal,
-  PersonalCreateInput,
-  PersonalUpdateInput,
-} from './types';
-import {
-  getPersonal,
-  createPersonal,
-  updatePersonal,
-  deletePersonal,
-} from './personalApi';
+import type { PersonalCreateInput, PersonalUpdateInput } from './types';
+import { createPersonal, updatePersonal, deletePersonal } from './personalApi';
 
-export function usePersonal(proximosAVencer = false) {
-  const [personal, setPersonal] = useState<Personal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [size] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [mostrarInactivos, setMostrarInactivos] = useState(false);
+import type { Personal as ListItem } from './types';
+import { usePagedList } from '../../shared/hooks/usePagedList';
 
-    const cargarPersonal = useCallback(
-    (currentPage: number, currentSize: number, showInactive: boolean, soloVencimientos: boolean) => {
-      setLoading(true);
-      getPersonal(currentPage, currentSize, showInactive, soloVencimientos)
-        .then((data) => {
-          setPersonal(data.items);
-          setTotalPages(data.pages);
-          setTotal(data.total);
-          setPage(data.page);
-          setError(null);
-        })
-        .catch((err: Error) => setError(err.message))
-        .finally(() => setLoading(false));
-    },
-    []
-  );
-
-  useEffect(() => {
-    cargarPersonal(page, size, mostrarInactivos, proximosAVencer);
-  }, [cargarPersonal, page, size, mostrarInactivos, proximosAVencer]);
-
+export function usePersonal(proximosAVencer = false, enabled = true) {
+  const list = usePagedList<ListItem>('personal', enabled, `&proximos_a_vencer=${proximosAVencer}`);
   const eliminar = async (id: number) => {
     await deletePersonal(id);
-    cargarPersonal(page, size, mostrarInactivos, proximosAVencer);
+    list.refetch(true);
   };
-
   const guardar = async (
     datos: PersonalCreateInput | PersonalUpdateInput,
-    idExistente?: number
+    idExistente?: number,
   ) => {
     if (idExistente !== undefined) {
       await updatePersonal(idExistente, datos);
@@ -57,34 +20,7 @@ export function usePersonal(proximosAVencer = false) {
       await createPersonal(datos as PersonalCreateInput);
     }
 
-    cargarPersonal(page, size, mostrarInactivos, proximosAVencer);
+    list.refetch();
   };
-
-  const nextPage = () => {
-    if (page < totalPages) setPage((prev) => prev + 1);
-  };
-
-  const prevPage = () => {
-    if (page > 1) setPage((prev) => prev - 1);
-  };
-
-  const changePage = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  return {
-    personal,
-    loading,
-    error,
-    eliminar,
-    guardar,
-    page,
-    totalPages,
-    total,
-    nextPage,
-    prevPage,
-    changePage,
-    mostrarInactivos,
-    setMostrarInactivos,
-  };
+  return { ...list, personal: list.items, eliminar, guardar };
 }

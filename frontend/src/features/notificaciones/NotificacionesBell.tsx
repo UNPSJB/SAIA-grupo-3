@@ -5,30 +5,45 @@ import type { Notificacion } from './types';
 
 function formatearFecha(fechaIso: string) {
   return new Date(fechaIso).toLocaleString('es-AR', {
-    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
 export function NotificacionesBell() {
   const navigate = useNavigate();
-  const { notificaciones, cantidadNoLeidas, error, recargar, marcarLeida, marcarTodas } = useNotificaciones();
+  const { notificaciones, cantidadNoLeidas, error, recargar, marcarLeida, marcarTodas } =
+    useNotificaciones();
 
   const abrirNotificacion = (n: Notificacion) => {
     if (n.enlace) navigate(n.enlace);
-    if (!n.leida) marcarLeida(n.id).catch(() => { /* no bloquea la navegación */ });
+    if (!n.leida)
+      marcarLeida(n.id).catch(() => {
+        /* no bloquea la navegación */
+      });
   };
 
   return (
-    <Dropdown align="end" onToggle={(abierto) => { if (abierto) recargar(); }}>
+    <Dropdown
+      align="end"
+      onToggle={(abierto) => {
+        if (abierto) recargar();
+      }}
+    >
       <Dropdown.Toggle
-        variant="link"
-        className="campanita-toggle position-relative text-secondary p-2 shadow-none"
+        variant="outline-secondary"
+        className="header-icon-button campanita-toggle position-relative d-flex align-items-center justify-content-center rounded-circle p-0 shadow-none"
         aria-label="Notificaciones"
         title="Notificaciones"
       >
-        <i className={`bi ${cantidadNoLeidas > 0 ? 'bi-bell-fill' : 'bi-bell'} fs-5`}></i>
+        <i
+          className={`bi ${cantidadNoLeidas > 0 ? 'bi-bell-fill' : 'bi-bell'}`}
+          aria-hidden="true"
+        ></i>
         {cantidadNoLeidas > 0 && (
-          <Badge bg="danger" pill className="position-absolute top-0 start-100 translate-middle" style={{ fontSize: '0.65rem' }}>
+          <Badge bg="danger" pill className="notification-count">
             {cantidadNoLeidas > 9 ? '9+' : cantidadNoLeidas}
           </Badge>
         )}
@@ -38,7 +53,12 @@ export function NotificacionesBell() {
         <div className="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
           <strong className="small">Notificaciones</strong>
           {cantidadNoLeidas > 0 && (
-            <Button variant="link" size="sm" className="p-0 text-decoration-none" onClick={marcarTodas}>
+            <Button
+              variant="link"
+              size="sm"
+              className="p-0 text-decoration-none"
+              onClick={marcarTodas}
+            >
               Marcar todas como leídas
             </Button>
           )}
@@ -64,7 +84,9 @@ export function NotificacionesBell() {
                 <div className="flex-grow-1 small">
                   <div className="fw-semibold">{n.titulo}</div>
                   <div className="text-body-secondary">{n.mensaje}</div>
-                  <div className="text-muted" style={{ fontSize: '0.75rem' }}>{formatearFecha(n.fecha_creacion)}</div>
+                  <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                    {formatearFecha(n.fecha_creacion)}
+                  </div>
                 </div>
                 {n.enlace && <i className="bi bi-chevron-right text-muted align-self-center"></i>}
               </Dropdown.Item>

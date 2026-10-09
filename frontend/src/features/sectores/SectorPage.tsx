@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react'; 
-import { Container } from 'react-bootstrap';
-import { useLocation } from 'react-router-dom'; 
+import { Container, Button } from 'react-bootstrap';
 import { SectorList } from './SectorList';
 import { SectorForm } from './SectorForm';
 import { SectorView } from './SectorView';
@@ -8,115 +6,57 @@ import { SectorDeleteView } from './SectorDeleteView';
 import { useSector } from './useSector';
 import { getSectorById } from './sectorApi';
 import type { Sector } from './types';
-
-type ModoVista = 'ver' | 'listado' | 'crear' | 'editar' | 'eliminar';
+import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
+import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { ErrorAlert } from '../../shared/components/ErrorAlert';
 
 export function SectorPage() {
-  const location = useLocation();
-  const [modo, setModo] = useState<ModoVista>('listado');
-  const [sectorSeleccionado, setSectorSeleccionado] = useState<Sector | null>(null);
-  const { guardar, eliminar } = useSector();
-
-  // EFECTO CORREGIDO: Solo lee cosas de Sector
-  useEffect(() => {
-    if (location.state?.sectorIdSeleccionado) {
-      const buscarSector = async () => {
-        try {
-          const sectorCompleto = await getSectorById(location.state.sectorIdSeleccionado);
-          setSectorSeleccionado(sectorCompleto);
-          setModo('ver');
-          window.history.replaceState({}, document.title);
-        } catch (error) {
-          alert('Error al cargar los detalles del sector.');
-        }
-      };
-      
-      buscarSector();
-    }
-  }, [location.state]);
-
-  const handleNuevo = () => {
-    setSectorSeleccionado(null);
-    setModo('crear');
-  };
-
-  const handleView = async (sector: Sector) => {
-    if (sector.id !== undefined) {
-      try {
-        const sectorCompleto = await getSectorById(sector.id);
-        setSectorSeleccionado(sectorCompleto);
-        setModo('ver');
-      } catch (err) {
-        alert('Error al cargar los detalles del sector.');
-      }
-    }
-  };
-
-  const handleEditar = (sector: Sector) => {
-    setSectorSeleccionado(sector);
-    setModo('editar');
-  };
-
-  const handleEliminarClick = (sector: Sector) => {
-    setSectorSeleccionado(sector);
-    setModo('eliminar');
-  };
-
+  const route = useCrudRoute<Sector>('/sectores', getSectorById);
+  const { mode, item, open, back, error, loading } = route;
+  const { guardar, eliminar } = useSector(false);
   const handleGuardar = async (datos: Sector) => {
-    if (modo === 'editar' && sectorSeleccionado?.id) {
-      await guardar(datos, sectorSeleccionado.id);
-    } else {
-      await guardar(datos);
-    }
-    volverAlListado();
+    await guardar(datos, mode === 'editar' ? item?.id : undefined);
+    back();
   };
-
   const handleConfirmarBaja = async (id: number) => {
     await eliminar(id);
-    volverAlListado();
-  };
-
-  const volverAlListado = () => {
-    setModo('listado');
-    setSectorSeleccionado(null);
+    back();
   };
 
   return (
     <Container className="py-2">
-      <h2 className="mb-4 border-bottom pb-2 text-secondary">
-        Gestión de Sectores
-      </h2>
-
-      {modo === 'ver' && sectorSeleccionado && (
-        <SectorView
-          sector={sectorSeleccionado}
-          onEditar={() => handleEditar(sectorSeleccionado)}
-          onVolver={volverAlListado}
-        />
+      <h2 className="mb-4 border-bottom pb-2 text-secondary">Gestión de Sectores</h2>
+      {loading && <LoadingSpinner mensaje="Cargando detalle..." />}
+      {error && (
+        <>
+          <ErrorAlert mensaje={error} />
+          <Button onClick={back}>Volver al listado</Button>
+        </>
       )}
-
-      {modo === 'listado' && (
+      {mode === 'listado' && (
         <SectorList
-          onViewClick={handleView}
-          onNuevoClick={handleNuevo}
-          onEditarClick={handleEditar}
-          onEliminarClick={handleEliminarClick}
+          onViewClick={(item) => open(item)}
+          onNuevoClick={() => open()}
+          onEditarClick={(item) => open(item, 'editar')}
+          onEliminarClick={(item) => open(item, 'eliminar')}
         />
       )}
-
-      {(modo === 'crear' || modo === 'editar') && (
+      {mode === 'ver' && item && (
+        <SectorView sector={item} onEditar={() => open(item, 'editar')} onVolver={back} />
+      )}
+      {(mode === 'crear' || (mode === 'editar' && item)) && (
         <SectorForm
-          sectorInicial={sectorSeleccionado}
+          key={item?.id ?? 'nuevo'}
+          sectorInicial={mode === 'crear' ? null : item}
           onGuardar={handleGuardar}
-          onCancelar={volverAlListado}
+          onCancelar={back}
         />
       )}
-
-      {modo === 'eliminar' && sectorSeleccionado && sectorSeleccionado.id !== undefined && (
+      {mode === 'eliminar' && item && item.id !== undefined && (
         <SectorDeleteView
-          sector={sectorSeleccionado}
+          sector={item}
           onConfirmarEliminar={handleConfirmarBaja}
-          onCancelar={volverAlListado}
+          onCancelar={back}
         />
       )}
     </Container>

@@ -1,110 +1,62 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Container } from 'react-bootstrap';
-import { PersonalView } from './PersonalView';
+import { Container, Button } from 'react-bootstrap';
 import { PersonalList } from './PersonalList';
 import { PersonalForm } from './PersonalForm';
+import { PersonalView } from './PersonalView';
 import { PersonalDeleteView } from './PersonalDeleteView';
 import { usePersonal } from './usePersonal';
-import type {
-  Personal,
-  PersonalCreateInput,
-  PersonalUpdateInput,
-} from './types';
-
-type ModoVista = 'ver' | 'listado' | 'crear' | 'editar' | 'eliminar';
+import { getPersonalById } from './personalApi';
+import type { Personal, PersonalCreateInput, PersonalUpdateInput } from './types';
+import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
+import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { ErrorAlert } from '../../shared/components/ErrorAlert';
 
 export function PersonalPage() {
-  const [modo, setModo] = useState<ModoVista>('listado');
-  const [personalSeleccionado, setPersonalSeleccionado] =
-    useState<Personal | null>(null);
-
-  const { guardar, eliminar } = usePersonal();
-
-  const volverAlListado = () => {
-    setModo('listado');
-    setPersonalSeleccionado(null);
+  const route = useCrudRoute<Personal>('/personal', getPersonalById);
+  const { mode, item, open, back, error, loading } = route;
+  const { guardar, eliminar } = usePersonal(false, false);
+  const handleGuardar = async (datos: PersonalCreateInput | PersonalUpdateInput) => {
+    await guardar(datos, mode === 'editar' ? item?.id : undefined);
+    back();
   };
-  const location = useLocation();
-  useEffect(() => {
-    setModo('listado');
-    setPersonalSeleccionado(null);
-  }, [location.key]);
-
-  const handleNuevo = () => {
-    setPersonalSeleccionado(null);
-    setModo('crear');
-  };
-
-  const handleView = (personal: Personal) => {
-    setPersonalSeleccionado(personal);
-    setModo('ver');
-  };
-
-  const handleEditar = (personal: Personal) => {
-    setPersonalSeleccionado(personal);
-    setModo('editar');
-  };
-
-  const handleEliminarClick = (personal: Personal) => {
-    setPersonalSeleccionado(personal);
-    setModo('eliminar');
-  };
-
-  const handleGuardar = async (
-    datos: PersonalCreateInput | PersonalUpdateInput
-  ) => {
-    if (modo === 'editar' && personalSeleccionado) {
-      await guardar(datos, personalSeleccionado.id);
-    } else {
-      await guardar(datos);
-    }
-
-    volverAlListado();
-  };
-
   const handleConfirmarBaja = async (id: number) => {
     await eliminar(id);
-    volverAlListado();
+    back();
   };
 
   return (
     <Container className="py-2">
-      <h2 className="mb-4 border-bottom pb-2 text-secondary">
-        Gestión de Personal
-      </h2>
-
-      {modo === 'ver' && personalSeleccionado && (
-        <PersonalView
-          personal={personalSeleccionado}
-          onEditar={() => handleEditar(personalSeleccionado)}
-          onVolver={volverAlListado}
-        />
+      <h2 className="mb-4 border-bottom pb-2 text-secondary">Gestión de Personal</h2>
+      {loading && <LoadingSpinner mensaje="Cargando detalle..." />}
+      {error && (
+        <>
+          <ErrorAlert mensaje={error} />
+          <Button onClick={back}>Volver al listado</Button>
+        </>
       )}
-
-      {modo === 'listado' && (
+      {mode === 'listado' && (
         <PersonalList
-          key={location.search}
-          onViewClick={handleView}
-          onNuevoClick={handleNuevo}
-          onEditarClick={handleEditar}
-          onEliminarClick={handleEliminarClick}
+          onViewClick={(item) => open(item)}
+          onNuevoClick={() => open()}
+          onEditarClick={(item) => open(item, 'editar')}
+          onEliminarClick={(item) => open(item, 'eliminar')}
         />
       )}
-
-      {(modo === 'crear' || modo === 'editar') && (
+      {mode === 'ver' && item && (
+        <PersonalView personal={item} onEditar={() => open(item, 'editar')} onVolver={back} />
+      )}
+      {(mode === 'crear' || (mode === 'editar' && item)) && (
         <PersonalForm
-          personalInicial={personalSeleccionado}
+          key={item?.id ?? 'nuevo'}
+          personalInicial={mode === 'crear' ? null : item}
           onGuardar={handleGuardar}
-          onCancelar={volverAlListado}
+          onCancelar={back}
         />
       )}
-
-      {modo === 'eliminar' && personalSeleccionado && (
+      {mode === 'eliminar' && item && item.id !== undefined && (
         <PersonalDeleteView
-          personal={personalSeleccionado}
+          personal={item}
           onConfirmarEliminar={handleConfirmarBaja}
-          onCancelar={volverAlListado}
+          onCancelar={back}
         />
       )}
     </Container>

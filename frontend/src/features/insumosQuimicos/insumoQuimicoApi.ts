@@ -1,4 +1,4 @@
-import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
 import type { InsumoQuimico, InsumoQuimicoCreate, InsumoQuimicoUpdate } from './types';
 
 export interface PaginatedInsumosQuimicos {
@@ -16,7 +16,7 @@ export async function getInsumosQuimicos(
   ordenarPor = 'id',
   orden = 'asc',
   buscar = '',
-  tipoQuimico = ''
+  tipoQuimico = '',
 ): Promise<PaginatedInsumosQuimicos> {
   let url = `${API_BASE_URL}/insumos-quimicos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`;
   if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
@@ -41,12 +41,15 @@ export async function createInsumoQuimico(data: InsumoQuimicoCreate): Promise<In
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al registrar el insumo químico.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al registrar el insumo químico.'));
   }
   return res.json();
 }
 
-export async function updateInsumoQuimico(id: number, data: InsumoQuimicoUpdate): Promise<InsumoQuimico> {
+export async function updateInsumoQuimico(
+  id: number,
+  data: InsumoQuimicoUpdate,
+): Promise<InsumoQuimico> {
   const res = await fetchWithAuth(`${API_BASE_URL}/insumos-quimicos/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -54,7 +57,7 @@ export async function updateInsumoQuimico(id: number, data: InsumoQuimicoUpdate)
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al actualizar el insumo químico.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al actualizar el insumo químico.'));
   }
   return res.json();
 }
@@ -65,6 +68,6 @@ export async function deleteInsumoQuimico(id: number): Promise<void> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'No se pudo dar de baja el insumo químico.');
+    throw new Error(mensajeDeError(errorData.detail, 'No se pudo dar de baja el insumo químico.'));
   }
 }

@@ -1,92 +1,62 @@
-import { useState } from 'react';
-import { Container } from 'react-bootstrap';
-import { InsumoView } from './InsumoView';
+import { Container, Button } from 'react-bootstrap';
 import { InsumoList } from './InsumoList';
 import { InsumoForm } from './InsumoForm';
+import { InsumoView } from './InsumoView';
 import { InsumoDeleteView } from './InsumoDeleteView';
 import { useInsumo } from './useInsumo';
+import { getInsumoById } from './InsumoApi';
 import type { Insumo, InsumoCreate } from './types';
-
-type ModoVista = 'ver' | 'listado' | 'crear' | 'editar' | 'eliminar';
+import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
+import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { ErrorAlert } from '../../shared/components/ErrorAlert';
 
 export function InsumoPage() {
-  const [modo, setModo] = useState<ModoVista>('listado');
-  const [insumoSeleccionado, setInsumoSeleccionado] = useState<Insumo | null>(null);
-  const { guardar, eliminar } = useInsumo();
-
-  const handleNuevo = () => {
-    setInsumoSeleccionado(null);
-    setModo('crear');
-  };
-  
-  const handleView = (insumo: Insumo) => {
-    setInsumoSeleccionado(insumo);
-    setModo('ver');
-  };
-
-  const handleEditar = (insumo: Insumo) => {
-    setInsumoSeleccionado(insumo);
-    setModo('editar');
-  };
-
-  const handleEliminarClick = (insumo: Insumo) => {
-    setInsumoSeleccionado(insumo);
-    setModo('eliminar');
-  };
-
+  const route = useCrudRoute<Insumo>('/insumos', getInsumoById);
+  const { mode, item, open, back, error, loading } = route;
+  const { guardar, eliminar } = useInsumo(false);
   const handleGuardar = async (datos: InsumoCreate) => {
-    if (modo === 'editar' && insumoSeleccionado) {
-      await guardar(datos, insumoSeleccionado.id);
-    } else {
-      await guardar(datos);
-    }
-    volverAlListado();
+    await guardar(datos, mode === 'editar' ? item?.id : undefined);
+    back();
   };
-
   const handleConfirmarBaja = async (id: number) => {
     await eliminar(id);
-    volverAlListado();
-  };
-
-  const volverAlListado = () => {
-    setModo('listado');
-    setInsumoSeleccionado(null);
+    back();
   };
 
   return (
     <Container className="py-2">
       <h2 className="mb-4 border-bottom pb-2 text-secondary">Gestión de Insumos</h2>
-
-      {modo === 'ver' && insumoSeleccionado && (
-        <InsumoView
-          insumo={insumoSeleccionado}
-          onEditar={() => handleEditar(insumoSeleccionado)}
-          onVolver={volverAlListado}
-        />
+      {loading && <LoadingSpinner mensaje="Cargando detalle..." />}
+      {error && (
+        <>
+          <ErrorAlert mensaje={error} />
+          <Button onClick={back}>Volver al listado</Button>
+        </>
       )}
-
-      {modo === 'listado' && (
+      {mode === 'listado' && (
         <InsumoList
-          onViewClick={handleView}
-          onNuevoClick={handleNuevo}
-          onEditarClick={handleEditar}
-          onEliminarClick={handleEliminarClick}
+          onViewClick={(item) => open(item)}
+          onNuevoClick={() => open()}
+          onEditarClick={(item) => open(item, 'editar')}
+          onEliminarClick={(item) => open(item, 'eliminar')}
         />
       )}
-
-      {(modo === 'crear' || modo === 'editar') && (
+      {mode === 'ver' && item && (
+        <InsumoView insumo={item} onEditar={() => open(item, 'editar')} onVolver={back} />
+      )}
+      {(mode === 'crear' || (mode === 'editar' && item)) && (
         <InsumoForm
-          insumoInicial={insumoSeleccionado}
+          key={item?.id ?? 'nuevo'}
+          insumoInicial={mode === 'crear' ? null : item}
           onGuardar={handleGuardar}
-          onCancelar={volverAlListado}
+          onCancelar={back}
         />
       )}
-
-      {modo === 'eliminar' && insumoSeleccionado && (
+      {mode === 'eliminar' && item && item.id !== undefined && (
         <InsumoDeleteView
-          insumo={insumoSeleccionado}
+          insumo={item}
           onConfirmarEliminar={handleConfirmarBaja}
-          onCancelar={volverAlListado}
+          onCancelar={back}
         />
       )}
     </Container>

@@ -1,3 +1,4 @@
+import { permissions, homeFor } from '../libreria/permissions';
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -28,26 +29,14 @@ export function ProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
-  if (requireAdmin && !currentUser.administrar) {
-    return (
-      <Navigate
-        to={currentUser.operar ? '/checklist' : '/login'}
-        replace
-      />
-    );
+  const { canAdmin, canOperate } = permissions(currentUser);
+  if (requireAdmin && !canAdmin) {
+    return <Navigate to={homeFor(currentUser)} replace />;
   }
 
-if (
-  requireOperate &&
-  !currentUser.operar
-) {
-  return (
-    <Navigate
-      to={currentUser.administrar ? '/personal' : '/login'}
-      replace
-    />
-  );
-}
+  if (requireOperate && !canOperate) {
+    return <Navigate to={homeFor(currentUser)} replace />;
+  }
 
   return children ? <>{children}</> : <Outlet />;
 }

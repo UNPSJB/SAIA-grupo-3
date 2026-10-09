@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react';
+import { SearchableSelect } from '../../shared/components/SearchableSelect';
+import { useForm, useController } from 'react-hook-form';
+import { FormErrors } from '../../shared/components/FormErrors';
+import { useEffect } from 'react';
 import { Card, Form, Button } from 'react-bootstrap';
 import type { InsumoQuimico, InsumoQuimicoCreate, TipoQuimico } from './types';
 import { TIPOS_QUIMICOS } from './types';
-import { useUnidadMedida } from '../unidadMedida/useUnidadMedida';
+import { useOptions } from '../../shared/hooks/useOptions';
+import type { UnidadMedida } from '../unidadMedida/types';
 
 interface InsumoQuimicoFormProps {
   insumoInicial?: InsumoQuimico | null;
@@ -10,14 +14,96 @@ interface InsumoQuimicoFormProps {
   onCancelar: () => void;
 }
 
-export function InsumoQuimicoForm({ insumoInicial, onGuardar, onCancelar }: InsumoQuimicoFormProps) {
-  const [nombre, setNombre] = useState('');
-  const [cantidad, setCantidad] = useState<number | ''>('');
-  const [tipoQuimico, setTipoQuimico] = useState<TipoQuimico>('detergente');
-  const [unidadMedidaId, setUnidadMedidaId] = useState<number | ''>('');
-  const [enviando, setEnviando] = useState(false);
+export function InsumoQuimicoForm({
+  insumoInicial,
+  onGuardar,
+  onCancelar,
+}: InsumoQuimicoFormProps) {
+  const esEdicion = Boolean(insumoInicial);
+  const form = useForm<{
+    nombre: string;
+    cantidad: number | '';
+    tipoQuimico: TipoQuimico;
+    unidadMedidaId: number | '';
+  }>({
+    defaultValues: { nombre: '', cantidad: '', tipoQuimico: 'detergente', unidadMedidaId: '' },
+  });
+  const enviando = form.formState.isSubmitting;
+  const {
+    field: {
+      value: nombre,
+      onChange: setNombre,
+      onBlur: nombreBlur,
+      ref: nombreRef,
+      name: nombreName,
+    },
+  } = useController({
+    name: 'nombre',
+    control: form.control,
+    rules: {
+      validate: (value) =>
+        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
+        'Este campo es obligatorio.',
+    },
+  });
+  const {
+    field: {
+      value: cantidad,
+      onChange: setCantidad,
+      onBlur: cantidadBlur,
+      ref: cantidadRef,
+      name: cantidadName,
+    },
+  } = useController({
+    name: 'cantidad',
+    control: form.control,
+    rules: {
+      validate: (value) =>
+        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
+        'Este campo es obligatorio.',
+      min: { value: 0, message: 'Valor demasiado pequeño.' },
+    },
+  });
+  const {
+    field: {
+      value: tipoQuimico,
+      onChange: setTipoQuimico,
+      onBlur: tipoQuimicoBlur,
+      ref: tipoQuimicoRef,
+      name: tipoQuimicoName,
+    },
+  } = useController({
+    name: 'tipoQuimico',
+    control: form.control,
+    rules: {
+      validate: (value) =>
+        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
+        'Este campo es obligatorio.',
+    },
+  });
+  const {
+    field: {
+      value: unidadMedidaId,
+      onChange: setUnidadMedidaId,
+      onBlur: unidadMedidaIdBlur,
+      ref: unidadMedidaIdRef,
+      name: unidadMedidaIdName,
+    },
+  } = useController({
+    name: 'unidadMedidaId',
+    control: form.control,
+    rules: {
+      validate: (value) =>
+        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
+        'Este campo es obligatorio.',
+    },
+  });
 
-  const { unidades, loading: loadingUnidades } = useUnidadMedida();
+  const {
+    items: unidades,
+    loading: loadingUnidades,
+    error: optionsError,
+  } = useOptions<UnidadMedida>('unidades-medida');
 
   useEffect(() => {
     if (insumoInicial) {
@@ -26,13 +112,12 @@ export function InsumoQuimicoForm({ insumoInicial, onGuardar, onCancelar }: Insu
       setTipoQuimico(insumoInicial.tipo_quimico);
       setUnidadMedidaId(insumoInicial.unidad_medida_id);
     }
-  }, [insumoInicial]);
+  }, [insumoInicial, setNombre, setCantidad, setTipoQuimico, setUnidadMedidaId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = form.handleSubmit(async () => {
+    form.clearErrors('root');
     if (!nombre.trim() || cantidad === '' || unidadMedidaId === '') return;
 
-    setEnviando(true);
     try {
       await onGuardar({
         nombre: nombre.trim(),
@@ -41,51 +126,69 @@ export function InsumoQuimicoForm({ insumoInicial, onGuardar, onCancelar }: Insu
         unidad_medida_id: Number(unidadMedidaId),
       });
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al guardar el insumo químico.');
-    } finally {
-      setEnviando(false);
+      form.setError('root', {
+        message: err instanceof Error ? err.message : 'Error al guardar el insumo químico.',
+      });
     }
-  };
-
-  const esEdicion = Boolean(insumoInicial);
+  });
 
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
       <Card.Header as="h5" className="bg-light text-secondary py-3">
-        {esEdicion ? `Modificar Químico: ${insumoInicial?.nombre}` : 'Registrar Nuevo Insumo Químico'}
+        {esEdicion
+          ? `Modificar Químico: ${insumoInicial?.nombre}`
+          : 'Registrar Nuevo Insumo Químico'}
       </Card.Header>
       <Card.Body className="p-4">
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
+        <Form noValidate onSubmit={handleSubmit}>
+          <FormErrors errors={form.formState.errors} />
+          {optionsError && (
+            <div role="alert" className="text-danger">
+              {optionsError}
+            </div>
+          )}
+          <Form.Group controlId="InsumoQuimicoForm-nombre" className="mb-3">
             <Form.Label>Nombre</Form.Label>
             <Form.Control
               type="text"
               required
+              ref={nombreRef}
+              onBlur={nombreBlur}
+              name={nombreName}
               value={nombre}
+              isInvalid={!!form.formState.errors.nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej: Hipoclorito de Sodio 55g/L"
             />
           </Form.Group>
 
           <div className="row">
-            <Form.Group className="col-md-6 mb-3">
+            <Form.Group controlId="InsumoQuimicoForm-cantidad" className="col-md-6 mb-3">
               <Form.Label>Cantidad</Form.Label>
               <Form.Control
                 type="number"
                 step="any"
                 required
                 min={0}
+                ref={cantidadRef}
+                onBlur={cantidadBlur}
+                name={cantidadName}
                 value={cantidad}
+                isInvalid={!!form.formState.errors.cantidad}
                 onChange={(e) => setCantidad(e.target.value === '' ? '' : Number(e.target.value))}
                 placeholder="Ej: 20"
               />
             </Form.Group>
 
-            <Form.Group className="col-md-6 mb-3">
+            <Form.Group controlId="InsumoQuimicoForm-tipoQuimico" className="col-md-6 mb-3">
               <Form.Label>Tipo de Químico</Form.Label>
-              <Form.Select
+              <SearchableSelect
                 required
+                ref={tipoQuimicoRef}
+                onBlur={tipoQuimicoBlur}
+                name={tipoQuimicoName}
                 value={tipoQuimico}
+                isInvalid={!!form.formState.errors.tipoQuimico}
                 onChange={(e) => setTipoQuimico(e.target.value as TipoQuimico)}
               >
                 {TIPOS_QUIMICOS.map((item) => (
@@ -93,16 +196,22 @@ export function InsumoQuimicoForm({ insumoInicial, onGuardar, onCancelar }: Insu
                     {item.label}
                   </option>
                 ))}
-              </Form.Select>
+              </SearchableSelect>
             </Form.Group>
           </div>
 
-          <Form.Group className="mb-4">
+          <Form.Group controlId="InsumoQuimicoForm-unidadMedidaId" className="mb-4">
             <Form.Label>Unidad de Medida</Form.Label>
-            <Form.Select
+            <SearchableSelect
               required
+              ref={unidadMedidaIdRef}
+              onBlur={unidadMedidaIdBlur}
+              name={unidadMedidaIdName}
               value={unidadMedidaId}
-              onChange={(e) => setUnidadMedidaId(e.target.value === '' ? '' : Number(e.target.value))}
+              isInvalid={!!form.formState.errors.unidadMedidaId}
+              onChange={(e) =>
+                setUnidadMedidaId(e.target.value === '' ? '' : Number(e.target.value))
+              }
               disabled={loadingUnidades}
             >
               <option value="">Seleccione una unidad...</option>
@@ -111,7 +220,7 @@ export function InsumoQuimicoForm({ insumoInicial, onGuardar, onCancelar }: Insu
                   {u.sufijo} ({u.tipo})
                 </option>
               ))}
-            </Form.Select>
+            </SearchableSelect>
           </Form.Group>
 
           <div className="d-flex justify-content-end gap-2">

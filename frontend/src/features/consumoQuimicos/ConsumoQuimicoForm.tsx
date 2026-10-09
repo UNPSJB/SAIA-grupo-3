@@ -1,3 +1,8 @@
+import { SearchableSelect } from '../../shared/components/SearchableSelect';
+import { loadAllPages } from '../../shared/libreria/options';
+import type { InsumoQuimico } from '../insumosQuimicos/types';
+import { useForm, useController } from 'react-hook-form';
+import { FormErrors } from '../../shared/components/FormErrors';
 import { useState, useEffect } from 'react';
 import { Card, Form, Button, Alert, InputGroup } from 'react-bootstrap';
 import type { ConsumoQuimico } from './types';
@@ -9,22 +14,95 @@ interface ConsumoQuimicoFormProps {
   onCancelar: () => void;
 }
 
-export function ConsumoQuimicoForm({ consumoInicial, onGuardar, onCancelar }: ConsumoQuimicoFormProps) {
-  const [insumoId, setInsumoId] = useState<number | ''>('');
-  const [cantidad, setCantidad] = useState<number | ''>('');
-  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
-  const [tarea, setTarea] = useState('');
-  
-  const [insumos, setInsumos] = useState<any[]>([]);
-  const [enviando, setEnviando] = useState(false);
+export function ConsumoQuimicoForm({
+  consumoInicial,
+  onGuardar,
+  onCancelar,
+}: ConsumoQuimicoFormProps) {
+  const esEdicion = Boolean(consumoInicial);
+  const form = useForm<{
+    insumoId: number | '';
+    cantidad: number | '';
+    fecha: string;
+    tarea: string;
+  }>({
+    defaultValues: {
+      insumoId: '',
+      cantidad: '',
+      fecha: new Date().toISOString().split('T')[0],
+      tarea: '',
+    },
+  });
+  const enviando = form.formState.isSubmitting;
+  const {
+    field: {
+      value: insumoId,
+      onChange: setInsumoId,
+      onBlur: insumoIdBlur,
+      ref: insumoIdRef,
+      name: insumoIdName,
+    },
+  } = useController({
+    name: 'insumoId',
+    control: form.control,
+    rules: {
+      validate: (value) =>
+        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
+        'Este campo es obligatorio.',
+    },
+  });
+  const {
+    field: {
+      value: cantidad,
+      onChange: setCantidad,
+      onBlur: cantidadBlur,
+      ref: cantidadRef,
+      name: cantidadName,
+    },
+  } = useController({
+    name: 'cantidad',
+    control: form.control,
+    rules: {
+      validate: (value) =>
+        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
+        'Este campo es obligatorio.',
+      min: { value: 0, message: 'Valor demasiado pequeño.' },
+    },
+  });
+  const {
+    field: { value: fecha, onChange: setFecha, onBlur: fechaBlur, ref: fechaRef, name: fechaName },
+  } = useController({
+    name: 'fecha',
+    control: form.control,
+    rules: {
+      validate: (value) =>
+        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
+        'Este campo es obligatorio.',
+    },
+  });
+  const {
+    field: { value: tarea, onChange: setTarea, onBlur: tareaBlur, ref: tareaRef, name: tareaName },
+  } = useController({
+    name: 'tarea',
+    control: form.control,
+    rules: {
+      validate: (value) =>
+        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
+        'Este campo es obligatorio.',
+    },
+  });
+
+  const [insumos, setInsumos] = useState<InsumoQuimico[]>([]);
   const [errorBackend, setErrorBackend] = useState<string | null>(null);
 
   useEffect(() => {
-    getInsumosQuimicos(1, 100)
-      .then(data => {
+    loadAllPages((page) => getInsumosQuimicos(page, 100))
+      .then((data) => {
         if (data && data.items) setInsumos(data.items);
       })
-      .catch(() => setErrorBackend('Atención: No se pudieron cargar los insumos químicos del servidor.'));
+      .catch(() =>
+        setErrorBackend('Atención: No se pudieron cargar los insumos químicos del servidor.'),
+      );
   }, []);
 
   useEffect(() => {
@@ -34,28 +112,25 @@ export function ConsumoQuimicoForm({ consumoInicial, onGuardar, onCancelar }: Co
       setFecha(consumoInicial.fecha);
       setTarea(consumoInicial.tarea_limpieza || '');
     }
-  }, [consumoInicial]);
+  }, [consumoInicial, setInsumoId, setCantidad, setFecha, setTarea]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = form.handleSubmit(async () => {
+    form.clearErrors('root');
     if (!insumoId || cantidad === '' || !fecha || !tarea.trim()) return;
-    setEnviando(true);
     setErrorBackend(null);
     try {
       await onGuardar({
         insumo_quimico_id: Number(insumoId),
         cantidad_utilizada: Number(cantidad),
         fecha,
-        tarea_limpieza: tarea
+        tarea_limpieza: tarea,
       });
     } catch (err: unknown) {
       setErrorBackend(err instanceof Error ? err.message : 'Error al guardar');
-      setEnviando(false);
     }
-  };
+  });
 
-  const esEdicion = Boolean(consumoInicial);
-  const insumoSeleccionado = insumos.find(i => i.id === insumoId);
+  const insumoSeleccionado = insumos.find((i) => i.id === insumoId);
   const sufijoUnidad = insumoSeleccionado?.unidadMedidaObj?.sufijo || '';
 
   return (
@@ -70,29 +145,42 @@ export function ConsumoQuimicoForm({ consumoInicial, onGuardar, onCancelar }: Co
             <div className="ms-2">{errorBackend}</div>
           </Alert>
         )}
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
+        <Form noValidate onSubmit={handleSubmit}>
+          <FormErrors errors={form.formState.errors} />
+          <Form.Group controlId="ConsumoQuimicoForm-insumoId" className="mb-3">
             <Form.Label>Insumo Químico Utilizado</Form.Label>
-            <Form.Select required value={insumoId} onChange={e => setInsumoId(e.target.value === '' ? '' : Number(e.target.value))}>
+            <SearchableSelect
+              required
+              ref={insumoIdRef}
+              onBlur={insumoIdBlur}
+              name={insumoIdName}
+              value={insumoId}
+              isInvalid={!!form.formState.errors.insumoId}
+              onChange={(e) => setInsumoId(e.target.value === '' ? '' : Number(e.target.value))}
+            >
               <option value="">Seleccione el químico...</option>
-              {insumos.map(i => (
+              {insumos.map((i) => (
                 <option key={i.id} value={i.id}>
                   {i.nombre} (Stock actual: {i.cantidad} {i.unidadMedidaObj?.sufijo})
                 </option>
               ))}
-            </Form.Select>
+            </SearchableSelect>
           </Form.Group>
 
-          <Form.Group className="mb-3">
+          <Form.Group controlId="ConsumoQuimicoForm-cantidad" className="mb-3">
             <Form.Label>Cantidad Aproximada</Form.Label>
             <InputGroup>
-              <Form.Control 
-                type="number" 
-                step="any" 
-                min={0} 
-                required 
-                value={cantidad} 
-                onChange={e => setCantidad(e.target.value === '' ? '' : Number(e.target.value))} 
+              <Form.Control
+                type="number"
+                step="any"
+                min={0}
+                required
+                ref={cantidadRef}
+                onBlur={cantidadBlur}
+                name={cantidadName}
+                value={cantidad}
+                isInvalid={!!form.formState.errors.cantidad}
+                onChange={(e) => setCantidad(e.target.value === '' ? '' : Number(e.target.value))}
                 placeholder="Ej: 0.5"
               />
               {/* Aquí mostramos el cartelito con la unidad pegado al input */}
@@ -107,16 +195,37 @@ export function ConsumoQuimicoForm({ consumoInicial, onGuardar, onCancelar }: Co
             </Form.Text>
           </Form.Group>
 
-          <Form.Group className="mb-3">
+          <Form.Group controlId="ConsumoQuimicoForm-fecha" className="mb-3">
             <Form.Label>Fecha</Form.Label>
-            <Form.Control type="date" required value={fecha} onChange={e => setFecha(e.target.value)} />
+            <Form.Control
+              type="date"
+              required
+              ref={fechaRef}
+              onBlur={fechaBlur}
+              name={fechaName}
+              value={fecha}
+              isInvalid={!!form.formState.errors.fecha}
+              onChange={(e) => setFecha(e.target.value)}
+            />
           </Form.Group>
-          <Form.Group className="mb-4">
+          <Form.Group controlId="ConsumoQuimicoForm-tarea" className="mb-4">
             <Form.Label>Tarea de Limpieza Asociada</Form.Label>
-            <Form.Control type="text" required placeholder="Ej: Limpieza de línea de cocción A" value={tarea} onChange={e => setTarea(e.target.value)} />
+            <Form.Control
+              type="text"
+              required
+              placeholder="Ej: Limpieza de línea de cocción A"
+              ref={tareaRef}
+              onBlur={tareaBlur}
+              name={tareaName}
+              value={tarea}
+              isInvalid={!!form.formState.errors.tarea}
+              onChange={(e) => setTarea(e.target.value)}
+            />
           </Form.Group>
           <div className="d-flex justify-content-end gap-2">
-            <Button variant="secondary" onClick={onCancelar} disabled={enviando}>Cancelar</Button>
+            <Button variant="secondary" onClick={onCancelar} disabled={enviando}>
+              Cancelar
+            </Button>
             <Button variant="primary" type="submit" disabled={enviando}>
               {enviando ? 'Guardando...' : esEdicion ? 'Actualizar Cambios' : 'Registrar Consumo'}
             </Button>

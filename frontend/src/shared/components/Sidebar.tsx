@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { permissions } from '../libreria/permissions';
+import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Offcanvas, Collapse } from 'react-bootstrap';
 import { useAuth } from '../hooks/useAuth';
@@ -23,13 +24,20 @@ interface MenuItem {
 
 export function Sidebar({ show, onClose }: SidebarProps) {
   const location = useLocation();
-  const { currentUser, logout } = useAuth();
+  const { currentUser } = useAuth();
+
+  const { canAdmin, canOperate } = permissions(currentUser);
 
   const menuItems: MenuItem[] = [
     { to: '/planes', label: 'Planes de Limpieza', icono: 'bi bi-clipboard2-check' },
     { to: '/auditoria', label: 'Historial Checklist', icono: 'bi bi-clock-history' },
     { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square' },
-    { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
+    { to: '/consumos', label: 'Registros de Consumo', icono: 'bi bi-droplet' },
+    {
+      to: '/reportes/consumos',
+      label: 'Consumo de Insumos Químicos',
+      icono: 'bi bi-bar-chart-line',
+    },
     { to: '/incidentes', label: 'Incidentes', icono: 'bi bi-exclamation-triangle' },
     {
       label: 'Vencimientos',
@@ -59,29 +67,20 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   ];
 
   const grupoActivo = menuItems.find((item) =>
-    item.subItems?.some((sub) =>
-      location.pathname === sub.to ||
-      (!sub.end && location.pathname.startsWith(`${sub.to}/`))
-    )
+    item.subItems?.some(
+      (sub) =>
+        location.pathname === sub.to || (!sub.end && location.pathname.startsWith(`${sub.to}/`)),
+    ),
   )?.grupo;
 
-  const [gruposAbiertos, setGruposAbiertos] = useState({
-    vencimientos: grupoActivo === 'vencimientos',
-    maestros: grupoActivo === 'maestros',
-  });
-
-  useEffect(() => {
-    if (grupoActivo) {
-      setGruposAbiertos((prev) => ({ ...prev, [grupoActivo]: true }));
-    }
-  }, [grupoActivo, location.pathname]);
+  const [gruposAbiertos, setGruposAbiertos] = useState<
+    Partial<Record<'vencimientos' | 'maestros', boolean>>
+  >({});
 
   const menuContent = (
     <>
       <div className="d-flex align-items-center gap-2 px-4 py-4 mb-2">
-        <span className="fs-5 fw-bold text-dark tracking-tight">
-          SAIA
-        </span>
+        <span className="fs-5 fw-bold text-dark tracking-tight">SAIA</span>
       </div>
 
       {currentUser && (
@@ -96,25 +95,25 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         {menuItems
           .filter((item) => {
             if (item.to === '/checklist' || item.to === '/incidentes') {
-              return currentUser?.operar === true;
+              return canOperate;
             }
 
-            return currentUser?.administrar === true;
+            return canAdmin;
           })
           .map((item) => {
             if (item.grupo) {
               const grupo = item.grupo;
-              const abierto = gruposAbiertos[grupo];
+              const abierto = gruposAbiertos[grupo] ?? grupoActivo === grupo;
               const collapseId = `${grupo}-collapse`;
               return (
                 <div key={item.label}>
                   <button
                     type="button"
-                    onClick={() => setGruposAbiertos((prev) => ({ ...prev, [grupo]: !prev[grupo] }))}
+                    onClick={() =>
+                      setGruposAbiertos((prev) => ({ ...prev, [grupo]: !abierto }))
+                    }
                     className={`nav-link w-100 border-0 bg-transparent d-flex justify-content-between align-items-center px-3 py-2 rounded-3 fw-medium ${
-                      grupoActivo === grupo
-                        ? 'text-dark'
-                        : 'text-secondary hover-bg-light'
+                      grupoActivo === grupo ? 'text-dark' : 'text-secondary hover-bg-light'
                     }`}
                     aria-controls={collapseId}
                     aria-expanded={abierto}
@@ -126,9 +125,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
 
                     <i
                       className={`bi ${
-                        abierto
-                          ? 'bi-chevron-up'
-                          : 'bi-chevron-down'
+                        abierto ? 'bi-chevron-up' : 'bi-chevron-down'
                       } text-dark ms-2`}
                     ></i>
                   </button>
@@ -171,9 +168,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
                 onClick={onClose}
                 className={({ isActive }) =>
                   `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium text-wrap overflow-hidden ${
-                    isActive
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-secondary hover-bg-light'
+                    isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
                   }`
                 }
                 style={{ wordBreak: 'break-word', lineHeight: '1.2' }}
@@ -184,17 +179,6 @@ export function Sidebar({ show, onClose }: SidebarProps) {
             );
           })}
       </nav>
-
-      <div className="p-3 border-top mt-3">
-        <button
-          type="button"
-          onClick={() => void logout()}
-          className="btn btn-outline-danger w-100 btn-sm"
-        >
-          <i className="bi bi-box-arrow-left me-2"></i>
-          Cerrar sesión
-        </button>
-      </div>
     </>
   );
 
@@ -209,14 +193,10 @@ export function Sidebar({ show, onClose }: SidebarProps) {
 
       <Offcanvas show={show} onHide={onClose} placement="start" className="d-md-none">
         <Offcanvas.Header closeButton>
-          <Offcanvas.Title className="fw-bold">
-            Menú
-          </Offcanvas.Title>
+          <Offcanvas.Title className="fw-bold">Menú</Offcanvas.Title>
         </Offcanvas.Header>
 
-        <Offcanvas.Body className="d-flex flex-column p-0">
-          {menuContent}
-        </Offcanvas.Body>
+        <Offcanvas.Body className="d-flex flex-column p-0">{menuContent}</Offcanvas.Body>
       </Offcanvas>
     </>
   );

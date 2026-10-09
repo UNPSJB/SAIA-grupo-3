@@ -3,8 +3,8 @@
    ========================================================================== */
 
 /* Fondo claro solo cuando NO está activo el tema oscuro */
-[data-bs-theme="light"] body,
-body:not([data-bs-theme="dark"]) {
+[data-bs-theme='light'] body,
+:root:not([data-bs-theme='dark']) body {
   background-color: #f8fafc;
   color: #1e293b;
 }
@@ -36,16 +36,16 @@ body:not([data-bs-theme="dark"]) {
    2. Paginación Adaptable (Modo Claro por defecto)
    ========================================================================== */
 .pagination .page-item.active .page-link {
-  background-color: #e2e8f0 !important; 
-  border-color: #cbd5e1 !important;     
-  color: #0f172a !important;            
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
   font-weight: 600 !important;
 }
 
 .pagination .page-link {
-  color: #64748b !important;            
-  background-color: #ffffff !important; 
-  border-color: #e2e8f0 !important;     
+  color: #64748b !important;
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
 }
 
 .pagination .page-link:hover {
@@ -68,62 +68,117 @@ body:not([data-bs-theme="dark"]) {
    ========================================================================== */
 
 /* A. Encabezados de tablas: anula 'table-light' y fondo claro en todos los listados */
-[data-bs-theme="dark"] .table th,
-[data-bs-theme="dark"] .table-light,
-[data-bs-theme="dark"] thead.table-light th {
+[data-bs-theme='dark'] .table th,
+[data-bs-theme='dark'] .table-light,
+[data-bs-theme='dark'] thead.table-light th {
   background-color: var(--bs-tertiary-bg) !important;
   color: var(--bs-body-color) !important;
   border-color: var(--bs-border-color) !important;
 }
 
 /* B. Pies de tarjeta: oscurece automáticamente cualquier footer con 'bg-white' */
-[data-bs-theme="dark"] .card-footer,
-[data-bs-theme="dark"] .card-footer.bg-white,
-[data-bs-theme="dark"] .bg-white {
+[data-bs-theme='dark'] .card-footer,
+[data-bs-theme='dark'] .card-footer.bg-white,
+[data-bs-theme='dark'] .bg-white {
   background-color: var(--bs-body-bg) !important;
   color: var(--bs-body-color) !important;
   border-color: var(--bs-border-color) !important;
 }
 
 /* C. Cajas de detalles y encabezados con 'bg-light' en tarjetas y formularios */
-[data-bs-theme="dark"] .bg-light,
-[data-bs-theme="dark"] .card-header.bg-light {
+[data-bs-theme='dark'] .bg-light,
+[data-bs-theme='dark'] .card-header.bg-light {
   background-color: var(--bs-tertiary-bg) !important;
   color: var(--bs-body-color) !important;
   border-color: var(--bs-border-color) !important;
 }
 
 /* D. Paginación en modo oscuro */
-[data-bs-theme="dark"] .pagination .page-item.active .page-link {
+[data-bs-theme='dark'] .pagination .page-item.active .page-link {
   background-color: var(--bs-primary) !important;
   border-color: var(--bs-primary) !important;
   color: #ffffff !important;
   font-weight: 600 !important;
 }
 
-[data-bs-theme="dark"] .pagination .page-link {
+[data-bs-theme='dark'] .pagination .page-link {
   color: var(--bs-body-color) !important;
   background-color: var(--bs-body-bg) !important;
   border-color: var(--bs-border-color) !important;
 }
 
-[data-bs-theme="dark"] .pagination .page-link:hover {
+[data-bs-theme='dark'] .pagination .page-link:hover {
   background-color: var(--bs-tertiary-bg) !important;
   border-color: var(--bs-border-color) !important;
   color: var(--bs-primary) !important;
 }
 
 /* E. Elementos secundarios y hovers en modo oscuro */
-[data-bs-theme="dark"] .hover-bg-light:hover {
+[data-bs-theme='dark'] .hover-bg-light:hover {
   background-color: var(--bs-tertiary-bg) !important;
   color: var(--bs-body-color) !important;
 }
 
-[data-bs-theme="dark"] .text-dark {
+[data-bs-theme='dark'] .text-dark {
   color: var(--bs-body-color) !important;
 }
 
 /* Campanita de notificaciones: sin la flecha del dropdown */
 .campanita-toggle::after {
   display: none;
+}
+
+.header-icon-button {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--bs-body-color);
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
+}
+
+.header-icon-button:hover,
+.header-icon-button:focus-visible,
+.header-icon-button.show {
+  color: var(--bs-body-color);
+  background-color: var(--bs-tertiary-bg);
+  border-color: var(--bs-secondary-color);
+}
+
+.campanita-toggle .notification-count {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(25%, -25%);
+  min-width: 18px;
+  height: 18px;
+  padding: 2px 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
+  border: 2px solid var(--bs-body-bg);
+}
+
+.avatar-toggle::after {
+  display: none;
+}
+
+/* Texto uniforme y legible en ambos temas, sin alterar colores de botones o estados. */
+.main-content :is(h1, h2, h3, h4, h5, h6),
+.main-content .text-secondary:not(.btn) {
+  color: var(--bs-body-color) !important;
+}
+
+.main-content .table {
+  --bs-table-color: var(--bs-body-color);
+  --bs-table-striped-color: var(--bs-body-color);
+  --bs-table-hover-color: var(--bs-body-color);
+}
+
+[data-bs-theme='dark'] .badge.text-dark {
+  color: #212529 !important;
 }

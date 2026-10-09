@@ -1,4 +1,4 @@
-import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
 import type { Sector } from './types';
 
 export interface PaginatedSectores {
@@ -10,19 +10,19 @@ export interface PaginatedSectores {
 }
 
 export async function getSectores(
-  page = 1, 
-  size = 10, 
+  page = 1,
+  size = 10,
   mostrarInactivos = false,
   ordenarPor = 'id',
   orden = 'asc',
-  buscar = ''
+  buscar = '',
 ): Promise<PaginatedSectores> {
   let url = `${API_BASE_URL}/sectores?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`;
-  
+
   if (buscar) {
     url += `&buscar=${encodeURIComponent(buscar)}`;
   }
-  
+
   const res = await fetchWithAuth(url);
   if (!res.ok) throw new Error('No se pudo listar los sectores.');
   return res.json();
@@ -36,7 +36,7 @@ export async function createSector(data: Sector): Promise<Sector> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al registrar el sector.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al registrar el sector.'));
   }
   return res.json();
 }
@@ -49,7 +49,7 @@ export async function updateSector(id: number, data: Sector): Promise<Sector> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al actualizar el sector.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al actualizar el sector.'));
   }
   return res.json();
 }
@@ -60,7 +60,7 @@ export async function deleteSector(id: number): Promise<void> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'No se pudo dar de baja el sector.');
+    throw new Error(mensajeDeError(errorData.detail, 'No se pudo dar de baja el sector.'));
   }
 }
 

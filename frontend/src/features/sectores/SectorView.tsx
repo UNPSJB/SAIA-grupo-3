@@ -29,10 +29,8 @@ export function SectorView({ sector, onEditar, onVolver }: SectorViewProps) {
           </div>
         </div>
 
-        <h6 className="text-secondary fw-semibold mb-3 border-bottom pb-2">
-          Equipos Asignados
-        </h6>
-        
+        <h6 className="text-secondary fw-semibold mb-3 border-bottom pb-2">Equipos Asignados</h6>
+
         {!sector.equipos || sector.equipos.length === 0 ? (
           <p className="text-muted small text-center py-3 bg-light rounded border">
             No hay equipos asignados a este sector actualmente.
@@ -40,7 +38,10 @@ export function SectorView({ sector, onEditar, onVolver }: SectorViewProps) {
         ) : (
           <ListGroup variant="flush" className="border rounded shadow-sm">
             {sector.equipos.map((equipo) => (
-              <ListGroup.Item key={equipo.id} className="d-flex justify-content-between align-items-center py-3">
+              <ListGroup.Item
+                key={equipo.id}
+                className="d-flex justify-content-between align-items-center py-3"
+              >
                 <div>
                   <span className="fw-medium text-dark">{equipo.nombre}</span>
                   <br />
@@ -53,17 +54,12 @@ export function SectorView({ sector, onEditar, onVolver }: SectorViewProps) {
                   <Badge bg="info" className="text-dark text-capitalize">
                     {equipo.tipo}
                   </Badge>
-                  <Button 
-                    variant="outline-primary" 
-                    size="sm" 
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
                     className="border-0 shadow-none px-2"
                     title="Ver detalle del equipo"
-                    onClick={() => navigate('/equipos', { 
-                      state: { 
-                        equipoIdSeleccionado: equipo.id,
-                        sectorDeOrigenId: sector.id  
-                      } 
-                    })}
+                    onClick={() => navigate(`/equipos/${equipo.id}`)}
                   >
                     <i className="bi bi-eye-fill fs-6"></i>
                   </Button>

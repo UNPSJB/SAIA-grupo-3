@@ -1,4 +1,4 @@
-import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
 import type { Tarea, TareaCreate, PaginatedTareas } from './types';
 
 export async function getTareas(page = 1, size = 10): Promise<PaginatedTareas> {
@@ -15,7 +15,7 @@ export async function createTarea(data: TareaCreate): Promise<Tarea> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al registrar la tarea.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al registrar la tarea.'));
   }
   return res.json();
 }
@@ -28,7 +28,7 @@ export async function updateTarea(id: number, data: Partial<TareaCreate>): Promi
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al actualizar la tarea.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al actualizar la tarea.'));
   }
   return res.json();
 }
@@ -39,6 +39,11 @@ export async function deleteTarea(id: number): Promise<void> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'No se pudo eliminar la tarea.');
+    throw new Error(mensajeDeError(errorData.detail, 'No se pudo eliminar la tarea.'));
   }
+}
+export async function getTareaById(id: number): Promise<Tarea> {
+  const response = await fetchWithAuth(`${API_BASE_URL}/tareas/${id}`);
+  if (!response.ok) throw new Error('No se encontró el registro.');
+  return response.json();
 }

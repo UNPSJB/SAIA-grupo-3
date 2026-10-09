@@ -1,78 +1,41 @@
-# React + TypeScript + Vite
+# Frontend SAIA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite, React Router, React Hook Form y Bootstrap.
 
-Currently, two official plugins are available:
+## Instalación y ejecución
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Usar Node.js 22.12 o posterior compatible con Vite 8.
 
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```sh
+npm ci
+cp .env.example .env
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+`VITE_API_BASE_URL` configura el backend; por defecto es `http://localhost:8000`.
+Las variables Vite son públicas. Reiniciar el servidor de desarrollo al cambiarlas.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Verificación
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```sh
+npm run build
+npm run lint
+npm test
 ```
+
+`npm run format` aplica Prettier al código de `src`.
+Las dependencias de producción y desarrollo se declaran en `package.json` y se resuelven en `package-lock.json`.
+Para agregar una dependencia, usar `npm install paquete` o `npm install -D paquete`; guardar ambos archivos.
+
+## Convenciones
+
+- Organización por funcionalidades en `src/features`; componentes y hooks reutilizables en `src/shared`.
+- React Router mantiene listado, alta (`/nuevo`), detalle (`/:id`) y edición (`/:id/editar`). La confirmación de baja usa `/:id/eliminar` en catálogos.
+- Búsqueda, orden, página y filtros se conservan en parámetros de URL. Los listados paginados filtran y ordenan en el backend; esperan 300 ms al escribir y descartan respuestas obsoletas.
+- Checklist filtra el conjunto completo del día en el frontend, conservando los totales de avance. Los selectores extensos permiten búsqueda y cargan todas las páginas de opciones.
+- React Hook Form administra validación y estados de envío; Bootstrap mantiene el diseño.
+- `AuthProvider` carga el perfil al iniciar sesión/restaurarla. `permissions` y `ProtectedRoute` usan las capacidades del contexto, sin consultar el perfil por formulario.
+- Administración conserva los módulos administrativos y operación conserva checklist e incidentes. Editar/borrar incidentes requiere además administración. El backend vuelve a verificar cada permiso.
+- No se usan loaders/actions ni `Form` de React Router. La capa API existente conserva el acceso autenticado.
+
+En hosting, configurar fallback de las rutas del frontend hacia `index.html` para permitir recargar URLs de detalle.

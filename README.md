@@ -21,7 +21,6 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 
 # Dependencias
 pip install -r requirements.txt
-pip install faker               # necesaria para seed.py
 
 # Variables de entorno
 cp .env.template .env
@@ -35,9 +34,16 @@ fastapi dev src/main.py
 ### Frontend (React + Vite + TypeScript)
 cd frontend
 
-npm install
+npm ci
 
 # Levantar en desarrollo (http://localhost:5173)
 npm run dev
 
-Para que el front funcione, el backend tiene que estar corriendo en http://localhost:8000 — esa URL está fija en api.ts. Opciona, es configurable como variable de entorno.
+Para que el front funcione, el backend tiene que estar corriendo en http://localhost:8000 — esa URL es el valor por defecto y se puede cambiar con `VITE_API_BASE_URL` en `frontend/.env` (ver `.env.example`).
+
+
+### Verificaciones
+
+Frontend: `npm run build`, `npm run lint` y `npm test` desde `frontend`.
+Backend: instalar `requirements-dev.txt` y ejecutar `python -m pytest -q` desde `backend`.
+Consultar los README de cada carpeta para las convenciones de rutas, formularios y permisos.

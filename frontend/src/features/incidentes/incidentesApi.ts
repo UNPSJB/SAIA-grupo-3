@@ -1,6 +1,4 @@
-import { fetchWithAuth } from '../../shared/libreria/api';
-import { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api';
-
+import { fetchWithAuth, mensajeDeError, API_BASE_URL } from '../../shared/libreria/api';
 export interface ReportanteIncidente {
   dni: string;
   nombre: string;
@@ -39,7 +37,10 @@ export async function getIncidentes(page = 1, size = 10): Promise<PaginatedIncid
   return res.json();
 }
 
-export async function guardarIncidente(datos: IncidenteDatos, incidenteId?: number): Promise<Incidente> {
+export async function guardarIncidente(
+  datos: IncidenteDatos,
+  incidenteId?: number,
+): Promise<Incidente> {
   const formData = new FormData();
   formData.append('descripcion', datos.descripcion);
   if (datos.reportadoPorDni !== undefined) {
@@ -56,7 +57,7 @@ export async function guardarIncidente(datos: IncidenteDatos, incidenteId?: numb
     {
       method: incidenteId === undefined ? 'POST' : 'PUT',
       body: formData,
-    }
+    },
   );
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -66,9 +67,17 @@ export async function guardarIncidente(datos: IncidenteDatos, incidenteId?: numb
 }
 
 export async function eliminarIncidente(incidenteId: number): Promise<void> {
-  const res = await fetchWithAuth(`${API_BASE_URL}/incidentes/${incidenteId}`, { method: 'DELETE' });
+  const res = await fetchWithAuth(`${API_BASE_URL}/incidentes/${incidenteId}`, {
+    method: 'DELETE',
+  });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(mensajeDeError(errorData.detail, 'No se pudo eliminar el incidente.'));
   }
+}
+
+export async function getIncidenteById(id: number): Promise<Incidente> {
+  const response = await fetchWithAuth(`${API_BASE_URL}/incidentes/${id}`);
+  if (!response.ok) throw new Error('No se encontró el incidente.');
+  return response.json();
 }

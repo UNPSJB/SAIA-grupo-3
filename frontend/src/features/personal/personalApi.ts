@@ -1,8 +1,4 @@
-import {
-  API_BASE_URL,
-  mensajeDeError,
-  fetchWithAuth,
-} from '../../shared/libreria/api';
+import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
 import type {
   Personal,
   PersonalCreateInput,

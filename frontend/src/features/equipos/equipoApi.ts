@@ -1,4 +1,4 @@
-import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
 import type { Equipo } from './types';
 
 export interface PaginatedEquipos {
@@ -10,13 +10,15 @@ export interface PaginatedEquipos {
 }
 
 export async function getEquipos(
-  page = 1, 
-  size = 10, 
+  page = 1,
+  size = 10,
   mostrarInactivos = false,
   ordenarPor = 'id',
-  orden = 'asc'
+  orden = 'asc',
 ): Promise<PaginatedEquipos> {
-  const res = await fetchWithAuth(`${API_BASE_URL}/equipos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`);
+  const res = await fetchWithAuth(
+    `${API_BASE_URL}/equipos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`,
+  );
   if (!res.ok) throw new Error('No se pudo listar los equipos.');
   return res.json();
 }
@@ -29,7 +31,7 @@ export async function createEquipo(data: Equipo): Promise<Equipo> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al registrar el equipo.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al registrar el equipo.'));
   }
   return res.json();
 }
@@ -42,7 +44,7 @@ export async function updateEquipo(id: number, data: Equipo): Promise<Equipo> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al actualizar el equipo.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al actualizar el equipo.'));
   }
   return res.json();
 }
@@ -53,7 +55,7 @@ export async function deleteEquipo(id: number): Promise<void> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'No se pudo dar de baja el equipo.');
+    throw new Error(mensajeDeError(errorData.detail, 'No se pudo dar de baja el equipo.'));
   }
 }
 

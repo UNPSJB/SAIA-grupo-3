@@ -1,95 +1,62 @@
-import { useState } from 'react';
-import { Container } from 'react-bootstrap';
+import { Container, Button } from 'react-bootstrap';
 import { ElementoList } from './ElementoList';
 import { ElementoForm } from './ElementoForm';
 import { ElementoView } from './ElementoView';
 import { ElementoDeleteView } from './ElementoDeleteView';
 import { useElemento } from './useElemento';
+import { getElementoById } from './elementoApi';
 import type { Elemento } from './types';
-
-type ModoVista = 'ver' | 'listado' | 'crear' | 'editar' | 'eliminar';
+import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
+import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { ErrorAlert } from '../../shared/components/ErrorAlert';
 
 export function ElementoPage() {
-  const [modo, setModo] = useState<ModoVista>('listado');
-  const [elementoSeleccionado, setElementoSeleccionado] = useState<Elemento | null>(null);
-  const { guardar, eliminar } = useElemento();
-
-  const handleNuevo = () => {
-    setElementoSeleccionado(null);
-    setModo('crear');
-  };
-
-  const handleView = (elemento: Elemento) => {
-    setElementoSeleccionado(elemento);
-    setModo('ver');
-  };
-
-  const handleEditar = (elemento: Elemento) => {
-    setElementoSeleccionado(elemento);
-    setModo('editar');
-  };
-
-  const handleEliminarClick = (elemento: Elemento) => {
-    setElementoSeleccionado(elemento);
-    setModo('eliminar');
-  };
-
+  const route = useCrudRoute<Elemento>('/elementos', getElementoById);
+  const { mode, item, open, back, error, loading } = route;
+  const { guardar, eliminar } = useElemento(false);
   const handleGuardar = async (datos: Elemento) => {
-    if (modo === 'editar' && elementoSeleccionado?.id) {
-      await guardar(datos, elementoSeleccionado.id);
-    } else {
-      await guardar(datos);
-    }
-    volverAlListado();
+    await guardar(datos, mode === 'editar' ? item?.id : undefined);
+    back();
   };
-
   const handleConfirmarBaja = async (id: number) => {
     await eliminar(id);
-    volverAlListado();
-  };
-
-  const volverAlListado = () => {
-    setModo('listado');
-    setElementoSeleccionado(null);
+    back();
   };
 
   return (
     <Container className="py-2">
-      <h2 className="mb-4 border-bottom pb-2 text-secondary">
-        Gestión de Elementos de limpieza
-      </h2>
-
-      {modo === 'ver' && elementoSeleccionado && (
-        <ElementoView
-          elemento={elementoSeleccionado}
-          onEditar={() => handleEditar(elementoSeleccionado)}
-          onVolver={volverAlListado}
-        />
+      <h2 className="mb-4 border-bottom pb-2 text-secondary">Gestión de Elementos de limpieza</h2>
+      {loading && <LoadingSpinner mensaje="Cargando detalle..." />}
+      {error && (
+        <>
+          <ErrorAlert mensaje={error} />
+          <Button onClick={back}>Volver al listado</Button>
+        </>
       )}
-
-      {modo === 'listado' && (
+      {mode === 'listado' && (
         <ElementoList
-          onViewClick={handleView}
-          onNuevoClick={handleNuevo}
-          onEditarClick={handleEditar}
-          onEliminarClick={handleEliminarClick}
+          onViewClick={(item) => open(item)}
+          onNuevoClick={() => open()}
+          onEditarClick={(item) => open(item, 'editar')}
+          onEliminarClick={(item) => open(item, 'eliminar')}
         />
       )}
-
-      {(modo === 'crear' || modo === 'editar') && (
+      {mode === 'ver' && item && (
+        <ElementoView elemento={item} onEditar={() => open(item, 'editar')} onVolver={back} />
+      )}
+      {(mode === 'crear' || (mode === 'editar' && item)) && (
         <ElementoForm
-          key={elementoSeleccionado?.id ?? 'nuevo'}
-          elementoInicial={elementoSeleccionado}
+          key={item?.id ?? 'nuevo'}
+          elementoInicial={mode === 'crear' ? null : item}
           onGuardar={handleGuardar}
-          onCancelar={volverAlListado}
+          onCancelar={back}
         />
       )}
-
-      {modo === 'eliminar' && elementoSeleccionado && elementoSeleccionado.id !== undefined && (
+      {mode === 'eliminar' && item && item.id !== undefined && (
         <ElementoDeleteView
-          elemento={elementoSeleccionado}
+          elemento={item}
           onConfirmarEliminar={handleConfirmarBaja}
-          onCancelar={volverAlListado}
+          onCancelar={back}
         />
       )}
     </Container>

@@ -1,4 +1,8 @@
-export const API_BASE_URL = 'http://localhost:8000';
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(
+  /\/$/,
+  '',
+);
+export const SESSION_EXPIRED_EVENT = 'saia:session-expired';
 
 interface TokenResponse {
   access_token: string;
@@ -6,6 +10,13 @@ interface TokenResponse {
 }
 
 let accessToken: string | null = null;
+let sessionVersion = 0;
+export function clearSession(): void {
+  sessionVersion++;
+  accessToken = null;
+  refreshEnCurso = null;
+}
+
 let refreshEnCurso: Promise<TokenResponse | null> | null = null;
 
 export function setAccessToken(token: string | null): void {
@@ -16,9 +27,7 @@ export function mensajeDeError(detail: unknown, porDefecto: string): string {
   if (typeof detail === 'string') return detail;
 
   if (Array.isArray(detail)) {
-    return detail
-      .map((item) => String(item.msg).replace('Value error, ', ''))
-      .join('\n');
+    return detail.map((item) => String(item.msg).replace('Value error, ', '')).join('\n');
   }
 
   return porDefecto;
@@ -26,6 +35,7 @@ export function mensajeDeError(detail: unknown, porDefecto: string): string {
 
 export async function renovarSesion(): Promise<TokenResponse | null> {
   if (!refreshEnCurso) {
+    const version = sessionVersion;
     refreshEnCurso = (async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/auth/token`, {
@@ -34,18 +44,19 @@ export async function renovarSesion(): Promise<TokenResponse | null> {
         });
 
         if (!response.ok) {
-          setAccessToken(null);
+          if (version === sessionVersion) setAccessToken(null);
           return null;
         }
 
         const data = (await response.json()) as TokenResponse;
+        if (version !== sessionVersion) return null;
         setAccessToken(data.access_token);
         return data;
       } catch {
-        setAccessToken(null);
+        if (version === sessionVersion) setAccessToken(null);
         return null;
       } finally {
-        refreshEnCurso = null;
+        if (version === sessionVersion) refreshEnCurso = null;
       }
     })();
   }
@@ -53,10 +64,8 @@ export async function renovarSesion(): Promise<TokenResponse | null> {
   return refreshEnCurso;
 }
 
-export async function fetchWithAuth(
-  url: string,
-  options: RequestInit = {},
-): Promise<Response> {
+export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+  const requestVersion = sessionVersion;
   const esEndpointDeToken = url.split('?')[0].replace(/\/$/, '').endsWith('/auth/token');
 
   const hacerPeticion = (token: string | null) => {
@@ -81,15 +90,18 @@ export async function fetchWithAuth(
 
   let response = await hacerPeticion(accessToken);
 
-  if (response.status === 401 && !esEndpointDeToken) {
+  if (response.status === 401 && !esEndpointDeToken && requestVersion === sessionVersion) {
     const tokenData = await renovarSesion();
 
-    if (tokenData) {
+    if (tokenData && requestVersion === sessionVersion) {
       response = await hacerPeticion(tokenData.access_token);
-    } else if (window.location.pathname !== '/login') {
-      window.location.assign('/login');
+    }
+    if (response.status === 401 && requestVersion === sessionVersion) {
+      setAccessToken(null);
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
     }
   }
 
+  if (response.status === 403) throw new Error('No tenés permiso para realizar esta operación.');
   return response;
 }

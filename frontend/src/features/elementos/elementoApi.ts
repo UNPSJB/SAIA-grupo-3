@@ -1,4 +1,4 @@
-import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
 import type { Elemento } from './types';
 
 export interface PaginatedElementos {
@@ -10,13 +10,15 @@ export interface PaginatedElementos {
 }
 
 export async function getElementos(
-  page = 1, 
-  size = 10, 
+  page = 1,
+  size = 10,
   mostrarInactivos = false,
   ordenarPor = 'id',
-  orden = 'asc'
+  orden = 'asc',
 ): Promise<PaginatedElementos> {
-  const res = await fetchWithAuth(`${API_BASE_URL}/elementos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`);
+  const res = await fetchWithAuth(
+    `${API_BASE_URL}/elementos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`,
+  );
   if (!res.ok) throw new Error('No se pudo listar los elementos.');
   return res.json();
 }
@@ -29,7 +31,7 @@ export async function createElemento(data: Elemento): Promise<Elemento> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al registrar el elemento.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al registrar el elemento.'));
   }
   return res.json();
 }
@@ -42,7 +44,7 @@ export async function updateElemento(id: number, data: Elemento): Promise<Elemen
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al actualizar el elemento.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al actualizar el elemento.'));
   }
   return res.json();
 }
@@ -53,7 +55,7 @@ export async function deleteElemento(id: number): Promise<void> {
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'No se pudo dar de baja el elemento.');
+    throw new Error(mensajeDeError(errorData.detail, 'No se pudo dar de baja el elemento.'));
   }
 }
 
@@ -66,7 +68,12 @@ export async function registrarRecambioApi(id: number, fecha: string): Promise<E
   });
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al registrar el recambio.');
+    throw new Error(mensajeDeError(errorData.detail, 'Error al registrar el recambio.'));
   }
   return res.json();
+}
+export async function getElementoById(id: number): Promise<Elemento> {
+  const response = await fetchWithAuth(`${API_BASE_URL}/elementos/${id}`);
+  if (!response.ok) throw new Error('No se encontró el registro.');
+  return response.json();
 }
