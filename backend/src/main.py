@@ -31,6 +31,7 @@ from src.auth import router as auth_router
 from src.notificaciones.router import router as notificaciones_router
 from src.incidente.router import router as incidente_router
 from src.notificaciones.scheduler import iniciar_scheduler, detener_scheduler
+from src.documentoTecnico.router import router as documento_tecnico_router
 
 ENV = settings.ENV.upper()
 ROOT_PATH = getattr(settings, f"ROOT_PATH_{ENV}", "")
@@ -81,6 +82,8 @@ app.include_router(consumo_quimico_router)
 app.include_router(auth_router.router)
 app.include_router(notificaciones_router)
 app.include_router(incidente_router)
+app.include_router(documento_tecnico_router)
+
 
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")

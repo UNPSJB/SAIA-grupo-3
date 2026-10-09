@@ -28,6 +28,7 @@ import {
 import { VencimientosPage } from '../features/personal';
 import { IncidentesPage } from '../features/incidentes';
 import { CalibracionPage } from '../features/vencimientos/CalibracionPage';
+import { DocumentoTecnicoPage } from '../features/documentosTecnicos';
 
 function HomeRedirect() {
   const { currentUser } = useAuth();
@@ -121,6 +122,7 @@ export function AppRouter() {
               <Route path="consumos/:id" element={<ConsumoQuimicoPage />} />
               <Route path="consumos/:id/:action" element={<ConsumoQuimicoPage />} />
               <Route path="reportes/consumos" element={<ReporteConsumosPage />} />
+              <Route path="documentos-tecnicos" element={<DocumentoTecnicoPage />} />
             </Route>
           </Route>
         </Routes>

@@ -39,6 +39,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       icono: 'bi bi-bar-chart-line',
     },
     { to: '/incidentes', label: 'Incidentes', icono: 'bi bi-exclamation-triangle' },
+    { to: '/documentos-tecnicos', label: 'Documentos Técnicos', icono: 'bi bi-journal-text' },
     {
       label: 'Vencimientos',
       icono: 'bi bi-calendar-x',

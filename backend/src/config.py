@@ -29,3 +29,5 @@ class Settings(BaseSettings):
 
 settings = Settings()
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
+
+ARCHIVOS_DIR = Path(__file__).resolve().parent.parent / "archivos"
