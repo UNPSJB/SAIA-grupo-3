@@ -23,6 +23,7 @@ import { ReporteConsumosPage } from '../features/consumoQuimicos/ConsumoQuimicoP
 import { VencimientosPage } from '../features/personal';
 import { IncidentesPage } from '../features/incidentes';
 import { CalibracionPage } from '../features/vencimientos/CalibracionPage';
+import { DocumentoTecnicoPage } from '../features/documentosTecnicos';
 
 export function AppRouter() {
   return (
@@ -62,7 +63,7 @@ export function AppRouter() {
               <Route path="elementos" element={<ElementoPage />} />
               <Route path="planes" element={<PlanPage />} />
               <Route path="auditoria" element={<AuditoriaPage />} />
-
+              <Route path="documentos-tecnicos" element={<DocumentoTecnicoPage />} />
               <Route
                 path="reportes/consumos"
                 element={<ReporteConsumosPage />}
