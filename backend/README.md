@@ -11,7 +11,6 @@ Se sugiere mantener la estructura de archivos (basada en [fastapi-best-practices
 *  `schemas.py`
 *  `services.py`
 
-Si se lo desea, añadir tests para dichos módulos debiera seguir la misma estructura que los disponibles en la carpeta `tests`, con las adaptaciones que se consideren necesarias.
 
 #### ¿Cómo lo ejecuto?
 
@@ -20,15 +19,11 @@ Si se lo desea, añadir tests para dichos módulos debiera seguir la misma estru
 3. Asumiendo que estamos en la raiz del repositorio y nuestro código dentro de `src/`, iniciar el proyecto ejecutando: `fastapi dev src/main.py`
 4. Cuando el proyecto esté listo, abrir http://localhost:8000/docs para probar la API de manera interactiva.
 
-Opcionalmente:
-1. Asumiendo que estamos en la raíz del repositorio, ejecutar los tests con: `python -m pytest tests/`
-
 **Importante**: 
 * Al trabajar en nuevos dominios, los módulos y archivos de ejemplo (Personals, mascotas) ya no son necesarios y pueden ser eliminados junto con cualquier referencia a ellos dentro de `src/` y `tests/`.
 * Por defecto el proyecto utiliza el motor de base de datos `sqlite` por lo que los datos de la app vivirán dentro del archivo cuyo nombre está definido en el archivo `.env` (por ejemplo: `db.sqlite3`) a menos que se renombre y/o se decida utilizar otro motor de base de datos.
-* Los tests han sido configurados para ejecutarse utilizando una base de datos en memoria por lo que no existe un archivo que contenga sus datos. Estos tests están relacionados al dominio Personals/mascotas por lo que si borras los módulos, es probable que dejen de funcionar.
 
-## Instalación reproducible y pruebas
+## Instalación reproducible
 
 ```sh
 python3 -m venv .venv
@@ -38,15 +33,7 @@ cp .env.template .env
 fastapi dev src/main.py
 ```
 
-Para desarrollo y pruebas:
-
-```sh
-pip install -r requirements-dev.txt
-python -m pytest -q
-```
-
-Las pruebas usan SQLite en memoria y desactivan el scheduler; no modifican la base de desarrollo.
-`requirements.txt` mantiene las dependencias de producción; `requirements-dev.txt` incluye esas dependencias y pytest con versión fija. No se agregaron bibliotecas de producción para búsqueda, ordenamiento o permisos: se utiliza FastAPI y SQLAlchemy existentes.
+`requirements.txt` mantiene las dependencias de producción.
 
 Los listados conservan `items`, `total`, `page`, `size` y `pages`. Admiten `buscar`, `ordenar_por` y `orden` (`asc`/`desc`) según las columnas de cada módulo. La búsqueda se aplica antes de paginar y el ID desempata órdenes equivalentes. Columnas o direcciones inválidas devuelven 422.
 

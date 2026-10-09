@@ -8,6 +8,13 @@ export const TIPOS_DOCUMENTO_TECNICO: { value: TipoDocumentoTecnico; label: stri
   { value: 'receta', label: 'Receta' },
 ];
 
+export const COLORES_DOCUMENTO_TECNICO: Record<TipoDocumentoTecnico, string> = {
+  manual_bpm: 'primary',
+  ficha_tecnica: 'info',
+  procedimiento: 'warning',
+  receta: 'success',
+};
+
 export interface PersonalResumen {
   id: number;
   nombre: string;
@@ -33,7 +40,16 @@ export interface DocumentoTecnicoResumen {
   tipo: TipoDocumentoTecnico;
   descripcion: string | null;
   fecha_creacion: string;
+  estado: EstadoDocumento;
   version_vigente: VersionDocumentoTecnico | null;
+  vigencia_actual: VigenciaDocumentoTecnico | null;
+}
+
+export interface VigenciaDocumentoTecnico {
+  version_anterior_id: number | null;
+  version_id: number;
+  personal: PersonalResumen;
+  fecha_vigencia: string;
 }
 
 export interface DocumentoTecnico extends DocumentoTecnicoResumen {

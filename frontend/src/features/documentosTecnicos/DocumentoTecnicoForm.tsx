@@ -1,11 +1,19 @@
 import { useState } from 'react';
 import { Alert, Badge, Button, Card, Form, Modal } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
-import { actualizarDocumentoTecnico, crearDocumentoTecnico, subirNuevaVersion } from './documentoTecnicoApi';
+import {
+  actualizarDocumentoTecnico,
+  crearDocumentoTecnico,
+  subirNuevaVersion,
+  getDocumentoTecnico,
+} from './documentoTecnicoApi';
 import {
   TIPOS_DOCUMENTO_TECNICO,
-  type DocumentoTecnico, type DocumentoTecnicoDatos, type DocumentoTecnicoResumen,
-  type TipoDocumentoTecnico, type VersionDocumentoTecnico,
+  type DocumentoTecnico,
+  type DocumentoTecnicoDatos,
+  type DocumentoTecnicoResumen,
+  type TipoDocumentoTecnico,
+  type VersionDocumentoTecnico,
 } from './types';
 
 // Mismos formatos y tamaño que valida el backend (documentoTecnico/constants.py)
@@ -19,12 +27,16 @@ function validarArchivo(archivo: File | null): string | null {
 }
 
 interface DocumentoTecnicoFormProps {
-  documentoInicial: DocumentoTecnicoResumen | null;   // null = crear
+  documentoInicial: DocumentoTecnicoResumen | null; // null = crear
   onGuardado: (documento: DocumentoTecnico) => void;
   onCancelar: () => void;
 }
 
-export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar }: DocumentoTecnicoFormProps) {
+export function DocumentoTecnicoForm({
+  documentoInicial,
+  onGuardado,
+  onCancelar,
+}: DocumentoTecnicoFormProps) {
   const [nombre, setNombre] = useState(documentoInicial?.nombre ?? '');
   const [tipo, setTipo] = useState<TipoDocumentoTecnico>(documentoInicial?.tipo ?? 'manual_bpm');
   const [descripcion, setDescripcion] = useState(documentoInicial?.descripcion ?? '');
@@ -34,8 +46,9 @@ export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar 
 
   // Solo en edición: archivo vigente y modal "Cargar nuevo documento"
   const [versionVigente, setVersionVigente] = useState<VersionDocumentoTecnico | null>(
-    documentoInicial?.version_vigente ?? null
+    documentoInicial?.version_vigente ?? null,
   );
+  const [siguienteVersion, setSiguienteVersion] = useState<number | null>(null);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [archivoNuevo, setArchivoNuevo] = useState<File | null>(null);
   const [comentario, setComentario] = useState('');
@@ -66,7 +79,7 @@ export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar 
     try {
       const guardado = documentoInicial
         ? await actualizarDocumentoTecnico(documentoInicial.id, datos)
-        : await crearDocumentoTecnico(datos, archivo as File);   // ya validado arriba
+        : await crearDocumentoTecnico(datos, archivo as File); // ya validado arriba
       onGuardado(guardado);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar el documento.');
@@ -74,16 +87,25 @@ export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar 
     }
   };
 
-  const abrirModal = () => {
+  const abrirModal = async () => {
     setArchivoNuevo(null);
     setComentario('');
     setErrorModal(null);
+    setSiguienteVersion(null);
     setMostrarModal(true);
+    if (!documentoInicial) return;
+    try {
+      const actualizado = await getDocumentoTecnico(documentoInicial.id);
+      setVersionVigente(actualizado.version_vigente);
+      setSiguienteVersion(Math.max(0, ...actualizado.versiones.map((v) => v.numero)) + 1);
+    } catch (err: unknown) {
+      setErrorModal(err instanceof Error ? err.message : 'No se pudieron consultar las versiones.');
+    }
   };
 
   const handleSubirVersion = async (evento: React.FormEvent<HTMLFormElement>) => {
     evento.preventDefault();
-    evento.stopPropagation();   // que no dispare también el submit del formulario principal
+    evento.stopPropagation(); // que no dispare también el submit del formulario principal
     if (!documentoInicial) return;
 
     const errorArchivo = validarArchivo(archivoNuevo);
@@ -95,10 +117,15 @@ export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar 
     setSubiendo(true);
     setErrorModal(null);
     try {
-      const actualizado = await subirNuevaVersion(documentoInicial.id, archivoNuevo as File, comentario);
+      const actualizado = await subirNuevaVersion(
+        documentoInicial.id,
+        archivoNuevo as File,
+        comentario,
+      );
       setVersionVigente(actualizado.version_vigente);
+      setSiguienteVersion(Math.max(0, ...actualizado.versiones.map((v) => v.numero)) + 1);
       setMensajeExito(
-        `Se cargó la versión v${actualizado.version_vigente?.numero}. La anterior quedó archivada.`
+        `Se cargó la versión v${actualizado.version_vigente?.numero}. La anterior quedó archivada.`,
       );
       setMostrarModal(false);
     } catch (err: unknown) {
@@ -132,15 +159,22 @@ export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar 
 
             <Form.Group className="mb-3">
               <Form.Label>Tipo</Form.Label>
-              <Form.Select value={tipo} onChange={(e) => setTipo(e.target.value as TipoDocumentoTecnico)}>
+              <Form.Select
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value as TipoDocumentoTecnico)}
+              >
                 {TIPOS_DOCUMENTO_TECNICO.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
                 ))}
               </Form.Select>
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Descripción <span className="text-muted small">(opcional)</span></Form.Label>
+              <Form.Label>
+                Descripción <span className="text-muted small">(opcional)</span>
+              </Form.Label>
               <Form.Control
                 as="textarea"
                 rows={2}
@@ -155,7 +189,8 @@ export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar 
                 <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
                   <div>
                     <div className="fw-semibold">
-                      Archivo vigente {versionVigente && <Badge bg="secondary">v{versionVigente.numero}</Badge>}
+                      Archivo vigente{' '}
+                      {versionVigente && <Badge bg="secondary">v{versionVigente.numero}</Badge>}
                     </div>
                     <small className="text-muted">
                       {versionVigente ? versionVigente.nombre_original : 'Sin archivo cargado'}
@@ -166,7 +201,9 @@ export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar 
                   </Button>
                 </div>
                 {mensajeExito && (
-                  <Alert variant="success" className="small mt-3 mb-0">{mensajeExito}</Alert>
+                  <Alert variant="success" className="small mt-3 mb-0">
+                    {mensajeExito}
+                  </Alert>
                 )}
               </div>
             ) : (
@@ -183,7 +220,9 @@ export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar 
             )}
 
             <div className="d-flex justify-content-end gap-2">
-              <Button variant="secondary" onClick={onCancelar} disabled={enviando}>Cancelar</Button>
+              <Button variant="secondary" onClick={onCancelar} disabled={enviando}>
+                Cancelar
+              </Button>
               <Button variant="primary" type="submit" disabled={enviando}>
                 {enviando ? 'Guardando...' : 'Guardar'}
               </Button>
@@ -201,8 +240,19 @@ export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar 
           <Modal.Body>
             {errorModal && <ErrorAlert mensaje={errorModal} />}
             <p className="small text-muted">
-              Se guardará como <strong>v{(versionVigente?.numero ?? 0) + 1}</strong>.
-              {versionVigente && <> La versión actual (v{versionVigente.numero}) quedará archivada automáticamente.</>}
+              {siguienteVersion ? (
+                <>
+                  Se guardará como <strong>v{siguienteVersion}</strong>.
+                </>
+              ) : (
+                'Consultando el número de la próxima versión...'
+              )}
+              {versionVigente && (
+                <>
+                  {' '}
+                  La versión actual (v{versionVigente.numero}) quedará archivada automáticamente.
+                </>
+              )}
             </p>
             <Form.Group className="mb-3">
               <Form.Label>Archivo</Form.Label>
@@ -215,7 +265,9 @@ export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar 
               <Form.Text muted>PDF, Word, Excel, JPG o PNG. Máximo 10 MB.</Form.Text>
             </Form.Group>
             <Form.Group>
-              <Form.Label>¿Qué cambió? <span className="text-muted small">(opcional)</span></Form.Label>
+              <Form.Label>
+                ¿Qué cambió? <span className="text-muted small">(opcional)</span>
+              </Form.Label>
               <Form.Control
                 as="textarea"
                 rows={2}
@@ -227,8 +279,14 @@ export function DocumentoTecnicoForm({ documentoInicial, onGuardado, onCancelar 
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setMostrarModal(false)} disabled={subiendo}>Cancelar</Button>
-            <Button variant="success" type="submit" disabled={subiendo}>
+            <Button variant="secondary" onClick={() => setMostrarModal(false)} disabled={subiendo}>
+              Cancelar
+            </Button>
+            <Button
+              variant="success"
+              type="submit"
+              disabled={subiendo || siguienteVersion === null}
+            >
               {subiendo ? 'Cargando...' : 'Cargar'}
             </Button>
           </Modal.Footer>

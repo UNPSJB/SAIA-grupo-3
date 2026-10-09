@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import auto, StrEnum
 from typing import List, Optional
 from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint
@@ -33,6 +33,19 @@ class DocumentoTecnico(ModeloBase):
         order_by="VersionDocumentoTecnico.numero.desc()"
     )
 
+    cambios_vigencia: Mapped[List["CambioVigenciaDocumentoTecnico"]] = relationship(
+        back_populates="documento", order_by="CambioVigenciaDocumentoTecnico.id.desc()"
+    )
+
+    @property
+    def vigencia_actual(self) -> Optional["CambioVigenciaDocumentoTecnico"]:
+        vigente = self.version_vigente
+        if self.cambios_vigencia and vigente:
+            ultimo = self.cambios_vigencia[0]
+            if ultimo.version_id == vigente.id:
+                return ultimo
+        return None
+
     @property
     def version_vigente(self) -> Optional["VersionDocumentoTecnico"]:
         for v in self.versiones:
@@ -62,3 +75,17 @@ class VersionDocumentoTecnico(ModeloBase):
 
     documento: Mapped[DocumentoTecnico] = relationship(back_populates="versiones")
     subido_por = relationship("src.personal.models.Personal")
+
+
+class CambioVigenciaDocumentoTecnico(ModeloBase):
+    __tablename__ = "cambios_vigencia_documento_tecnico"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    documento_id: Mapped[int] = mapped_column(ForeignKey("documentos_tecnicos.id"), nullable=False, index=True)
+    version_anterior_id: Mapped[Optional[int]] = mapped_column(ForeignKey("versiones_documento_tecnico.id"), nullable=True)
+    version_id: Mapped[int] = mapped_column(ForeignKey("versiones_documento_tecnico.id"), nullable=False)
+    personal_id: Mapped[int] = mapped_column(ForeignKey("personal.id"), nullable=False)
+    fecha_vigencia: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    documento: Mapped["DocumentoTecnico"] = relationship(back_populates="cambios_vigencia")
+    personal = relationship("src.personal.models.Personal")

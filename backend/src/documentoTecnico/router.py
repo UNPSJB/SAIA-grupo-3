@@ -73,9 +73,12 @@ def read_documentos(
     size: int = Query(10, ge=1, le=100),
     estado: Optional[EstadoDocumento] = Query(None, description="vigente / archivado (vacío = todos)"),
     tipo: Optional[TipoDocumentoTecnico] = Query(None),
+    buscar: Optional[str] = Query(None, max_length=100),
+    ordenar_por: str = Query("nombre"),
+    orden: str = Query("asc"),
     busqueda: Optional[str] = Query(None, max_length=100, description="Busca por nombre"),
 ):
-    return services.listar_documentos(db, page, size, estado, tipo, busqueda)
+    return services.listar_documentos(db, page, size, estado, tipo, buscar if buscar is not None else busqueda, ordenar_por, orden)
 
 
 @router.get("/versiones/{version_id}/archivo")
@@ -145,3 +148,13 @@ def archivar_documento(documento_id: int, db: Session = Depends(get_db)):
 @router.patch("/{documento_id}/reactivar", response_model=schemas.DocumentoTecnico)
 def reactivar_documento(documento_id: int, db: Session = Depends(get_db)):
     return services.cambiar_estado(db, documento_id, EstadoDocumento.VIGENTE)
+
+
+@router.patch("/{documento_id}/versiones/{version_id}/vigente", response_model=schemas.DocumentoTecnico)
+def marcar_version_vigente(
+    documento_id: int,
+    version_id: int,
+    current_personal: Personal = Depends(tiene_permiso_administrar),
+    db: Session = Depends(get_db),
+):
+    return services.marcar_version_vigente(db, documento_id, version_id, current_personal)

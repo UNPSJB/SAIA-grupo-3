@@ -44,6 +44,5 @@ Para que el front funcione, el backend tiene que estar corriendo en http://local
 
 ### Verificaciones
 
-Frontend: `npm run build`, `npm run lint` y `npm test` desde `frontend`.
-Backend: instalar `requirements-dev.txt` y ejecutar `python -m pytest -q` desde `backend`.
+Frontend: `npm run build` y `npm run lint` desde `frontend`.
 Consultar los README de cada carpeta para las convenciones de rutas, formularios y permisos.

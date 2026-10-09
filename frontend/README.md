@@ -20,7 +20,6 @@ Las variables Vite son públicas. Reiniciar el servidor de desarrollo al cambiar
 ```sh
 npm run build
 npm run lint
-npm test
 ```
 
 `npm run format` aplica Prettier al código de `src`.
