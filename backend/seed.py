@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from datetime import date, datetime, time, timedelta
 
-from faker import Faker
 from sqlalchemy import func, select
 
 # Importar la app registra todos los modelos en la metadata SQLAlchemy.
@@ -31,11 +30,9 @@ from src.planRealizado.models import PlanRealizado
 from src.tareaRealizada.models import TareaRealizada
 from src.consumoQuimico.models import ConsumoQuimico
 from src.notificaciones.services import generar_aviso_vencimientos
+from src.notificaciones.models import Notificacion, TipoNotificacion
 
-fake = Faker("es_AR")
-Faker.seed(20261005)
-
-CANTIDAD = 15
+CANTIDAD = 30
 PASSWORD_ADMIN = "admin123"
 PASSWORD_OPERARIO = "opera123"
 
@@ -54,7 +51,7 @@ def obtener_o_crear(db, modelo, filtros: dict, valores: dict):
 
 
 def crear_personal(db):
-    """Garantiza los usuarios de users.py y completa 15 personas de prueba."""
+    """Conserva admin/opera y agrega usuarios para cada combinación de permisos."""
     hashes = {
         "admin": get_password_hash(PASSWORD_ADMIN),
         "operario": get_password_hash(PASSWORD_OPERARIO),
@@ -89,8 +86,8 @@ def crear_personal(db):
         username = f"operario.demo{numero - 2:02d}"
         especificaciones.append({
             "username": username,
-            "nombre": fake.first_name(),
-            "apellido": fake.last_name(),
+            "nombre": ["Ana", "Bruno", "Carla", "Diego", "Elena"][(numero - 3) % 5],
+            "apellido": f"Prueba {numero:02d}",
             "dni": f"990000{numero - 1:04d}",
             "nroLegajo": f"DEMO-{numero - 1:04d}",
             "email": f"{username}@example.com",
@@ -98,6 +95,18 @@ def crear_personal(db):
             "administrar": False,
             "hashed_password": hashes["operario"],
             "activo": True,
+        })
+
+    for numero, (username, administrar, operar, activo) in enumerate([
+        ("admin.solo", True, False, True),
+        ("sin.permisos", False, False, True),
+        ("inactivo.demo", False, True, False),
+    ], start=1):
+        especificaciones.append({
+            "username": username, "nombre": "Usuario", "apellido": username,
+            "dni": f"8800000{numero}", "nroLegajo": f"ROL-{numero}",
+            "email": f"{username}@example.com", "administrar": administrar,
+            "operar": operar, "activo": activo, "hashed_password": hashes["operario"],
         })
 
     usuarios = []
@@ -129,12 +138,12 @@ def quitar_etiquetas_anteriores(db) -> None:
     db.flush()
 
 
-def cargar_seed() -> None:
-    ModeloBase.metadata.create_all(bind=engine)
-    hoy = date.today()
+def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy: date | None = None) -> None:
+    ModeloBase.metadata.create_all(bind=db_engine)
+    hoy = hoy or date.today()
     ayer = hoy - timedelta(days=1)
 
-    with SessionLocal() as db:
+    with session_factory() as db:
         try:
             quitar_etiquetas_anteriores(db)
             personas = crear_personal(db)
@@ -156,6 +165,15 @@ def cargar_seed() -> None:
                 (TipoUnidadMedida.LONGITUD, "cm"),
                 (TipoUnidadMedida.LONGITUD, "m"),
             ]
+            definiciones_unidad.extend([
+                (TipoUnidadMedida.PESO, sufijo) for sufijo in ["t", "oz", "mcg", "cg", "dg", "dag", "hg"]
+            ])
+            definiciones_unidad.extend([
+                (TipoUnidadMedida.CAPACIDAD, sufijo) for sufijo in ["cl", "dl", "hl", "m³"]
+            ])
+            definiciones_unidad.extend([
+                (TipoUnidadMedida.LONGITUD, sufijo) for sufijo in ["mm", "km", "dm", "in"]
+            ])
             unidades = []
             for tipo, sufijo in definiciones_unidad:
                 unidad, _ = obtener_o_crear(
@@ -180,7 +198,7 @@ def cargar_seed() -> None:
                     db, Equipo,
                     {"numero_serie": f"DEMO-EQ-{numero:04d}"},
                     {
-                        "nombre": f"{fake.word().capitalize()} {numero:02d}",
+                        "nombre": f"Equipo de lavado {numero:02d}",
                         "tipo": tipos_equipo[(numero - 1) % len(tipos_equipo)],
                         "activo": True,
                         "sector_id": sectores[numero - 1].id,
@@ -229,8 +247,8 @@ def cargar_seed() -> None:
                     {"nombre": f"Elemento de limpieza {numero:02d}"},
                     {
                         "frecuencia_recambio": 30 + (numero % 6) * 15,
-                        "fecha_ultimo_recambio": ayer,
-                        "fecha_proximo_recambio": hoy + timedelta(days=30 + numero),
+                        "fecha_ultimo_recambio": hoy - timedelta(days=60),
+                        "fecha_proximo_recambio": hoy + timedelta(days=(-7, 0, 3, 60)[(numero - 1) % 4]),
                         "activo": True,
                     },
                 )
@@ -272,16 +290,16 @@ def cargar_seed() -> None:
                 tareas.append(tarea)
 
             planes = []
-            operadores = personas[1:]
+            operadores = [persona for persona in personas if persona.operar and persona.activo]
             for numero in range(1, CANTIDAD + 1):
-                operador = personas[1]
+                operador = personas[0] if numero % 5 == 0 else personas[1]
                 nombre_plan = f"Plan POES {numero:02d}"
                 plan, _ = obtener_o_crear(
                     db, Plan,
                     {"nombre": nombre_plan},
                     {
                         "responsable_id": operador.id,
-                        "descripcion": f"Plan de prueba diario {numero:02d} generado con Faker.",
+                        "descripcion": f"Plan de prueba diario {numero:02d} para búsqueda, ordenamiento y checklist.",
                         "activo": True,
                         "fecha_inicio": ayer,
                         "fecha_fin": None,
@@ -299,7 +317,9 @@ def cargar_seed() -> None:
                 planes.append(plan)
 
             tipos_documento = []
-            for nombre in ["Carnet de manipulador", "Libreta sanitaria", "Apto psicofísico", "Certificado de salud", "Capacitación"]:
+            nombres_documento = ["Carnet de manipulador", "Libreta sanitaria", "Apto psicofísico", "Certificado de salud", "Capacitación"]
+            nombres_documento.extend(f"Certificado de prueba {numero:02d}" for numero in range(1, 26))
+            for nombre in nombres_documento:
                 tipo, _ = obtener_o_crear(db, TipoDocumento, {"nombre": nombre}, {"activo": True})
                 tipos_documento.append(tipo)
             for numero in range(1, CANTIDAD + 1):
@@ -307,7 +327,7 @@ def cargar_seed() -> None:
                 tipo = tipos_documento[(numero - 1) % len(tipos_documento)]
                 obtener_o_crear(db, Documentacion,
                     {"personal_id": operador.id, "tipo_documento_id": tipo.id},
-                    {"fecha_vencimiento": hoy + timedelta(days=(-7, 7, 60)[(numero - 1) % 3])})
+                    {"fecha_vencimiento": hoy + timedelta(days=(-7, 0, 7, 30, 60)[(numero - 1) % 5])})
             for numero, descripcion in enumerate([
                 "Se detectó una pérdida de agua debajo de la pileta del área de lavado.",
                 "Se observó presencia de insectos en el sector de almacenamiento.",
@@ -317,12 +337,56 @@ def cargar_seed() -> None:
                     {"reportado_por_dni": operadores[numero].dni,
                      "fecha_hora": datetime.combine(ayer, time(hour=10 + numero))})
 
+            for numero in range(4, CANTIDAD + 1):
+                obtener_o_crear(db, Incidente, {"descripcion": f"Incidente de prueba {numero:02d}: revisión del sector de lavado."},
+                    {"reportado_por_dni": operadores[(numero - 1) % len(operadores)].dni,
+                     "fecha_hora": datetime.combine(hoy - timedelta(days=numero % 7), time(hour=9, minute=numero))})
+
+            # Registros independientes: permiten reactivar y dar de baja sin afectar planes activos.
+            for numero in range(1, 4):
+                obtener_o_crear(db, Sector, {"nombre": f"Sector inactivo {numero:02d}"}, {"activo": False})
+                obtener_o_crear(db, UnidadMedida, {"sufijo": f"demo-inactiva-{numero}"}, {"tipo": TipoUnidadMedida.UNIDAD, "activo": False})
+                obtener_o_crear(db, TipoDocumento, {"nombre": f"Documento inactivo {numero:02d}"}, {"activo": False})
+                obtener_o_crear(db, Equipo, {"numero_serie": f"DEMO-INACTIVO-{numero}"}, {"nombre": f"Equipo inactivo {numero}", "tipo": TipoEquipo.HERRAMIENTA, "activo": False, "sector_id": sectores[0].id})
+                obtener_o_crear(db, Insumo, {"nombre": f"Insumo inactivo {numero}"}, {"cantidad": 0, "unidad_medida_id": unidades[0].id, "activo": False})
+                obtener_o_crear(db, InsumoQuimico, {"nombre": f"Químico inactivo {numero}"}, {"cantidad": 0, "tipo_quimico": tipos_quimicos[0], "unidad_medida_id": unidades_capacidad[0].id, "activo": False})
+                obtener_o_crear(db, Elemento, {"nombre": f"Elemento inactivo {numero}"}, {"frecuencia_recambio": 30, "fecha_ultimo_recambio": ayer, "fecha_proximo_recambio": hoy, "activo": False})
+                obtener_o_crear(db, Plan, {"nombre": f"Plan finalizado {numero}"}, {"responsable_id": personas[1].id, "descripcion": "Plan finalizado para probar filtros y reactivación.", "activo": False, "fecha_inicio": hoy - timedelta(days=60), "fecha_fin": ayer, "sector_id": sectores[0].id})
+                obtener_o_crear(db, ConsumoQuimico, {"tarea_limpieza": f"Consumo inactivo {numero}", "insumo_quimico_id": quimicos[0].id, "fecha": ayer}, {"cantidad_utilizada": 0.5, "operario_id": personas[1].id, "activo": False})
+            obtener_o_crear(db, Sector, {"nombre": "Sector libre para baja"}, {"activo": True})
+            sin_stock, _ = obtener_o_crear(db, InsumoQuimico,
+                {"nombre": "Químico de prueba sin stock"},
+                {"cantidad": 0, "tipo_quimico": tipos_quimicos[0],
+                 "unidad_medida_id": unidades_capacidad[0].id, "activo": True})
+            for nombre, frecuencia, requisitos in [
+                ("Revisión semanal sin químicos", FrecuenciaTarea.SEMANAL, []),
+                ("Revisión mensual sin químicos", FrecuenciaTarea.MENSUAL, []),
+                ("Limpieza con dos químicos", FrecuenciaTarea.DIARIA, quimicos[:2]),
+                ("Limpieza con stock insuficiente", FrecuenciaTarea.DIARIA, [sin_stock]),
+            ]:
+                tarea, _ = obtener_o_crear(db, Tarea, {"nombre": nombre},
+                    {"frecuencia": frecuencia, "procedimiento": "Escenario de prueba del formulario de finalización.",
+                     "equipo_id": equipos[0].id})
+                tarea.insumos_quimicos = [TareaInsumoQuimico(insumo_quimico_id=quimico.id, cantidad=1)
+                                         for quimico in requisitos]
+                plan, _ = obtener_o_crear(db, Plan, {"nombre": f"Plan de prueba: {nombre}"},
+                    {"responsable_id": personas[1].id, "descripcion": nombre, "activo": True,
+                     "fecha_inicio": hoy, "fecha_fin": None, "sector_id": sectores[0].id,
+                     "equipo_id": equipos[0].id})
+                plan.tareas = [tarea]
+            for numero in range(1, 13):
+                obtener_o_crear(db, Notificacion, {"clave": f"seed-aviso-{numero:02d}"},
+                    {"tipo": TipoNotificacion.VENCIMIENTO_DOCUMENTACION,
+                     "titulo": f"Aviso de prueba {numero:02d}",
+                     "mensaje": "Revisar la documentación del personal en Control de Vencimientos.",
+                     "enlace": "/personal/vencimientos", "leida": numero > 10,
+                     "fecha_creacion": datetime.combine(hoy, time(hour=8, minute=numero))})
             db.flush()
 
             # Datos de ayer para que el historial y el reporte no aparezcan vacíos.
             for numero, plan in enumerate(planes, start=1):
                 tarea = tareas[numero - 1]
-                operador = personas[1]
+                operador = db.get(Personal, plan.responsable_id)
                 quimico = quimicos[numero - 1]
                 momento = datetime.combine(ayer, time(hour=10, minute=numero % 60))
 
@@ -438,6 +502,24 @@ def cargar_seed() -> None:
                     consumo.cantidad_utilizada = 1.0
                     consumo.activo = True
 
+            # Genera el checklist mediante la misma lógica de la aplicación.
+            # Sólo finaliza una muestra pendiente; las reejecuciones no vuelven a descontar stock.
+            from src.checklist.services import armar_checklist, finalizar_item_checklist
+            from src.checklist.schemas import InsumoQuimicoConsumido
+            db.flush()
+            for operador in personas[:2]:
+                armar_checklist(db, operador.id, hoy)
+                muestra = db.scalars(select(ItemChecklist).where(
+                    ItemChecklist.responsable_id == operador.id,
+                    ItemChecklist.plan_id.in_([plan.id for plan in planes]),
+                    ItemChecklist.periodo_inicio == hoy,
+                ).order_by(ItemChecklist.id)).all()
+                for item in muestra[:2]:
+                    if item.estado == EstadoItem.PENDIENTE:
+                        finalizar_item_checklist(db, item.id, operador.id, consumos=[
+                            InsumoQuimicoConsumido(insumo_quimico_id=req.insumo_quimico_id, cantidad_utilizada=0.5)
+                            for req in item.tarea.insumos_quimicos
+                        ])
             db.commit()
             aviso = generar_aviso_vencimientos(db, hoy)
             if aviso is not None:
@@ -446,11 +528,14 @@ def cargar_seed() -> None:
                 db.commit()
 
             print("Seed SAIA cargado correctamente. No se borraron datos.")
-            print("Se crearon/actualizaron 15 registros por catálogo principal y 15 registros históricos.")
+            print(f"Se crearon/actualizaron {CANTIDAD} registros por catálogo, historial y registros inactivos.")
             print(f"Administrador: admin / {PASSWORD_ADMIN}")
-            print(f"Operario con 15 tareas diarias: opera / {PASSWORD_OPERARIO}")
-            print("El checklist de hoy se genera al abrirlo; ayer queda cargado para el historial.")
-            print("Documentos de prueba: 5 vencidos hace 7 días, 5 por vencer en 7 días y 5 vigentes por 60 días.")
+            print(f"Sólo operación: opera / {PASSWORD_OPERARIO}")
+            print(f"Sólo administración: admin.solo / {PASSWORD_OPERARIO}")
+            print(f"Sin capacidades: sin.permisos / {PASSWORD_OPERARIO}")
+            print(f"Usuario dado de baja: inactivo.demo / {PASSWORD_OPERARIO}")
+            print("admin y opera tienen tareas pendientes y realizadas; los demás operarios tienen checklist vacío.")
+            print("Documentos: vencidos, vencen hoy, próximos y vigentes; elementos con alertas de recambio.")
             if aviso is not None:
                 print(f"Campanita: aviso de hoy disponible y no leído. {aviso.mensaje}")
             else:

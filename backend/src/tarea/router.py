@@ -18,10 +18,13 @@ def create_tarea(tarea: schemas.TareaCreate, db: Session = Depends(get_db)):
 def read_tareas(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1, description="Número de página"),
-    size: int = Query(10, ge=1, le=100, description="Cantidad de registros por página")
+    size: int = Query(10, ge=1, le=100, description="Cantidad de registros por página"),
+    buscar: str = Query(""),
+    ordenar_por: str = Query("id"),
+    orden: str = Query("asc"),
 ):
     logger.info(f"Listando tareas (página {page}, tamaño {size})")
-    return services.listar_tareas(db, page, size)
+    return services.listar_tareas(db, page, size, buscar=buscar, ordenar_por=ordenar_por, orden=orden)
 
 @router.get("/{tarea_id}", response_model=schemas.Tarea)
 def read_tarea(tarea_id: int, db: Session = Depends(get_db)):

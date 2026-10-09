@@ -10,7 +10,7 @@ from src.database import get_db
 from src.incidente import schemas, services
 from src.pagination import PaginatedResponse
 from src.auth.router_base import PermissionedRouter
-from src.auth.dependencies import tiene_permiso_operar
+from src.auth.dependencies import tiene_permiso_operar, puede_consultar_operacion
 from src.personal.models import Personal
 
 
@@ -61,16 +61,19 @@ def create_incidente(
         raise
 
 
-@router.get("/", response_model=PaginatedResponse[schemas.Incidente])
+@router.get("/", response_model=PaginatedResponse[schemas.Incidente], dependencies=[Depends(puede_consultar_operacion)])
 def read_incidentes(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
+    buscar: str = Query(""),
+    ordenar_por: str = Query("fecha_hora"),
+    orden: str = Query("desc"),
 ):
-    return services.listar_incidentes(db, page, size)
+    return services.listar_incidentes(db, page, size, buscar=buscar, ordenar_por=ordenar_por, orden=orden)
 
 
-@router.get("/{incidente_id}", response_model=schemas.Incidente)
+@router.get("/{incidente_id}", response_model=schemas.Incidente, dependencies=[Depends(puede_consultar_operacion)])
 def read_incidente(incidente_id: int, db: Session = Depends(get_db)):
     return services.leer_incidente(db, incidente_id)
 

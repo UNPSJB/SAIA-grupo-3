@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
-from src.auth.dependencies import tiene_permiso_administrar, get_current_personal
+from src.auth.dependencies import tiene_permiso_administrar
 
 class PermissionedRouter(APIRouter):
 
     def get(self, path, *, dependencies=None, **kwargs):
-        dependencies = dependencies if dependencies is not None else [Depends(get_current_personal)]
+        dependencies = dependencies if dependencies is not None else [Depends(tiene_permiso_administrar)]
         return super().get(path, dependencies=dependencies, **kwargs)
 
     def post(self, path, *, dependencies=None, **kwargs):

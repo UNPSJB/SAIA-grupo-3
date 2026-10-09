@@ -26,10 +26,10 @@ def read_consumos(
     mostrar_inactivos: bool = Query(False),
     ordenar_por: str = Query("fecha"),
     orden: str = Query("desc"),
+    buscar: str = Query(""),
 ):
     return services.listar_consumos(
-        db, page, size, mostrar_inactivos, ordenar_por, orden
-    )
+        db, page, size, mostrar_inactivos, ordenar_por, orden, buscar=buscar)
 
 @router.get(
     "/reporte/acumulado",
@@ -40,8 +40,11 @@ def reporte_consumo_acumulado(
     db: Session = Depends(get_db),
     fecha_desde: date | None = Query(None),
     fecha_hasta: date | None = Query(None),
+    buscar: str = Query(""),
+    ordenar_por: str = Query("nombre_insumo"),
+    orden: str = Query("asc"),
 ):
-    return services.obtener_consumo_acumulado(db, fecha_desde, fecha_hasta)
+    return services.obtener_consumo_acumulado(db, fecha_desde, fecha_hasta, buscar, ordenar_por, orden)
 
 @router.get(
     "/{consumo_id}",

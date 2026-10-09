@@ -1,3 +1,4 @@
+from src.pagination import filtrar_ordenar
 from typing import Dict, Any
 from sqlalchemy import select, update, func
 from sqlalchemy.orm import Session
@@ -24,19 +25,16 @@ def crear_consumo(db: Session, consumo: schemas.ConsumoQuimicoCreate) -> Consumo
     return _consumo
 
 def listar_consumos(
-    db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False, ordenar_por: str = "fecha", orden: str = "desc"
+    db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False, ordenar_por: str = "fecha", orden: str = "desc", buscar: str = ""
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
-    query = select(ConsumoQuimico)
+    query = select(ConsumoQuimico).join(InsumoQuimico, ConsumoQuimico.insumo_quimico_id == InsumoQuimico.id)
     
     if not mostrar_inactivos:
         query = query.where(ConsumoQuimico.activo == True)
 
-    columna_orden = getattr(ConsumoQuimico, ordenar_por, ConsumoQuimico.id)
-    if orden == "desc":
-        query = query.order_by(columna_orden.desc())
-    else:
-        query = query.order_by(columna_orden.asc())
+
+    query = filtrar_ordenar(query, ConsumoQuimico, buscar, [ConsumoQuimico.tarea_limpieza, InsumoQuimico.nombre], ordenar_por, orden, {"id": ConsumoQuimico.id, "fecha": ConsumoQuimico.fecha, "cantidad_utilizada": ConsumoQuimico.cantidad_utilizada, "insumo_quimico_id": ConsumoQuimico.insumo_quimico_id, "tarea_limpieza": ConsumoQuimico.tarea_limpieza, "activo": ConsumoQuimico.activo})
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()
@@ -103,7 +101,7 @@ def eliminar_consumo(db: Session, consumo_id: int) -> schemas.ConsumoQuimicoDele
         db.refresh(db_consumo)
     return db_consumo
 
-def obtener_consumo_acumulado(db: Session, fecha_desde: date | None = None, fecha_hasta: date | None = None):
+def obtener_consumo_acumulado(db: Session, fecha_desde: date | None = None, fecha_hasta: date | None = None, buscar: str = "", ordenar_por: str = "nombre_insumo", orden: str = "asc"):
     # Armamos la consulta cruzando Consumo, Insumo y Unidad de Medida
     query = (
         select(
@@ -126,6 +124,8 @@ def obtener_consumo_acumulado(db: Session, fecha_desde: date | None = None, fech
     # Agrupamos por producto
     query = query.group_by(InsumoQuimico.id, InsumoQuimico.nombre, UnidadMedida.sufijo)
     
+    columnas = {"insumo_id": InsumoQuimico.id, "nombre_insumo": InsumoQuimico.nombre, "cantidad_total": func.sum(ConsumoQuimico.cantidad_utilizada), "unidad_medida": UnidadMedida.sufijo}
+    query = filtrar_ordenar(query, InsumoQuimico, buscar, [InsumoQuimico.nombre, UnidadMedida.sufijo], ordenar_por, orden, columnas)
     resultados = db.execute(query).all()
     
     # Devolvemos la lista con el formato que definimos en el schema

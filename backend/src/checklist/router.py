@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 router = PermissionedRouter(prefix="/checklist", tags=["checklist"])
 
 
-@router.get("/{personal_id}", response_model=schemas.Checklist)
+@router.get("/{personal_id}", response_model=schemas.Checklist, dependencies=[Depends(get_current_personal)])
 def read_checklist_del_dia(
     personal_id: int,
     db: Session = Depends(get_db),
@@ -30,6 +30,9 @@ def read_checklist_del_dia(
 ):
     # El operario solo puede consultar su propio checklist.
     # Administración puede consultar el de otro operario.
+    if not current_personal.operar and not current_personal.administrar:
+        raise PermissionDenied()
+
     if (
         not current_personal.administrar
         and current_personal.id != personal_id

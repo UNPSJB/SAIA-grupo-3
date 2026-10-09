@@ -23,10 +23,11 @@ def read_sectores(
     size: int = Query(10, ge=1, le=100, description="Cantidad de registros por página"),
     mostrar_inactivos: bool = Query(False, description="Incluir sectores dados de baja"),
     ordenar_por: str = Query("id", description="Columna para ordenar"),
-    orden: str = Query("asc", description="asc o desc")
+    orden: str = Query("asc", description="asc o desc"),
+    buscar: str = Query(""),
 ):
     logger.info(f"Listando sectores desde router (página {page}, tamaño {size})")
-    return services.listar_sectores(db, page, size, mostrar_inactivos, ordenar_por, orden)
+    return services.listar_sectores(db, page, size, mostrar_inactivos, ordenar_por, orden, buscar=buscar)
 
 
 @router.get("/{sector_id}", response_model=schemas.SectorConEquipos)

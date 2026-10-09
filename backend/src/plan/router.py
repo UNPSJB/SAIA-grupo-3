@@ -17,9 +17,12 @@ def read_planes(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
-    mostrar_inactivos: bool = Query(False)
+    mostrar_inactivos: bool = Query(False),
+    buscar: str = Query(""),
+    ordenar_por: str = Query("id"),
+    orden: str = Query("asc"),
 ):
-    return services.listar_planes(db, page, size, mostrar_inactivos)
+    return services.listar_planes(db, page, size, mostrar_inactivos, buscar=buscar, ordenar_por=ordenar_por, orden=orden)
 
 @router.get("/{plan_id}", response_model=schemas.Plan)
 def read_plan(plan_id: int, db: Session = Depends(get_db)):

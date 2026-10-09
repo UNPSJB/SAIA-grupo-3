@@ -1,3 +1,4 @@
+from src.pagination import filtrar_ordenar
 from typing import Dict, Any
 from datetime import date
 from sqlalchemy import select, update, func
@@ -39,11 +40,14 @@ def crear_plan(db: Session, plan_create: schemas.PlanCreate) -> Plan:
     db.refresh(nuevo_plan)
     return nuevo_plan
 
-def listar_planes(db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False) -> Dict[str, Any]:
+def listar_planes(db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False, buscar: str = "", ordenar_por: str = "id", orden: str = "asc"
+) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(Plan)
     if not mostrar_inactivos:
         query = query.where(Plan.activo == True)
+
+    query = filtrar_ordenar(query, Plan, buscar, [Plan.nombre, Plan.descripcion], ordenar_por, orden, {"id": Plan.id, "nombre": Plan.nombre, "descripcion": Plan.descripcion, "fecha_inicio": Plan.fecha_inicio, "fecha_fin": Plan.fecha_fin, "activo": Plan.activo})
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()

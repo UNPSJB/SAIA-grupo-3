@@ -1,3 +1,4 @@
+from src.pagination import filtrar_ordenar
 from typing import Dict, Any
 from sqlalchemy import select, update, func
 from sqlalchemy.orm import Session
@@ -40,7 +41,7 @@ def listar_equipos(
     size: int = 10, 
     mostrar_inactivos: bool = False,
     ordenar_por: str = "id",
-    orden: str = "asc"
+    orden: str = "asc", buscar: str = ""
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(Equipo)
@@ -49,11 +50,8 @@ def listar_equipos(
         query = query.where(Equipo.activo == True)
 
     # Lógica de ordenamiento
-    columna_orden = getattr(Equipo, ordenar_por, Equipo.id)
-    if orden == "desc":
-        query = query.order_by(columna_orden.desc())
-    else:
-        query = query.order_by(columna_orden.asc())
+
+    query = filtrar_ordenar(query, Equipo, buscar, [Equipo.nombre, Equipo.numero_serie], ordenar_por, orden, {"id": Equipo.id, "nombre": Equipo.nombre, "numero_serie": Equipo.numero_serie, "tipo": Equipo.tipo, "sector_id": Equipo.sector_id, "activo": Equipo.activo})
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()

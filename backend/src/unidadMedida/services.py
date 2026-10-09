@@ -1,3 +1,4 @@
+from src.pagination import filtrar_ordenar
 from typing import List, Dict, Any
 from sqlalchemy import select, update, func
 from sqlalchemy.orm import Session
@@ -30,15 +31,7 @@ def listar_unidades_medida(
     if not mostrar_inactivos:
         query = query.where(models.UnidadMedida.activo == True)
 
-    if buscar.strip():
-        termino = f"%{buscar.strip().lower()}%"
-        query = query.where(func.lower(models.UnidadMedida.sufijo).like(termino))
-
-    columna_orden = getattr(models.UnidadMedida, ordenar_por, models.UnidadMedida.id)
-    if orden == "desc":
-        query = query.order_by(columna_orden.desc())
-    else:
-        query = query.order_by(columna_orden.asc())
+    query = filtrar_ordenar(query, models.UnidadMedida, buscar, [models.UnidadMedida.tipo, models.UnidadMedida.sufijo], ordenar_por, orden, {"id": models.UnidadMedida.id, "tipo": models.UnidadMedida.tipo, "sufijo": models.UnidadMedida.sufijo, "activo": models.UnidadMedida.activo})
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()

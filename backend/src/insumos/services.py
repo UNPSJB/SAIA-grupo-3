@@ -1,3 +1,4 @@
+from src.pagination import filtrar_ordenar
 from typing import List, Dict, Any
 from sqlalchemy import select, update, func
 from sqlalchemy.orm import Session
@@ -31,15 +32,7 @@ def listar_insumos(
     if not mostrar_inactivos:
         query = query.where(Insumo.activo == True)
 
-    if buscar.strip():
-        termino = f"%{buscar.strip().lower()}%"
-        query = query.where(func.lower(Insumo.nombre).like(termino))
-
-    columna_orden = getattr(Insumo, ordenar_por, Insumo.id)
-    if orden == "desc":
-        query = query.order_by(columna_orden.desc())
-    else:
-        query = query.order_by(columna_orden.asc())
+    query = filtrar_ordenar(query, Insumo, buscar, [Insumo.nombre], ordenar_por, orden, {"id": Insumo.id, "nombre": Insumo.nombre, "cantidad": Insumo.cantidad, "unidad_medida_id": Insumo.unidad_medida_id, "activo": Insumo.activo})
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()

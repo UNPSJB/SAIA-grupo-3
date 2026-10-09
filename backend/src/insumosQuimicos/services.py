@@ -1,3 +1,4 @@
+from src.pagination import filtrar_ordenar
 from typing import Dict, Any
 from sqlalchemy import select, update, func
 from sqlalchemy.orm import Session
@@ -46,18 +47,11 @@ def listar_insumos_quimicos(
     if not mostrar_inactivos:
         query = query.where(InsumoQuimico.activo == True)
 
-    if buscar.strip():
-        termino = f"%{buscar.strip().lower()}%"
-        query = query.where(func.lower(InsumoQuimico.nombre).like(termino))
-
     if tipo_quimico:
         query = query.where(InsumoQuimico.tipo_quimico == tipo_quimico.lower())
 
-    columna_orden = getattr(InsumoQuimico, ordenar_por, InsumoQuimico.id)
-    if orden == "desc":
-        query = query.order_by(columna_orden.desc())
-    else:
-        query = query.order_by(columna_orden.asc())
+
+    query = filtrar_ordenar(query, InsumoQuimico, buscar, [InsumoQuimico.nombre], ordenar_por, orden, {"id": InsumoQuimico.id, "nombre": InsumoQuimico.nombre, "cantidad": InsumoQuimico.cantidad, "tipo_quimico": InsumoQuimico.tipo_quimico, "unidad_medida_id": InsumoQuimico.unidad_medida_id, "activo": InsumoQuimico.activo})
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()

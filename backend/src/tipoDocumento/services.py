@@ -1,3 +1,4 @@
+from src.pagination import filtrar_ordenar
 from typing import Any, Dict
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
@@ -40,15 +41,7 @@ def listar_tipos_documento(
     query = select(models.TipoDocumento)
     if not mostrar_inactivos:
         query = query.where(models.TipoDocumento.activo == True)
-    if buscar.strip():
-        termino = f"%{buscar.strip().lower()}%"
-        query = query.where(func.lower(models.TipoDocumento.nombre).like(termino))
-
-    columna_orden = getattr(models.TipoDocumento, ordenar_por, models.TipoDocumento.id)
-    if orden == "desc":
-        query = query.order_by(columna_orden.desc())
-    else:
-        query = query.order_by(columna_orden.asc())
+    query = filtrar_ordenar(query, models.TipoDocumento, buscar, [models.TipoDocumento.nombre], ordenar_por, orden, {"id": models.TipoDocumento.id, "nombre": models.TipoDocumento.nombre, "activo": models.TipoDocumento.activo})
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()

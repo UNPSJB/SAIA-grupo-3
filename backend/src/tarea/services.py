@@ -1,3 +1,4 @@
+from src.pagination import filtrar_ordenar
 from typing import Dict, Any
 from sqlalchemy import delete, select, update, func
 from sqlalchemy.orm import Session
@@ -27,10 +28,14 @@ def crear_tarea(db: Session, tarea: schemas.TareaCreate) -> Tarea:
     db.refresh(nueva_tarea)
     return nueva_tarea
 
-def listar_tareas(db: Session, page: int = 1, size: int = 10) -> Dict[str, Any]:
+def listar_tareas(db: Session, page: int = 1, size: int = 10, buscar: str = "", ordenar_por: str = "id", orden: str = "asc"
+) -> Dict[str, Any]:
     skip = (page - 1) * size
-    total = db.scalar(select(func.count()).select_from(Tarea))
-    items = db.scalars(select(Tarea).offset(skip).limit(size)).all()
+    query = select(Tarea)
+    query = filtrar_ordenar(query, Tarea, buscar, [Tarea.nombre, Tarea.procedimiento], ordenar_por, orden, {"id": Tarea.id, "nombre": Tarea.nombre, "frecuencia": Tarea.frecuencia, "procedimiento": Tarea.procedimiento, "equipo_id": Tarea.equipo_id})
+
+    total = db.scalar(select(func.count()).select_from(query.subquery()))
+    items = db.scalars(query.offset(skip).limit(size)).all()
     pages = (total + size - 1) // size if total else 0
     return {
         "items": items, "total": total, "page": page, "size": size, "pages": pages

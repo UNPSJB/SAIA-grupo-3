@@ -1,3 +1,4 @@
+from src.pagination import filtrar_ordenar
 import logging
 from typing import Any, Dict, List
 from sqlalchemy import func, select, update
@@ -69,7 +70,7 @@ def leer_personal_por_username(db: Session, username: str):
 
 
 def listar_personal(
-    db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False, proximos_a_vencer: bool = False
+    db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False, proximos_a_vencer: bool = False, buscar: str = "", ordenar_por: str = "id", orden: str = "asc"
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(Personal)
@@ -79,6 +80,8 @@ def listar_personal(
 
     if proximos_a_vencer:
         query = query.where(Personal.id.in_(ids_con_vencimientos(db)))
+
+    query = filtrar_ordenar(query, Personal, buscar, [Personal.nombre, Personal.apellido, Personal.dni, Personal.nroLegajo, Personal.email, Personal.username], ordenar_por, orden, {"id": Personal.id, "nombre": Personal.nombre, "apellido": Personal.apellido, "dni": Personal.dni, "nroLegajo": Personal.nroLegajo, "email": Personal.email, "username": Personal.username, "activo": Personal.activo})
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()

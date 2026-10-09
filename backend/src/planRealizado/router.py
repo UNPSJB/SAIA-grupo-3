@@ -23,12 +23,15 @@ def read_planes_realizados(
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
     desde: Optional[date] = Query(None, description="Fecha inicial del rango (incluida)"),
-    hasta: Optional[date] = Query(None, description="Fecha final del rango (incluida)")
+    hasta: Optional[date] = Query(None, description="Fecha final del rango (incluida)"),
+    buscar: str = Query(""),
+    ordenar_por: str = Query("fecha_ejecucion"),
+    orden: str = Query("desc"),
 ):
     if desde and hasta and desde > hasta:
         raise HTTPException(status_code=400, detail="El rango de fechas no es válido: 'desde' es posterior a 'hasta'.")
 
-    return services.listar_planes_realizados(db, page, size, desde, hasta)
+    return services.listar_planes_realizados(db, page, size, desde, hasta, buscar, ordenar_por, orden)
 
 @router.get("/{plan_realizado_id}", response_model=schemas.PlanRealizado)
 def read_plan_realizado(plan_realizado_id: int, db: Session = Depends(get_db)):

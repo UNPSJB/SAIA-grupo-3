@@ -81,3 +81,8 @@ async def tiene_permiso_operar(personal: personal_models.Personal = Depends(get_
     if not personal.operar:
         raise PermissionDenied()
     return personal
+
+async def puede_consultar_operacion(personal: personal_models.Personal = Depends(get_current_personal)) -> personal_models.Personal:
+    if not personal.operar and not personal.administrar:
+        raise PermissionDenied()
+    return personal

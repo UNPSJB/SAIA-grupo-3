@@ -1,3 +1,4 @@
+from src.pagination import filtrar_ordenar
 from datetime import date, timedelta
 from typing import Dict, Any
 from sqlalchemy import select, update, func
@@ -19,7 +20,7 @@ def listar_elementos(
     size: int = 10, 
     mostrar_inactivos: bool = False,
     ordenar_por: str = "id",
-    orden: str = "asc"
+    orden: str = "asc", buscar: str = ""
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(Elemento)
@@ -28,11 +29,8 @@ def listar_elementos(
         query = query.where(Elemento.activo == True)
 
     # Lógica de ordenamiento
-    columna_orden = getattr(Elemento, ordenar_por, Elemento.id)
-    if orden == "desc":
-        query = query.order_by(columna_orden.desc())
-    else:
-        query = query.order_by(columna_orden.asc())
+
+    query = filtrar_ordenar(query, Elemento, buscar, [Elemento.nombre], ordenar_por, orden, {"id": Elemento.id, "nombre": Elemento.nombre, "frecuencia_recambio": Elemento.frecuencia_recambio, "fecha_ultimo_recambio": Elemento.fecha_ultimo_recambio, "fecha_proximo_recambio": Elemento.fecha_proximo_recambio, "activo": Elemento.activo})
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()

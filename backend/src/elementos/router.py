@@ -19,9 +19,10 @@ def read_elementos(
     size: int = Query(10, ge=1, le=100, description="Cantidad de registros por página"),
     mostrar_inactivos: bool = Query(False, description="Incluir equipos dados de baja"),
     ordenar_por: str = Query("id", description="Columna para ordenar"),
-    orden: str = Query("asc", description="asc o desc")
+    orden: str = Query("asc", description="asc o desc"),
+    buscar: str = Query(""),
 ):
-    return services.listar_elementos(db, page, size, mostrar_inactivos, ordenar_por, orden)
+    return services.listar_elementos(db, page, size, mostrar_inactivos, ordenar_por, orden, buscar=buscar)
 
 @router.get("/{elemento_id}", response_model=schemas.Elemento)
 def read_elemento(elemento_id: int, db: Session = Depends(get_db)):

@@ -27,8 +27,7 @@ def read_tipos_documento(
     buscar: str = Query(""),
 ):
     return services.listar_tipos_documento(
-        db, page, size, mostrar_inactivos, ordenar_por, orden, buscar
-    )
+        db, page, size, mostrar_inactivos, ordenar_por, orden, buscar)
 
 
 @router.get("/{tipo_documento_id}", response_model=schemas.TipoDocumento)

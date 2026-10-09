@@ -1,3 +1,4 @@
+from src.pagination import filtrar_ordenar
 from typing import Dict, Any
 from sqlalchemy import select, update, func
 from sqlalchemy.orm import Session
@@ -31,7 +32,7 @@ def listar_sectores(
     size: int = 10,
     mostrar_inactivos: bool = False,
     ordenar_por: str = "id",
-    orden: str = "asc"
+    orden: str = "asc", buscar: str = ""
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(Sector)
@@ -41,11 +42,8 @@ def listar_sectores(
         query = query.where(Sector.activo == True)
 
     # Lógica de ordenamiento
-    columna_orden = getattr(Sector, ordenar_por, Sector.id)
-    if orden == "desc":
-        query = query.order_by(columna_orden.desc())
-    else:
-        query = query.order_by(columna_orden.asc())
+
+    query = filtrar_ordenar(query, Sector, buscar, [Sector.nombre], ordenar_por, orden, {"id": Sector.id, "nombre": Sector.nombre, "activo": Sector.activo})
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()

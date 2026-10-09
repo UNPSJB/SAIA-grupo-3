@@ -31,8 +31,7 @@ def read_insumos_quimicos(
 ):
     logger.info(f"Listando insumos químicos (página {page}, tamaño {size})")
     return services.listar_insumos_quimicos(
-        db, page, size, mostrar_inactivos, ordenar_por, orden, buscar, tipo_quimico
-    )
+        db, page, size, mostrar_inactivos, ordenar_por, orden, buscar, tipo_quimico)
 
 
 @router.get("/{insumo_id}", response_model=schemas.InsumoQuimico)

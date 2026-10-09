@@ -26,11 +26,14 @@ def read_personal(
     size: int = Query(10, ge=1, le=100, description="Cantidad de registros por página"),
     mostrar_inactivos: bool = Query(False, description="Incluir personal dado de baja"),
     proximos_a_vencer: bool = Query(False, description="Solo personal con documentación vencida o por vencer"),
+    buscar: str = Query(""),
+    ordenar_por: str = Query("id"),
+    orden: str = Query("asc"),
 ):
-    return services.listar_personal(db, page, size, mostrar_inactivos, proximos_a_vencer)
+    return services.listar_personal(db, page, size, mostrar_inactivos, proximos_a_vencer, buscar=buscar, ordenar_por=ordenar_por, orden=orden)
 
 
-@router.get("/{personal_id}", response_model=schemas.Personal)
+@router.get("/{personal_id}", response_model=schemas.Personal, dependencies=[Depends(get_current_personal)])
 def read_personal_id(
     personal_id: int,
     db: Session = Depends(get_db),

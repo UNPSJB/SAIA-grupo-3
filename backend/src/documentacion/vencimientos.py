@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Any, Dict, List, Set
-from sqlalchemy import String, cast, func, or_, select
+from sqlalchemy import func, select
+from src.pagination import filtrar_ordenar
 from sqlalchemy.orm import Session
 from src.documentacion.constants import DIAS_AVISO_VENCIMIENTO, EstadoVencimiento
 from src.documentacion.models import Documentacion
@@ -100,24 +101,7 @@ def listar_vencimientos(
     elif estado == EstadoVencimiento.VIGENTE:
         query = query.where(Documentacion.fecha_vencimiento > limite)
 
-    # Búsqueda por apellido, nombre, DNI o tipo de documento
-    if buscar.strip():
-        termino = f"%{buscar.strip().lower()}%"
-        query = query.where(
-            or_(
-                func.lower(Personal.apellido).like(termino),
-                func.lower(Personal.nombre).like(termino),
-                cast(Personal.dni, String).like(termino),
-                func.lower(TipoDocumento.nombre).like(termino),
-            )
-        )
-
-    # Lógica de ordenamiento
-    columna_orden = COLUMNAS_ORDEN.get(ordenar_por, Documentacion.fecha_vencimiento)
-    if orden == "desc":
-        query = query.order_by(columna_orden.desc(), Documentacion.id.asc())
-    else:
-        query = query.order_by(columna_orden.asc(), Documentacion.id.asc())
+    query = filtrar_ordenar(query, Documentacion, buscar, [Personal.apellido, Personal.nombre, Personal.dni, TipoDocumento.nombre], ordenar_por, orden, COLUMNAS_ORDEN)
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     documentos = db.scalars(query.offset(skip).limit(size)).all()
