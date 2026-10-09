@@ -30,6 +30,7 @@ from src.checklist.models import ItemChecklist, EstadoItem, MovimientoItemCheckl
 from src.planRealizado.models import PlanRealizado
 from src.tareaRealizada.models import TareaRealizada
 from src.consumoQuimico.models import ConsumoQuimico
+from src.notificaciones.services import generar_aviso_vencimientos
 
 fake = Faker("es_AR")
 Faker.seed(20261005)
@@ -306,7 +307,7 @@ def cargar_seed() -> None:
                 tipo = tipos_documento[(numero - 1) % len(tipos_documento)]
                 obtener_o_crear(db, Documentacion,
                     {"personal_id": operador.id, "tipo_documento_id": tipo.id},
-                    {"fecha_vencimiento": hoy + timedelta(days=(numero % 3) * 45 - 15)})
+                    {"fecha_vencimiento": hoy + timedelta(days=(-7, 7, 60)[(numero - 1) % 3])})
             for numero, descripcion in enumerate([
                 "Se detectó una pérdida de agua debajo de la pileta del área de lavado.",
                 "Se observó presencia de insectos en el sector de almacenamiento.",
@@ -438,11 +439,22 @@ def cargar_seed() -> None:
                     consumo.activo = True
 
             db.commit()
+            aviso = generar_aviso_vencimientos(db, hoy)
+            if aviso is not None:
+                # Permite volver a probar la campanita aunque el aviso ya se haya leído.
+                aviso.leida = False
+                db.commit()
+
             print("Seed SAIA cargado correctamente. No se borraron datos.")
             print("Se crearon/actualizaron 15 registros por catálogo principal y 15 registros históricos.")
             print(f"Administrador: admin / {PASSWORD_ADMIN}")
             print(f"Operario con 15 tareas diarias: opera / {PASSWORD_OPERARIO}")
             print("El checklist de hoy se genera al abrirlo; ayer queda cargado para el historial.")
+            print("Documentos de prueba: 5 vencidos hace 7 días, 5 por vencer en 7 días y 5 vigentes por 60 días.")
+            if aviso is not None:
+                print(f"Campanita: aviso de hoy disponible y no leído. {aviso.mensaje}")
+            else:
+                print("Campanita: no se generó un aviso; no hay documentos vencidos o por vencer.")
         except Exception:
             db.rollback()
             raise

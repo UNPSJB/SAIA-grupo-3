@@ -13,7 +13,7 @@ async function mensajeError(res: Response, mensajePorDefecto: string): Promise<s
 }
 
 export async function getDocumentosPersonal(personalId: number): Promise<Documento[]> {
-  const res = await fetchWithAuth(`${API_BASE_URL}/documentos?personal_id=${personalId}`);
+  const res = await fetchWithAuth(`${API_BASE_URL}/documentacion?personal_id=${personalId}`);
   if (!res.ok) {
     throw new Error(await mensajeError(res, 'No se pudieron obtener los documentos del personal.'));
   }
@@ -24,7 +24,7 @@ export async function createDocumento(
   personalId: number,
   datos: DocumentoDatos
 ): Promise<Documento> {
-  const res = await fetchWithAuth(`${API_BASE_URL}/documentos/`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/documentacion/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...datos, personal_id: personalId }),
@@ -39,7 +39,7 @@ export async function updateDocumento(
   documentoId: number,
   datos: DocumentoDatos
 ): Promise<Documento> {
-  const res = await fetchWithAuth(`${API_BASE_URL}/documentos/${documentoId}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/documentacion/${documentoId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datos),
@@ -51,7 +51,7 @@ export async function updateDocumento(
 }
 
 export async function deleteDocumento(documentoId: number): Promise<void> {
-  const res = await fetchWithAuth(`${API_BASE_URL}/documentos/${documentoId}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/documentacion/${documentoId}`, {
     method: 'DELETE',
   });
   if (!res.ok) {
@@ -67,7 +67,7 @@ export async function getVencimientos(
   ordenarPor = 'fecha_vencimiento',
   orden = 'asc'
 ): Promise<PaginatedVencimientos> {
-  let url = `${API_BASE_URL}/documentos/vencimientos?page=${page}&size=${size}&ordenar_por=${ordenarPor}&orden=${orden}`;
+  let url = `${API_BASE_URL}/documentacion/vencimientos?page=${page}&size=${size}&ordenar_por=${ordenarPor}&orden=${orden}`;
   if (estado) url += `&estado=${estado}`;
   if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
 

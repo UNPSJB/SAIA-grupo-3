@@ -12,7 +12,7 @@ interface MenuItem {
   to?: string;
   label: string;
   icono: string;
-  esDesplegable?: boolean;
+  grupo?: 'vencimientos' | 'maestros';
   subItems?: {
     to: string;
     label: string;
@@ -25,102 +25,56 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const location = useLocation();
   const { currentUser, logout } = useAuth();
 
-  const esRutaMaestros = [
-    '/personal',
-    '/sectores',
-    '/equipos',
-    '/insumos',
-    '/insumos-quimicos',
-    '/unidades-medida',
-    '/elementos',
-    '/tipos-documento',
-  ].some(
-    (ruta) =>
-      location.pathname === ruta ||
-      location.pathname.startsWith(`${ruta}/`)
-  );
-
-  const [openMaestros, setOpenMaestros] = useState(esRutaMaestros);
-
-  useEffect(() => {
-    if (esRutaMaestros) {
-      setOpenMaestros(true);
-    }
-  }, [esRutaMaestros]);
-
   const menuItems: MenuItem[] = [
+    { to: '/planes', label: 'Planes de Limpieza', icono: 'bi bi-clipboard2-check' },
+    { to: '/auditoria', label: 'Historial Checklist', icono: 'bi bi-clock-history' },
+    { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square' },
+    { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
     { to: '/incidentes', label: 'Incidentes', icono: 'bi bi-exclamation-triangle' },
-    { to: '/personal/vencimientos', label: 'Vencimientos de personal', icono: 'bi bi-calendar-x' },
     {
-      label: 'Datos maestros',
-      icono: 'bi bi-database',
-      esDesplegable: true,
-        subItems: [
-          { to: '/tipos-documento', label: 'Tipos de documentos', icono: 'bi bi-file-earmark-text' },
-        {
-          to: '/personal',
-          label: 'Personal',
-          icono: 'bi bi-people',
-        },
-        {
-          to: '/sectores',
-          label: 'Sectores',
-          icono: 'bi bi-diagram-3',
-        },
-        {
-          to: '/equipos',
-          label: 'Equipos e instrumentos',
-          icono: 'bi bi-tools',
-        },
-        {
-          to: '/insumos',
-          label: 'Insumos / Ingredientes',
-          icono: 'bi bi-box-seam',
-          end: true,
-        },
-        {
-          to: '/insumos-quimicos',
-          label: 'Insumos químicos',
-          icono: 'bi bi-droplet-half',
-        },
-        {
-          to: '/elementos',
-          label: 'Elementos de limpieza',
-          icono: 'bi bi-bucket-fill',
-        },
-        {
-          to: '/unidades-medida',
-          label: 'Unidades de medida',
-          icono: 'bi bi-rulers',
-        },
+      label: 'Vencimientos',
+      icono: 'bi bi-calendar-x',
+      grupo: 'vencimientos',
+      subItems: [
+        { to: '/personal/vencimientos', label: 'Personal', icono: 'bi bi-person-vcard' },
+        { to: '/vencimientos/calibracion', label: 'Calibración', icono: 'bi bi-tools' },
       ],
     },
     {
-      to: '/tarea',
-      label: 'Tareas',
-      icono: 'bi bi-list-task',
-    },
-    {
-      to: '/planes',
-      label: 'Planes de limpieza',
-      icono: 'bi bi-clipboard2-check',
-    },
-    {
-      to: '/checklist',
-      label: 'Checklist del día',
-      icono: 'bi bi-check2-square',
-    },
-    {
-      to: '/auditoria',
-      label: 'Historial de checklist',
-      icono: 'bi bi-clock-history',
-    },
-    {
-      to: '/reportes/consumos',
-      label: 'Consumo de insumos químicos',
-      icono: 'bi bi-bar-chart-line',
+      label: 'Datos Maestros',
+      icono: 'bi bi-database',
+      grupo: 'maestros',
+      subItems: [
+        { to: '/personal', label: 'Personal', icono: 'bi bi-people', end: true },
+        { to: '/sectores', label: 'Sectores', icono: 'bi bi-diagram-3' },
+        { to: '/tipos-documento', label: 'Tipo Documento', icono: 'bi bi-file-earmark-text' },
+        { to: '/equipos', label: 'Equipos e Instrumentos', icono: 'bi bi-tools' },
+        { to: '/insumos', label: 'Insumos / Ingredientes', icono: 'bi bi-box-seam', end: true },
+        { to: '/insumos-quimicos', label: 'Insumos Químicos', icono: 'bi bi-droplet-half' },
+        { to: '/unidades-medida', label: 'Unidad de Medida', icono: 'bi bi-rulers' },
+        { to: '/elementos', label: 'Elementos de Limpieza', icono: 'bi bi-bucket-fill' },
+        { to: '/tarea', label: 'Tareas', icono: 'bi bi-list-task' },
+      ],
     },
   ];
+
+  const grupoActivo = menuItems.find((item) =>
+    item.subItems?.some((sub) =>
+      location.pathname === sub.to ||
+      (!sub.end && location.pathname.startsWith(`${sub.to}/`))
+    )
+  )?.grupo;
+
+  const [gruposAbiertos, setGruposAbiertos] = useState({
+    vencimientos: grupoActivo === 'vencimientos',
+    maestros: grupoActivo === 'maestros',
+  });
+
+  useEffect(() => {
+    if (grupoActivo) {
+      setGruposAbiertos((prev) => ({ ...prev, [grupoActivo]: true }));
+    }
+  }, [grupoActivo, location.pathname]);
 
   const menuContent = (
     <>
@@ -148,19 +102,22 @@ export function Sidebar({ show, onClose }: SidebarProps) {
             return currentUser?.administrar === true;
           })
           .map((item) => {
-            if (item.esDesplegable) {
+            if (item.grupo) {
+              const grupo = item.grupo;
+              const abierto = gruposAbiertos[grupo];
+              const collapseId = `${grupo}-collapse`;
               return (
                 <div key={item.label}>
                   <button
                     type="button"
-                    onClick={() => setOpenMaestros((abierto) => !abierto)}
+                    onClick={() => setGruposAbiertos((prev) => ({ ...prev, [grupo]: !prev[grupo] }))}
                     className={`nav-link w-100 border-0 bg-transparent d-flex justify-content-between align-items-center px-3 py-2 rounded-3 fw-medium ${
-                      esRutaMaestros
+                      grupoActivo === grupo
                         ? 'text-dark'
                         : 'text-secondary hover-bg-light'
                     }`}
-                    aria-controls="maestros-collapse"
-                    aria-expanded={openMaestros}
+                    aria-controls={collapseId}
+                    aria-expanded={abierto}
                   >
                     <span className="d-flex align-items-center gap-3">
                       <i className={item.icono}></i>
@@ -169,15 +126,15 @@ export function Sidebar({ show, onClose }: SidebarProps) {
 
                     <i
                       className={`bi ${
-                        openMaestros
+                        abierto
                           ? 'bi-chevron-up'
                           : 'bi-chevron-down'
                       } text-dark ms-2`}
                     ></i>
                   </button>
 
-                  <Collapse in={openMaestros}>
-                    <div id="maestros-collapse">
+                  <Collapse in={abierto}>
+                    <div id={collapseId}>
                       <div className="d-flex flex-column gap-1 mt-1">
                         {item.subItems?.map((sub) => (
                           <NavLink

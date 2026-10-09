@@ -22,6 +22,7 @@ import { AuditoriaPage } from '../features/auditoria';
 import { ReporteConsumosPage } from '../features/consumoQuimicos/ConsumoQuimicoPage';
 import { VencimientosPage } from '../features/personal';
 import { IncidentesPage } from '../features/incidentes';
+import { CalibracionPage } from '../features/vencimientos/CalibracionPage';
 
 export function AppRouter() {
   return (
@@ -50,6 +51,7 @@ export function AppRouter() {
             <Route element={<ProtectedRoute requireAdmin />}>
               <Route path="personal" element={<PersonalPage />} />
               <Route path="personal/vencimientos" element={<VencimientosPage />} />
+              <Route path="vencimientos/calibracion" element={<CalibracionPage />} />
               <Route path="tipos-documento" element={<TipoDocumentoPage />} />
               <Route path="equipos" element={<EquipoPage />} />
               <Route path="insumos" element={<InsumoPage />} />
