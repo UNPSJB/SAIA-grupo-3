@@ -1,9 +1,20 @@
 import { fetchWithAuth } from '../../shared/libreria/api';
 import { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api';
-import type { Incidente, IncidenteCreateInput, IncidenteUpdateInput, PaginatedIncidentes } from './types';
+import type { EstadoIncidente, Incidente, IncidenteCreateInput, IncidenteUpdateInput, PaginatedIncidentes } from './types';
 
-export async function getIncidentes(page = 1, size = 10): Promise<PaginatedIncidentes> {
-  const res = await fetchWithAuth(`${API_BASE_URL}/incidentes/?page=${page}&size=${size}`);
+export async function getIncidentes(
+  page = 1,
+  size = 10,
+  estado: EstadoIncidente | '' = '',
+  fechaDesde = '',
+  fechaHasta = '',
+): Promise<PaginatedIncidentes> {
+  let url = `${API_BASE_URL}/incidentes/?page=${page}&size=${size}`;
+  if (estado) url += `&estado=${estado}`;
+  if (fechaDesde) url += `&fecha_desde=${fechaDesde}`;
+  if (fechaHasta) url += `&fecha_hasta=${fechaHasta}`;
+
+  const res = await fetchWithAuth(url);
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(mensajeDeError(errorData.detail, 'No se pudieron cargar los incidentes.'));

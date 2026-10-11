@@ -1,9 +1,11 @@
+from datetime import date, datetime, time, timedelta
 from typing import Any, Dict
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from src.incidente import exceptions, models, schemas
+from src.incidente.constants import EstadoIncidente
 from src.personal.models import Personal
 
 
@@ -43,11 +45,25 @@ def listar_incidentes(
     page: int = 1,
     size: int = 10,
     reportado_por_dni: str | None = None,
+    estado: EstadoIncidente | None = None,
+    fecha_desde: date | None = None,
+    fecha_hasta: date | None = None,
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(models.Incidente).order_by(models.Incidente.fecha_hora.desc())
     if reportado_por_dni is not None:
         query = query.where(models.Incidente.reportado_por_dni == reportado_por_dni)
+    if estado is not None:
+        query = query.where(models.Incidente.estado == estado)
+    if fecha_desde is not None:
+        query = query.where(
+            models.Incidente.fecha_hora >= datetime.combine(fecha_desde, time.min)
+        )
+    if fecha_hasta is not None:
+        query = query.where(
+            models.Incidente.fecha_hora
+            < datetime.combine(fecha_hasta + timedelta(days=1), time.min)
+        )
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()
     pages = (total + size - 1) // size if total else 0
@@ -71,6 +87,8 @@ def modificar_incidente(
 ) -> models.Incidente:
     db_incidente = leer_incidente(db, incidente_id)
     db_incidente.descripcion = incidente.descripcion
+    if incidente.estado is not None:
+        db_incidente.estado = incidente.estado
     if imagen_path is not None:
         db_incidente.imagen_path = imagen_path
     db.commit()

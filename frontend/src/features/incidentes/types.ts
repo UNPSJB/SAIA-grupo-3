@@ -4,10 +4,18 @@ export interface ReportanteIncidente {
   apellido: string;
 }
 
+export type EstadoIncidente = 'abierto' | 'cerrado';
+
+export const ESTADOS_INCIDENTE: { value: EstadoIncidente; label: string; variante: string }[] = [
+  { value: 'abierto', label: 'Abierto', variante: 'warning' },
+  { value: 'cerrado', label: 'Cerrado', variante: 'success' },
+];
+
 export interface Incidente {
   id: number;
   descripcion: string;
   fecha_hora: string;
+  estado: EstadoIncidente;
   reportado_por_dni: string;
   reportado_por: ReportanteIncidente;
   imagen_path: string | null;

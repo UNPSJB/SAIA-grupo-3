@@ -5,6 +5,7 @@ from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
+from src.incidente.constants import EstadoIncidente
 from src.models import ModeloBase
 
 
@@ -15,6 +16,9 @@ class Incidente(ModeloBase):
     descripcion: Mapped[str] = mapped_column(String(1000), nullable=False)
     fecha_hora: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), nullable=False
+    )
+    estado: Mapped[str] = mapped_column(
+        String(20), default=EstadoIncidente.ABIERTO, nullable=False, index=True
     )
     reportado_por_dni: Mapped[str] = mapped_column(
         ForeignKey("personal.dni"), nullable=False

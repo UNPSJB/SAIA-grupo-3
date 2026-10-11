@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { Incidente, IncidenteCreateInput, IncidenteUpdateInput } from './types';
+import type { EstadoIncidente, Incidente, IncidenteCreateInput, IncidenteUpdateInput } from './types';
 import { eliminarIncidente, getIncidentes, guardarIncidente } from './incidenteApi';
 
 export function useIncidente() {
@@ -12,10 +12,14 @@ export function useIncidente() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const cargarIncidentes = useCallback(async (currentPage: number, currentSize: number) => {
+  const [estado, setEstado] = useState<EstadoIncidente | ''>('');
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
+
+  const cargarIncidentes = useCallback(async (currentPage: number, currentSize: number, currentEstado: EstadoIncidente | '', currentDesde: string, currentHasta: string) => {
     setLoading(true);
     try {
-      const data = await getIncidentes(currentPage, currentSize);
+      const data = await getIncidentes(currentPage, currentSize, currentEstado, currentDesde, currentHasta);
       setIncidentes(data.items);
       setTotalPages(data.pages);
       setTotal(data.total);
@@ -29,17 +33,26 @@ export function useIncidente() {
   }, []);
 
   useEffect(() => {
-    void cargarIncidentes(page, size);
-  }, [cargarIncidentes, page, size]);
+    void cargarIncidentes(page, size, estado, fechaDesde, fechaHasta);
+  }, [cargarIncidentes, page, size, estado, fechaDesde, fechaHasta]);
+
+  // Al cambiar un filtro volvemos a la primera página
+  useEffect(() => { setPage(1); }, [estado, fechaDesde, fechaHasta]);
+
+  const limpiarFiltros = () => {
+    setEstado('');
+    setFechaDesde('');
+    setFechaHasta('');
+  };
 
   const eliminar = async (id: number) => {
     await eliminarIncidente(id);
-    await cargarIncidentes(page, size);
+    await cargarIncidentes(page, size, estado, fechaDesde, fechaHasta);
   };
 
   const guardar = async (datos: IncidenteCreateInput | IncidenteUpdateInput, idExistente?: number) => {
     await guardarIncidente(datos, idExistente);
-    await cargarIncidentes(page, size);
+    await cargarIncidentes(page, size, estado, fechaDesde, fechaHasta);
   };
 
   const nextPage = () => {
@@ -64,5 +77,12 @@ export function useIncidente() {
     nextPage,
     prevPage,
     changePage,
+    estado,
+    setEstado,
+    fechaDesde,
+    setFechaDesde,
+    fechaHasta,
+    setFechaHasta,
+    limpiarFiltros,
   };
 }

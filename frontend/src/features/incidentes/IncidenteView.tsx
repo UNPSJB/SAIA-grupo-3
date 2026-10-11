@@ -1,7 +1,8 @@
 import { Badge, Button, Card } from 'react-bootstrap';
 import { API_BASE_URL } from '../../shared/libreria/api';
 import { useAuth } from '../../shared/hooks/useAuth';
-import type { Incidente } from './types';
+import type { EstadoIncidente, Incidente } from './types';
+import { ESTADOS_INCIDENTE } from './types';
 
 interface IncidenteViewProps {
   incidente: Incidente;
@@ -11,6 +12,10 @@ interface IncidenteViewProps {
 
 export function IncidenteView({ incidente, onEditar, onVolver }: IncidenteViewProps) {
   const { currentUser } = useAuth();
+
+  const getEstado = (valor: EstadoIncidente) =>
+    ESTADOS_INCIDENTE.find((e) => e.value === valor) ?? { label: valor, variante: 'secondary' };
+  const infoEstado = getEstado(incidente.estado);
 
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
@@ -41,6 +46,18 @@ export function IncidenteView({ incidente, onEditar, onVolver }: IncidenteViewPr
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Descripción:</span>
             <span className="col-8 text-break">{incidente.descripcion}</span>
+          </div>
+
+          <div className="row mb-2">
+            <span className="col-4 text-muted fw-semibold">Estado:</span>
+            <span className="col-8">
+              <Badge
+                bg={infoEstado.variante}
+                className={incidente.estado === 'abierto' ? 'text-dark' : ''}
+              >
+                {infoEstado.label}
+              </Badge>
+            </span>
           </div>
 
           <div className="row">

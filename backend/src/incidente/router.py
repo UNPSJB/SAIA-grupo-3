@@ -1,5 +1,6 @@
 import shutil
 import uuid
+from datetime import date
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 from src.config import UPLOADS_DIR
 from src.database import get_db
 from src.incidente import schemas, services
+from src.incidente.constants import EstadoIncidente
 from src.pagination import PaginatedResponse
 from src.auth.router_base import PermissionedRouter
 from src.auth.dependencies import get_current_personal, tiene_permiso_operar
@@ -54,11 +56,20 @@ def read_incidentes(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
+    estado: EstadoIncidente | None = Query(None, description="abierto o cerrado"),
+    fecha_desde: date | None = Query(None, description="Desde (inclusive, formato YYYY-MM-DD)"),
+    fecha_hasta: date | None = Query(None, description="Hasta (inclusive, formato YYYY-MM-DD)"),
     current_personal: Personal = Depends(get_current_personal),
 ):
     # El operario solo ve sus incidentes; administración ve todos.
     dni = None if current_personal.administrar else current_personal.dni
-    return services.listar_incidentes(db, page, size, reportado_por_dni=dni)
+    return services.listar_incidentes(
+        db, page, size,
+        reportado_por_dni=dni,
+        estado=estado,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+    )
 
 
 @router.get("/{incidente_id}", response_model=schemas.Incidente)
