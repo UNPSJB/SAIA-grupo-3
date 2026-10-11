@@ -42,6 +42,15 @@ useEffect(() => {
     }
   }, [location.state]);
 
+  const refrescarEquipoSeleccionado = async () => {
+    if (!equipoSeleccionado?.id) return;
+    try {
+      const equipoActualizado = await getEquipoById(equipoSeleccionado.id);
+      setEquipoSeleccionado(equipoActualizado);
+    } catch {
+    }
+  };
+
   const handleNuevo = () => {
     setEquipoSeleccionado(null);
     setModo('crear');
@@ -96,6 +105,7 @@ const handleVolver = () => {
           equipo={equipoSeleccionado}
           onEditar={() => handleEditar(equipoSeleccionado)}
           onVolver={handleVolver}
+          onCalibracionesActualizadas={refrescarEquipoSeleccionado}
         />
       )}
 

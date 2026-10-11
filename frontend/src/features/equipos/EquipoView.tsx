@@ -1,14 +1,21 @@
 import { Card, Button, Badge } from 'react-bootstrap';
 import { TIPOS_EQUIPOS } from './types';
 import type { Equipo, TipoEquipo } from './types';
+import { CalibracionesEquipo } from './CalibracionesEquipo';
 
 interface EquipoViewProps {
   equipo: Equipo;
   onEditar: () => void;
   onVolver: () => void;
+  onCalibracionesActualizadas?: () => void;
 }
 
-export function EquipoView({ equipo, onEditar, onVolver }: EquipoViewProps) {
+export function EquipoView({
+  equipo,
+  onEditar,
+  onVolver,
+  onCalibracionesActualizadas,
+}: EquipoViewProps) {
   const etiquetaTipo =
     TIPOS_EQUIPOS.find((t) => t.value === equipo.tipo)?.label ?? equipo.tipo;
 
@@ -46,6 +53,7 @@ export function EquipoView({ equipo, onEditar, onVolver }: EquipoViewProps) {
   }
 
   return (
+    <div className="mx-auto" style={{ maxWidth: '850px' }}>
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
       <Card.Header className="bg-light text-secondary d-flex align-items-center gap-2 py-3">
         <i className="bi bi-tools fs-5 flex-shrink-0"></i>
@@ -127,5 +135,13 @@ export function EquipoView({ equipo, onEditar, onVolver }: EquipoViewProps) {
         </Button>
       </Card.Footer>
     </Card>
+    {equipo.id !== undefined && (
+      <CalibracionesEquipo
+        equipoId={equipo.id}
+        periodicidadDias={equipo.periodicidad_dias}
+        onCambio={onCalibracionesActualizadas}
+      />
+    )}
+    </div>
   );
 }
