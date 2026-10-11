@@ -3,9 +3,10 @@ import { Badge, Button, Card, Container, Form, Pagination, Table } from 'react-b
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { useTipoDocumento } from './useTipoDocumento';
+import { TipoDocumentoDeleteView } from './TipoDocumentoDeleteView';
 import type { TipoDocumento, TipoDocumentoDatos } from './types';
 
-type ModoVista = 'listado' | 'crear' | 'editar';
+type ModoVista = 'listado' | 'crear' | 'editar' | 'eliminar';
 
 export function TipoDocumentoPage() {
   const {
@@ -48,13 +49,21 @@ export function TipoDocumentoPage() {
     }
   };
 
-  const handleEliminar = async (tipo: TipoDocumento) => {
-    if (!window.confirm(`¿Dar de baja el tipo de documento "${tipo.nombre}"?`)) return;
-    try {
-      await eliminar(tipo.id);
-    } catch (err: unknown) {
-      window.alert(err instanceof Error ? err.message : 'Error al dar de baja el tipo.');
-    }
+  const handleEliminarClick = (tipo: TipoDocumento) => {
+    setTipoSeleccionado(tipo);
+    setErrorFormulario(null);
+    setModo('eliminar');
+  };
+
+  const handleConfirmarEliminar = async (id: number) => {
+    await eliminar(id);
+    setTipoSeleccionado(null);
+    setModo('listado');
+  };
+
+  const volverAlListado = () => {
+    setTipoSeleccionado(null);
+    setModo('listado');
   };
 
   const handleReactivar = async (tipo: TipoDocumento) => {
@@ -85,7 +94,7 @@ export function TipoDocumentoPage() {
 
       {error && modo === 'listado' && <ErrorAlert mensaje={error} />}
 
-      {modo !== 'listado' && (
+      {(modo === 'crear' || modo === 'editar') && (
         <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
           <Card.Header as="h5" className="bg-light text-secondary py-3">
             {modo === 'editar' ? 'Modificar tipo de documento' : 'Registrar tipo de documento'}
@@ -190,10 +199,10 @@ export function TipoDocumentoPage() {
                         <td className="text-center">
                           {tipo.activo ? (
                             <div className="d-flex justify-content-center gap-2">
-                              <Button variant="warning" size="sm" title="Modificar" onClick={() => iniciarEdicion(tipo)}>
+                              <Button variant="warning" size="sm" className="text-white py-1 px-2 shadow-sm" title="Modificar" onClick={() => iniciarEdicion(tipo)}>
                                 <i className="bi bi-pencil-fill"></i>
                               </Button>
-                              <Button variant="danger" size="sm" title="Dar de baja" onClick={() => void handleEliminar(tipo)}>
+                              <Button variant="danger" size="sm" className="py-1 px-2 shadow-sm" title="Dar de baja" onClick={() => handleEliminarClick(tipo)}>
                                 <i className="bi bi-trash3-fill"></i>
                               </Button>
                             </div>
@@ -231,6 +240,13 @@ export function TipoDocumentoPage() {
             )}
           </Card>
         </>
+      )}
+      {modo === 'eliminar' && tipoSeleccionado && (
+        <TipoDocumentoDeleteView
+          tipoDocumento={tipoSeleccionado}
+          onConfirmarEliminar={handleConfirmarEliminar}
+          onCancelar={volverAlListado}
+        />
       )}
     </Container>
   );
