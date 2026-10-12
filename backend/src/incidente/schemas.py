@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.checklist.schemas import PersonalResumen
+from src.incidente.auditoria import AccionMovimientoIncidente
 from src.incidente.constants import EstadoIncidente
 
 
@@ -38,5 +39,16 @@ class Incidente(BaseModel):
     reportado_por_dni: str
     reportado_por: PersonalResumen
     imagen_path: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MovimientoIncidente(BaseModel):
+    id: int
+    incidente_id: int
+    accion: AccionMovimientoIncidente
+    fecha_hora: datetime
+    motivo: Optional[str] = None
+    personal: PersonalResumen
 
     model_config = ConfigDict(from_attributes=True)
