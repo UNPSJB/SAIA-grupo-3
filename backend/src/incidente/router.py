@@ -61,7 +61,6 @@ def read_incidentes(
     fecha_hasta: date | None = Query(None, description="Hasta (inclusive, formato YYYY-MM-DD)"),
     current_personal: Personal = Depends(get_current_personal),
 ):
-    # El operario solo ve sus incidentes; administración ve todos.
     dni = None if current_personal.administrar else current_personal.dni
     return services.listar_incidentes(
         db, page, size,
@@ -79,8 +78,6 @@ def read_incidente(
     current_personal: Personal = Depends(get_current_personal),
 ):
     incidente = services.leer_incidente(db, incidente_id)
-    # El operario solo puede ver sus propios incidentes.
-    # Administración puede ver el de cualquier operario.
     if (
         not current_personal.administrar
         and incidente.reportado_por_dni != current_personal.dni
@@ -115,3 +112,19 @@ def update_incidente(
 @router.delete("/{incidente_id}", response_model=schemas.Incidente)
 def delete_incidente(incidente_id: int, db: Session = Depends(get_db)):
     return services.eliminar_incidente(db, incidente_id)
+
+
+@router.get("/{incidente_id}/movimientos", response_model=list[schemas.MovimientoIncidente])
+def read_movimientos_incidente(
+    incidente_id: int,
+    db: Session = Depends(get_db),
+    current_personal: Personal = Depends(get_current_personal),
+):
+    """Auditoría: historial de cambios del incidente (alta, cierres y reaperturas)."""
+    incidente = services.leer_incidente(db, incidente_id)
+    if (
+        not current_personal.administrar
+        and incidente.reportado_por_dni != current_personal.dni
+    ):
+        raise PermissionDenied()
+    return services.listar_movimientos(db, incidente_id)

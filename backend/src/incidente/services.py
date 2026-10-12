@@ -5,6 +5,11 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from src.incidente import exceptions, models, schemas
+from src.incidente.auditoria import (
+    AccionMovimientoIncidente,
+    MovimientoIncidente,
+    registrar_movimiento,
+)
 from src.incidente.constants import EstadoIncidente
 from src.personal.models import Personal
 
@@ -28,13 +33,17 @@ def crear_incidente(
     reportado_por_dni: str,
     imagen_path: str | None = None,
 ) -> models.Incidente:
-    validar_reportante(db, reportado_por_dni)
+    reportante = validar_reportante(db, reportado_por_dni)
     db_incidente = models.Incidente(
         descripcion=incidente.descripcion,
         reportado_por_dni=reportado_por_dni,
         imagen_path=imagen_path,
     )
     db.add(db_incidente)
+    db.flush()  
+    registrar_movimiento(
+        db, db_incidente.id, AccionMovimientoIncidente.REPORTADO, reportante.id
+    )
     db.commit()
     db.refresh(db_incidente)
     return db_incidente
@@ -102,3 +111,13 @@ def eliminar_incidente(db: Session, incidente_id: int) -> schemas.Incidente:
     db.delete(incidente)
     db.commit()
     return respuesta
+
+
+def listar_movimientos(db: Session, incidente_id: int) -> list[MovimientoIncidente]:
+    """Historial del incidente, del más antiguo al más reciente."""
+    leer_incidente(db, incidente_id)
+    return db.scalars(
+        select(MovimientoIncidente)
+        .where(MovimientoIncidente.incidente_id == incidente_id)
+        .order_by(MovimientoIncidente.fecha_hora.asc(), MovimientoIncidente.id.asc())
+    ).all()

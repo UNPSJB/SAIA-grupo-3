@@ -3,6 +3,7 @@ import { API_BASE_URL } from '../../shared/libreria/api';
 import { useAuth } from '../../shared/hooks/useAuth';
 import type { EstadoIncidente, Incidente } from './types';
 import { ESTADOS_INCIDENTE } from './types';
+import { HistorialIncidente } from './HistorialIncidente';
 
 interface IncidenteViewProps {
   incidente: Incidente;
@@ -77,6 +78,8 @@ export function IncidenteView({ incidente, onEditar, onVolver }: IncidenteViewPr
             </span>
           </div>
         </div>
+
+        <HistorialIncidente incidenteId={incidente.id} />
       </Card.Body>
 
       <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
