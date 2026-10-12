@@ -73,7 +73,7 @@ export function AuditoriaList({ onViewClick }: AuditoriaListProps) {
               />
             </div>
             <Button
-              variant="outline-secondary"
+              variant="success"
               onClick={limpiarFiltros}
               disabled={!desde && !hasta}
               className="d-flex align-items-center gap-1"

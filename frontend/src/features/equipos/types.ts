@@ -13,8 +13,73 @@ export interface Equipo {
   tipo: TipoEquipo;
   sector_id: number;
   activo?: boolean;
+  fecha_ultima_calibracion?: string | null;
+  periodicidad_dias?: number | null;
   sector?: {           
     id: number;
     nombre: string;
   };
+}
+
+// ---------- Registros de calibración ----------
+
+export interface Calibracion {
+  id: number;
+  equipo_id: number;
+  fecha_calibracion: string;
+  otorgado_por: string;
+  certificado_path: string;
+  fecha_vencimiento_calculada: string | null;
+  fecha_registro: string;
+  activo: boolean;
+}
+
+export interface CalibracionInput {
+  fecha_calibracion: string;
+  otorgado_por: string;
+  certificado?: File | null;
+}
+
+export function esCertificadoPdf(path: string): boolean {
+  return path.toLowerCase().endsWith('.pdf');
+}
+
+// ---------- Vencimientos de calibración ----------
+
+export type EstadoVencimientoCalibracion = 'vencido' | 'por_vencer' | 'vigente';
+
+export const ESTADOS_VENCIMIENTO_CALIBRACION: {
+  value: EstadoVencimientoCalibracion;
+  label: string;
+  variante: string;
+}[] = [
+  { value: 'vencido', label: 'Vencido', variante: 'danger' },
+  { value: 'por_vencer', label: 'Por vencer', variante: 'warning' },
+  { value: 'vigente', label: 'Vigente', variante: 'success' },
+];
+
+export interface EquipoResumen {
+  id: number;
+  numero_serie: string;
+  nombre: string;
+  tipo: TipoEquipo;
+}
+
+export interface VencimientoCalibracion {
+  id: number; // id del equipo
+  fecha_vencimiento: string;
+  fecha_ultima_calibracion: string;
+  periodicidad_dias: number;
+  equipo: EquipoResumen;
+  sector: { id: number; nombre: string } | null;
+  estado: EstadoVencimientoCalibracion;
+  dias_restantes: number;
+}
+
+export interface PaginatedVencimientosCalibracion {
+  items: VencimientoCalibracion[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
 }

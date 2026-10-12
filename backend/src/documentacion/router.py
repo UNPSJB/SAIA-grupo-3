@@ -1,5 +1,4 @@
-import logging
-from fastapi import APIRouter, Depends, Query
+from fastapi import Depends, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.documentacion import schemas, services
@@ -9,7 +8,6 @@ from src.documentacion.vencimientos import listar_vencimientos
 from src.pagination import PaginatedResponse
 
 
-logger = logging.getLogger(__name__)
 router = PermissionedRouter(prefix="/documentacion", tags=["documentacion"])
 
 # Rutas para Documentos
@@ -27,7 +25,6 @@ def read_documentos(
         None, ge=1, description="Filtrar documentos por personal"
     ),
 ):
-    logger.info("Listando documentos desde router") # <- este mensaje se verá por la terminal
     return services.listar_documentos(db, personal_id)
 
 
@@ -41,7 +38,6 @@ def read_vencimientos(
     ordenar_por: str = Query("fecha_vencimiento", description="fecha_vencimiento, empleado, dni o tipo_documento"),
     orden: str = Query("asc", description="asc o desc"),
 ):
-    logger.info(f"Listando vencimientos (página {page}, tamaño {size}, estado {estado})")
     return listar_vencimientos(db, page, size, estado, buscar, ordenar_por, orden)
 
 

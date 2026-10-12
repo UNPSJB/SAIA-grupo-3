@@ -42,7 +42,7 @@ export function EquipoPage() {
         />
       )}
       {mode === 'ver' && item && (
-        <EquipoView equipo={item} onEditar={() => open(item, 'editar')} onVolver={back} />
+        <EquipoView equipo={item} onEditar={() => open(item, 'editar')} onVolver={back} onCalibracionesActualizadas={route.refresh} />
       )}
       {(mode === 'crear' || (mode === 'editar' && item)) && (
         <EquipoForm

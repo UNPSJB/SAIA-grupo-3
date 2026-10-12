@@ -1,10 +1,17 @@
 from src.pagination import filtrar_ordenar
+from datetime import date, datetime, time, timedelta
 from typing import Any, Dict
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from src.incidente import exceptions, models, schemas
+from src.incidente.auditoria import (
+    AccionMovimientoIncidente,
+    MovimientoIncidente,
+    registrar_movimiento,
+)
+from src.incidente.constants import EstadoIncidente
 from src.personal.models import Personal
 
 
@@ -24,26 +31,53 @@ def validar_reportante(db: Session, personal_dni: str) -> Personal:
 def crear_incidente(
     db: Session,
     incidente: schemas.IncidenteCreate,
+    reportado_por_dni: str,
     imagen_path: str | None = None,
 ) -> models.Incidente:
-    validar_reportante(db, incidente.reportado_por_dni)
+    reportante = validar_reportante(db, reportado_por_dni)
     db_incidente = models.Incidente(
         descripcion=incidente.descripcion,
-        reportado_por_dni=incidente.reportado_por_dni,
+        reportado_por_dni=reportado_por_dni,
         imagen_path=imagen_path,
     )
     db.add(db_incidente)
+    db.flush()  
+    registrar_movimiento(
+        db, db_incidente.id, AccionMovimientoIncidente.REPORTADO, reportante.id
+    )
     db.commit()
     db.refresh(db_incidente)
     return db_incidente
 
 
-def listar_incidentes(db: Session, page: int = 1, size: int = 10, buscar: str = "", ordenar_por: str = "fecha_hora", orden: str = "desc"
+def listar_incidentes(
+    db: Session,
+    page: int = 1,
+    size: int = 10,
+    buscar: str = "",
+    ordenar_por: str = "fecha_hora",
+    orden: str = "desc",
+    reportado_por_dni: str | None = None,
+    estado: EstadoIncidente | None = None,
+    fecha_desde: date | None = None,
+    fecha_hasta: date | None = None,
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(models.Incidente).order_by(models.Incidente.fecha_hora.desc())
+    if reportado_por_dni is not None:
+        query = query.where(models.Incidente.reportado_por_dni == reportado_por_dni)
+    if estado is not None:
+        query = query.where(models.Incidente.estado == estado)
+    if fecha_desde is not None:
+        query = query.where(
+            models.Incidente.fecha_hora >= datetime.combine(fecha_desde, time.min)
+        )
+    if fecha_hasta is not None:
+        query = query.where(
+            models.Incidente.fecha_hora
+            < datetime.combine(fecha_hasta + timedelta(days=1), time.min)
+        )
     query = filtrar_ordenar(query, models.Incidente, buscar, [models.Incidente.descripcion, models.Incidente.reportado_por_dni], ordenar_por, orden, {"id": models.Incidente.id, "descripcion": models.Incidente.descripcion, "fecha_hora": models.Incidente.fecha_hora, "reportado_por_dni": models.Incidente.reportado_por_dni})
-
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()
     pages = (total + size - 1) // size if total else 0
@@ -67,6 +101,8 @@ def modificar_incidente(
 ) -> models.Incidente:
     db_incidente = leer_incidente(db, incidente_id)
     db_incidente.descripcion = incidente.descripcion
+    if incidente.estado is not None:
+        db_incidente.estado = incidente.estado
     if imagen_path is not None:
         db_incidente.imagen_path = imagen_path
     db.commit()
@@ -80,3 +116,13 @@ def eliminar_incidente(db: Session, incidente_id: int) -> schemas.Incidente:
     db.delete(incidente)
     db.commit()
     return respuesta
+
+
+def listar_movimientos(db: Session, incidente_id: int) -> list[MovimientoIncidente]:
+    """Historial del incidente, del más antiguo al más reciente."""
+    leer_incidente(db, incidente_id)
+    return db.scalars(
+        select(MovimientoIncidente)
+        .where(MovimientoIncidente.incidente_id == incidente_id)
+        .order_by(MovimientoIncidente.fecha_hora.asc(), MovimientoIncidente.id.asc())
+    ).all()

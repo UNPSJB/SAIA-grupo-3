@@ -131,34 +131,37 @@ export function ReporteConsumosPage() {
       <ListControls {...filters} />
       <Card className="shadow-sm border-0 mb-4 bg-white">
         <Card.Body>
-          <Row className="g-3 align-items-center">
-            <Col xs={12} md={4}>
-              <Form.Group>
+          <Row className="g-3 align-items-end">
+            <Col xs={12} md="auto">
+              <Form.Group controlId="reporte-consumos-fecha-desde">
                 <Form.Label className="small text-muted fw-medium mb-1">Fecha Desde</Form.Label>
                 <Form.Control
                   type="date"
+                  style={{ width: '220px', maxWidth: '100%' }}
                   value={fechaDesde}
                   onChange={(e) => setFechaDesde(e.target.value)}
                 />
               </Form.Group>
             </Col>
-            <Col xs={12} md={4}>
-              <Form.Group>
+            <Col xs={12} md="auto">
+              <Form.Group controlId="reporte-consumos-fecha-hasta">
                 <Form.Label className="small text-muted fw-medium mb-1">Fecha Hasta</Form.Label>
                 <Form.Control
                   type="date"
+                  style={{ width: '220px', maxWidth: '100%' }}
                   value={fechaHasta}
                   onChange={(e) => setFechaHasta(e.target.value)}
                 />
               </Form.Group>
             </Col>
-            <Col xs={12} md={4} className="d-flex align-items-end mt-4">
+            <Col xs={12} md="auto" className="d-flex">
               <button
-                className="btn btn-outline-secondary w-100"
+                className="btn btn-success d-inline-flex align-items-center gap-1 text-nowrap"
                 onClick={() => filters.update({ fecha_desde: '', fecha_hasta: '', buscar: '' })}
                 disabled={!fechaDesde && !fechaHasta}
               >
-                Limpiar Filtros
+                <i className="bi bi-x-lg" aria-hidden="true"></i>
+                <span>Limpiar</span>
               </button>
             </Col>
           </Row>

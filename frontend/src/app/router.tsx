@@ -26,14 +26,14 @@ import {
   ReporteConsumosPage,
 } from '../features/consumoQuimicos/ConsumoQuimicoPage';
 import { VencimientosPage } from '../features/personal';
-import { IncidentesPage } from '../features/incidentes';
-import { CalibracionPage } from '../features/vencimientos/CalibracionPage';
 import { DocumentoTecnicoPage } from '../features/documentosTecnicos';
 
 function HomeRedirect() {
   const { currentUser } = useAuth();
   return <Navigate to={homeFor(currentUser)} replace />;
 }
+import { IncidentePage } from '../features/incidentes';
+import { VencimientosCalibracionPage } from '../features/equipos';
 
 export function AppRouter() {
   return (
@@ -64,10 +64,7 @@ export function AppRouter() {
             {/* Operación diaria: requiere capacidad operar */}
             <Route element={<ProtectedRoute requireOperate />}>
               <Route path="checklist" element={<ChecklistPage />} />
-              <Route path="incidentes" element={<IncidentesPage />} />
-              <Route path="incidentes/nuevo" element={<IncidentesPage />} />
-              <Route path="incidentes/:id" element={<IncidentesPage />} />
-              <Route path="incidentes/:id/:action" element={<IncidentesPage />} />
+              <Route path="incidentes" element={<IncidentePage />} />
             </Route>
 
             {/* Administración */}
@@ -77,7 +74,7 @@ export function AppRouter() {
               <Route path="personal/:id" element={<PersonalPage />} />
               <Route path="personal/:id/:action" element={<PersonalPage />} />
               <Route path="personal/vencimientos" element={<VencimientosPage />} />
-              <Route path="vencimientos/calibracion" element={<CalibracionPage />} />
+              <Route path="vencimientos/calibracion" element={<VencimientosCalibracionPage />} />
               <Route path="tipos-documento" element={<TipoDocumentoPage />} />
               <Route path="tipos-documento/nuevo" element={<TipoDocumentoPage />} />
               <Route path="tipos-documento/:id" element={<TipoDocumentoPage />} />
