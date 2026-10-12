@@ -1,5 +1,6 @@
-from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey, String
+from datetime import date
+from typing import TYPE_CHECKING,Optional
+from sqlalchemy import ForeignKey, String, Date, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import auto, StrEnum
 from src.models import ModeloBase
@@ -29,6 +30,9 @@ class Equipo(ModeloBase):
     sector_id: Mapped[int] = mapped_column(ForeignKey("sectores.id"), nullable=False)
     sector: Mapped["Sector"] = relationship("Sector", back_populates="equipos")
 
+    fecha_ultima_calibracion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    periodicidad_dias: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    
     # =========================================================================
     # EXTENSIONES FUTURAS (Sprint 1 y Sprint 2):
     # - E2 (POES / Limpieza): Tareas de limpieza asignadas al equipo.
