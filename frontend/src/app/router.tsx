@@ -62,7 +62,7 @@ export function AppRouter() {
               <Route path="elementos" element={<ElementoPage />} />
               <Route path="planes" element={<PlanPage />} />
               <Route path="auditoria" element={<AuditoriaPage />} />
-              <Route path="incidentes-abiertos" element={<IncidentesAbiertosPage />} />
+              <Route path="incidentes/abiertos" element={<IncidentesAbiertosPage />} />
               <Route
                 path="reportes/consumos"
                 element={<ReporteConsumosPage />}

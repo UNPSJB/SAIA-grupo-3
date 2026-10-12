@@ -8,19 +8,22 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+type Permiso = 'operar' | 'administrar';
+
 interface MenuItem {
   to?: string;
   label: string;
   icono: string;
-  grupo?: 'vencimientos' | 'maestros';
+  permiso?: Permiso;
+  grupo?: 'incidentes' | 'vencimientos' | 'maestros';
   subItems?: {
     to: string;
     label: string;
     icono: string;
     end?: boolean;
+    permiso?: Permiso;
   }[];
 }
-
 export function Sidebar({ show, onClose }: SidebarProps) {
   const location = useLocation();
   const { currentUser, logout } = useAuth();
@@ -28,10 +31,17 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const menuItems: MenuItem[] = [
     { to: '/planes', label: 'Planes de Limpieza', icono: 'bi bi-clipboard2-check' },
     { to: '/auditoria', label: 'Historial Checklist', icono: 'bi bi-clock-history' },
-    { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square' },
+    { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square', permiso: 'operar' },
     { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
-    { to: '/incidentes', label: 'Incidentes', icono: 'bi bi-exclamation-triangle' },
-    { to: '/incidentes-abiertos', label: 'Incidentes Abiertos', icono: 'bi bi-hourglass-split' },
+    {
+      label: 'Incidentes',
+      icono: 'bi bi-exclamation-triangle',
+      grupo: 'incidentes',
+      subItems: [
+        { to: '/incidentes', label: 'Incidentes', icono: 'bi bi-list-ul', end: true, permiso: 'operar' },
+        { to: '/incidentes/abiertos', label: 'Abiertos', icono: 'bi bi-hourglass-split' },
+      ],
+    },
     {
       label: 'Vencimientos',
       icono: 'bi bi-calendar-x',
@@ -59,6 +69,15 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     },
   ];
 
+  const puedeVer = (permiso: Permiso = 'administrar') =>
+    permiso === 'operar' ? currentUser?.operar === true : currentUser?.administrar === true;
+
+  const menuVisible = menuItems
+    .map((item) =>
+      item.subItems ? { ...item, subItems: item.subItems.filter((sub) => puedeVer(sub.permiso)) } : item
+    )
+    .filter((item) => (item.subItems ? item.subItems.length > 0 : puedeVer(item.permiso)));
+
   const grupoActivo = menuItems.find((item) =>
     item.subItems?.some((sub) =>
       location.pathname === sub.to ||
@@ -67,6 +86,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   )?.grupo;
 
   const [gruposAbiertos, setGruposAbiertos] = useState({
+    incidentes: grupoActivo === 'incidentes',
     vencimientos: grupoActivo === 'vencimientos',
     maestros: grupoActivo === 'maestros',
   });
@@ -94,15 +114,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       )}
 
       <nav className="nav nav-pills flex-column px-3 gap-1 mb-auto">
-        {menuItems
-          .filter((item) => {
-            if (item.to === '/checklist' || item.to === '/incidentes') {
-              return currentUser?.operar === true;
-            }
-
-            return currentUser?.administrar === true;
-          })
-          .map((item) => {
+        {menuVisible.map((item) => {
             if (item.grupo) {
               const grupo = item.grupo;
               const abierto = gruposAbiertos[grupo];
