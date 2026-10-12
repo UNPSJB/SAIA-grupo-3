@@ -23,6 +23,7 @@ class IncidenteCreate(BaseModel):
 
 class IncidenteUpdate(BaseModel):
     descripcion: str = Field(min_length=1, max_length=1000)
+    tipo: TipoIncidente
     estado: Optional[EstadoIncidente] = None
 
     @field_validator("descripcion", mode="before")
@@ -36,6 +37,7 @@ class IncidenteUpdate(BaseModel):
 class Incidente(BaseModel):
     id: int
     descripcion: str
+    tipo: TipoIncidente
     fecha_hora: datetime
     estado: EstadoIncidente
     reportado_por_dni: str
