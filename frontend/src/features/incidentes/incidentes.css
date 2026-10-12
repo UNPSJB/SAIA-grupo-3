@@ -1,0 +1,26 @@
+/* Mantiene los umbrales y adapta el resaltado al tema seleccionado. */
+.incidentes-abiertos .incidente-alerta {
+  --bs-table-bg: var(--bs-warning-bg-subtle);
+  --bs-table-color: var(--bs-body-color);
+  --bs-table-hover-bg: color-mix(in srgb, var(--bs-warning-bg-subtle), var(--bs-body-color) 6%);
+  --bs-table-hover-color: var(--bs-body-color);
+}
+
+.incidentes-abiertos .incidente-critico {
+  --bs-table-bg: var(--bs-danger-bg-subtle);
+  --bs-table-color: var(--bs-body-color);
+  --bs-table-hover-bg: color-mix(in srgb, var(--bs-danger-bg-subtle), var(--bs-body-color) 6%);
+  --bs-table-hover-color: var(--bs-body-color);
+}
+
+.incidentes-abiertos td:first-child {
+  border-left: 3px solid transparent;
+}
+
+.incidentes-abiertos .incidente-alerta td:first-child {
+  border-left-color: var(--bs-warning);
+}
+
+.incidentes-abiertos .incidente-critico td:first-child {
+  border-left-color: var(--bs-danger);
+}

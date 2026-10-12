@@ -32,7 +32,7 @@ function HomeRedirect() {
   const { currentUser } = useAuth();
   return <Navigate to={homeFor(currentUser)} replace />;
 }
-import { IncidentePage } from '../features/incidentes';
+import { IncidentePage, IncidentesAbiertosPage } from '../features/incidentes';
 import { VencimientosCalibracionPage } from '../features/equipos';
 
 export function AppRouter() {
@@ -124,6 +124,7 @@ export function AppRouter() {
               <Route path="consumos/:id/:action" element={<ConsumoQuimicoPage />} />
               <Route path="reportes/consumos" element={<ReporteConsumosPage />} />
               <Route path="documentos-tecnicos" element={<DocumentoTecnicoPage />} />
+              <Route path="incidentes/abiertos" element={<IncidentesAbiertosPage />} />
             </Route>
           </Route>
         </Routes>

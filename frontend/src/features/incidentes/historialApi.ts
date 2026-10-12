@@ -5,7 +5,9 @@ export async function getHistorialIncidente(incidenteId: number): Promise<Movimi
   const res = await fetchWithAuth(`${API_BASE_URL}/incidentes/${incidenteId}/movimientos`);
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(mensajeDeError(errorData.detail, 'No se pudo cargar el historial del incidente.'));
+    throw new Error(
+      mensajeDeError(errorData.detail, 'No se pudo cargar el historial del incidente.'),
+    );
   }
   return res.json();
 }

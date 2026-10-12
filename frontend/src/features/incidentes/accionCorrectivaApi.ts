@@ -22,12 +22,15 @@ export async function getAccionesCorrectivas(incidenteId: number): Promise<Accio
 // Registra la acción correctiva y el backend cierra el incidente
 export async function registrarAccionCorrectiva(
   incidenteId: number,
-  datos: AccionCorrectivaInput
+  datos: AccionCorrectivaInput,
 ): Promise<AccionCorrectiva> {
-  const res = await fetchWithAuth(`${API_BASE_URL}/incidentes/${incidenteId}/acciones-correctivas`, {
-    method: 'POST',
-    body: JSON.stringify(datos),
-  });
+  const res = await fetchWithAuth(
+    `${API_BASE_URL}/incidentes/${incidenteId}/acciones-correctivas`,
+    {
+      method: 'POST',
+      body: JSON.stringify(datos),
+    },
+  );
   if (!res.ok) {
     throw new Error(await mensajeError(res, 'No se pudo registrar la acción correctiva.'));
   }
@@ -36,7 +39,7 @@ export async function registrarAccionCorrectiva(
 
 export async function modificarAccionCorrectiva(
   accionId: number,
-  datos: AccionCorrectivaInput
+  datos: AccionCorrectivaInput,
 ): Promise<AccionCorrectiva> {
   const res = await fetchWithAuth(`${API_BASE_URL}/incidentes/acciones-correctivas/${accionId}`, {
     method: 'PUT',
@@ -50,7 +53,7 @@ export async function modificarAccionCorrectiva(
 
 export async function reabrirIncidente(
   incidenteId: number,
-  datos: ReaperturaInput
+  datos: ReaperturaInput,
 ): Promise<Incidente> {
   const res = await fetchWithAuth(`${API_BASE_URL}/incidentes/${incidenteId}/reabrir`, {
     method: 'POST',

@@ -5,11 +5,13 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.checklist.schemas import PersonalResumen
 from src.incidente.auditoria import AccionMovimientoIncidente
-from src.incidente.constants import EstadoIncidente
+from src.incidente.constants import EstadoIncidente, TipoIncidente
 
 
 class IncidenteCreate(BaseModel):
     descripcion: str = Field(min_length=1, max_length=1000)
+    tipo: TipoIncidente
+
 
     @field_validator("descripcion", mode="before")
     @classmethod
@@ -21,6 +23,7 @@ class IncidenteCreate(BaseModel):
 
 class IncidenteUpdate(BaseModel):
     descripcion: str = Field(min_length=1, max_length=1000)
+    tipo: TipoIncidente
     estado: Optional[EstadoIncidente] = None
 
     @field_validator("descripcion", mode="before")
@@ -34,6 +37,7 @@ class IncidenteUpdate(BaseModel):
 class Incidente(BaseModel):
     id: int
     descripcion: str
+    tipo: TipoIncidente
     fecha_hora: datetime
     estado: EstadoIncidente
     reportado_por_dni: str
@@ -52,3 +56,14 @@ class MovimientoIncidente(BaseModel):
     personal: PersonalResumen
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class IncidenteAbierto(Incidente):
+    """Listado de abiertos: el incidente + cuántos días lleva sin resolver."""
+    dias_abierto: int
+
+
+class CantidadPorTipo(BaseModel):
+    """Indicador 'incidentes abiertos por tipo' (lo consume el tablero de E7)."""
+    tipo: TipoIncidente
+    cantidad: int

@@ -14,11 +14,7 @@ import {
   reabrirIncidente,
   registrarAccionCorrectiva,
 } from './accionCorrectivaApi';
-import type {
-  Incidente,
-  IncidenteCreateInput,
-  IncidenteUpdateInput,
-} from './types';
+import type { Incidente, IncidenteCreateInput, IncidenteUpdateInput } from './types';
 import type {
   AccionCorrectiva,
   AccionCorrectivaInput,
@@ -31,21 +27,20 @@ type ModoVista =
   | 'crear'
   | 'editar'
   | 'eliminar'
-  | 'accionCorrectiva'   // modal sobre el listado
-  | 'reabrir';           // modal sobre el listado
+  | 'accionCorrectiva' // modal sobre el listado
+  | 'reabrir'; // modal sobre el listado
 
 export function IncidentePage() {
   const { currentUser } = useAuth();
   const [modo, setModo] = useState<ModoVista>('listado');
-  const [incidenteSeleccionado, setIncidenteSeleccionado] =
-    useState<Incidente | null>(null);
+  const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<Incidente | null>(null);
   // Acción que se está corrigiendo desde el detalle (modal sobre la vista 'ver')
   const [accionEnEdicion, setAccionEnEdicion] = useState<AccionCorrectiva | null>(null);
   // Cambiar la key vuelve a montar el componente y fuerza que recargue sus datos
   const [recargaLista, setRecargaLista] = useState(0);
   const [recargaAccion, setRecargaAccion] = useState(0);
 
-  const { guardar, eliminar } = useIncidente();
+  const { guardar, eliminar } = useIncidente(false);
 
   const volverAlListado = () => {
     setModo('listado');
@@ -83,9 +78,7 @@ export function IncidentePage() {
     setModo('reabrir');
   };
 
-  const handleGuardar = async (
-    datos: IncidenteCreateInput | IncidenteUpdateInput
-  ) => {
+  const handleGuardar = async (datos: IncidenteCreateInput | IncidenteUpdateInput) => {
     if (modo === 'editar' && incidenteSeleccionado) {
       await guardar(datos, incidenteSeleccionado.id);
     } else {
@@ -125,9 +118,7 @@ export function IncidentePage() {
 
   return (
     <Container className="py-2">
-      <h2 className="mb-4 border-bottom pb-2 text-secondary">
-        Gestión de Incidentes
-      </h2>
+      <h2 className="mb-4 border-bottom pb-2 text-secondary">Gestión de Incidentes</h2>
 
       {modo === 'ver' && incidenteSeleccionado && (
         <>
@@ -158,8 +149,10 @@ export function IncidentePage() {
         />
       )}
 
-      {((modo === 'crear' && currentUser?.operar) || (modo === 'editar' && currentUser?.administrar)) && (
+      {((modo === 'crear' && currentUser?.operar) ||
+        (modo === 'editar' && currentUser?.administrar)) && (
         <IncidenteForm
+          key={incidenteSeleccionado?.id ?? 'nuevo'}
           incidenteInicial={incidenteSeleccionado}
           onGuardar={handleGuardar}
           onCancelar={volverAlListado}
@@ -182,6 +175,7 @@ export function IncidentePage() {
         <Modal.Body>
           {incidenteSeleccionado && (
             <AccionCorrectivaForm
+              key={`${incidenteSeleccionado.id}-${accionEnEdicion?.id ?? 'nueva'}`}
               incidente={incidenteSeleccionado}
               onGuardar={handleRegistrarAccion}
               onCancelar={volverAlListado}
@@ -214,6 +208,7 @@ export function IncidentePage() {
         <Modal.Body>
           {incidenteSeleccionado && accionEnEdicion && (
             <AccionCorrectivaForm
+              key={`${incidenteSeleccionado.id}-${accionEnEdicion?.id ?? 'nueva'}`}
               incidente={incidenteSeleccionado}
               accionInicial={accionEnEdicion}
               onGuardar={handleModificarAccion}

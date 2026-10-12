@@ -9,10 +9,11 @@ from sqlalchemy.orm import Session
 from src.config import UPLOADS_DIR
 from src.database import get_db
 from src.incidente import schemas, services
-from src.incidente.constants import EstadoIncidente
+from src.incidente.constants import EstadoIncidente, TipoIncidente
 from src.pagination import PaginatedResponse
 from src.auth.router_base import PermissionedRouter
-from src.auth.dependencies import get_current_personal, tiene_permiso_operar, puede_consultar_operacion
+from src.auth.dependencies import (get_current_personal, tiene_permiso_operar,
+    puede_consultar_operacion, tiene_permiso_administrar)
 from src.exceptions import PermissionDenied
 from src.personal.models import Personal
 
@@ -36,12 +37,13 @@ def _guardar_imagen(foto: UploadFile | None) -> str | None:
 @router.post("/", response_model=schemas.Incidente, dependencies=[Depends(tiene_permiso_operar)])
 def create_incidente(
     descripcion: str = Form(..., min_length=1, max_length=1000),
+    tipo: TipoIncidente = Form(...),
     current_personal: Personal = Depends(tiene_permiso_operar),
     foto: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
     reportado_por_dni = current_personal.dni
-    incidente = schemas.IncidenteCreate(descripcion=descripcion)
+    incidente = schemas.IncidenteCreate(descripcion=descripcion, tipo=tipo)
     imagen_path = _guardar_imagen(foto)
     try:
         return services.crear_incidente(db, incidente, reportado_por_dni, imagen_path)
@@ -74,6 +76,32 @@ def read_incidentes(
         fecha_hasta=fecha_hasta,
     )
 
+@router.get(
+    "/abiertos",
+    response_model=PaginatedResponse[schemas.IncidenteAbierto],
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_incidentes_abiertos(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    size: int = Query(10, ge=1, le=100),
+    tipo: TipoIncidente | None = Query(None),
+    dias_minimos: int | None = Query(None, ge=0, description="Solo los abiertos hace N días o más"),
+    buscar: str = Query(""),
+):
+    """Incidentes sin acción correctiva, del más viejo al más nuevo."""
+    return services.listar_incidentes_abiertos(db, page, size, tipo, dias_minimos, buscar)
+
+
+@router.get(
+    "/abiertos/por-tipo",
+    response_model=list[schemas.CantidadPorTipo],
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_abiertos_por_tipo(db: Session = Depends(get_db)):
+    """Indicador 'incidentes abiertos por tipo' para el tablero (E7)."""
+    return services.contar_abiertos_por_tipo(db)
+
 
 @router.get("/{incidente_id}", response_model=schemas.Incidente, dependencies=[Depends(puede_consultar_operacion)])
 def read_incidente(
@@ -93,11 +121,12 @@ def read_incidente(
 @router.put("/{incidente_id}", response_model=schemas.Incidente)
 def update_incidente(
     incidente_id: int,
+    tipo: TipoIncidente = Form(...),
     descripcion: str = Form(..., min_length=1, max_length=1000),
     foto: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-    incidente = schemas.IncidenteUpdate(descripcion=descripcion)
+    incidente = schemas.IncidenteUpdate(descripcion=descripcion, tipo=tipo)
     imagen_anterior = services.leer_incidente(db, incidente_id).imagen_path
     imagen_nueva = _guardar_imagen(foto)
     try:

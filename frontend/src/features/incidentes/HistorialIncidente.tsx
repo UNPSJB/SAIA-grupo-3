@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge } from 'react-bootstrap';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -15,21 +15,24 @@ export function HistorialIncidente({ incidenteId }: HistorialIncidenteProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const cargar = useCallback(async () => {
-    setLoading(true);
-    try {
-      setMovimientos(await getHistorialIncidente(incidenteId));
-      setError(null);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al cargar el historial.');
-    } finally {
-      setLoading(false);
-    }
-  }, [incidenteId]);
-
   useEffect(() => {
-    void cargar();
-  }, [cargar]);
+    let active = true;
+    getHistorialIncidente(incidenteId)
+      .then((datos) => {
+        if (!active) return;
+        setMovimientos(datos);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (active) setError(err instanceof Error ? err.message : 'Error al cargar el historial.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [incidenteId]);
 
   const getAccion = (valor: AccionMovimientoIncidente) =>
     ACCIONES_MOVIMIENTO_INCIDENTE.find((a) => a.value === valor) ?? {
@@ -51,9 +54,7 @@ export function HistorialIncidente({ incidenteId }: HistorialIncidenteProps) {
       ) : error ? (
         <ErrorAlert mensaje={error} />
       ) : movimientos.length === 0 ? (
-        <p className="text-muted small mb-0">
-          Este incidente no tiene movimientos registrados.
-        </p>
+        <p className="text-muted small mb-0">Este incidente no tiene movimientos registrados.</p>
       ) : (
         <ul className="list-unstyled mb-0">
           {movimientos.map((movimiento, indice) => {
@@ -63,9 +64,7 @@ export function HistorialIncidente({ incidenteId }: HistorialIncidenteProps) {
               <li key={movimiento.id} className="d-flex gap-3">
                 <div className="d-flex flex-column align-items-center">
                   <i className={`bi ${info.icono} text-${info.variante} fs-5`}></i>
-                  {!esUltimo && (
-                    <div className="flex-grow-1 border-start border-2 my-1"></div>
-                  )}
+                  {!esUltimo && <div className="flex-grow-1 border-start border-2 my-1"></div>}
                 </div>
                 <div className={esUltimo ? '' : 'pb-3'}>
                   <div>
@@ -80,12 +79,14 @@ export function HistorialIncidente({ incidenteId }: HistorialIncidenteProps) {
                     </small>
                   </div>
                   <div className="small">
-                    por <strong>{movimiento.personal.apellido}, {movimiento.personal.nombre}</strong>
+                    por{' '}
+                    <strong>
+                      {movimiento.personal.apellido}, {movimiento.personal.nombre}
+                    </strong>
                   </div>
                   {movimiento.motivo && (
                     <div className="small text-break mt-1">
-                      <span className="text-muted">{info.etiquetaMotivo}:</span>{' '}
-                      {movimiento.motivo}
+                      <span className="text-muted">{info.etiquetaMotivo}:</span> {movimiento.motivo}
                     </div>
                   )}
                 </div>

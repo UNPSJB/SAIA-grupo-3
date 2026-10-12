@@ -1,11 +1,5 @@
 import { API_BASE_URL, fetchWithAuth, mensajeDeError } from '../../shared/libreria/api';
-import type {
-  DocumentoTecnico,
-  DocumentoTecnicoDatos,
-  PaginatedDocumentosTecnicos,
-  TipoDocumentoTecnico,
-  VersionDocumentoTecnico,
-} from './types';
+import type { DocumentoTecnico, DocumentoTecnicoDatos, VersionDocumentoTecnico } from './types';
 
 const URL_DOCUMENTOS = `${API_BASE_URL}/documentos-tecnicos`;
 
@@ -15,20 +9,6 @@ async function leerRespuesta<T>(res: Response, porDefecto: string): Promise<T> {
     throw new Error(mensajeDeError(errorData.detail, porDefecto));
   }
   return res.json();
-}
-
-export async function getDocumentosTecnicos(
-  page = 1,
-  size = 10,
-  tipo: TipoDocumentoTecnico | '' = '',
-  busqueda = '',
-): Promise<PaginatedDocumentosTecnicos> {
-  const params = new URLSearchParams({ page: String(page), size: String(size) });
-  if (tipo) params.set('tipo', tipo);
-  if (busqueda.trim()) params.set('busqueda', busqueda.trim());
-
-  const res = await fetchWithAuth(`${URL_DOCUMENTOS}/?${params}`);
-  return leerRespuesta(res, 'No se pudieron cargar los documentos técnicos.');
 }
 
 export async function getDocumentoTecnico(id: number): Promise<DocumentoTecnico> {
@@ -113,10 +93,11 @@ export async function visualizarVersion(version: VersionDocumentoTecnico): Promi
   const res = await fetchWithAuth(`${URL_DOCUMENTOS}/versiones/${version.id}/archivo`);
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(mensajeDeError(errorData.detail, 'No se pudo cargar el archivo para visualizar.'));
+    throw new Error(
+      mensajeDeError(errorData.detail, 'No se pudo cargar el archivo para visualizar.'),
+    );
   }
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank');
 }
-

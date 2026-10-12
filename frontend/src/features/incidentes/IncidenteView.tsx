@@ -2,7 +2,7 @@ import { Badge, Button, Card } from 'react-bootstrap';
 import { API_BASE_URL } from '../../shared/libreria/api';
 import { useAuth } from '../../shared/hooks/useAuth';
 import type { EstadoIncidente, Incidente } from './types';
-import { ESTADOS_INCIDENTE } from './types';
+import { ESTADOS_INCIDENTE, etiquetaTipoIncidente } from './types';
 import { HistorialIncidente } from './HistorialIncidente';
 
 interface IncidenteViewProps {
@@ -28,19 +28,17 @@ export function IncidenteView({ incidente, onEditar, onVolver }: IncidenteViewPr
         <div className="bg-light p-3 rounded border mb-2">
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Fecha y hora:</span>
-            <span className="col-8">
-              {new Date(incidente.fecha_hora).toLocaleString()}
-            </span>
+            <span className="col-8">{new Date(incidente.fecha_hora).toLocaleString()}</span>
           </div>
-
+          <div className="row mb-2">
+            <span className="col-4 text-muted fw-semibold">Tipo:</span>
+            <span className="col-8">{etiquetaTipoIncidente(incidente.tipo)}</span>
+          </div>
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Reportado por:</span>
             <span className="col-8">
-              {incidente.reportado_por.apellido},{' '}
-              {incidente.reportado_por.nombre}{' '}
-              <small className="text-muted">
-                (DNI: {incidente.reportado_por_dni})
-              </small>
+              {incidente.reportado_por.apellido}, {incidente.reportado_por.nombre}{' '}
+              <small className="text-muted">(DNI: {incidente.reportado_por_dni})</small>
             </span>
           </div>
 
@@ -83,9 +81,7 @@ export function IncidenteView({ incidente, onEditar, onVolver }: IncidenteViewPr
           </div>
         </div>
 
-        {currentUser?.administrar === true && (
-          <HistorialIncidente incidenteId={incidente.id} />
-        )}
+        {currentUser?.administrar === true && <HistorialIncidente incidenteId={incidente.id} />}
       </Card.Body>
 
       <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">

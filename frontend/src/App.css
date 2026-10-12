@@ -182,3 +182,8 @@
 [data-bs-theme='dark'] .badge.text-dark {
   color: #212529 !important;
 }
+
+/* Permite que las tablas responsivas se desplacen dentro del contenido. */
+.main-content {
+  min-width: 0;
+}

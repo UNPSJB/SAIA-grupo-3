@@ -68,8 +68,8 @@ export function ReabrirIncidenteForm({
 
       <Alert variant="warning" className="small py-2">
         <i className="bi bi-info-circle me-1"></i>
-        El incidente vuelve a <strong>Abierto</strong>. La acción correctiva anterior
-        queda guardada en el historial.
+        El incidente vuelve a <strong>Abierto</strong>. La acción correctiva anterior queda guardada
+        en el historial.
       </Alert>
 
       <div className="d-flex justify-content-end gap-2">

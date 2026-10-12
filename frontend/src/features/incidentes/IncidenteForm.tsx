@@ -1,49 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, Card, Form } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { API_BASE_URL } from '../../shared/libreria/api';
 import { useAuth } from '../../shared/hooks/useAuth';
-import type {
-  Incidente,
-  IncidenteCreateInput,
-  IncidenteUpdateInput,
-} from './types';
+import type { Incidente, IncidenteCreateInput, IncidenteUpdateInput, TipoIncidente } from './types';
+import { TIPOS_INCIDENTE } from './types';
 
 interface IncidenteFormProps {
   incidenteInicial?: Incidente | null;
-  onGuardar: (
-    datos: IncidenteCreateInput | IncidenteUpdateInput
-  ) => Promise<void>;
+  onGuardar: (datos: IncidenteCreateInput | IncidenteUpdateInput) => Promise<void>;
   onCancelar: () => void;
 }
 
-export function IncidenteForm({
-  incidenteInicial,
-  onGuardar,
-  onCancelar,
-}: IncidenteFormProps) {
+export function IncidenteForm({ incidenteInicial, onGuardar, onCancelar }: IncidenteFormProps) {
   const { currentUser } = useAuth();
-  const [descripcion, setDescripcion] = useState('');
-  const [reportanteDni, setReportanteDni] = useState('');
+  const [descripcion, setDescripcion] = useState(incidenteInicial?.descripcion ?? '');
+  const [tipo, setTipo] = useState<TipoIncidente | ''>(incidenteInicial?.tipo ?? '');
+  const reportanteDni = incidenteInicial?.reportado_por_dni ?? currentUser?.dni ?? '';
   const [foto, setFoto] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [validated, setValidated] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
 
   const esEdicion = Boolean(incidenteInicial);
-
-  useEffect(() => {
-    if (incidenteInicial) {
-      setDescripcion(incidenteInicial.descripcion);
-      setReportanteDni(incidenteInicial.reportado_por_dni);
-    } else {
-      setDescripcion('');
-      setReportanteDni(currentUser?.dni ?? '');
-    }
-    setFoto(null);
-    setErrorEnvio(null);
-    setValidated(false);
-  }, [incidenteInicial, currentUser]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -62,12 +41,11 @@ export function IncidenteForm({
     try {
       await onGuardar({
         descripcion: descripcion.trim(),
+        tipo: tipo as TipoIncidente,
         foto,
       });
     } catch (err: unknown) {
-      setErrorEnvio(
-        err instanceof Error ? err.message : 'Error al guardar los datos.'
-      );
+      setErrorEnvio(err instanceof Error ? err.message : 'Error al guardar los datos.');
     } finally {
       setEnviando(false);
     }
@@ -76,9 +54,7 @@ export function IncidenteForm({
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
       <Card.Header as="h5" className="bg-light text-secondary py-3">
-        {esEdicion
-          ? `Modificar Incidente #${incidenteInicial?.id}`
-          : 'Registrar Nuevo Incidente'}
+        {esEdicion ? `Modificar Incidente #${incidenteInicial?.id}` : 'Registrar Nuevo Incidente'}
       </Card.Header>
 
       <Card.Body className="p-4">
@@ -104,7 +80,24 @@ export function IncidenteForm({
                 : 'El incidente se registra a nombre de tu usuario.'}
             </Form.Text>
           </Form.Group>
-
+          <Form.Group className="mb-3">
+            <Form.Label>Tipo de incidente</Form.Label>
+            <Form.Select
+              required
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value as TipoIncidente | '')}
+            >
+              <option value="">Seleccioná un tipo...</option>
+              {TIPOS_INCIDENTE.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </Form.Select>
+            <Form.Control.Feedback type="invalid">
+              El tipo de incidente es obligatorio.
+            </Form.Control.Feedback>
+          </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Descripción del incidente</Form.Label>
             <Form.Control
@@ -149,20 +142,12 @@ export function IncidenteForm({
           </Form.Group>
 
           <div className="d-flex justify-content-end gap-2">
-            <Button
-              variant="secondary"
-              onClick={onCancelar}
-              disabled={enviando}
-            >
+            <Button variant="secondary" onClick={onCancelar} disabled={enviando}>
               Cancelar
             </Button>
 
             <Button variant="primary" type="submit" disabled={enviando}>
-              {enviando
-                ? 'Guardando...'
-                : esEdicion
-                  ? 'Actualizar Cambios'
-                  : 'Guardar'}
+              {enviando ? 'Guardando...' : esEdicion ? 'Actualizar Cambios' : 'Guardar'}
             </Button>
           </div>
         </Form>

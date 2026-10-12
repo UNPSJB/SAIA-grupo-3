@@ -28,15 +28,14 @@ from src.plan.models import Plan
 from src.documentacion.models import Documentacion
 from src.tipoDocumento.models import TipoDocumento
 from src.incidente.models import Incidente
-from src.incidente.constants import EstadoIncidente
-from src.incidente.auditoria import AccionMovimientoIncidente, MovimientoIncidente, registrar_movimiento
+from src.incidente.constants import EstadoIncidente, TipoIncidente
+from src.incidente.auditoria import AccionMovimientoIncidente, MovimientoIncidente
 from src.accionCorrectiva.models import AccionCorrectiva
 from src.registroCalibracion.models import RegistroCalibracion
 from src.checklist.models import ItemChecklist, EstadoItem, MovimientoItemChecklist, AccionMovimiento
 from src.planRealizado.models import PlanRealizado
 from src.tareaRealizada.models import TareaRealizada
 from src.consumoQuimico.models import ConsumoQuimico
-from src.notificaciones.services import generar_aviso_vencimientos
 from src.notificaciones.models import Notificacion, TipoNotificacion
 
 from src.documentoTecnico.models import (DocumentoTecnico, VersionDocumentoTecnico, CambioVigenciaDocumentoTecnico, TipoDocumentoTecnico, EstadoDocumento)
@@ -86,7 +85,7 @@ DOCUMENTOS_TECNICOS = ["Manual de buenas prácticas de manufactura", "POES de re
     "Prevención de contaminación cruzada", "Limpieza de horno convector", "Higiene de amasadoras",
     "Control de alérgenos en pastelería", "Trazabilidad del envasado", "Control de despacho de alimentos",
     "Desinfección de vajilla", "Ficha técnica de detergente neutro", "Higiene de manos del personal",
-    "Gestión de residuos orgánicos"]
+    "Receta de demostración para preparación de vegetales"]
 # Fotografías de contexto, no evidencia de sucesos reales. Créditos en seed_assets/FUENTES.md.
 FOTOS = ["cocina-industrial.jpg", "lavado-utensilios.jpg", "mesada-lavado.jpg"]
 INCIDENTES = [
@@ -258,7 +257,8 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             for i, (descripcion, correccion, foto_indice) in enumerate(INCIDENTES):
                 reportante = personas[1] if i % 2 == 0 else operadores[i % len(operadores)]
                 incidente, nuevo = crear(Incidente, {"descripcion": descripcion}, reportado_por_dni=reportante.dni,
-                    fecha_hora=datetime.combine(ayer, time(9, i)), imagen_path=fotos[foto_indice],
+                    tipo=list(TipoIncidente)[i % len(TipoIncidente)],
+                    fecha_hora=datetime.combine(hoy - timedelta(days=[1, 3, 7, 15, 30][i % 5]), time(9, i)), imagen_path=fotos[foto_indice],
                     estado=EstadoIncidente.CERRADO if i % 3 else EstadoIncidente.ABIERTO)
                 # Un cierre histórico por incidente; los abiertos tienen una reapertura.
                 if nuevo:
@@ -274,10 +274,23 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                             personal_id=admin.id, fecha_hora=momento + timedelta(hours=2),
                             motivo="La revisión del turno siguiente solicita una nueva verificación del procedimiento.")
 
+            for i, tipo in enumerate(TipoIncidente):
+                for dias in (1, 7, 30):
+                    descripcion = f"Demostración: incidente de {tipo.value} pendiente de resolución ({dias} días)."
+                    reportante = personas[1]
+                    incidente, nuevo = crear(Incidente, {"descripcion": descripcion},
+                        tipo=tipo, reportado_por_dni=reportante.dni,
+                        fecha_hora=datetime.combine(hoy - timedelta(days=dias), time(8)),
+                        imagen_path=fotos[i % len(fotos)], estado=EstadoIncidente.ABIERTO)
+                    if nuevo:
+                        crear(MovimientoIncidente,
+                            {"incidente_id": incidente.id, "accion": AccionMovimientoIncidente.REPORTADO},
+                            personal_id=reportante.id, fecha_hora=incidente.fecha_hora)
+
             carpeta = ARCHIVOS_DIR / "documentos-tecnicos"
             carpeta.mkdir(parents=True, exist_ok=True)
             for i, nombre in enumerate(DOCUMENTOS_TECNICOS):
-                tipo = TipoDocumentoTecnico.MANUAL_BPM if i == 0 else TipoDocumentoTecnico.FICHA_TECNICA if i == 12 else TipoDocumentoTecnico.PROCEDIMIENTO
+                tipo = TipoDocumentoTecnico.MANUAL_BPM if i == 0 else TipoDocumentoTecnico.FICHA_TECNICA if i == 12 else TipoDocumentoTecnico.RECETA if i == 14 else TipoDocumentoTecnico.PROCEDIMIENTO
                 documento, _ = crear(DocumentoTecnico, {"nombre": nombre}, descripcion=f"Documento de demostración para {SECTORES[i].lower()}.",
                     tipo=tipo, estado=EstadoDocumento.VIGENTE, fecha_creacion=datetime.combine(ayer, time(8, i)))
                 nombre_archivo = f"seed-saia-documento-{i + 1:02d}.pdf"

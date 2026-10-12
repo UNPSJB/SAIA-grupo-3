@@ -1,11 +1,14 @@
-import { Badge, Button, Card, Form, Pagination, Table } from 'react-bootstrap';
+import { ListPagination } from '../../shared/components/ListPagination';
+import { formatearFecha } from '../../shared/libreria/fechas';
+import './incidentes.css';
+import { Badge, Button, Card, Form, Table } from 'react-bootstrap';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { API_BASE_URL } from '../../shared/libreria/api';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { useIncidente } from './useIncidente';
 import type { EstadoIncidente, Incidente } from './types';
-import { ESTADOS_INCIDENTE } from './types';
+import { ESTADOS_INCIDENTE, COLORES_INCIDENTE, etiquetaTipoIncidente } from './types';
 
 interface IncidenteListProps {
   onNuevoClick: () => void;
@@ -32,8 +35,6 @@ export function IncidenteList({
     page,
     totalPages,
     total,
-    nextPage,
-    prevPage,
     changePage,
     estado,
     setEstado,
@@ -69,7 +70,9 @@ export function IncidenteList({
             >
               <option value="">Todos los estados</option>
               {ESTADOS_INCIDENTE.map((e) => (
-                <option key={e.value} value={e.value}>{e.label}</option>
+                <option key={e.value} value={e.value}>
+                  {e.label}
+                </option>
               ))}
             </Form.Select>
             <Form.Control
@@ -92,18 +95,21 @@ export function IncidenteList({
               disabled={!estado && !fechaDesde && !fechaHasta}
               className="d-flex align-items-center gap-1"
             >
-              <i className="bi bi-x-lg"></i><span>Limpiar</span>
+              <i className="bi bi-x-lg"></i>
+              <span>Limpiar</span>
             </Button>
           </div>
           <div className="d-flex flex-wrap align-items-center justify-content-end gap-3 ms-auto">
-            {currentUser?.operar && <Button
-              variant="success"
-              onClick={onNuevoClick}
-              className="d-flex align-items-center gap-1 shadow-sm"
-            >
-              <i className="bi bi-plus-lg"></i>
-              <span>Nuevo Incidente</span>
-            </Button>}
+            {currentUser?.operar && (
+              <Button
+                variant="success"
+                onClick={onNuevoClick}
+                className="d-flex align-items-center gap-1 shadow-sm"
+              >
+                <i className="bi bi-plus-lg"></i>
+                <span>Nuevo Incidente</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -114,6 +120,7 @@ export function IncidenteList({
             <thead className="table-light">
               <tr>
                 <th>Fecha y hora</th>
+                <th>Tipo</th>
                 <th>Descripción</th>
                 <th>Reportado por</th>
                 <th>Foto</th>
@@ -126,7 +133,7 @@ export function IncidenteList({
             <tbody>
               {incidentes.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-4 text-muted">
+                  <td colSpan={7} className="text-center py-4 text-muted">
                     {estado || fechaDesde || fechaHasta
                       ? 'No hay incidentes para los filtros actuales.'
                       : 'No hay incidentes registrados.'}
@@ -137,101 +144,107 @@ export function IncidenteList({
                   const infoEstado = getEstado(incidente.estado);
                   return (
                     <tr key={incidente.id}>
-                    <td>{new Date(incidente.fecha_hora).toLocaleString()}</td>
-                    <td className="text-break">{incidente.descripcion}</td>
-                    <td>
-                      <span>
-                        {incidente.reportado_por.apellido},{' '}
-                        {incidente.reportado_por.nombre}
-                      </span>
-                      <div>
-                        <small className="text-muted">
-                          DNI: {incidente.reportado_por_dni}
-                        </small>
-                      </div>
-                    </td>
-                    <td>
-                      {incidente.imagen_path ? (
-                        <a
-                          href={`${API_BASE_URL}${incidente.imagen_path}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn btn-outline-primary btn-sm d-inline-flex align-items-center justify-content-center gap-1 text-nowrap"
-                          title="Ver foto"
-                          aria-label="Ver foto del incidente (abre en otra pestaña)"
+                      <td>{formatearFecha(incidente.fecha_hora)}</td>
+                      <td>
+                        <Badge
+                          bg={COLORES_INCIDENTE[incidente.tipo]}
+                          text={incidente.tipo === 'higiene' ? 'dark' : undefined}
                         >
-                          <i className="bi bi-image" aria-hidden="true"></i>
-                          <span>Ver foto</span>
-                        </a>
-                      ) : (
-                        <Badge bg="secondary">Sin foto</Badge>
-                      )}
-                    </td>
-                    <td>
-                      <Badge
-                        bg={infoEstado.variante}
-                        className={incidente.estado === 'abierto' ? 'text-dark' : ''}
-                      >
-                        {infoEstado.label}
-                      </Badge>
-                    </td>
-                    <td className="text-center">
-                      <div className="d-flex justify-content-center gap-2">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          className="text-white py-1 px-2 shadow-sm"
-                          title="Ver Detalle"
-                          onClick={() => onViewClick(incidente)}
-                        >
-                          <i className="bi bi-eye-fill"></i>
-                        </Button>
-                        {currentUser?.administrar && (
-                          <>
-                            {incidente.estado === 'abierto' ? (
-                              <Button
-                                variant="success"
-                                size="sm"
-                                className="py-1 px-2 shadow-sm"
-                                title="Registrar acción correctiva y cerrar"
-                                onClick={() => onAccionCorrectivaClick(incidente)}
-                              >
-                                <i className="bi bi-clipboard-check-fill"></i>
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="outline-secondary"
-                                size="sm"
-                                className="py-1 px-2 shadow-sm"
-                                title="Reabrir incidente"
-                                onClick={() => onReabrirClick(incidente)}
-                              >
-                                <i className="bi bi-arrow-counterclockwise"></i>
-                              </Button>
-                            )}
-                            <Button
-                              variant="warning"
-                              size="sm"
-                              className="text-white py-1 px-2 shadow-sm"
-                              title="Modificar"
-                              onClick={() => onEditarClick(incidente)}
-                            >
-                              <i className="bi bi-pencil-fill"></i>
-                            </Button>
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              className="py-1 px-2 shadow-sm"
-                              title="Eliminar"
-                              onClick={() => onEliminarClick(incidente)}
-                            >
-                              <i className="bi bi-trash3-fill"></i>
-                            </Button>
-                          </>
+                          {etiquetaTipoIncidente(incidente.tipo)}
+                        </Badge>
+                      </td>
+
+                      <td className="text-break">{incidente.descripcion}</td>
+                      <td>
+                        <span>
+                          {incidente.reportado_por.apellido}, {incidente.reportado_por.nombre}
+                        </span>
+                        <div>
+                          <small className="text-muted">DNI: {incidente.reportado_por_dni}</small>
+                        </div>
+                      </td>
+                      <td>
+                        {incidente.imagen_path ? (
+                          <a
+                            href={`${API_BASE_URL}${incidente.imagen_path}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn btn-outline-primary btn-sm d-inline-flex align-items-center justify-content-center gap-1 text-nowrap"
+                            title="Ver foto"
+                            aria-label="Ver foto del incidente (abre en otra pestaña)"
+                          >
+                            <i className="bi bi-image" aria-hidden="true"></i>
+                            <span>Ver foto</span>
+                          </a>
+                        ) : (
+                          <Badge bg="secondary">Sin foto</Badge>
                         )}
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                      <td>
+                        <Badge
+                          bg={infoEstado.variante}
+                          className={incidente.estado === 'abierto' ? 'text-dark' : ''}
+                        >
+                          {infoEstado.label}
+                        </Badge>
+                      </td>
+                      <td className="text-center">
+                        <div className="d-flex justify-content-center gap-2">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="text-white py-1 px-2 shadow-sm"
+                            title="Ver Detalle"
+                            onClick={() => onViewClick(incidente)}
+                          >
+                            <i className="bi bi-eye-fill"></i>
+                          </Button>
+                          {currentUser?.administrar && (
+                            <>
+                              {incidente.estado === 'abierto' ? (
+                                <Button
+                                  variant="success"
+                                  size="sm"
+                                  className="py-1 px-2 shadow-sm"
+                                  title="Registrar acción correctiva y cerrar"
+                                  onClick={() => onAccionCorrectivaClick(incidente)}
+                                >
+                                  <i className="bi bi-clipboard-check-fill"></i>
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline-secondary"
+                                  size="sm"
+                                  className="py-1 px-2 shadow-sm"
+                                  title="Reabrir incidente"
+                                  onClick={() => onReabrirClick(incidente)}
+                                >
+                                  <i className="bi bi-arrow-counterclockwise"></i>
+                                </Button>
+                              )}
+                              <Button
+                                variant="warning"
+                                size="sm"
+                                className="text-white py-1 px-2 shadow-sm"
+                                title="Modificar"
+                                onClick={() => onEditarClick(incidente)}
+                              >
+                                <i className="bi bi-pencil-fill"></i>
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                className="py-1 px-2 shadow-sm"
+                                title="Eliminar"
+                                onClick={() => onEliminarClick(incidente)}
+                              >
+                                <i className="bi bi-trash3-fill"></i>
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })
               )}
@@ -241,28 +254,12 @@ export function IncidenteList({
 
         {totalPages > 0 && (
           <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
-            <span className="text-muted small mb-2 mb-md-0">
-              Mostrando página {page} de {totalPages} ({total} registros en
-              total)
-            </span>
-            <Pagination className="mb-0" size="sm">
-              <Pagination.Prev onClick={prevPage} disabled={page === 1} />
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (num) => (
-                  <Pagination.Item
-                    key={num}
-                    active={num === page}
-                    onClick={() => changePage(num)}
-                  >
-                    {num}
-                  </Pagination.Item>
-                )
-              )}
-              <Pagination.Next
-                onClick={nextPage}
-                disabled={page === totalPages}
-              />
-            </Pagination>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              changePage={changePage}
+            />
           </Card.Footer>
         )}
       </Card>

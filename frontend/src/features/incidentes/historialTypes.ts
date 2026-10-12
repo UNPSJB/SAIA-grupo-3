@@ -7,9 +7,27 @@ export const ACCIONES_MOVIMIENTO_INCIDENTE: {
   icono: string;
   etiquetaMotivo: string;
 }[] = [
-  { value: 'reportado', label: 'Reportado', variante: 'secondary', icono: 'bi-flag-fill', etiquetaMotivo: '' },
-  { value: 'cerrado', label: 'Cerrado', variante: 'success', icono: 'bi-check-circle-fill', etiquetaMotivo: 'Acción correctiva' },
-  { value: 'reabierto', label: 'Reabierto', variante: 'warning', icono: 'bi-arrow-counterclockwise', etiquetaMotivo: 'Motivo' },
+  {
+    value: 'reportado',
+    label: 'Reportado',
+    variante: 'secondary',
+    icono: 'bi-flag-fill',
+    etiquetaMotivo: '',
+  },
+  {
+    value: 'cerrado',
+    label: 'Cerrado',
+    variante: 'success',
+    icono: 'bi-check-circle-fill',
+    etiquetaMotivo: 'Acción correctiva',
+  },
+  {
+    value: 'reabierto',
+    label: 'Reabierto',
+    variante: 'warning',
+    icono: 'bi-arrow-counterclockwise',
+    etiquetaMotivo: 'Motivo',
+  },
 ];
 
 export interface MovimientoIncidente {

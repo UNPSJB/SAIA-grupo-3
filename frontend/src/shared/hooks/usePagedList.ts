@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useListState, useDebouncedValue } from './useListState';
-import { API_BASE_URL, fetchWithAuth } from '../libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeError } from '../libreria/api';
 export function usePagedList<T>(
   endpoint: string,
   enabled = true,
@@ -34,7 +34,10 @@ export function usePagedList<T>(
       setLoading(true);
       try {
         const response = await fetchWithAuth(`${API_BASE_URL}/${endpoint}?${params}${extra}`);
-        if (!response.ok) throw new Error('No se pudo cargar el listado.');
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(mensajeDeError(data.detail, 'No se pudo cargar el listado.'));
+        }
         const data = await response.json();
         if (
           !Array.isArray(data.items) ||

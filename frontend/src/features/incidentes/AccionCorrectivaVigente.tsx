@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Button } from 'react-bootstrap';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { getAccionesCorrectivas } from './accionCorrectivaApi';
@@ -16,22 +16,29 @@ export function AccionCorrectivaVigente({ incidenteId, onEditar }: AccionCorrect
   const [accion, setAccion] = useState<AccionCorrectiva | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const cargar = useCallback(async () => {
-    try {
-      const acciones = await getAccionesCorrectivas(incidenteId);
-      setAccion(acciones.find((a) => a.vigente) ?? null);
-      setError(null);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al cargar la acción correctiva.');
-    }
+  useEffect(() => {
+    let active = true;
+    getAccionesCorrectivas(incidenteId)
+      .then((acciones) => {
+        if (!active) return;
+        setAccion(acciones.find((a) => a.vigente) ?? null);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (active)
+          setError(err instanceof Error ? err.message : 'Error al cargar la acción correctiva.');
+      });
+    return () => {
+      active = false;
+    };
   }, [incidenteId]);
 
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
-
   if (error) {
-    return <Alert variant="danger" className="mx-auto" style={{ maxWidth: '650px' }}>{error}</Alert>;
+    return (
+      <Alert variant="danger" className="mx-auto" style={{ maxWidth: '650px' }}>
+        {error}
+      </Alert>
+    );
   }
   if (!accion) return null;
 
@@ -45,8 +52,11 @@ export function AccionCorrectivaVigente({ incidenteId, onEditar }: AccionCorrect
           </div>
           <div className="text-break mb-2">{accion.descripcion}</div>
           <small>
-            Resuelto por <strong>{accion.responsable.apellido}, {accion.responsable.nombre}</strong>
-            {' '}el {new Date(accion.fecha_cierre).toLocaleString()}
+            Resuelto por{' '}
+            <strong>
+              {accion.responsable.apellido}, {accion.responsable.nombre}
+            </strong>{' '}
+            el {new Date(accion.fecha_cierre).toLocaleString()}
           </small>
         </div>
         {currentUser?.administrar && (

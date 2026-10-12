@@ -1,88 +1,40 @@
-import { useCallback, useEffect, useState } from 'react';
-import type { EstadoIncidente, Incidente, IncidenteCreateInput, IncidenteUpdateInput } from './types';
-import { eliminarIncidente, getIncidentes, guardarIncidente } from './incidenteApi';
+import { useSearchParams } from 'react-router-dom';
+import { usePagedList } from '../../shared/hooks/usePagedList';
+import { eliminarIncidente, guardarIncidente } from './incidenteApi';
+import type {
+  EstadoIncidente,
+  Incidente,
+  IncidenteCreateInput,
+  IncidenteUpdateInput,
+} from './types';
 
-export function useIncidente() {
-  const [incidentes, setIncidentes] = useState<Incidente[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [page, setPage] = useState(1);
-  const [size] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-
-  const [estado, setEstado] = useState<EstadoIncidente | ''>('');
-  const [fechaDesde, setFechaDesde] = useState('');
-  const [fechaHasta, setFechaHasta] = useState('');
-
-  const cargarIncidentes = useCallback(async (currentPage: number, currentSize: number, currentEstado: EstadoIncidente | '', currentDesde: string, currentHasta: string) => {
-    setLoading(true);
-    try {
-      const data = await getIncidentes(currentPage, currentSize, currentEstado, currentDesde, currentHasta);
-      setIncidentes(data.items);
-      setTotalPages(data.pages);
-      setTotal(data.total);
-      setPage(data.page);
-      setError(null);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al cargar los incidentes.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void cargarIncidentes(page, size, estado, fechaDesde, fechaHasta);
-  }, [cargarIncidentes, page, size, estado, fechaDesde, fechaHasta]);
-
-  // Al cambiar un filtro volvemos a la primera página
-  useEffect(() => { setPage(1); }, [estado, fechaDesde, fechaHasta]);
-
-  const limpiarFiltros = () => {
-    setEstado('');
-    setFechaDesde('');
-    setFechaHasta('');
-  };
-
-  const eliminar = async (id: number) => {
-    await eliminarIncidente(id);
-    await cargarIncidentes(page, size, estado, fechaDesde, fechaHasta);
-  };
-
-  const guardar = async (datos: IncidenteCreateInput | IncidenteUpdateInput, idExistente?: number) => {
-    await guardarIncidente(datos, idExistente);
-    await cargarIncidentes(page, size, estado, fechaDesde, fechaHasta);
-  };
-
-  const nextPage = () => {
-    if (page < totalPages) setPage((prev) => prev + 1);
-  };
-
-  const prevPage = () => {
-    if (page > 1) setPage((prev) => prev - 1);
-  };
-
-  const changePage = (newPage: number) => setPage(newPage);
-
+export function useIncidente(enabled = true) {
+  const [params] = useSearchParams();
+  const estado = (params.get('estado') || '') as EstadoIncidente | '';
+  const fechaDesde = params.get('fecha_desde') || '';
+  const fechaHasta = params.get('fecha_hasta') || '';
+  const filtros = new URLSearchParams();
+  if (estado) filtros.set('estado', estado);
+  if (fechaDesde) filtros.set('fecha_desde', fechaDesde);
+  if (fechaHasta) filtros.set('fecha_hasta', fechaHasta);
+  const list = usePagedList<Incidente>('incidentes/', enabled, `&${filtros}`, 'fecha_hora', 'desc');
   return {
-    incidentes,
-    loading,
-    error,
-    eliminar,
-    guardar,
-    page,
-    totalPages,
-    total,
-    nextPage,
-    prevPage,
-    changePage,
+    ...list,
+    incidentes: list.items,
     estado,
-    setEstado,
     fechaDesde,
-    setFechaDesde,
     fechaHasta,
-    setFechaHasta,
-    limpiarFiltros,
+    setEstado: (value: EstadoIncidente | '') => list.update({ estado: value }),
+    setFechaDesde: (value: string) => list.update({ fecha_desde: value }),
+    setFechaHasta: (value: string) => list.update({ fecha_hasta: value }),
+    limpiarFiltros: () => list.update({ estado: '', fecha_desde: '', fecha_hasta: '' }),
+    eliminar: async (id: number) => {
+      await eliminarIncidente(id);
+      list.refetch(true);
+    },
+    guardar: async (datos: IncidenteCreateInput | IncidenteUpdateInput, idExistente?: number) => {
+      await guardarIncidente(datos, idExistente);
+      list.refetch();
+    },
   };
 }

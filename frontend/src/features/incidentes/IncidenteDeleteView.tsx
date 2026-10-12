@@ -24,9 +24,7 @@ export function IncidenteDeleteView({
     try {
       await onConfirmarEliminar(incidente.id);
     } catch (err: unknown) {
-      setErrorBackend(
-        err instanceof Error ? err.message : 'Error al procesar la eliminación.'
-      );
+      setErrorBackend(err instanceof Error ? err.message : 'Error al procesar la eliminación.');
       setEliminando(false);
     }
   };
@@ -53,16 +51,13 @@ export function IncidenteDeleteView({
         <div className="bg-light p-3 rounded border mb-4">
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Fecha y hora:</span>
-            <span className="col-8">
-              {new Date(incidente.fecha_hora).toLocaleString()}
-            </span>
+            <span className="col-8">{new Date(incidente.fecha_hora).toLocaleString()}</span>
           </div>
 
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Reportado por:</span>
             <span className="col-8">
-              {incidente.reportado_por.apellido},{' '}
-              {incidente.reportado_por.nombre}
+              {incidente.reportado_por.apellido}, {incidente.reportado_por.nombre}
             </span>
           </div>
 
@@ -91,25 +86,17 @@ export function IncidenteDeleteView({
 
         <Alert variant="warning" className="small mb-0">
           <i className="bi bi-info-circle me-1"></i>
-          <strong>Atención:</strong> Esta acción elimina el registro de forma
-          permanente y no se puede deshacer.
+          <strong>Atención:</strong> Esta acción elimina el registro de forma permanente y no se
+          puede deshacer.
         </Alert>
       </Card.Body>
 
       <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
-        <Button
-          variant="secondary"
-          onClick={onCancelar}
-          disabled={eliminando}
-        >
+        <Button variant="secondary" onClick={onCancelar} disabled={eliminando}>
           Cancelar
         </Button>
 
-        <Button
-          variant="danger"
-          onClick={handleEliminar}
-          disabled={eliminando}
-        >
+        <Button variant="danger" onClick={handleEliminar} disabled={eliminando}>
           {eliminando ? 'Eliminando...' : 'Confirmar Eliminación'}
         </Button>
       </Card.Footer>

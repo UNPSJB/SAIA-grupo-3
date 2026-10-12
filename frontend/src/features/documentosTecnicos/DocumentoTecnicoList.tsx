@@ -1,3 +1,4 @@
+import { formatearFecha } from '../../shared/libreria/fechas';
 import { ListControls } from '../../shared/components/ListControls';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { SortableHeader } from '../../shared/components/SortableHeader';
@@ -14,16 +15,6 @@ import {
 
 function etiquetaTipo(tipo: TipoDocumentoTecnico): string {
   return TIPOS_DOCUMENTO_TECNICO.find((t) => t.value === tipo)?.label ?? tipo;
-}
-
-function formatearFecha(fechaIso: string): string {
-  return new Date(fechaIso).toLocaleString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 interface DocumentoTecnicoListProps {

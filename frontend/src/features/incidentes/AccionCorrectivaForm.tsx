@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Button, Form } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { useAuth } from '../../shared/hooks/useAuth';
@@ -19,18 +19,12 @@ export function AccionCorrectivaForm({
   onCancelar,
 }: AccionCorrectivaFormProps) {
   const { currentUser } = useAuth();
-  const [descripcion, setDescripcion] = useState('');
+  const [descripcion, setDescripcion] = useState(accionInicial?.descripcion ?? '');
   const [enviando, setEnviando] = useState(false);
   const [validated, setValidated] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
 
   const esEdicion = Boolean(accionInicial);
-
-  useEffect(() => {
-    setDescripcion(accionInicial?.descripcion ?? '');
-    setErrorEnvio(null);
-    setValidated(false);
-  }, [accionInicial]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -111,11 +105,7 @@ export function AccionCorrectivaForm({
           Cancelar
         </Button>
         <Button variant={esEdicion ? 'primary' : 'success'} type="submit" disabled={enviando}>
-          {enviando
-            ? 'Guardando...'
-            : esEdicion
-              ? 'Guardar cambios'
-              : 'Registrar y cerrar'}
+          {enviando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Registrar y cerrar'}
         </Button>
       </div>
     </Form>

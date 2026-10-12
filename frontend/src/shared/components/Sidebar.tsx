@@ -1,4 +1,3 @@
-import { permissions } from '../libreria/permissions';
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Offcanvas, Collapse } from 'react-bootstrap';
@@ -9,37 +8,43 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+type Permiso = 'operar' | 'administrar' | 'consultarOperacion';
+
 interface MenuItem {
   to?: string;
   label: string;
   icono: string;
-  grupo?: 'vencimientos' | 'maestros';
+  permiso?: Permiso;
+  grupo?: 'incidentes' | 'vencimientos' | 'maestros';
   subItems?: {
     to: string;
     label: string;
     icono: string;
     end?: boolean;
+    permiso?: Permiso;
   }[];
 }
-
 export function Sidebar({ show, onClose }: SidebarProps) {
   const location = useLocation();
   const { currentUser } = useAuth();
 
-  const { canAdmin, canOperate } = permissions(currentUser);
 
   const menuItems: MenuItem[] = [
     { to: '/planes', label: 'Planes de Limpieza', icono: 'bi bi-clipboard2-check' },
     { to: '/auditoria', label: 'Historial Checklist', icono: 'bi bi-clock-history' },
-    { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square' },
-    { to: '/consumos', label: 'Registros de Consumo', icono: 'bi bi-droplet' },
+    { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square', permiso: 'operar' },
+    { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
+    { to: "/consumos", label: "Registros de Consumo", icono: "bi bi-droplet" },
+    { to: "/documentos-tecnicos", label: "Documentos Técnicos", icono: "bi bi-journal-text" },
     {
-      to: '/reportes/consumos',
-      label: 'Consumo de Insumos Químicos',
-      icono: 'bi bi-bar-chart-line',
+      label: 'Incidentes',
+      icono: 'bi bi-exclamation-triangle',
+      grupo: 'incidentes',
+      subItems: [
+        { to: '/incidentes', label: 'Incidentes', icono: 'bi bi-list-ul', end: true, permiso: 'consultarOperacion' },
+        { to: '/incidentes/abiertos', label: 'Abiertos', icono: 'bi bi-hourglass-split' },
+      ],
     },
-    { to: '/incidentes', label: 'Incidentes', icono: 'bi bi-exclamation-triangle' },
-    { to: '/documentos-tecnicos', label: 'Documentos Técnicos', icono: 'bi bi-journal-text' },
     {
       label: 'Vencimientos',
       icono: 'bi bi-calendar-x',
@@ -67,6 +72,17 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     },
   ];
 
+  const puedeVer = (permiso: Permiso = 'administrar') =>
+    permiso === 'consultarOperacion'
+      ? currentUser?.operar === true || currentUser?.administrar === true
+      : permiso === 'operar' ? currentUser?.operar === true : currentUser?.administrar === true;
+
+  const menuVisible = menuItems
+    .map((item) =>
+      item.subItems ? { ...item, subItems: item.subItems.filter((sub) => puedeVer(sub.permiso)) } : item
+    )
+    .filter((item) => (item.subItems ? item.subItems.length > 0 : puedeVer(item.permiso)));
+
   const grupoActivo = menuItems.find((item) =>
     item.subItems?.some(
       (sub) =>
@@ -75,7 +91,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   )?.grupo;
 
   const [gruposAbiertos, setGruposAbiertos] = useState<
-    Partial<Record<'vencimientos' | 'maestros', boolean>>
+    Partial<Record<'incidentes' | 'vencimientos' | 'maestros', boolean>>
   >({});
 
   const menuContent = (
@@ -93,16 +109,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       )}
 
       <nav className="nav nav-pills flex-column px-3 gap-1 mb-auto">
-        {menuItems
-          .filter((item) => {
-            if (item.to === '/incidentes') return canAdmin || canOperate;
-            if (item.to === '/checklist') {
-              return canOperate;
-            }
-
-            return canAdmin;
-          })
-          .map((item) => {
+        {menuVisible.map((item) => {
             if (item.grupo) {
               const grupo = item.grupo;
               const abierto = gruposAbiertos[grupo] ?? grupoActivo === grupo;
