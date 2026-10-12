@@ -12,6 +12,8 @@ interface IncidenteListProps {
   onViewClick: (incidente: Incidente) => void;
   onEditarClick: (incidente: Incidente) => void;
   onEliminarClick: (incidente: Incidente) => void;
+  onAccionCorrectivaClick: (incidente: Incidente) => void;
+  onReabrirClick: (incidente: Incidente) => void;
 }
 
 export function IncidenteList({
@@ -19,6 +21,8 @@ export function IncidenteList({
   onViewClick,
   onEditarClick,
   onEliminarClick,
+  onAccionCorrectivaClick,
+  onReabrirClick,
 }: IncidenteListProps) {
   const { currentUser } = useAuth();
   const {
@@ -117,7 +121,7 @@ export function IncidenteList({
                 <th>Reportado por</th>
                 <th>Foto</th>
                 <th>Estado</th>
-                <th className="text-center" style={{ width: '160px' }}>
+                <th className="text-center" style={{ width: '200px' }}>
                   Acciones
                 </th>
               </tr>
@@ -183,6 +187,27 @@ export function IncidenteList({
                         </Button>
                         {currentUser?.administrar && (
                           <>
+                            {incidente.estado === 'abierto' ? (
+                              <Button
+                                variant="success"
+                                size="sm"
+                                className="py-1 px-2 shadow-sm"
+                                title="Registrar acción correctiva y cerrar"
+                                onClick={() => onAccionCorrectivaClick(incidente)}
+                              >
+                                <i className="bi bi-clipboard-check-fill"></i>
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                className="py-1 px-2 shadow-sm"
+                                title="Reabrir incidente"
+                                onClick={() => onReabrirClick(incidente)}
+                              >
+                                <i className="bi bi-arrow-counterclockwise"></i>
+                              </Button>
+                            )}
                             <Button
                               variant="warning"
                               size="sm"

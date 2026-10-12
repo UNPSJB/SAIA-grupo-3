@@ -29,6 +29,9 @@ from src.plan.models import Plan
 from src.documentacion.models import Documentacion
 from src.tipoDocumento.models import TipoDocumento
 from src.incidente.models import Incidente
+from src.incidente.constants import EstadoIncidente
+from src.incidente.auditoria import AccionMovimientoIncidente, MovimientoIncidente, registrar_movimiento
+from src.accionCorrectiva.models import AccionCorrectiva
 from src.registroCalibracion.models import RegistroCalibracion
 from src.checklist.models import ItemChecklist, EstadoItem, MovimientoItemChecklist, AccionMovimiento
 from src.planRealizado.models import PlanRealizado
@@ -265,6 +268,58 @@ def cargar_calibraciones(db, equipos: list, hoy: date) -> dict:
     return resumen
 
 
+def cargar_historial_incidentes(db, incidentes: list, admin, ayer: date) -> bool:
+    """Deja un incidente en cada situación para probar acción correctiva y auditoría:
+
+    1. abierto (recién reportado)            -> para registrar una acción correctiva
+    2. cerrado con su acción correctiva      -> para reabrirlo o corregir la acción
+    3. cerrado y después reabierto           -> historial completo + acción no vigente
+
+    Solo se carga la primera vez (si el incidente no tiene movimientos), así correr
+    el seed de nuevo no duplica el historial ni pisa lo que se haya probado a mano.
+    """
+    if db.scalar(select(func.count()).select_from(MovimientoIncidente)) > 0:
+        return False
+
+    def movimiento(incidente, accion, personal, hora, motivo=None):
+        registro = registrar_movimiento(db, incidente.id, accion, personal.id, motivo)
+        registro.fecha_hora = datetime.combine(ayer, time(hour=hora))
+
+    def accion_correctiva(incidente, descripcion, hora, vigente):
+        db.add(AccionCorrectiva(
+            incidente_id=incidente.id,
+            descripcion=descripcion,
+            responsable_id=admin.id,
+            fecha_cierre=datetime.combine(ayer, time(hour=hora)),
+            vigente=vigente,
+        ))
+
+    for incidente in incidentes:
+        reportante = db.scalar(select(Personal).where(Personal.dni == incidente.reportado_por_dni))
+        movimiento(incidente, AccionMovimientoIncidente.REPORTADO, reportante, incidente.fecha_hora.hour)
+
+    abierto, cerrado, reabierto = incidentes
+
+    abierto.estado = EstadoIncidente.ABIERTO
+
+    texto = "Se contrató fumigación del depósito y se sellaron las aberturas detectadas."
+    accion_correctiva(cerrado, texto, 15, vigente=True)
+    movimiento(cerrado, AccionMovimientoIncidente.CERRADO, admin, 15, texto)
+    cerrado.estado = EstadoIncidente.CERRADO
+
+    texto = "Se retiró el lote observado y se avisó al proveedor de envases."
+    accion_correctiva(reabierto, texto, 16, vigente=False)
+    movimiento(reabierto, AccionMovimientoIncidente.CERRADO, admin, 16, texto)
+    movimiento(
+        reabierto, AccionMovimientoIncidente.REABIERTO, admin, 18,
+        "El proveedor confirmó que el problema afecta también a otro lote.",
+    )
+    reabierto.estado = EstadoIncidente.ABIERTO
+
+    db.flush()
+    return True
+
+
 def quitar_etiquetas_anteriores(db) -> None:
     """Limpia los nombres del seed anterior sin borrar registros ni relaciones."""
     prefijo = "[DEMO SAIA] "
@@ -465,14 +520,19 @@ def cargar_seed() -> None:
                 obtener_o_crear(db, Documentacion,
                     {"personal_id": operador.id, "tipo_documento_id": tipo.id},
                     {"fecha_vencimiento": hoy + timedelta(days=(-7, 7, 60)[(numero - 1) % 3])})
+            incidentes = []
             for numero, descripcion in enumerate([
                 "Se detectó una pérdida de agua debajo de la pileta del área de lavado.",
                 "Se observó presencia de insectos en el sector de almacenamiento.",
                 "Un cliente devolvió un producto por inconvenientes con el envase.",
             ]):
-                obtener_o_crear(db, Incidente, {"descripcion": descripcion},
+                incidente, _ = obtener_o_crear(db, Incidente, {"descripcion": descripcion},
                     {"reportado_por_dni": operadores[numero].dni,
                      "fecha_hora": datetime.combine(ayer, time(hour=10 + numero))})
+                incidentes.append(incidente)
+            historial_incidentes_cargado = cargar_historial_incidentes(
+                db, incidentes, personas[0], ayer
+            )
 
             resumen_calibraciones = cargar_calibraciones(db, equipos, hoy)
 
@@ -621,6 +681,10 @@ def cargar_seed() -> None:
             print("  DEMO-EQ-0007: sin periodicidad (no calcula vencimiento).")
             print("  DEMO-EQ-0008: sin calibraciones, para probar el alta desde cero.")
             print("  DEMO-EQ-0009: tiene una calibración dada de baja que no debe aparecer.")
+            if historial_incidentes_cargado:
+                print("Incidentes: 1 abierto, 1 cerrado con acción correctiva y 1 reabierto (con historial completo).")
+            else:
+                print("Incidentes: el historial ya estaba cargado, no se modificó.")
             if aviso is not None:
                 print(f"Campanita: aviso de hoy disponible y no leído. {aviso.mensaje}")
             else:
