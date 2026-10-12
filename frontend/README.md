@@ -4,13 +4,15 @@ React + TypeScript + Vite, React Router, React Hook Form y Bootstrap.
 
 ## Instalación y ejecución
 
-Usar Node.js 22.12 o posterior compatible con Vite 8.
+Usar Node.js 22.12 o superior; se recomienda Node 22 o 24 LTS. La dependencia `@rolldown/plugin-babel` requiere ese mínimo, aunque Vite por sí solo admita algunas versiones de Node 20.
 
 ```sh
 npm ci
 cp .env.example .env
 npm run dev
 ```
+
+Ejecutar desde `frontend/`. En Windows (PowerShell), usar `Copy-Item .env.example .env` en lugar de `cp`. La copia es opcional si se usa la URL por defecto; no sobrescribir un `.env` existente. Mantener el backend iniciado en otra terminal.
 
 `VITE_API_BASE_URL` configura el backend; por defecto es `http://localhost:8000`.
 Las variables Vite son públicas. Reiniciar el servidor de desarrollo al cambiarlas.

@@ -1,3 +1,4 @@
+# Python >=3.11. Instalar con: python -m pip install -r requirements.txt
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.14.2
@@ -41,7 +42,7 @@ typing-inspection==0.4.4
 typing_extensions==4.16.0
 urllib3==2.7.0
 uvicorn==0.52.1
-#uvloop==0.22.1 # comentado porque con Windows daba problemas y lo reemplaza por otra herramienta
+# uvloop no se exige directamente para mantener compatibilidad con Windows.
 watchfiles==1.2.0
 websockets==17.0.1
 PyJWT==2.8.0

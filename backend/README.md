@@ -1,39 +1,24 @@
-#### Descripción
+# Backend SAIA
 
-Este proyecto contiene un ejemplo de la estructura recomendada para nuevos proyectos que utilicen FastAPI en el backend. 
-
-Se sugiere mantener la estructura de archivos (basada en [fastapi-best-practices](https://github.com/zhanymkanov/fastapi-best-practices)), adaptándola al dominio que corresponda. Esto es, creando nuevos módulos que contengan mínimamente los siguientes elementos:
-
-*  `constants.py`
-*  `exceptions.py`
-*  `models.py`
-*  `router.py`
-*  `schemas.py`
-*  `services.py`
-
-
-#### ¿Cómo lo ejecuto?
-
-1. Instalar dependencias dentro de un entorno virtual con: `pip install -r requirements.txt`
-2. Crea una copia del archivo `.env.template` con el nombre `.env` y reemplaza los valores de las variables de entorno que creas necesarias.
-3. Asumiendo que estamos en la raiz del repositorio y nuestro código dentro de `src/`, iniciar el proyecto ejecutando: `fastapi dev src/main.py`
-4. Cuando el proyecto esté listo, abrir http://localhost:8000/docs para probar la API de manera interactiva.
-
-**Importante**: 
-* Al trabajar en nuevos dominios, los módulos y archivos de ejemplo (Personals, mascotas) ya no son necesarios y pueden ser eliminados junto con cualquier referencia a ellos dentro de `src/` y `tests/`.
-* Por defecto el proyecto utiliza el motor de base de datos `sqlite` por lo que los datos de la app vivirán dentro del archivo cuyo nombre está definido en el archivo `.env` (por ejemplo: `db.sqlite3`) a menos que se renombre y/o se decida utilizar otro motor de base de datos.
+FastAPI + SQLAlchemy + SQLite. Requiere Python 3.11 o superior; la instalación limpia fue verificada con Python 3.13.
 
 ## Instalación reproducible
 
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 cp .env.template .env
 fastapi dev src/main.py
 ```
 
-`requirements.txt` mantiene las dependencias de producción.
+En Windows (PowerShell), crear el entorno con `py -3 -m venv .venv`, activarlo con `.\.venv\Scripts\Activate.ps1` y copiar la configuración con `Copy-Item .env.template .env`. Los comandos de pip y FastAPI son los mismos. Si no se activa el entorno, usar directamente sus ejecutables en `.venv\Scripts`.
+
+No sobrescribir un `.env` existente. `DB_URL` define la base; `DB_URL_TEST` es la configuración para pruebas. Ejecutar siempre desde `backend/` para que las rutas relativas y `.env` se resuelvan correctamente. Reiniciar el servidor después de cambiar la configuración o de rama.
+
+`requirements.txt` mantiene las dependencias del backend, incluyendo JWT, Argon2, formularios/archivos y scheduler. No se exige `uvloop` directamente: algunas dependencias pueden instalarlo automáticamente en plataformas compatibles; Windows usa el bucle estándar de asyncio.
+
+Comprobar la instalación con `python -m pip check`. Backend en http://localhost:8000 y documentación en http://localhost:8000/docs.
 
 Los listados conservan `items`, `total`, `page`, `size` y `pages`. Admiten `buscar`, `ordenar_por` y `orden` (`asc`/`desc`) según las columnas de cada módulo. La búsqueda se aplica antes de paginar y el ID desempata órdenes equivalentes. Columnas o direcciones inválidas devuelven 422.
 
@@ -49,19 +34,16 @@ Con la configuración de `.env` del backend lista, ejecutar desde `backend/`:
 .venv/bin/python seed.py
 ```
 
-El seed no borra la base; crea o actualiza sus registros de demostración y restablece sus contraseñas, stock, estados y avisos. Puede repetirse sin duplicar los registros del mismo día. Las fechas se calculan al ejecutarlo; al cambiar de día se agrega historial.
+El seed no borra ni actualiza registros existentes, no restablece contraseñas y no descuenta stock. Crea ejemplos faltantes mediante claves estables; al repetirlo el mismo día no duplica datos. Al cambiar de día puede agregar registros diarios de checklist e historial. En bases existentes puede conservar fechas, permisos y contraseñas anteriores.
 
-| Usuario | Contraseña | Caso |
+| Usuario nuevo | Contraseña inicial | Caso |
 | --- | --- | --- |
-| `admin` | `admin123` | Administración y operación; checklist con pendientes y realizadas |
+| `admin` | `admin123` | Administración y operación |
 | `admin.solo` | `opera123` | Sólo administración |
-| `opera` | `opera123` | Sólo operación; checklist con pendientes y realizadas |
+| `opera` | `opera123` | Sólo operación; ve sus incidentes |
 | `sin.permisos` | `opera123` | Sin capacidades; pantalla sin permisos |
-| `inactivo.demo` | `opera123` | Usuario dado de baja; login rechazado |
-| `operario.demo01` | `opera123` | Operación con checklist vacío |
+| `inactivo.demo` | `opera123` | Usuario inactivo; login rechazado |
 
-Los catálogos tienen al menos 30 registros activos para probar varias páginas y tres inactivos para reactivar. En Sectores, buscar `Sector 30` permite comprobar resultados fuera de la primera página; buscar `sin-resultados` permite probar el estado vacío. `Sector libre para baja` no tiene equipos asociados; los sectores numerados tienen equipos para comprobar la restricción de baja.
+En una base nueva carga al menos 15 registros por entidad, incidentes de todos los tipos, abiertos y cerrados, acciones correctivas e historial. Incluye documentos personales con distintas fechas de vencimiento, calibraciones, documentos técnicos con PDF de demostración, consumos, tareas realizadas y pendientes de hoy. Las fotografías necesarias están versionadas en `seed_assets/`; los archivos generados se guardan en `uploads/` y `archivos/`.
 
-Hay documentos vencidos, que vencen hoy, próximos a vencer y vigentes; elementos vencidos y próximos a recambio; planes finalizados; consumos activos e inactivos e incidentes e historial con varias páginas. `opera` tiene además tareas diarias, semanales y mensuales, tareas sin químicos, con dos químicos y con stock insuficiente. La campana incluye avisos históricos leídos y el aviso de hoy no leído, respetando la consolidación de vencimientos de la aplicación.
-
-Las pruebas de errores de red, sesión vencida, archivos adjuntos y datos inválidos requieren provocar esas condiciones desde el navegador o la API; el seed carga datos válidos para iniciar esos escenarios.
+`create_all` crea tablas nuevas, pero no migra tablas existentes. Si una base de otra rama tiene columnas faltantes, conservarla y coordinar la actualización del esquema; reinstalar dependencias o repetir el seed no migra esa base.
