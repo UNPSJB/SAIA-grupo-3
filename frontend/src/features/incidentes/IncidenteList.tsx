@@ -96,14 +96,14 @@ export function IncidenteList({
             </Button>
           </div>
           <div className="d-flex flex-wrap align-items-center justify-content-end gap-3 ms-auto">
-            <Button
+            {currentUser?.operar && <Button
               variant="success"
               onClick={onNuevoClick}
               className="d-flex align-items-center gap-1 shadow-sm"
             >
               <i className="bi bi-plus-lg"></i>
               <span>Nuevo Incidente</span>
-            </Button>
+            </Button>}
           </div>
         </div>
       </div>

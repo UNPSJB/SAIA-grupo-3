@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Badge, Button, Card, Form, Modal } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
-import { descargarVersion, getDocumentoTecnico, visualizarVersion } from './documentoTecnicoApi';
+import { descargarVersion, getDocumentoTecnico, visualizarVersion, marcarVersionVigente } from './documentoTecnicoApi';
 import {
   TIPOS_DOCUMENTO_TECNICO,
   COLORES_DOCUMENTO_TECNICO,
@@ -51,6 +51,8 @@ export function DocumentoTecnicoView({
   const [versionHistorialElegida, setVersionHistorialElegida] = useState(''); 
 
   const [documento, setDocumento] = useState<DocumentoTecnico | null>(null);
+  const [cambiandoVigencia, setCambiandoVigencia] = useState(false);
+  const [errorVigencia, setErrorVigencia] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,6 +86,19 @@ export function DocumentoTecnicoView({
     }
   };
   
+  const activarVersion = async (version: VersionDocumentoTecnico) => {
+    if (!currentUser?.administrar || !window.confirm(`¿Marcar v${version.numero} como vigente y reemplazar la versión actual?`)) return;
+    setCambiandoVigencia(true);
+    setErrorVigencia(null);
+    try {
+      setDocumento(await marcarVersionVigente(documentoId, version.id));
+    } catch (err: unknown) {
+      setErrorVigencia(err instanceof Error ? err.message : 'No se pudo cambiar la vigencia.');
+    } finally {
+      setCambiandoVigencia(false);
+    }
+  };
+
   const esVisualizable = (nombreOriginal: string) => {
     const extension = nombreOriginal.split('.').pop()?.toLowerCase();
     return ['jpg', 'jpeg', 'png', 'pdf'].includes(extension || '');
@@ -208,6 +223,7 @@ export function DocumentoTecnicoView({
           <Modal.Title className="fs-5">Historial de Versiones</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {errorVigencia && <ErrorAlert mensaje={errorVigencia} />}
           <Form.Group controlId="select-historial-versiones">
             <Form.Label>Seleccione una versión para consultar la trazabilidad</Form.Label>
             <Form.Select
@@ -247,13 +263,30 @@ export function DocumentoTecnicoView({
                     <small className="text-muted d-block mb-1">
                       <strong>Fecha de subida:</strong> {formatearFecha(vSelec.fecha_subida)}
                     </small>
+                    <div className="small mt-2">
+                      <strong>Entradas en vigencia:</strong>
+                      {documento.cambios_vigencia.filter((cambio) => cambio.version_id === vSelec.id).length === 0 ? (
+                        <div className="text-muted">Sin registro de vigencia</div>
+                      ) : (
+                        <ul className="mb-0">
+                          {documento.cambios_vigencia.filter((cambio) => cambio.version_id === vSelec.id).slice().reverse().map((cambio, indice) => (
+                            <li key={indice}>{formatearFecha(cambio.fecha_vigencia)} · {cambio.personal.apellido}, {cambio.personal.nombre}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                     {vSelec.comentario && (
                       <small className="text-muted d-block fst-italic mt-2">
                         <strong>Nota:</strong> "{vSelec.comentario}"
                       </small>
                     )}
                     
-                    <div className="mt-4 d-flex justify-content-end align-items-center gap-2">
+                    <div className="mt-4 d-flex flex-wrap justify-content-end align-items-center gap-2">
+                      {currentUser?.administrar && documento.estado === 'vigente' && vSelec.estado !== 'vigente' && (
+                        <Button variant="success" disabled={cambiandoVigencia} onClick={() => void activarVersion(vSelec)}>
+                          {cambiandoVigencia ? 'Actualizando...' : 'Marcar como vigente'}
+                        </Button>
+                      )}
                       {esVisualizable(vSelec.nombre_original) && (
                        <Button variant="primary" onClick={() => void handleVisualizar(vSelec)} style={{ width: 'auto' }}>
                           <i className="bi bi-eye me-1"></i>Ver

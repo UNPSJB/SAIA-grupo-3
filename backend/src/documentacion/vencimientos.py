@@ -77,6 +77,7 @@ def listar_vencimientos(
     ordenar_por: str = "fecha_vencimiento",
     orden: str = "asc",
     hoy: date | None = None,
+    solo_alertas: bool = False,
 ) -> Dict[str, Any]:
     """Listado paginado de vencimientos de documentación del personal activo."""
     hoy = hoy or date.today()
@@ -92,6 +93,9 @@ def listar_vencimientos(
             Personal.activo == True,
         )
     )
+
+    if solo_alertas:
+        query = query.where(Documentacion.fecha_vencimiento <= limite)
 
     # Filtro por estado (se traduce a rangos de fecha para resolverlo en la consulta)
     if estado == EstadoVencimiento.VENCIDO:

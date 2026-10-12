@@ -95,7 +95,8 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       <nav className="nav nav-pills flex-column px-3 gap-1 mb-auto">
         {menuItems
           .filter((item) => {
-            if (item.to === '/checklist' || item.to === '/incidentes') {
+            if (item.to === '/incidentes') return canAdmin || canOperate;
+            if (item.to === '/checklist') {
               return canOperate;
             }
 

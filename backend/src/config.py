@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -10,6 +11,7 @@ class Settings(BaseSettings):
     ROOT_PATH_PRODUCTION: str = ""
     LOG_LEVEL: str = "INFO"
     SCHEDULER_ACTIVO: bool = True
+    DIAS_AVISO_VENCIMIENTO: int = Field(default=15, ge=0)
 
     SECRET_KEY: str = "tu-clave-secreta-para-access-token"
     REFRESH_SECRET_KEY: str = "tu-clave-secreta-para-refresh-token"

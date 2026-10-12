@@ -64,3 +64,4 @@ class DocumentoTecnicoResumen(DocumentoTecnicoBase):
 
 class DocumentoTecnico(DocumentoTecnicoResumen):
     versiones: List[VersionDocumentoTecnico] = []
+    cambios_vigencia: List[VigenciaDocumentoTecnico] = []

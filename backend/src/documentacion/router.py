@@ -34,11 +34,12 @@ def read_vencimientos(
     page: int = Query(1, ge=1, description="Número de página"),
     size: int = Query(10, ge=1, le=100, description="Cantidad de registros por página"),
     estado: EstadoVencimiento | None = Query(None, description="vencido, por_vencer o vigente"),
+    solo_alertas: bool = Query(False),
     buscar: str = Query("", description="Búsqueda por apellido, nombre, DNI o tipo de documento"),
     ordenar_por: str = Query("fecha_vencimiento", description="fecha_vencimiento, empleado, dni o tipo_documento"),
     orden: str = Query("asc", description="asc o desc"),
 ):
-    return listar_vencimientos(db, page, size, estado, buscar, ordenar_por, orden)
+    return listar_vencimientos(db, page, size, estado, buscar, ordenar_por, orden, solo_alertas=solo_alertas)
 
 
 @router.get("/{documento_id}", response_model=schemas.Documento)

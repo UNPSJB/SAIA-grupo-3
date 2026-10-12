@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { NOTIFICACIONES_ACTUALIZADAS } from './events';
 import type { Notificacion } from './types';
 import { getNotificaciones, getCantidadNoLeidas, marcarNotificacionLeida, marcarTodasLeidas } from './notificacionesApi';
 
@@ -23,7 +24,11 @@ export function useNotificaciones() {
   useEffect(() => {
     recargar();
     const intervalo = setInterval(recargar, INTERVALO_MS);
-    return () => clearInterval(intervalo);
+    window.addEventListener(NOTIFICACIONES_ACTUALIZADAS, recargar);
+    return () => {
+      clearInterval(intervalo);
+      window.removeEventListener(NOTIFICACIONES_ACTUALIZADAS, recargar);
+    };
   }, [recargar]);
 
   const marcarLeida = async (id: number) => {

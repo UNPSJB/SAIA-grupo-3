@@ -64,6 +64,10 @@ export function AppRouter() {
             {/* Operación diaria: requiere capacidad operar */}
             <Route element={<ProtectedRoute requireOperate />}>
               <Route path="checklist" element={<ChecklistPage />} />
+
+            </Route>
+
+            <Route element={<ProtectedRoute requireAdminOrOperate />}>
               <Route path="incidentes" element={<IncidentePage />} />
             </Route>
 

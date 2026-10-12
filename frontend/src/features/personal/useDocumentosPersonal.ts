@@ -1,3 +1,4 @@
+import { avisarCambioNotificaciones } from '../notificaciones/events';
 import { useCallback, useEffect, useState } from 'react';
 import {
   createDocumento,
@@ -42,11 +43,13 @@ export function useDocumentosPersonal(personalId: number) {
     } else {
       await createDocumento(personalId, datos);
     }
+    avisarCambioNotificaciones();
     await cargar();
   };
 
   const eliminar = async (id: number) => {
     await deleteDocumento(id);
+    avisarCambioNotificaciones();
     await cargar();
   };
 

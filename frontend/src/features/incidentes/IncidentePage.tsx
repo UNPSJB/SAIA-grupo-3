@@ -53,6 +53,7 @@ export function IncidentePage() {
   };
 
   const handleNuevo = () => {
+    if (!currentUser?.operar) return;
     setIncidenteSeleccionado(null);
     setModo('crear');
   };
@@ -157,7 +158,7 @@ export function IncidentePage() {
         />
       )}
 
-      {(modo === 'crear' || modo === 'editar') && (
+      {((modo === 'crear' && currentUser?.operar) || (modo === 'editar' && currentUser?.administrar)) && (
         <IncidenteForm
           incidenteInicial={incidenteSeleccionado}
           onGuardar={handleGuardar}

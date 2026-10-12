@@ -34,6 +34,8 @@ export function VencimientosList({ onVerLegajo }: VencimientosListProps) {
     changePage,
     estado,
     setEstado,
+    soloAlertas,
+    setSoloAlertas,
     busqueda,
     setBusqueda,
     limpiarFiltros,
@@ -71,10 +73,17 @@ export function VencimientosList({ onVerLegajo }: VencimientosListProps) {
               </option>
             ))}
           </Form.Select>
+          <Form.Check
+            type="switch"
+            id="solo-alertas-documentacion"
+            label="Solo vencidos y próximos"
+            checked={soloAlertas}
+            onChange={(e) => setSoloAlertas(e.target.checked)}
+          />
           <Button
             variant="success"
             onClick={limpiarFiltros}
-            disabled={!estado && !busqueda}
+            disabled={!estado && !busqueda && !soloAlertas}
             className="d-flex align-items-center gap-1"
           >
             <i className="bi bi-x-lg"></i>
@@ -136,7 +145,7 @@ export function VencimientosList({ onVerLegajo }: VencimientosListProps) {
                 {vencimientos.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="text-center py-4 text-muted">
-                      {estado || busqueda
+                      {estado || busqueda || soloAlertas
                         ? 'No hay documentos para los filtros actuales.'
                         : 'No hay documentación registrada en el sistema.'}
                     </td>

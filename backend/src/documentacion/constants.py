@@ -1,6 +1,8 @@
 from enum import StrEnum, auto
 
-DIAS_AVISO_VENCIMIENTO = 30
+from src.config import settings
+
+DIAS_AVISO_VENCIMIENTO = settings.DIAS_AVISO_VENCIMIENTO
 
 
 class EstadoVencimiento(StrEnum):

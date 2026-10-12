@@ -6,12 +6,14 @@ import { LoadingSpinner } from './LoadingSpinner';
 
 interface ProtectedRouteProps {
   requireAdmin?: boolean;
+  requireAdminOrOperate?: boolean;
   requireOperate?: boolean;
   children?: React.ReactNode;
 }
 
 export function ProtectedRoute({
   requireAdmin = false,
+  requireAdminOrOperate = false,
   requireOperate = false,
   children,
 }: ProtectedRouteProps) {
@@ -30,6 +32,10 @@ export function ProtectedRoute({
   }
 
   const { canAdmin, canOperate } = permissions(currentUser);
+  if (requireAdminOrOperate && !canAdmin && !canOperate) {
+    return <Navigate to={homeFor(currentUser)} replace />;
+  }
+
   if (requireAdmin && !canAdmin) {
     return <Navigate to={homeFor(currentUser)} replace />;
   }

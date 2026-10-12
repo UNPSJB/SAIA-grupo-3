@@ -9,6 +9,17 @@ from src.tipoDocumento.models import TipoDocumento
 from src.tipoDocumento import exceptions as tipo_documento_exceptions
 
 
+def _guardar_con_aviso(db: Session) -> None:
+    from src.notificaciones.services import generar_aviso_vencimientos
+    try:
+        db.flush()
+        generar_aviso_vencimientos(db, confirmar=False)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+
 # operaciones CRUD para Documentos
 
 
@@ -30,7 +41,7 @@ def crear_documento(db: Session, documento: schemas.DocumentoCreate) -> schemas.
 
     _documento = Documentacion(**documento.model_dump())
     db.add(_documento)
-    db.commit()
+    _guardar_con_aviso(db)
     db.refresh(_documento)
     return _documento
 
@@ -70,7 +81,7 @@ def modificar_documento(
         .where(Documentacion.id == documento_id)
         .values(**documento.model_dump())
     )
-    db.commit()
+    _guardar_con_aviso(db)
     db.refresh(db_documento)
     return db_documento
 
@@ -81,5 +92,5 @@ def eliminar_documento(db: Session, documento_id: int) -> schemas.DocumentoDelet
     db.execute(
         delete(Documentacion).where(Documentacion.id == documento_id)
     )
-    db.commit()
+    _guardar_con_aviso(db)
     return documento_eliminado

@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from typing import List, Optional
-from sqlalchemy import select, func, update
+from sqlalchemy import select, func, update, delete
 from sqlalchemy.orm import Session
 from src.notificaciones.models import Notificacion, TipoNotificacion
 from src.notificaciones.constants import ENLACE_VENCIMIENTOS
@@ -38,7 +38,7 @@ def marcar_todas_leidas(db: Session) -> int:
 def _plural(cantidad: int, singular: str, plural: str) -> str:
     return f"{cantidad} {singular if cantidad == 1 else plural}"
 
-def generar_aviso_vencimientos(db: Session, hoy: date | None = None) -> Optional[Notificacion]:
+def generar_aviso_vencimientos(db: Session, hoy: date | None = None, *, confirmar: bool = True) -> Optional[Notificacion]:
 
     hoy = hoy or date.today()
     clave_hoy = f"vencimientos-{hoy.isoformat()}"
@@ -56,7 +56,11 @@ def generar_aviso_vencimientos(db: Session, hoy: date | None = None) -> Optional
 
     vencimientos = buscar_vencimientos(db, hoy)
     if not vencimientos:
-        db.commit()
+        db.execute(delete(Notificacion).where(Notificacion.tipo == TipoNotificacion.VENCIMIENTO_DOCUMENTACION, Notificacion.clave == clave_hoy))
+        if confirmar:
+            db.commit()
+        else:
+            db.flush()
         return None
 
     vencidos = sum(1 for v in vencimientos if v.fecha_vencimiento < hoy)
@@ -83,8 +87,14 @@ def generar_aviso_vencimientos(db: Session, hoy: date | None = None) -> Optional
         )
         db.add(aviso)
     else:
+        if aviso.mensaje != mensaje:
+            aviso.leida = False
         aviso.mensaje = mensaje
+        aviso.enlace = ENLACE_VENCIMIENTOS
 
-    db.commit()
+    if confirmar:
+        db.commit()
+    else:
+        db.flush()
     db.refresh(aviso)
     return aviso

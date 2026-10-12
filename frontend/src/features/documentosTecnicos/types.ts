@@ -54,6 +54,7 @@ export interface VigenciaDocumentoTecnico {
 
 export interface DocumentoTecnico extends DocumentoTecnicoResumen {
   versiones: VersionDocumentoTecnico[];
+  cambios_vigencia: VigenciaDocumentoTecnico[];
 }
 
 export interface DocumentoTecnicoDatos {
