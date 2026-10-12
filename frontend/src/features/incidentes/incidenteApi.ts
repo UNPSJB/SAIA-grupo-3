@@ -28,6 +28,7 @@ export async function guardarIncidente(
 ): Promise<Incidente> {
   const formData = new FormData();
   formData.append('descripcion', datos.descripcion);
+  formData.append('tipo', datos.tipo);
   if (datos.foto) {
     formData.append('foto', datos.foto);
   }

@@ -11,9 +11,24 @@ export const ESTADOS_INCIDENTE: { value: EstadoIncidente; label: string; variant
   { value: 'cerrado', label: 'Cerrado', variante: 'success' },
 ];
 
+export type TipoIncidente = 'higiene' | 'plagas' | 'equipos' | 'producto';
+
+export const TIPOS_INCIDENTE: { value: TipoIncidente; label: string }[] = [
+  { value: 'higiene', label: 'Higiene y limpieza' },
+  { value: 'plagas', label: 'Plagas' },
+  { value: 'equipos', label: 'Equipos e instalaciones' },
+  { value: 'producto', label: 'Producto / cliente' },
+];
+
+export function etiquetaTipoIncidente(tipo: TipoIncidente): string {
+  return TIPOS_INCIDENTE.find((t) => t.value === tipo)?.label ?? tipo;
+}
+
+
 export interface Incidente {
   id: number;
   descripcion: string;
+  tipo: TipoIncidente;
   fecha_hora: string;
   estado: EstadoIncidente;
   reportado_por_dni: string;
@@ -31,6 +46,7 @@ export interface PaginatedIncidentes {
 
 export interface IncidenteCreateInput {
   descripcion: string;
+  tipo: TipoIncidente;
   foto?: File | null;
 }
 

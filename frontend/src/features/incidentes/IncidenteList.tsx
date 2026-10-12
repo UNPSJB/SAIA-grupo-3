@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../../shared/libreria/api';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { useIncidente } from './useIncidente';
 import type { EstadoIncidente, Incidente } from './types';
-import { ESTADOS_INCIDENTE } from './types';
+import { ESTADOS_INCIDENTE, etiquetaTipoIncidente } from './types';
 
 interface IncidenteListProps {
   onNuevoClick: () => void;
@@ -117,6 +117,7 @@ export function IncidenteList({
             <thead className="table-light">
               <tr>
                 <th>Fecha y hora</th>
+                <th>Tipo</th>
                 <th>Descripción</th>
                 <th>Reportado por</th>
                 <th>Foto</th>
@@ -129,7 +130,7 @@ export function IncidenteList({
             <tbody>
               {incidentes.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-4 text-muted">
+                  <td colSpan={7} className="text-center py-4 text-muted">
                     {estado || fechaDesde || fechaHasta
                       ? 'No hay incidentes para los filtros actuales.'
                       : 'No hay incidentes registrados.'}
@@ -140,97 +141,103 @@ export function IncidenteList({
                   const infoEstado = getEstado(incidente.estado);
                   return (
                     <tr key={incidente.id}>
-                    <td>{new Date(incidente.fecha_hora).toLocaleString()}</td>
-                    <td className="text-break">{incidente.descripcion}</td>
-                    <td>
-                      <span>
-                        {incidente.reportado_por.apellido},{' '}
-                        {incidente.reportado_por.nombre}
-                      </span>
-                      <div>
-                        <small className="text-muted">
-                          DNI: {incidente.reportado_por_dni}
-                        </small>
-                      </div>
-                    </td>
-                    <td>
-                      {incidente.imagen_path ? (
-                        <a
-                          href={`${API_BASE_URL}${incidente.imagen_path}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Ver foto
-                        </a>
-                      ) : (
-                        <Badge bg="secondary">Sin foto</Badge>
-                      )}
-                    </td>
-                    <td>
-                      <Badge
-                        bg={infoEstado.variante}
-                        className={incidente.estado === 'abierto' ? 'text-dark' : ''}
-                      >
-                        {infoEstado.label}
-                      </Badge>
-                    </td>
-                    <td className="text-center">
-                      <div className="d-flex justify-content-center gap-2">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          className="text-white py-1 px-2 shadow-sm"
-                          title="Ver Detalle"
-                          onClick={() => onViewClick(incidente)}
-                        >
-                          <i className="bi bi-eye-fill"></i>
-                        </Button>
-                        {currentUser?.administrar && (
-                          <>
-                            {incidente.estado === 'abierto' ? (
-                              <Button
-                                variant="success"
-                                size="sm"
-                                className="py-1 px-2 shadow-sm"
-                                title="Registrar acción correctiva y cerrar"
-                                onClick={() => onAccionCorrectivaClick(incidente)}
-                              >
-                                <i className="bi bi-clipboard-check-fill"></i>
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="outline-secondary"
-                                size="sm"
-                                className="py-1 px-2 shadow-sm"
-                                title="Reabrir incidente"
-                                onClick={() => onReabrirClick(incidente)}
-                              >
-                                <i className="bi bi-arrow-counterclockwise"></i>
-                              </Button>
-                            )}
-                            <Button
-                              variant="warning"
-                              size="sm"
-                              className="text-white py-1 px-2 shadow-sm"
-                              title="Modificar"
-                              onClick={() => onEditarClick(incidente)}
-                            >
-                              <i className="bi bi-pencil-fill"></i>
-                            </Button>
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              className="py-1 px-2 shadow-sm"
-                              title="Eliminar"
-                              onClick={() => onEliminarClick(incidente)}
-                            >
-                              <i className="bi bi-trash3-fill"></i>
-                            </Button>
-                          </>
+                      <td>{new Date(incidente.fecha_hora).toLocaleString()}</td>
+                      <td>
+                        <Badge bg="light" text="dark" className="border">
+                          {etiquetaTipoIncidente(incidente.tipo)}
+                        </Badge>
+                      </td>
+
+                      <td className="text-break">{incidente.descripcion}</td>
+                      <td>
+                        <span>
+                          {incidente.reportado_por.apellido},{' '}
+                          {incidente.reportado_por.nombre}
+                        </span>
+                        <div>
+                          <small className="text-muted">
+                            DNI: {incidente.reportado_por_dni}
+                          </small>
+                        </div>
+                      </td>
+                      <td>
+                        {incidente.imagen_path ? (
+                          <a
+                            href={`${API_BASE_URL}${incidente.imagen_path}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Ver foto
+                          </a>
+                        ) : (
+                          <Badge bg="secondary">Sin foto</Badge>
                         )}
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                      <td>
+                        <Badge
+                          bg={infoEstado.variante}
+                          className={incidente.estado === 'abierto' ? 'text-dark' : ''}
+                        >
+                          {infoEstado.label}
+                        </Badge>
+                      </td>
+                      <td className="text-center">
+                        <div className="d-flex justify-content-center gap-2">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="text-white py-1 px-2 shadow-sm"
+                            title="Ver Detalle"
+                            onClick={() => onViewClick(incidente)}
+                          >
+                            <i className="bi bi-eye-fill"></i>
+                          </Button>
+                          {currentUser?.administrar && (
+                            <>
+                              {incidente.estado === 'abierto' ? (
+                                <Button
+                                  variant="success"
+                                  size="sm"
+                                  className="py-1 px-2 shadow-sm"
+                                  title="Registrar acción correctiva y cerrar"
+                                  onClick={() => onAccionCorrectivaClick(incidente)}
+                                >
+                                  <i className="bi bi-clipboard-check-fill"></i>
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline-secondary"
+                                  size="sm"
+                                  className="py-1 px-2 shadow-sm"
+                                  title="Reabrir incidente"
+                                  onClick={() => onReabrirClick(incidente)}
+                                >
+                                  <i className="bi bi-arrow-counterclockwise"></i>
+                                </Button>
+                              )}
+                              <Button
+                                variant="warning"
+                                size="sm"
+                                className="text-white py-1 px-2 shadow-sm"
+                                title="Modificar"
+                                onClick={() => onEditarClick(incidente)}
+                              >
+                                <i className="bi bi-pencil-fill"></i>
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                className="py-1 px-2 shadow-sm"
+                                title="Eliminar"
+                                onClick={() => onEliminarClick(incidente)}
+                              >
+                                <i className="bi bi-trash3-fill"></i>
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })
               )}

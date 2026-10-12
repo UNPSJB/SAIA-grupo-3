@@ -7,7 +7,10 @@ import type {
   Incidente,
   IncidenteCreateInput,
   IncidenteUpdateInput,
+  TipoIncidente,
 } from './types';
+import { TIPOS_INCIDENTE } from './types';
+
 
 interface IncidenteFormProps {
   incidenteInicial?: Incidente | null;
@@ -24,6 +27,7 @@ export function IncidenteForm({
 }: IncidenteFormProps) {
   const { currentUser } = useAuth();
   const [descripcion, setDescripcion] = useState('');
+  const [tipo, setTipo] = useState<TipoIncidente | ''>('');
   const [reportanteDni, setReportanteDni] = useState('');
   const [foto, setFoto] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -33,11 +37,13 @@ export function IncidenteForm({
   const esEdicion = Boolean(incidenteInicial);
 
   useEffect(() => {
-    if (incidenteInicial) {
+        if (incidenteInicial) {
       setDescripcion(incidenteInicial.descripcion);
+      setTipo(incidenteInicial.tipo);
       setReportanteDni(incidenteInicial.reportado_por_dni);
     } else {
       setDescripcion('');
+      setTipo('');
       setReportanteDni(currentUser?.dni ?? '');
     }
     setFoto(null);
@@ -62,6 +68,7 @@ export function IncidenteForm({
     try {
       await onGuardar({
         descripcion: descripcion.trim(),
+        tipo: tipo as TipoIncidente,
         foto,
       });
     } catch (err: unknown) {
@@ -104,7 +111,22 @@ export function IncidenteForm({
                 : 'El incidente se registra a nombre de tu usuario.'}
             </Form.Text>
           </Form.Group>
-
+                    <Form.Group className="mb-3">
+            <Form.Label>Tipo de incidente</Form.Label>
+            <Form.Select
+              required
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value as TipoIncidente | '')}
+            >
+              <option value="">Seleccioná un tipo...</option>
+              {TIPOS_INCIDENTE.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </Form.Select>
+            <Form.Control.Feedback type="invalid">
+              El tipo de incidente es obligatorio.
+            </Form.Control.Feedback>
+          </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Descripción del incidente</Form.Label>
             <Form.Control
