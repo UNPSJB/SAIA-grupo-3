@@ -65,3 +65,37 @@ class DocumentoTecnicoResumen(DocumentoTecnicoBase):
 class DocumentoTecnico(DocumentoTecnicoResumen):
     versiones: List[VersionDocumentoTecnico] = []
     cambios_vigencia: List[VigenciaDocumentoTecnico] = []
+
+
+class VersionVigenteConsulta(BaseModel):
+    id: int
+    numero: int
+    nombre_original: str
+    tipo_contenido: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DocumentoVigenteConsulta(BaseModel):
+    id: int
+    nombre: str
+    tipo: TipoDocumentoTecnico
+    version_vigente: Optional[VersionVigenteConsulta] = None
+    fecha_vigencia: Optional[datetime] = None
+
+    @field_validator("fecha_vigencia")
+    @classmethod
+    def fecha_con_zona(cls, valor: Optional[datetime]) -> Optional[datetime]:
+        if valor is not None and valor.tzinfo is None:
+            return valor.replace(tzinfo=timezone.utc)
+        return valor
+
+
+class VersionConsultaHistorial(VersionVigenteConsulta):
+    estado: EstadoDocumento
+    fecha_subida: datetime
+
+    @field_validator("fecha_subida")
+    @classmethod
+    def fecha_con_zona(cls, valor: datetime) -> datetime:
+        return valor.replace(tzinfo=timezone.utc) if valor.tzinfo is None else valor

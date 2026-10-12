@@ -35,6 +35,8 @@ from src.documentoTecnico.router import router as documento_tecnico_router
 from src.registroCalibracion.router import router as registro_calibracion_router
 from src.accionCorrectiva.router import router as accion_correctiva_router
 
+from src.documentoTecnico.consulta_router import router as documentos_vigentes_router
+
 ENV = settings.ENV.upper()
 ROOT_PATH = getattr(settings, f"ROOT_PATH_{ENV}", "")
 
@@ -62,6 +64,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Version-Id", "X-Version-Numero", "X-Archivo-Nombre", "X-Version-Estado"],
 )
 
 
@@ -85,6 +88,7 @@ app.include_router(auth_router.router)
 app.include_router(notificaciones_router)
 app.include_router(incidente_router)
 app.include_router(documento_tecnico_router)
+app.include_router(documentos_vigentes_router)
 
 app.include_router(registro_calibracion_router)
 app.include_router(accion_correctiva_router)

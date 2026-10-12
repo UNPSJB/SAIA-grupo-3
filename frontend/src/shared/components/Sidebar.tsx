@@ -35,6 +35,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square', permiso: 'operar' },
     { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
     { to: "/consumos", label: "Registros de Consumo", icono: "bi bi-droplet" },
+    { to: "/documentos-vigentes", label: "Documentos vigentes", icono: "bi bi-journal-check", permiso: "operar" },
     { to: "/documentos-tecnicos", label: "Documentos Técnicos", icono: "bi bi-journal-text" },
     ...(currentUser?.administrar ? [{
       label: 'Incidentes',

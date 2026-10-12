@@ -28,6 +28,8 @@ import {
 import { VencimientosPage } from '../features/personal';
 import { DocumentoTecnicoPage } from '../features/documentosTecnicos';
 
+import { DocumentosVigentesPage } from '../features/documentosTecnicos/DocumentosVigentesPage';
+
 function HomeRedirect() {
   const { currentUser } = useAuth();
   return <Navigate to={homeFor(currentUser)} replace />;
@@ -64,6 +66,7 @@ export function AppRouter() {
             {/* Operación diaria: requiere capacidad operar */}
             <Route element={<ProtectedRoute requireOperate />}>
               <Route path="checklist" element={<ChecklistPage />} />
+              <Route path="documentos-vigentes" element={<DocumentosVigentesPage />} />
 
             </Route>
 
