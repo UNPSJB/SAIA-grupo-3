@@ -12,7 +12,7 @@ from src.incidente import schemas, services
 from src.incidente.constants import EstadoIncidente, TipoIncidente
 from src.pagination import PaginatedResponse
 from src.auth.router_base import PermissionedRouter
-from src.auth.dependencies import get_current_personal, tiene_permiso_operar
+from src.auth.dependencies import get_current_personal, tiene_permiso_administrar, tiene_permiso_operar
 from src.exceptions import PermissionDenied
 from src.personal.models import Personal
 
@@ -70,6 +70,31 @@ def read_incidentes(
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
     )
+
+@router.get(
+    "/abiertos",
+    response_model=PaginatedResponse[schemas.IncidenteAbierto],
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_incidentes_abiertos(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    size: int = Query(10, ge=1, le=100),
+    tipo: TipoIncidente | None = Query(None),
+    dias_minimos: int | None = Query(None, ge=0, description="Solo los abiertos hace N días o más"),
+):
+    """Incidentes sin acción correctiva, del más viejo al más nuevo."""
+    return services.listar_incidentes_abiertos(db, page, size, tipo, dias_minimos)
+
+
+@router.get(
+    "/abiertos/por-tipo",
+    response_model=list[schemas.CantidadPorTipo],
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_abiertos_por_tipo(db: Session = Depends(get_db)):
+    """Indicador 'incidentes abiertos por tipo' para el tablero (E7)."""
+    return services.contar_abiertos_por_tipo(db)
 
 
 @router.get("/{incidente_id}", response_model=schemas.Incidente)

@@ -29,3 +29,7 @@ class Incidente(ModeloBase):
     imagen_path: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     reportado_por = relationship("src.personal.models.Personal")
+
+    @property 
+    def dias_abierto(self) -> int:
+        return (datetime.now() - self.fecha_hora).days

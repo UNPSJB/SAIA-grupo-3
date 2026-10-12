@@ -51,3 +51,20 @@ export interface IncidenteCreateInput {
 }
 
 export type IncidenteUpdateInput = IncidenteCreateInput;
+
+export interface IncidenteAbierto extends Incidente {
+  dias_abierto: number;
+}
+
+export interface PaginatedIncidentesAbiertos {
+  items: IncidenteAbierto[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
+export interface CantidadPorTipo {
+  tipo: TipoIncidente;
+  cantidad: number;
+}

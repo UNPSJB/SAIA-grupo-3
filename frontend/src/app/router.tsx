@@ -21,7 +21,7 @@ import { ChecklistPage } from '../features/checklist';
 import { AuditoriaPage } from '../features/auditoria';
 import { ReporteConsumosPage } from '../features/consumoQuimicos/ConsumoQuimicoPage';
 import { VencimientosPage } from '../features/personal';
-import { IncidentePage } from '../features/incidentes';
+import { IncidentePage, IncidentesAbiertosPage } from '../features/incidentes';
 import { VencimientosCalibracionPage } from '../features/equipos';
 
 export function AppRouter() {
@@ -62,7 +62,7 @@ export function AppRouter() {
               <Route path="elementos" element={<ElementoPage />} />
               <Route path="planes" element={<PlanPage />} />
               <Route path="auditoria" element={<AuditoriaPage />} />
-
+              <Route path="incidentes-abiertos" element={<IncidentesAbiertosPage />} />
               <Route
                 path="reportes/consumos"
                 element={<ReporteConsumosPage />}

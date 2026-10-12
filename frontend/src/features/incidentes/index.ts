@@ -6,3 +6,5 @@ export * from './IncidenteList';
 export * from './types';
 export * from './useIncidente';
 export * from './incidenteApi';
+export * from './abiertos/IncidentesAbiertosPage';
+export * from './abiertos/useIncidentesAbiertos';

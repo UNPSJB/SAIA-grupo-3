@@ -10,7 +10,7 @@ from src.incidente.auditoria import (
     MovimientoIncidente,
     registrar_movimiento,
 )
-from src.incidente.constants import EstadoIncidente
+from src.incidente.constants import EstadoIncidente, TipoIncidente
 from src.personal.models import Personal
 
 
@@ -78,6 +78,43 @@ def listar_incidentes(
     items = db.scalars(query.offset(skip).limit(size)).all()
     pages = (total + size - 1) // size if total else 0
     return {"items": items, "total": total, "page": page, "size": size, "pages": pages}
+
+def listar_incidentes_abiertos(
+    db: Session,
+    page: int = 1,
+    size: int = 10,
+    tipo: TipoIncidente | None = None,
+    dias_minimos: int | None = None,
+) -> Dict[str, Any]:
+    """Incidentes sin acción correctiva vigente (estado abierto), del más viejo al más nuevo."""
+    skip = (page - 1) * size
+    query = select(models.Incidente).where(models.Incidente.estado == EstadoIncidente.ABIERTO)
+
+    if tipo is not None:
+        query = query.where(models.Incidente.tipo == tipo)
+    if dias_minimos is not None:
+        # "abiertos hace N días o más" = reportados antes de (hoy - N días)
+        limite = datetime.now() - timedelta(days=dias_minimos)
+        query = query.where(models.Incidente.fecha_hora <= limite)
+
+    total = db.scalar(select(func.count()).select_from(query.subquery()))
+    items = db.scalars(
+        query.order_by(models.Incidente.fecha_hora.asc())   # el más viejo primero
+        .offset(skip).limit(size)
+    ).all()
+    pages = (total + size - 1) // size if total else 0
+    return {"items": items, "total": total, "page": page, "size": size, "pages": pages}
+
+
+def contar_abiertos_por_tipo(db: Session) -> list[dict]:
+    """Cantidad de incidentes abiertos de cada tipo (incluye los tipos con 0)."""
+    filas = db.execute(
+        select(models.Incidente.tipo, func.count())
+        .where(models.Incidente.estado == EstadoIncidente.ABIERTO)
+        .group_by(models.Incidente.tipo)
+    ).all()
+    conteo = {tipo: cantidad for tipo, cantidad in filas}
+    return [{"tipo": tipo, "cantidad": conteo.get(tipo, 0)} for tipo in TipoIncidente]
 
 
 def leer_incidente(db: Session, incidente_id: int) -> models.Incidente:

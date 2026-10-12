@@ -531,6 +531,9 @@ def cargar_seed() -> None:
                      "tipo": tipo,
                      "fecha_hora": datetime.combine(ayer, time(hour=10 + numero))})
                 incidentes.append(incidente)
+            historial_incidentes_cargado = cargar_historial_incidentes(
+                db, incidentes, personas[0], ayer
+            )
 
             resumen_calibraciones = cargar_calibraciones(db, equipos, hoy)
 

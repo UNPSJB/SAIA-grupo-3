@@ -56,3 +56,14 @@ class MovimientoIncidente(BaseModel):
     personal: PersonalResumen
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class IncidenteAbierto(Incidente):
+    """Listado de abiertos: el incidente + cuántos días lleva sin resolver."""
+    dias_abierto: int
+
+
+class CantidadPorTipo(BaseModel):
+    """Indicador 'incidentes abiertos por tipo' (lo consume el tablero de E7)."""
+    tipo: TipoIncidente
+    cantidad: int
