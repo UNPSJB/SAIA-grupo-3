@@ -28,6 +28,7 @@ export function IncidenteList({
   onReabrirClick,
 }: IncidenteListProps) {
   const { currentUser } = useAuth();
+  const esAdministrador = currentUser?.administrar === true;
   const {
     incidentes,
     loading,
@@ -59,7 +60,9 @@ export function IncidenteList({
   return (
     <>
       <div className="mb-3">
-        <h4 className="text-secondary fw-normal mb-3">Registro de Incidentes</h4>
+        <h4 className="text-secondary fw-normal mb-3">
+          {esAdministrador ? 'Registro de Incidentes' : 'Incidentes que reportaste'}
+        </h4>
         <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
           <div className="d-flex flex-wrap align-items-center gap-2" style={{ maxWidth: '100%' }}>
             <Form.Select
@@ -122,10 +125,10 @@ export function IncidenteList({
                 <th>Fecha y hora</th>
                 <th>Tipo</th>
                 <th>Descripción</th>
-                <th>Reportado por</th>
+                {esAdministrador && <th>Reportado por</th>}
                 <th>Foto</th>
                 <th>Estado</th>
-                <th className="text-center" style={{ width: '200px' }}>
+                <th className="text-center" style={{ width: esAdministrador ? '200px' : '90px' }}>
                   Acciones
                 </th>
               </tr>
@@ -133,10 +136,12 @@ export function IncidenteList({
             <tbody>
               {incidentes.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-4 text-muted">
+                  <td colSpan={esAdministrador ? 7 : 6} className="text-center py-4 text-muted">
                     {estado || fechaDesde || fechaHasta
                       ? 'No hay incidentes para los filtros actuales.'
-                      : 'No hay incidentes registrados.'}
+                      : esAdministrador
+                        ? 'No hay incidentes registrados.'
+                        : 'Todavía no reportaste incidentes.'}
                   </td>
                 </tr>
               ) : (
@@ -155,14 +160,16 @@ export function IncidenteList({
                       </td>
 
                       <td className="text-break">{incidente.descripcion}</td>
-                      <td>
-                        <span>
-                          {incidente.reportado_por.apellido}, {incidente.reportado_por.nombre}
-                        </span>
-                        <div>
-                          <small className="text-muted">DNI: {incidente.reportado_por_dni}</small>
-                        </div>
-                      </td>
+                      {esAdministrador && (
+                        <td>
+                          <span>
+                            {incidente.reportado_por.apellido}, {incidente.reportado_por.nombre}
+                          </span>
+                          <div>
+                            <small className="text-muted">DNI: {incidente.reportado_por_dni}</small>
+                          </div>
+                        </td>
+                      )}
                       <td>
                         {incidente.imagen_path ? (
                           <a

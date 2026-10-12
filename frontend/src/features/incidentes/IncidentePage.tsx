@@ -118,7 +118,9 @@ export function IncidentePage() {
 
   return (
     <Container className="py-2">
-      <h2 className="mb-4 border-bottom pb-2 text-secondary">Gestión de Incidentes</h2>
+      <h2 className="mb-4 border-bottom pb-2 text-secondary">
+        {currentUser?.administrar ? 'Gestión de Incidentes' : 'Mis incidentes'}
+      </h2>
 
       {modo === 'ver' && incidenteSeleccionado && (
         <>

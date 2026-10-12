@@ -36,7 +36,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
     { to: "/consumos", label: "Registros de Consumo", icono: "bi bi-droplet" },
     { to: "/documentos-tecnicos", label: "Documentos Técnicos", icono: "bi bi-journal-text" },
-    {
+    ...(currentUser?.administrar ? [{
       label: 'Incidentes',
       icono: 'bi bi-exclamation-triangle',
       grupo: 'incidentes',
@@ -44,7 +44,12 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         { to: '/incidentes', label: 'Incidentes', icono: 'bi bi-list-ul', end: true, permiso: 'consultarOperacion' },
         { to: '/incidentes/abiertos', label: 'Abiertos', icono: 'bi bi-hourglass-split' },
       ],
-    },
+    } satisfies MenuItem] : [{
+      to: '/incidentes',
+      label: 'Incidentes',
+      icono: 'bi bi-exclamation-triangle',
+      permiso: 'operar',
+    } satisfies MenuItem]),
     {
       label: 'Vencimientos',
       icono: 'bi bi-calendar-x',
