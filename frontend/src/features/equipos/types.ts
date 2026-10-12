@@ -43,3 +43,43 @@ export interface CalibracionInput {
 export function esCertificadoPdf(path: string): boolean {
   return path.toLowerCase().endsWith('.pdf');
 }
+
+// ---------- Vencimientos de calibración ----------
+
+export type EstadoVencimientoCalibracion = 'vencido' | 'por_vencer' | 'vigente';
+
+export const ESTADOS_VENCIMIENTO_CALIBRACION: {
+  value: EstadoVencimientoCalibracion;
+  label: string;
+  variante: string;
+}[] = [
+  { value: 'vencido', label: 'Vencido', variante: 'danger' },
+  { value: 'por_vencer', label: 'Por vencer', variante: 'warning' },
+  { value: 'vigente', label: 'Vigente', variante: 'success' },
+];
+
+export interface EquipoResumen {
+  id: number;
+  numero_serie: string;
+  nombre: string;
+  tipo: TipoEquipo;
+}
+
+export interface VencimientoCalibracion {
+  id: number; // id del equipo
+  fecha_vencimiento: string;
+  fecha_ultima_calibracion: string;
+  periodicidad_dias: number;
+  equipo: EquipoResumen;
+  sector: { id: number; nombre: string } | null;
+  estado: EstadoVencimientoCalibracion;
+  dias_restantes: number;
+}
+
+export interface PaginatedVencimientosCalibracion {
+  items: VencimientoCalibracion[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}

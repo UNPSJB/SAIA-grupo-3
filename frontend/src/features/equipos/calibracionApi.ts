@@ -1,6 +1,11 @@
 import { fetchWithAuth } from '../../shared/libreria/api';
 import { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api';
-import type { Calibracion, CalibracionInput } from './types';
+import type {
+  Calibracion,
+  CalibracionInput,
+  EstadoVencimientoCalibracion,
+  PaginatedVencimientosCalibracion,
+} from './types';
 
 async function mensajeError(res: Response, mensajePorDefecto: string): Promise<string> {
   const errorData = await res.json().catch(() => ({}));
@@ -15,7 +20,7 @@ export async function getCalibracionesEquipo(equipoId: number): Promise<Calibrac
   return res.json();
 }
 
-
+// Se envía como FormData (igual que incidentes) porque puede llevar el archivo de evidencia
 export async function guardarCalibracion(
   equipoId: number,
   datos: CalibracionInput,
@@ -53,4 +58,23 @@ export async function eliminarCalibracion(calibracionId: number): Promise<void> 
   if (!res.ok) {
     throw new Error(await mensajeError(res, 'No se pudo eliminar la calibración.'));
   }
+}
+
+export async function getVencimientosCalibracion(
+  page = 1,
+  size = 10,
+  estado: EstadoVencimientoCalibracion | '' = '',
+  buscar = '',
+  ordenarPor = 'fecha_vencimiento',
+  orden = 'asc'
+): Promise<PaginatedVencimientosCalibracion> {
+  let url = `${API_BASE_URL}/calibraciones/vencimientos?page=${page}&size=${size}&ordenar_por=${ordenarPor}&orden=${orden}`;
+  if (estado) url += `&estado=${estado}`;
+  if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
+
+  const res = await fetchWithAuth(url);
+  if (!res.ok) {
+    throw new Error(await mensajeError(res, 'No se pudo obtener el listado de vencimientos de calibración.'));
+  }
+  return res.json();
 }

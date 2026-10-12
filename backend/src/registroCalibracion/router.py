@@ -11,14 +11,19 @@ from sqlalchemy.orm import Session
 from src.auth.router_base import PermissionedRouter
 from src.config import UPLOADS_DIR
 from src.database import get_db
+from src.documentacion.constants import EstadoVencimiento
+from src.pagination import PaginatedResponse
 from src.registroCalibracion import exceptions, schemas, services
 from src.registroCalibracion.constants import CONTENT_TYPE_PDF, EXTENSIONES_PERMITIDAS
+from src.registroCalibracion.vencimientos import listar_vencimientos_calibracion
 
 
+# GET: cualquier usuario logueado. POST / PUT / DELETE: solo administración.
 router = PermissionedRouter(prefix="/calibraciones", tags=["calibraciones"])
 
 
 def _guardar_certificado(archivo: UploadFile | None) -> str | None:
+    """Guarda la evidencia (foto o PDF) en /uploads, igual que la foto de incidentes."""
     if archivo is None or not archivo.filename:
         return None
 
@@ -41,6 +46,7 @@ def _borrar_archivo(path: str | None) -> None:
 
 
 def _validar(schema, **datos):
+    """Convierte los errores de validación del schema en un 422 como el resto de la API."""
     try:
         return schema(**datos)
     except ValidationError as error:
@@ -80,6 +86,20 @@ def read_registros_calibracion(
     return services.listar_registros(db, equipo_id)
 
 
+
+@router.get("/vencimientos", response_model=PaginatedResponse[schemas.VencimientoCalibracion])
+def read_vencimientos_calibracion(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1, description="Número de página"),
+    size: int = Query(10, ge=1, le=100, description="Cantidad de registros por página"),
+    estado: EstadoVencimiento | None = Query(None, description="vencido, por_vencer o vigente"),
+    buscar: str = Query("", description="Búsqueda por nombre de equipo, número de serie o sector"),
+    ordenar_por: str = Query("fecha_vencimiento", description="fecha_vencimiento, equipo, numero_serie o sector"),
+    orden: str = Query("asc", description="asc o desc"),
+):
+    return listar_vencimientos_calibracion(db, page, size, estado, buscar, ordenar_por, orden)
+
+
 @router.get("/{registro_id}", response_model=schemas.RegistroCalibracion)
 def read_registro_calibracion(registro_id: int, db: Session = Depends(get_db)):
     return services.leer_registro(db, registro_id)
@@ -109,6 +129,7 @@ def update_registro_calibracion(
         _borrar_archivo(certificado_nuevo)
         raise
 
+    # Si se reemplazó la evidencia, borramos el archivo viejo
     if certificado_nuevo is not None:
         _borrar_archivo(certificado_anterior)
     return registro_actualizado
