@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Badge, Button, Card, Form, Modal } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
-import { descargarVersion, getDocumentoTecnico, marcarVersionVigente } from './documentoTecnicoApi';
+import { descargarVersion, getDocumentoTecnico, visualizarVersion } from './documentoTecnicoApi';
 import {
   TIPOS_DOCUMENTO_TECNICO,
   COLORES_DOCUMENTO_TECNICO,
@@ -46,10 +46,10 @@ export function DocumentoTecnicoView({
   onEditar,
 }: DocumentoTecnicoViewProps) {
   const { currentUser } = useAuth();
-  const [mostrarModal, setMostrarModal] = useState(false);
-  const [versionElegida, setVersionElegida] = useState('');
-  const [guardandoVigencia, setGuardandoVigencia] = useState(false);
-  const [errorVigencia, setErrorVigencia] = useState<string | null>(null);
+  
+  const [mostrarModalHistorial, setMostrarModalHistorial] = useState(false); 
+  const [versionHistorialElegida, setVersionHistorialElegida] = useState(''); 
+
   const [documento, setDocumento] = useState<DocumentoTecnico | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,22 +76,17 @@ export function DocumentoTecnicoView({
     }
   };
 
-  const confirmarVigencia = async (evento: React.FormEvent<HTMLFormElement>) => {
-    evento.preventDefault();
-    if (!documento || !versionElegida || guardandoVigencia) return;
-    setGuardandoVigencia(true);
-    setErrorVigencia(null);
+  const handleVisualizar = async (version: VersionDocumentoTecnico) => {
     try {
-      const actualizado = await marcarVersionVigente(documento.id, Number(versionElegida));
-      setDocumento(actualizado);
-      setMostrarModal(false);
+      await visualizarVersion(version);
     } catch (err: unknown) {
-      setErrorVigencia(
-        err instanceof Error ? err.message : 'No se pudo cambiar la versión vigente.',
-      );
-    } finally {
-      setGuardandoVigencia(false);
+      window.alert(err instanceof Error ? err.message : 'No se pudo visualizar el archivo.');
     }
+  };
+  
+  const esVisualizable = (nombreOriginal: string) => {
+    const extension = nombreOriginal.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'pdf'].includes(extension || '');
   };
 
   if (error) {
@@ -159,32 +154,38 @@ export function DocumentoTecnicoView({
                   <small className="text-muted d-block fst-italic">"{vigente.comentario}"</small>
                 )}
               </div>
-              <Button variant="primary" size="sm" onClick={() => void handleDescargar(vigente)}>
-                <i className="bi bi-download me-1"></i>Descargar
-              </Button>
+
+              <div className="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                {esVisualizable(vigente.nombre_original) && (
+                  <Button variant="primary" size="sm" onClick={() => void handleVisualizar(vigente)}>
+                    <i className="bi bi-eye me-1"></i>Ver
+                  </Button>
+                )}
+                <Button variant="primary" size="sm" onClick={() => void handleDescargar(vigente)}>
+                  <i className="bi bi-download me-1"></i>Descargar
+                </Button>
+              </div>
+
             </div>
           ) : (
             <p className="text-muted">Este documento no tiene un archivo vigente.</p>
           )}
         </Card.Body>
-
-        {currentUser?.administrar &&
-          documento.estado === 'vigente' &&
-          documento.versiones.some((v) => v.id !== vigente?.id) && (
-            <div className="d-flex justify-content-end px-4 pb-3">
-              <Button
-                variant="outline-success"
-                onClick={() => {
-                  setVersionElegida('');
-                  setErrorVigencia(null);
-                  setMostrarModal(true);
-                }}
-              >
-                Cambiar versión vigente
-              </Button>
-            </div>
-          )}
         <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+          
+          {currentUser?.administrar && documento.versiones.length > 0 && (
+            <Button 
+              variant="info" 
+              className="text-white me-auto" 
+              onClick={() => {
+                setVersionHistorialElegida('');
+                setMostrarModalHistorial(true);
+              }}
+            >
+              <i className="bi bi-clock-history me-1"></i>Ver historial
+            </Button>
+          )}
+
           <Button variant="secondary" onClick={onVolver}>
             Volver
           </Button>
@@ -193,57 +194,89 @@ export function DocumentoTecnicoView({
           </Button>
         </Card.Footer>
       </Card>
+
       <Modal
-        show={mostrarModal}
+        show={mostrarModalHistorial}
         onHide={() => {
-          if (!guardandoVigencia) setMostrarModal(false);
+          setMostrarModalHistorial(false);
+          setVersionHistorialElegida('');
         }}
         centered
-        backdrop={guardandoVigencia ? 'static' : true}
-        keyboard={!guardandoVigencia}
+        size="lg"
       >
-        <Form onSubmit={confirmarVigencia}>
-          <Modal.Header closeButton={!guardandoVigencia}>
-            <Modal.Title className="fs-5">Cambiar versión vigente</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            {errorVigencia && <ErrorAlert mensaje={errorVigencia} />}
-            <Form.Group controlId="version-vigente-documento">
-              <Form.Label>Versión que corresponde seguir</Form.Label>
-              <Form.Select
-                required
-                value={versionElegida}
-                disabled={guardandoVigencia}
-                onChange={(e) => setVersionElegida(e.target.value)}
-              >
-                <option value="">Seleccionar versión</option>
-                {documento.versiones.map((version) => (
-                  <option key={version.id} value={version.id} disabled={version.id === vigente?.id}>
-                    v{version.numero} · {version.nombre_original} ·{' '}
-                    {formatearFecha(version.fecha_subida)}
-                    {version.id === vigente?.id ? ' (vigente actual)' : ''}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-            <p className="small text-muted mt-3 mb-0">
-              {vigente ? `La versión actual (v${vigente.numero}) quedará archivada. ` : ''}
-              Se registrarán tu usuario y la fecha y hora del cambio. Los archivos se conservarán.
-            </p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="secondary"
-              disabled={guardandoVigencia}
-              onClick={() => setMostrarModal(false)}
+        <Modal.Header closeButton>
+          <Modal.Title className="fs-5">Historial de Versiones</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group controlId="select-historial-versiones">
+            <Form.Label>Seleccione una versión para consultar la trazabilidad</Form.Label>
+            <Form.Select
+              value={versionHistorialElegida}
+              onChange={(e) => setVersionHistorialElegida(e.target.value)}
             >
-              Cancelar
-            </Button>
-            <Button variant="success" type="submit" disabled={!versionElegida || guardandoVigencia}>
-              {guardandoVigencia ? 'Guardando...' : 'Marcar vigente'}
-            </Button>
-          </Modal.Footer>
-        </Form>
+              <option value="">Desplegar versiones anteriores...</option>
+              {documento.versiones.map((version) => (
+                <option key={version.id} value={version.id}>
+                  Versión {version.numero} · Subida el {formatearFecha(version.fecha_subida)} {version.estado === 'vigente' ? '(Vigente actual)' : '(Archivada)'}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+
+          {versionHistorialElegida && (
+            <div className="mt-4 p-4 bg-light border rounded">
+              {(() => {
+                const vSelec = documento.versiones.find((v) => v.id === Number(versionHistorialElegida));
+                if (!vSelec) return null;
+                return (
+                  <>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h6 className="fw-bold mb-0">
+                        Detalles de la Versión <Badge bg={vSelec.estado === 'vigente' ? 'success' : 'secondary'}>{vSelec.numero}</Badge>
+                      </h6>
+                      <Badge bg={vSelec.estado === 'vigente' ? 'success' : 'secondary'}>
+                        {vSelec.estado.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <small className="text-muted d-block mb-1">
+                      <strong>Archivo:</strong> {vSelec.nombre_original} ({formatearTamanio(vSelec.tamanio_bytes)})
+                    </small>
+                    <small className="text-muted d-block mb-1">
+                      <strong>Subido por:</strong> {vSelec.subido_por.apellido}, {vSelec.subido_por.nombre}
+                    </small>
+                    <small className="text-muted d-block mb-1">
+                      <strong>Fecha de subida:</strong> {formatearFecha(vSelec.fecha_subida)}
+                    </small>
+                    {vSelec.comentario && (
+                      <small className="text-muted d-block fst-italic mt-2">
+                        <strong>Nota:</strong> "{vSelec.comentario}"
+                      </small>
+                    )}
+                    
+                    <div className="mt-4 d-flex justify-content-end align-items-center gap-2">
+                      {esVisualizable(vSelec.nombre_original) && (
+                       <Button variant="primary" onClick={() => void handleVisualizar(vSelec)} style={{ width: 'auto' }}>
+                          <i className="bi bi-eye me-1"></i>Ver
+                        </Button>
+                      )}
+                      <Button variant="primary" onClick={() => void handleDescargar(vSelec)} style={{ width: 'auto' }}>
+                        <i className="bi bi-download me-1"></i>Descargar esta versión
+                      </Button>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => {
+            setMostrarModalHistorial(false);
+            setVersionHistorialElegida('');
+          }}>
+            Cerrar
+          </Button>
+        </Modal.Footer>
       </Modal>
     </>
   );

@@ -107,3 +107,16 @@ export async function marcarVersionVigente(
   );
   return leerRespuesta(res, 'No se pudo cambiar la versión vigente.');
 }
+
+//FUNCION: Para ver la imagen sin descargar el documento
+export async function visualizarVersion(version: VersionDocumentoTecnico): Promise<void> {
+  const res = await fetchWithAuth(`${URL_DOCUMENTOS}/versiones/${version.id}/archivo`);
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(mensajeDeError(errorData.detail, 'No se pudo cargar el archivo para visualizar.'));
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
