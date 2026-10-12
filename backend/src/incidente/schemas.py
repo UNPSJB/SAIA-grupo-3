@@ -5,11 +5,13 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.checklist.schemas import PersonalResumen
 from src.incidente.auditoria import AccionMovimientoIncidente
-from src.incidente.constants import EstadoIncidente
+from src.incidente.constants import EstadoIncidente, TipoIncidente
 
 
 class IncidenteCreate(BaseModel):
     descripcion: str = Field(min_length=1, max_length=1000)
+    tipo: TipoIncidente
+
 
     @field_validator("descripcion", mode="before")
     @classmethod

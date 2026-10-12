@@ -29,7 +29,7 @@ from src.plan.models import Plan
 from src.documentacion.models import Documentacion
 from src.tipoDocumento.models import TipoDocumento
 from src.incidente.models import Incidente
-from src.incidente.constants import EstadoIncidente
+from src.incidente.constants import EstadoIncidente, TipoIncidente
 from src.incidente.auditoria import AccionMovimientoIncidente, MovimientoIncidente, registrar_movimiento
 from src.accionCorrectiva.models import AccionCorrectiva
 from src.registroCalibracion.models import RegistroCalibracion
@@ -521,18 +521,16 @@ def cargar_seed() -> None:
                     {"personal_id": operador.id, "tipo_documento_id": tipo.id},
                     {"fecha_vencimiento": hoy + timedelta(days=(-7, 7, 60)[(numero - 1) % 3])})
             incidentes = []
-            for numero, descripcion in enumerate([
-                "Se detectó una pérdida de agua debajo de la pileta del área de lavado.",
-                "Se observó presencia de insectos en el sector de almacenamiento.",
-                "Un cliente devolvió un producto por inconvenientes con el envase.",
+            for numero, (descripcion, tipo) in enumerate([
+                ("Se detectó una pérdida de agua debajo de la pileta del área de lavado.", TipoIncidente.EQUIPOS),
+                ("Se observó presencia de insectos en el sector de almacenamiento.", TipoIncidente.PLAGAS),
+                ("Un cliente devolvió un producto por inconvenientes con el envase.", TipoIncidente.PRODUCTO),
             ]):
                 incidente, _ = obtener_o_crear(db, Incidente, {"descripcion": descripcion},
                     {"reportado_por_dni": operadores[numero].dni,
+                     "tipo": tipo,
                      "fecha_hora": datetime.combine(ayer, time(hour=10 + numero))})
                 incidentes.append(incidente)
-            historial_incidentes_cargado = cargar_historial_incidentes(
-                db, incidentes, personas[0], ayer
-            )
 
             resumen_calibraciones = cargar_calibraciones(db, equipos, hoy)
 

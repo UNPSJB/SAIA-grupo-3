@@ -36,6 +36,7 @@ def crear_incidente(
     reportante = validar_reportante(db, reportado_por_dni)
     db_incidente = models.Incidente(
         descripcion=incidente.descripcion,
+         tipo=incidente.tipo,
         reportado_por_dni=reportado_por_dni,
         imagen_path=imagen_path,
     )
@@ -96,6 +97,7 @@ def modificar_incidente(
 ) -> models.Incidente:
     db_incidente = leer_incidente(db, incidente_id)
     db_incidente.descripcion = incidente.descripcion
+    db_incidente.tipo = incidente.tipo
     if incidente.estado is not None:
         db_incidente.estado = incidente.estado
     if imagen_path is not None:
