@@ -68,6 +68,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         { to: '/personal', label: 'Personal', icono: 'bi bi-people', end: true },
         { to: '/sectores', label: 'Sectores', icono: 'bi bi-diagram-3' },
         { to: '/tipos-documento', label: 'Tipo Documento', icono: 'bi bi-file-earmark-text' },
+        { to: '/tipos-incidente', label: 'Tipo Incidente', icono: 'bi bi-exclamation-triangle-fill' },
         { to: '/equipos', label: 'Equipos e Instrumentos', icono: 'bi bi-tools' },
         { to: '/insumos', label: 'Insumos / Ingredientes', icono: 'bi bi-box-seam', end: true },
         { to: '/insumos-quimicos', label: 'Insumos Químicos', icono: 'bi bi-droplet-half' },

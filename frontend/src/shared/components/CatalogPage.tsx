@@ -10,15 +10,20 @@ import { FormErrors } from './FormErrors';
 import { ErrorAlert } from './ErrorAlert';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ListPagination } from './ListPagination';
-type RecordItem = { id: number; activo: boolean; nombre?: string; tipo?: string; sufijo?: string };
+type RecordItem = { id: number; activo: boolean; nombre?: string; tipo?: string; sufijo?: string; color?: string };
+interface CampoColor {
+  value: string;
+  label: string;
+}
 interface Props {
   title: string;
   endpoint: string;
   fields: Record<string, string>;
   options?: Record<string, string[]>;
+  colorField?: CampoColor;
   load: (id: number) => Promise<RecordItem>;
 }
-export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
+export function CatalogPage({ title, endpoint, fields, options, colorField, load }: Props) {
   const route = useCrudRoute(`/${endpoint}`, load);
   const list = usePagedList<RecordItem>(endpoint, route.mode === 'listado');
   const form = useForm<Record<string, string>>({ shouldUnregister: true });
@@ -33,6 +38,15 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
       ),
     );
   }, [route.item, fields, options, reset]);
+  const esCampoColor = (key: string) => colorField?.value === key;
+  const esEtiquetaColor = (key: string) => colorField?.label === key;
+  const columnasVisibles = Object.entries(fields).filter(([key]) => !esCampoColor(key));
+  const celdaColor = (item: RecordItem) =>
+    colorField ? (
+      <Badge bg={String(item[colorField.value as keyof RecordItem] ?? 'secondary')}>
+        {String(item[colorField.label as keyof RecordItem] ?? '')}
+      </Badge>
+    ) : null;
   const mutate = async (method: string, id?: number, data?: object) => {
     const response = await fetchWithAuth(
       `${API_BASE_URL}/${endpoint}${id === undefined ? '' : `/${id}`}`,
@@ -79,7 +93,7 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
         <>
           <ListControls
             {...list}
-            title={endpoint === 'tipos-documento' ? 'Catálogo de tipos' : 'Nómina de Unidades'}
+            title={endpoint === 'tipos-documento' ? 'Catálogo de tipos' : endpoint === 'tipos-incidente' ? 'Catálogo de tipos de incidente' : 'Nómina de Unidades'}
           >
             <Form.Check
               id={`inactivos-${endpoint}`}
@@ -92,7 +106,9 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
               <i className="bi bi-plus-lg me-1" aria-hidden="true" />
               {endpoint === 'tipos-documento'
                 ? 'Nuevo Tipo de Documento'
-                : 'Nueva Unidad de Medida'}
+                : endpoint === 'tipos-incidente'
+                  ? 'Nuevo Tipo de Incidente'
+                  : 'Nueva Unidad de Medida'}
             </Button>
           </ListControls>
           {list.error && <ErrorAlert mensaje={list.error} />}
@@ -106,7 +122,7 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
                     <SortableHeader column="id" {...list}>
                       ID
                     </SortableHeader>
-                    {Object.entries(fields).map(([key, label]) => (
+                    {columnasVisibles.map(([key, label]) => (
                       <SortableHeader key={key} column={key} {...list}>
                         {label}
                       </SortableHeader>
@@ -125,8 +141,10 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
                       <td>
                         <Badge bg="secondary">#{item.id}</Badge>
                       </td>
-                      {Object.keys(fields).map((key) => (
-                        <td key={key}>{String(item[key as keyof RecordItem] ?? '')}</td>
+                      {columnasVisibles.map(([key]) => (
+                        <td key={key}>
+                          {esEtiquetaColor(key) ? celdaColor(item) : String(item[key as keyof RecordItem] ?? '')}
+                        </td>
                       ))}
                       <td>
                         <Badge bg={item.activo ? 'success' : 'danger'}>
@@ -196,7 +214,7 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
                   {!list.loading && list.items.length === 0 && (
                     <tr>
                       <td
-                        colSpan={Object.keys(fields).length + 3}
+                        colSpan={columnasVisibles.length + 3}
                         className="text-center py-4 text-muted"
                       >
                         No hay resultados.
@@ -221,7 +239,36 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
             {Object.entries(fields).map(([key, label]) => (
               <Form.Group key={key} controlId={`catalog-${key}`} className="mb-3">
                 <Form.Label>{label}</Form.Label>
-                {options?.[key] ? (
+                {esCampoColor(key) && options?.[key] ? (
+                  <div className="d-flex flex-wrap gap-2" role="radiogroup" aria-label={label}>
+                    {options[key].map((value) => (
+                      <div key={value} className="p-0">
+                        <input
+                          id={`catalog-${key}-${value}`}
+                          type="radio"
+                          value={value}
+                          className="visually-hidden"
+                          {...form.register(key, { required: 'Elegí un color.' })}
+                        />
+                        <label
+                          htmlFor={`catalog-${key}-${value}`}
+                          title={value}
+                          className={`d-block rounded border bg-${value}`}
+                          style={{
+                            width: 38,
+                            height: 38,
+                            cursor: 'pointer',
+                            outline:
+                              form.watch(key) === value
+                                ? '3px solid var(--bs-body-color)'
+                                : '1px solid var(--bs-border-color)',
+                            outlineOffset: 2,
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : options?.[key] ? (
                   <Form.Select
                     {...form.register(key, { required: 'Este campo es obligatorio.' })}
                     isInvalid={!!form.formState.errors[key]}
@@ -240,6 +287,11 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
                     isInvalid={!!form.formState.errors[key]}
                   />
                 )}
+                {esCampoColor(key) && form.formState.errors[key] && (
+                  <div className="invalid-feedback d-block">
+                    {String(form.formState.errors[key]?.message ?? '')}
+                  </div>
+                )}
                 <Form.Control.Feedback type="invalid">
                   {String(form.formState.errors[key]?.message ?? '')}
                 </Form.Control.Feedback>
@@ -256,10 +308,10 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
       )}
       {route.mode === 'ver' && route.item && (
         <Card body>
-          {Object.entries(fields).map(([key, label]) => (
+          {columnasVisibles.map(([key, label]) => (
             <p key={key}>
               <strong>{label}:</strong>{' '}
-              {String(route.item?.[key as keyof RecordItem] ?? options?.[key]?.[0] ?? '')}
+              {esEtiquetaColor(key) ? celdaColor(route.item!) : String(route.item?.[key as keyof RecordItem] ?? options?.[key]?.[0] ?? '')}
             </p>
           ))}
           <Button onClick={route.back}>Volver</Button>{' '}
