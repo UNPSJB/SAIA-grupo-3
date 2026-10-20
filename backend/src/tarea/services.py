@@ -4,9 +4,25 @@ from sqlalchemy import delete, select, update, func
 from sqlalchemy.orm import Session
 from src.tarea.models import Tarea, TareaInsumoQuimico
 from src.elementos.models import Elemento
+from src.equipos.models import Equipo
+from src.insumosQuimicos.models import InsumoQuimico
 from src.tarea import schemas, exceptions
 
+
+def _validar_referencias(db: Session, equipo_id: int | None, insumos_quimicos: list | None) -> None:
+    """Error 400 si el equipo o algún insumo químico indicado no existe
+    (sin esto, la base rechaza el guardado y el usuario recibe un error 500)."""
+    if equipo_id is not None and db.get(Equipo, equipo_id) is None:
+        raise exceptions.EquipoNoExiste()
+    if insumos_quimicos:
+        ids = {req.insumo_quimico_id for req in insumos_quimicos}
+        encontrados = db.scalars(select(InsumoQuimico.id).where(InsumoQuimico.id.in_(ids))).all()
+        if len(encontrados) != len(ids):
+            raise exceptions.InsumosQuimicosNoEncontrados()
+
+
 def crear_tarea(db: Session, tarea: schemas.TareaCreate) -> Tarea:
+    _validar_referencias(db, tarea.equipo_id, tarea.insumos_quimicos)
     elementos_db = db.scalars(select(Elemento).where(Elemento.id.in_(tarea.elemento_ids))).all() if tarea.elemento_ids else []
 
     nueva_tarea = Tarea(
@@ -50,6 +66,8 @@ def leer_tarea(db: Session, tarea_id: int) -> Tarea:
 def modificar_tarea(db: Session, tarea_id: int, tarea: schemas.TareaUpdate) -> Tarea:
     db_tarea = leer_tarea(db, tarea_id)
     datos_actualizar = tarea.model_dump(exclude_unset=True, exclude={'elemento_ids', 'insumos_quimicos'})
+
+    _validar_referencias(db, datos_actualizar.get("equipo_id"), tarea.insumos_quimicos)
     
     if datos_actualizar:
         db.execute(update(Tarea).where(Tarea.id == tarea_id).values(**datos_actualizar))

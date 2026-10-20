@@ -1,9 +1,9 @@
-import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { Tarea, TareaCreate, PaginatedTareas } from './types';
 
 export async function getTareas(page = 1, size = 10): Promise<PaginatedTareas> {
   const res = await fetchWithAuth(`${API_BASE_URL}/tareas?page=${page}&size=${size}`);
-  if (!res.ok) throw new Error('No se pudo listar las tareas.');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'No se pudo listar las tareas.'));
   return res.json();
 }
 
@@ -44,6 +44,6 @@ export async function deleteTarea(id: number): Promise<void> {
 }
 export async function getTareaById(id: number): Promise<Tarea> {
   const response = await fetchWithAuth(`${API_BASE_URL}/tareas/${id}`);
-  if (!response.ok) throw new Error('No se encontró el registro.');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'No se encontró el registro.'));
   return response.json();
 }

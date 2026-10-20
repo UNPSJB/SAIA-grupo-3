@@ -1,4 +1,4 @@
-import { fetchWithAuth, mensajeDeError, API_BASE_URL } from '../../shared/libreria/api';
+import { fetchWithAuth, API_BASE_URL, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { PaginatedTiposDocumento, TipoDocumento, TipoDocumentoDatos } from './types';
 
 const API_URL = `${API_BASE_URL}/tipos-documento`;
@@ -15,7 +15,7 @@ export async function getTiposDocumento(
   if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
 
   const response = await fetchWithAuth(url);
-  if (!response.ok) throw new Error('Error al obtener los tipos de documento.');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'Error al obtener los tipos de documento.'));
   return response.json();
 }
 

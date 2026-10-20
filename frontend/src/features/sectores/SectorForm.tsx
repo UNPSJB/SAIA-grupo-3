@@ -50,7 +50,7 @@ export function SectorForm({ sectorInicial, onGuardar, onCancelar }: SectorFormP
       </Card.Header>
       <Card.Body className="p-4">
         <Form noValidate onSubmit={handleSubmit}>
-          <FormErrors errors={form.formState.errors} />
+          <FormErrors key={form.formState.submitCount} errors={form.formState.errors} />
           <Form.Group controlId="SectorForm-nombre" className="mb-4">
             <Form.Label>Nombre del Sector</Form.Label>
             <Form.Control

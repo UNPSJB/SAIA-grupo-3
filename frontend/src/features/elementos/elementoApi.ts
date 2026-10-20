@@ -1,4 +1,4 @@
-import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { Elemento } from './types';
 
 export interface PaginatedElementos {
@@ -19,7 +19,7 @@ export async function getElementos(
   const res = await fetchWithAuth(
     `${API_BASE_URL}/elementos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`,
   );
-  if (!res.ok) throw new Error('No se pudo listar los elementos.');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'No se pudo listar los elementos.'));
   return res.json();
 }
 
@@ -74,6 +74,6 @@ export async function registrarRecambioApi(id: number, fecha: string): Promise<E
 }
 export async function getElementoById(id: number): Promise<Elemento> {
   const response = await fetchWithAuth(`${API_BASE_URL}/elementos/${id}`);
-  if (!response.ok) throw new Error('No se encontró el registro.');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'No se encontró el registro.'));
   return response.json();
 }

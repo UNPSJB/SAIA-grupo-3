@@ -1,4 +1,4 @@
-import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { Insumo, InsumoCreate, InsumoUpdate } from './types';
 
 export interface PaginatedInsumos {
@@ -21,13 +21,13 @@ export const getInsumos = async (
   if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
 
   const response = await fetchWithAuth(url);
-  if (!response.ok) throw new Error('Error al obtener insumos');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'Error al obtener insumos'));
   return response.json();
 };
 
 export const getInsumo = async (id: number): Promise<Insumo> => {
   const response = await fetchWithAuth(`${API_BASE_URL}/insumos/${id}`);
-  if (!response.ok) throw new Error('Error al obtener el insumo');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'Error al obtener el insumo'));
   return response.json();
 };
 
@@ -37,7 +37,7 @@ export const createInsumo = async (insumo: InsumoCreate): Promise<Insumo> => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(insumo),
   });
-  if (!response.ok) throw new Error('Error al crear insumo');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'Error al crear insumo'));
   return response.json();
 };
 
@@ -48,23 +48,18 @@ export const updateInsumo = async (id: number, insumo: InsumoUpdate): Promise<In
     body: JSON.stringify(insumo),
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const msg = Array.isArray(errorData.detail)
-      ? errorData.detail[0].msg
-      : errorData.detail || 'Error al actualizar insumo';
-    throw new Error(msg);
-  }
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'Error al actualizar insumo'));
+
 
   return response.json();
 };
 
 export const deleteInsumo = async (id: number): Promise<void> => {
   const response = await fetchWithAuth(`${API_BASE_URL}/insumos/${id}`, { method: 'DELETE' });
-  if (!response.ok) throw new Error('Error al eliminar insumo');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'Error al eliminar insumo'));
 };
 export async function getInsumoById(id: number): Promise<Insumo> {
   const response = await fetchWithAuth(`${API_BASE_URL}/insumos/${id}`);
-  if (!response.ok) throw new Error('No se encontró el registro.');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'No se encontró el registro.'));
   return response.json();
 }

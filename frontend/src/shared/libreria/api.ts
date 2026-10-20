@@ -4,6 +4,9 @@ export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localh
 );
 export const SESSION_EXPIRED_EVENT = 'saia:session-expired';
 
+export const MENSAJE_SIN_CONEXION =
+  'No se pudo conectar con el servidor. Verificá tu conexión o intentá de nuevo en unos minutos.';
+
 interface TokenResponse {
   access_token: string;
   user_id: number;
@@ -23,15 +26,42 @@ export function setAccessToken(token: string | null): void {
   accessToken = token;
 }
 
+function traducirErrorValidacion(item: { type?: string; loc?: unknown[]; msg?: unknown }): string {
+  const mensaje = String(item.msg ?? '');
+  if (mensaje.startsWith('Value error, ')) return mensaje.replace('Value error, ', ''); // ya viene en español
+  const campo = String(item.loc?.[item.loc.length - 1] ?? 'dato').replace(/_/g, ' ');
+  switch (item.type) {
+    case 'missing':
+      return `Falta completar el campo "${campo}".`;
+    case 'string_too_short':
+      return `El campo "${campo}" no puede estar vacío.`;
+    case 'string_too_long':
+      return `El campo "${campo}" supera el largo permitido.`;
+    case 'int_parsing':
+    case 'float_parsing':
+      return `El campo "${campo}" debe ser un número.`;
+    case 'enum':
+      return `El valor elegido en "${campo}" no es válido.`;
+    default:
+      return mensaje;
+  }
+}
+
 export function mensajeDeError(detail: unknown, porDefecto: string): string {
   if (typeof detail === 'string') return detail;
 
   if (Array.isArray(detail)) {
-    return detail.map((item) => String(item.msg).replace('Value error, ', '')).join('\n');
+    return detail.map(traducirErrorValidacion).join('\n');
   }
 
   return porDefecto;
 }
+
+export async function mensajeDeRespuesta(res: Response, porDefecto: string): Promise<string> {
+  const errorData = await res.json().catch(() => ({}));
+  return mensajeDeError(errorData.detail, porDefecto);
+}
+
 
 export async function renovarSesion(): Promise<TokenResponse | null> {
   if (!refreshEnCurso) {
@@ -68,7 +98,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
   const requestVersion = sessionVersion;
   const esEndpointDeToken = url.split('?')[0].replace(/\/$/, '').endsWith('/auth/token');
 
-  const hacerPeticion = (token: string | null) => {
+  const hacerPeticion = async (token: string | null) => {
     const headers = new Headers(options.headers);
 
     if (token) {
@@ -81,11 +111,15 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
       headers.set('Content-Type', 'application/json');
     }
 
-    return fetch(url, {
-      ...options,
-      headers,
-      credentials: 'include',
-    });
+    try {
+      return await fetch(url, {
+        ...options,
+        headers,
+        credentials: 'include',
+      });
+    } catch {
+      throw new Error(MENSAJE_SIN_CONEXION);
+    }
   };
 
   let response = await hacerPeticion(accessToken);

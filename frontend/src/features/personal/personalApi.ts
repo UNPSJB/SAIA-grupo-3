@@ -1,4 +1,4 @@
-import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type {
   Personal,
   PersonalCreateInput,
@@ -23,9 +23,8 @@ export async function getPersonal(
     `${API_BASE_URL}/personal?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&proximos_a_vencer=${proximosAVencer}`
   );
 
-  if (!res.ok) {
-    throw new Error('No se pudo listar el personal.');
-  }
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'No se pudo listar el personal.'));
+
 
   return res.json();
 }
@@ -74,16 +73,12 @@ export async function deletePersonal(id: number): Promise<void> {
     method: 'DELETE',
   });
 
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(
-      errorData.detail || 'No se pudo dar de baja el registro.'
-    );
-  }
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'No se pudo dar de baja el registro.'));
+
 }
 
 export async function getPersonalById(id: number): Promise<Personal> {
   const res = await fetchWithAuth(`${API_BASE_URL}/personal/${id}`);
-  if (!res.ok) throw new Error('No se pudo obtener el legajo del empleado.');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'No se pudo obtener el legajo del empleado.'));
   return res.json();
 }

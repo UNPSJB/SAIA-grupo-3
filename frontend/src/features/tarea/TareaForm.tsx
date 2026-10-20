@@ -228,7 +228,7 @@ export function TareaForm({ tareaInicial, equipoIdFijo, onGuardar, onCancelar }:
           {errorValidacion && <Alert variant="danger">{errorValidacion}</Alert>}
 
           <Form noValidate onSubmit={handleSubmit}>
-            <FormErrors errors={form.formState.errors} />
+            <FormErrors key={form.formState.submitCount} errors={form.formState.errors} />
             <div className="row">
               <Form.Group controlId="TareaForm-nombre" className="col-md-8 mb-3">
                 <Form.Label>Nombre de la Tarea</Form.Label>

@@ -1,4 +1,4 @@
-import { API_BASE_URL, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { UnidadMedida } from './types';
 
 const API_URL = `${API_BASE_URL}/unidades-medida`;
@@ -23,7 +23,7 @@ export const getUnidadesMedida = async (
   if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
 
   const response = await fetchWithAuth(url);
-  if (!response.ok) throw new Error('Error al obtener las unidades de medida');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'Error al obtener las unidades de medida'));
   return response.json();
 };
 
@@ -37,13 +37,8 @@ export const createUnidadMedida = async (unidad: {
     body: JSON.stringify(unidad),
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const msg = Array.isArray(errorData.detail)
-      ? errorData.detail[0].msg
-      : errorData.detail || 'Error al crear la unidad de medida';
-    throw new Error(msg);
-  }
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'Error al crear la unidad de medida'));
+
 
   return response.json();
 };
@@ -58,13 +53,8 @@ export const updateUnidadMedida = async (
     body: JSON.stringify(unidad),
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const msg = Array.isArray(errorData.detail)
-      ? errorData.detail[0].msg
-      : errorData.detail || 'Error al actualizar la unidad de medida';
-    throw new Error(msg);
-  }
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'Error al actualizar la unidad de medida'));
+
 
   return response.json();
 };
@@ -73,5 +63,5 @@ export const deleteUnidadMedida = async (id: number): Promise<void> => {
   const response = await fetchWithAuth(`${API_URL}/${id}`, {
     method: 'DELETE',
   });
-  if (!response.ok) throw new Error('Error al eliminar la unidad de medida');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'Error al eliminar la unidad de medida'));
 };

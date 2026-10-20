@@ -97,7 +97,7 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
           </ListControls>
           {list.error && <ErrorAlert mensaje={list.error} />}
           {list.loading && <LoadingSpinner mensaje="Cargando listado..." />}
-          <FormErrors errors={form.formState.errors} />
+          <FormErrors key={form.formState.submitCount} errors={form.formState.errors} />
           <Card className="shadow-sm border-0">
             <Card.Body className="p-0">
               <Table responsive striped hover className="mb-0 align-middle">
@@ -217,7 +217,7 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
       {(route.mode === 'crear' || (route.mode === 'editar' && route.item)) && (
         <Card body>
           <Form noValidate onSubmit={save}>
-            <FormErrors errors={form.formState.errors} />
+            <FormErrors key={form.formState.submitCount} errors={form.formState.errors} />
             {Object.entries(fields).map(([key, label]) => (
               <Form.Group key={key} controlId={`catalog-${key}`} className="mb-3">
                 <Form.Label>{label}</Form.Label>
@@ -271,7 +271,7 @@ export function CatalogPage({ title, endpoint, fields, options, load }: Props) {
       {route.mode === 'eliminar' && route.item && (
         <Card body>
           <p>¿Dar de baja este registro?</p>
-          <FormErrors errors={form.formState.errors} />
+          <FormErrors key={form.formState.submitCount} errors={form.formState.errors} />
           <Form onSubmit={form.handleSubmit(remove)}>
             <Button onClick={route.back} disabled={form.formState.isSubmitting}>
               Cancelar

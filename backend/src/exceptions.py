@@ -1,7 +1,19 @@
-from typing import Any, Dict
+from typing import Any, Dict, Type, TypeVar
 
 from fastapi import HTTPException, status
+from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, ValidationError
 
+SchemaT = TypeVar("SchemaT", bound=BaseModel)
+
+
+def validar_schema(schema: Type[SchemaT], **datos: Any) -> SchemaT:
+    """Arma un schema a mano (por ejemplo, con datos que llegan por Form) y, si los
+    datos no son válidos, responde 422 con el mensaje del schema en lugar de un 500."""
+    try:
+        return schema(**datos)
+    except ValidationError as error:
+        raise RequestValidationError(error.errors(include_context=False))
 
 class DetailedHTTPException(HTTPException):
     STATUS_CODE = status.HTTP_500_INTERNAL_SERVER_ERROR

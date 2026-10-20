@@ -1,4 +1,4 @@
-import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { ConsumoQuimico } from './types';
 
 export interface PaginatedConsumos {
@@ -48,7 +48,7 @@ export async function getConsumos(
   const res = await fetchWithAuth(
     `${API_BASE_URL}/consumo-quimico?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`,
   );
-  if (!res.ok) throw new Error('No se pudo listar los consumos.');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'No se pudo listar los consumos.'));
   return res.json();
 }
 
@@ -58,10 +58,7 @@ export async function createConsumo(data: ConsumoQuimico): Promise<ConsumoQuimic
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const e = await res.json();
-    throw new Error(mensajeDeError(e.detail, 'Error'));
-  }
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'Error al registrar el consumo.'));
   return res.json();
 }
 
@@ -71,19 +68,17 @@ export async function updateConsumo(id: number, data: ConsumoQuimico): Promise<C
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const e = await res.json();
-    throw new Error(mensajeDeError(e.detail, 'Error'));
-  }
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'Error al actualizar el consumo.'));
+
   return res.json();
 }
 
 export async function deleteConsumo(id: number): Promise<void> {
   const res = await fetchWithAuth(`${API_BASE_URL}/consumo-quimico/${id}`, { method: 'DELETE' });
-  if (!res.ok) throw new Error('Error al eliminar');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'Error al eliminar el consumo.'));
 }
 export async function getConsumoById(id: number): Promise<ConsumoQuimico> {
   const response = await fetchWithAuth(`${API_BASE_URL}/consumo-quimico/${id}`);
-  if (!response.ok) throw new Error('No se encontró el consumo.');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'No se encontró el consumo.'));
   return response.json();
 }

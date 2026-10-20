@@ -14,7 +14,7 @@ from src.pagination import PaginatedResponse
 from src.auth.router_base import PermissionedRouter
 from src.auth.dependencies import (get_current_personal, tiene_permiso_operar,
     puede_consultar_operacion, tiene_permiso_administrar)
-from src.exceptions import PermissionDenied
+from src.exceptions import PermissionDenied, validar_schema
 from src.personal.models import Personal
 
 
@@ -43,7 +43,7 @@ def create_incidente(
     db: Session = Depends(get_db),
 ):
     reportado_por_dni = current_personal.dni
-    incidente = schemas.IncidenteCreate(descripcion=descripcion, tipo=tipo)
+    incidente = validar_schema(schemas.IncidenteCreate, descripcion=descripcion, tipo=tipo)
     imagen_path = _guardar_imagen(foto)
     try:
         return services.crear_incidente(db, incidente, reportado_por_dni, imagen_path)
@@ -126,7 +126,7 @@ def update_incidente(
     foto: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-    incidente = schemas.IncidenteUpdate(descripcion=descripcion, tipo=tipo)
+    incidente = validar_schema(schemas.IncidenteUpdate, descripcion=descripcion, tipo=tipo)
     imagen_anterior = services.leer_incidente(db, incidente_id).imagen_path
     imagen_nueva = _guardar_imagen(foto)
     try:

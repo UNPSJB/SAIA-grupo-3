@@ -141,7 +141,7 @@ export function InsumoQuimicoForm({
       </Card.Header>
       <Card.Body className="p-4">
         <Form noValidate onSubmit={handleSubmit}>
-          <FormErrors errors={form.formState.errors} />
+          <FormErrors key={form.formState.submitCount} errors={form.formState.errors} />
           {optionsError && (
             <div role="alert" className="text-danger">
               {optionsError}

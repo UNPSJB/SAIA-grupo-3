@@ -1,4 +1,4 @@
-import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { Equipo } from './types';
 
 export interface PaginatedEquipos {
@@ -19,7 +19,7 @@ export async function getEquipos(
   const res = await fetchWithAuth(
     `${API_BASE_URL}/equipos?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`,
   );
-  if (!res.ok) throw new Error('No se pudo listar los equipos.');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'No se pudo listar los equipos.'));
   return res.json();
 }
 
@@ -61,7 +61,7 @@ export async function deleteEquipo(id: number): Promise<void> {
 
 export async function getEquipoById(id: number): Promise<Equipo> {
   const res = await fetchWithAuth(`${API_BASE_URL}/equipos/${id}`);
-  if (!res.ok) throw new Error('Error al obtener el equipo');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'Error al obtener el equipo'));
   return res.json();
 }
 
@@ -69,14 +69,12 @@ export async function registrarCalibracionEquipo(
   id: number, 
   datosCalibracion: Partial<Equipo>
 ): Promise<Equipo> {
-  const res = await fetch(`${API_BASE_URL}/equipos/${id}`, {
+  const res = await fetchWithAuth(`${API_BASE_URL}/equipos/${id}`, {
     method: 'PUT', 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datosCalibracion),
   });
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.detail || 'Error al registrar la calibración del equipo.');
-  }
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'Error al registrar la calibración del equipo.'));
+
   return res.json();
 }

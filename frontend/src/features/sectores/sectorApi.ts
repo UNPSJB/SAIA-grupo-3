@@ -1,4 +1,4 @@
-import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { Sector } from './types';
 
 export interface PaginatedSectores {
@@ -24,7 +24,7 @@ export async function getSectores(
   }
 
   const res = await fetchWithAuth(url);
-  if (!res.ok) throw new Error('No se pudo listar los sectores.');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'No se pudo listar los sectores.'));
   return res.json();
 }
 
@@ -66,6 +66,6 @@ export async function deleteSector(id: number): Promise<void> {
 
 export async function getSectorById(id: number): Promise<Sector> {
   const res = await fetchWithAuth(`${API_BASE_URL}/sectores/${id}`);
-  if (!res.ok) throw new Error('Error al obtener el detalle del sector');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'Error al obtener el detalle del sector'));
   return res.json();
 }

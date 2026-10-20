@@ -1,4 +1,4 @@
-import { API_BASE_URL, fetchWithAuth, mensajeDeError } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { Incidente } from './types';
 import type {
   AccionCorrectiva,
@@ -6,15 +6,10 @@ import type {
   ReaperturaInput,
 } from './accionCorrectivaTypes';
 
-async function mensajeError(res: Response, mensajePorDefecto: string): Promise<string> {
-  const errorData = await res.json().catch(() => ({}));
-  return mensajeDeError(errorData.detail, mensajePorDefecto);
-}
-
 export async function getAccionesCorrectivas(incidenteId: number): Promise<AccionCorrectiva[]> {
   const res = await fetchWithAuth(`${API_BASE_URL}/incidentes/${incidenteId}/acciones-correctivas`);
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudieron cargar las acciones correctivas.'));
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudieron cargar las acciones correctivas.'));
   }
   return res.json();
 }
@@ -32,7 +27,7 @@ export async function registrarAccionCorrectiva(
     },
   );
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudo registrar la acción correctiva.'));
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudo registrar la acción correctiva.'));
   }
   return res.json();
 }
@@ -46,7 +41,7 @@ export async function modificarAccionCorrectiva(
     body: JSON.stringify(datos),
   });
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudo modificar la acción correctiva.'));
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudo modificar la acción correctiva.'));
   }
   return res.json();
 }
@@ -60,7 +55,7 @@ export async function reabrirIncidente(
     body: JSON.stringify(datos),
   });
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudo reabrir el incidente.'));
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudo reabrir el incidente.'));
   }
   return res.json();
 }

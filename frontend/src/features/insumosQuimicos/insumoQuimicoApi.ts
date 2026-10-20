@@ -1,4 +1,4 @@
-import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { InsumoQuimico, InsumoQuimicoCreate, InsumoQuimicoUpdate } from './types';
 
 export interface PaginatedInsumosQuimicos {
@@ -23,13 +23,13 @@ export async function getInsumosQuimicos(
   if (tipoQuimico) url += `&tipo_quimico=${encodeURIComponent(tipoQuimico)}`;
 
   const res = await fetchWithAuth(url);
-  if (!res.ok) throw new Error('No se pudo listar los insumos químicos.');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'No se pudo listar los insumos químicos.'));
   return res.json();
 }
 
 export async function getInsumoQuimicoById(id: number): Promise<InsumoQuimico> {
   const res = await fetchWithAuth(`${API_BASE_URL}/insumos-quimicos/${id}`);
-  if (!res.ok) throw new Error('Error al obtener el insumo químico.');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'Error al obtener el insumo químico.'));
   return res.json();
 }
 

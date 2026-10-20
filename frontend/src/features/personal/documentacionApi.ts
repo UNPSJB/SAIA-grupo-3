@@ -1,4 +1,4 @@
-import { fetchWithAuth, mensajeDeError, API_BASE_URL } from '../../shared/libreria/api';
+import { fetchWithAuth, API_BASE_URL, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { Documento, EstadoVencimiento, PaginatedVencimientos } from './types';
 
 export interface DocumentoDatos {
@@ -6,15 +6,10 @@ export interface DocumentoDatos {
   fecha_vencimiento: string;
 }
 
-async function mensajeError(res: Response, mensajePorDefecto: string): Promise<string> {
-  const errorData = await res.json().catch(() => ({}));
-  return mensajeDeError(errorData.detail, mensajePorDefecto);
-}
-
 export async function getDocumentosPersonal(personalId: number): Promise<Documento[]> {
   const res = await fetchWithAuth(`${API_BASE_URL}/documentacion?personal_id=${personalId}`);
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudieron obtener los documentos del personal.'));
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudieron obtener los documentos del personal.'));
   }
   return res.json();
 }
@@ -29,7 +24,7 @@ export async function createDocumento(
     body: JSON.stringify({ ...datos, personal_id: personalId }),
   });
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'Error al registrar el documento.'));
+    throw new Error(await mensajeDeRespuesta(res, 'Error al registrar el documento.'));
   }
   return res.json();
 }
@@ -44,7 +39,7 @@ export async function updateDocumento(
     body: JSON.stringify(datos),
   });
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'Error al actualizar el documento.'));
+    throw new Error(await mensajeDeRespuesta(res, 'Error al actualizar el documento.'));
   }
   return res.json();
 }
@@ -54,7 +49,7 @@ export async function deleteDocumento(documentoId: number): Promise<void> {
     method: 'DELETE',
   });
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudo eliminar el documento.'));
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudo eliminar el documento.'));
   }
 }
 
@@ -72,7 +67,7 @@ export async function getVencimientos(
 
   const res = await fetchWithAuth(url);
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudo obtener el listado de vencimientos.'));
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudo obtener el listado de vencimientos.'));
   }
   return res.json();
 }

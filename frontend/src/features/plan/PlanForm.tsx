@@ -263,7 +263,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
           {errorValidacion && <Alert variant="danger">{errorValidacion}</Alert>}
 
           <Form noValidate onSubmit={handleSubmit}>
-            <FormErrors errors={form.formState.errors} />
+            <FormErrors key={form.formState.submitCount} errors={form.formState.errors} />
             <Form.Group controlId="PlanForm-nombre" className="mb-3">
               <Form.Label>Nombre del Plan</Form.Label>
               <Form.Control

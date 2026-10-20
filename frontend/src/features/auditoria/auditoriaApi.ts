@@ -1,4 +1,4 @@
-import { API_BASE_URL, mensajeDeError, fetchWithAuth } from '../../shared/libreria/api';
+import { API_BASE_URL, fetchWithAuth, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type { PaginatedPlanesRealizados, PlanRealizado } from './types';
 
 export async function getPlanesRealizados(page = 1, size = 10, desde = '', hasta = ''): Promise<PaginatedPlanesRealizados> {
@@ -16,6 +16,6 @@ export async function getPlanesRealizados(page = 1, size = 10, desde = '', hasta
 
 export async function getPlanRealizadoById(id: number): Promise<PlanRealizado> {
   const res = await fetchWithAuth(`${API_BASE_URL}/planes-realizados/${id}`);
-  if (!res.ok) throw new Error('Error al obtener el detalle del plan.');
+  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'Error al obtener el detalle del plan.'));
   return res.json();
 }

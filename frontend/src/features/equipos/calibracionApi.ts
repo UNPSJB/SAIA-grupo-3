@@ -1,5 +1,5 @@
 import { fetchWithAuth } from '../../shared/libreria/api';
-import { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api';
+import { API_BASE_URL, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type {
   Calibracion,
   CalibracionInput,
@@ -7,15 +7,10 @@ import type {
   PaginatedVencimientosCalibracion,
 } from './types';
 
-async function mensajeError(res: Response, mensajePorDefecto: string): Promise<string> {
-  const errorData = await res.json().catch(() => ({}));
-  return mensajeDeError(errorData.detail, mensajePorDefecto);
-}
-
 export async function getCalibracionesEquipo(equipoId: number): Promise<Calibracion[]> {
   const res = await fetchWithAuth(`${API_BASE_URL}/calibraciones/?equipo_id=${equipoId}`);
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudieron obtener las calibraciones del equipo.'));
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudieron obtener las calibraciones del equipo.'));
   }
   return res.json();
 }
@@ -46,7 +41,7 @@ export async function guardarCalibracion(
     }
   );
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudo guardar la calibración.'));
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudo guardar la calibración.'));
   }
   return res.json();
 }
@@ -56,7 +51,7 @@ export async function eliminarCalibracion(calibracionId: number): Promise<void> 
     method: 'DELETE',
   });
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudo eliminar la calibración.'));
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudo eliminar la calibración.'));
   }
 }
 
@@ -74,7 +69,7 @@ export async function getVencimientosCalibracion(
 
   const res = await fetchWithAuth(url);
   if (!res.ok) {
-    throw new Error(await mensajeError(res, 'No se pudo obtener el listado de vencimientos de calibración.'));
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudo obtener el listado de vencimientos de calibración.'));
   }
   return res.json();
 }

@@ -1,5 +1,5 @@
 import { fetchWithAuth } from '../../shared/libreria/api';
-import { API_BASE_URL, mensajeDeError } from '../../shared/libreria/api';
+import { API_BASE_URL, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type {
   CantidadPorTipo,
   EstadoIncidente,
@@ -70,7 +70,7 @@ export async function eliminarIncidente(incidenteId: number): Promise<void> {
 
 export async function getIncidenteById(id: number): Promise<Incidente> {
   const response = await fetchWithAuth(`${API_BASE_URL}/incidentes/${id}`);
-  if (!response.ok) throw new Error('No se encontró el incidente.');
+  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'No se encontró el incidente.'));
   return response.json();
 }
 
