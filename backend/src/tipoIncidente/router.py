@@ -1,6 +1,7 @@
 from src.auth.router_base import PermissionedRouter
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+from src.auth.dependencies import puede_consultar_operacion
 from src.database import get_db
 from src.pagination import PaginatedResponse
 from src.tipoIncidente import schemas, services
@@ -28,6 +29,16 @@ def read_tipos_incidente(
 ):
     return services.listar_tipos_incidente(
         db, page, size, mostrar_inactivos, ordenar_por, orden, buscar)
+
+
+@router.get(
+    "/activos",
+    response_model=list[schemas.TipoIncidente],
+    dependencies=[Depends(puede_consultar_operacion)],
+)
+def read_tipos_incidente_activos(db: Session = Depends(get_db)):
+    """Solo tipos activos: lo consumen los formularios y filtros de operación."""
+    return services.listar_tipos_incidente_activos(db)
 
 
 @router.get("/{tipo_incidente_id}", response_model=schemas.TipoIncidente)

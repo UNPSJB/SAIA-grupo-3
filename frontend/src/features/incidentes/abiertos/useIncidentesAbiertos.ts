@@ -2,18 +2,18 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { usePagedList } from '../../../shared/hooks/usePagedList';
 import { getAbiertosPorTipo } from '../incidenteApi';
-import type { CantidadPorTipo, IncidenteAbierto, TipoIncidente } from '../types';
+import type { CantidadPorTipo, IncidenteAbierto } from '../types';
 
 export function useIncidentesAbiertos() {
   const [params] = useSearchParams();
-  const tipo = (params.get('tipo') || '') as TipoIncidente | '';
+  const tipoId = params.get('tipo_id') || '';
   const diasParam = params.get('dias_minimos');
   const diasMinimos =
     diasParam !== null && Number.isFinite(Number(diasParam)) && Number(diasParam) >= 0
       ? Number(diasParam)
       : '';
   const filtros = new URLSearchParams();
-  if (tipo) filtros.set('tipo', tipo);
+  if (tipoId) filtros.set('tipo_id', tipoId);
   if (diasMinimos !== '') filtros.set('dias_minimos', String(diasMinimos));
   const list = usePagedList<IncidenteAbierto>(
     'incidentes/abiertos',
@@ -53,9 +53,9 @@ export function useIncidentesAbiertos() {
     porTipo: resumen.datos,
     resumenLoading: resumen.loading,
     resumenError: resumen.error,
-    tipo,
+    tipoId,
     diasMinimos,
-    cambiarTipo: (valor: TipoIncidente | '') => list.update({ tipo: valor }),
+    cambiarTipo: (valor: number | '') => list.update({ tipo_id: String(valor) }),
     cambiarDiasMinimos: (valor: number | '') => list.update({ dias_minimos: String(valor) }),
   };
 }

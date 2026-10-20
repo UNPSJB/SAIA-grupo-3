@@ -1,3 +1,7 @@
+import type { TipoIncidente } from '../tipoIncidente/types';
+
+export type { TipoIncidente };
+
 export interface ReportanteIncidente {
   dni: string;
   nombre: string;
@@ -11,29 +15,10 @@ export const ESTADOS_INCIDENTE: { value: EstadoIncidente; label: string; variant
   { value: 'cerrado', label: 'Cerrado', variante: 'success' },
 ];
 
-export type TipoIncidente = 'higiene' | 'plagas' | 'equipos' | 'producto';
-
-export const TIPOS_INCIDENTE: { value: TipoIncidente; label: string }[] = [
-  { value: 'higiene', label: 'Higiene y limpieza' },
-  { value: 'plagas', label: 'Plagas' },
-  { value: 'equipos', label: 'Equipos e instalaciones' },
-  { value: 'producto', label: 'Producto / cliente' },
-];
-
-export const COLORES_INCIDENTE: Record<TipoIncidente, string> = {
-  higiene: 'info',
-  plagas: 'danger',
-  equipos: 'primary',
-  producto: 'success',
-};
-
-export function etiquetaTipoIncidente(tipo: TipoIncidente): string {
-  return TIPOS_INCIDENTE.find((t) => t.value === tipo)?.label ?? tipo;
-}
-
 export interface Incidente {
   id: number;
   descripcion: string;
+  tipo_id: number;
   tipo: TipoIncidente;
   fecha_hora: string;
   estado: EstadoIncidente;
@@ -52,7 +37,7 @@ export interface PaginatedIncidentes {
 
 export interface IncidenteCreateInput {
   descripcion: string;
-  tipo: TipoIncidente;
+  tipo_id: number;
   foto?: File | null;
 }
 

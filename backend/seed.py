@@ -29,7 +29,7 @@ from src.documentacion.models import Documentacion
 from src.tipoDocumento.models import TipoDocumento
 from src.tipoIncidente.models import TipoIncidente as ModeloTipoIncidente
 from src.incidente.models import Incidente
-from src.incidente.constants import EstadoIncidente, TipoIncidente
+from src.incidente.constants import EstadoIncidente
 from src.incidente.auditoria import AccionMovimientoIncidente, MovimientoIncidente
 from src.accionCorrectiva.models import AccionCorrectiva
 from src.registroCalibracion.models import RegistroCalibracion
@@ -47,14 +47,13 @@ PASSWORD_OPERARIO = "opera123"
 ASSETS_DIR = Path(__file__).resolve().parent / "seed_assets"
 
 # Nombres verosímiles; todos los perfiles, DNIs y legajos son datos ficticios.
-TIPOS_INCIDENTE = [("Higiene y limpieza", "info"), ("Plagas", "danger"),
-    ("Equipos e instalaciones", "primary"), ("Producto/cliente", "success"),
-    ("Seguridad del personal", "warning"), ("Documentación y registros", "secondary"),
-    ("Control de temperatura", "info"), ("Alérgenos", "danger"),
-    ("Trazabilidad", "primary"), ("Capacitación", "success"),
-    ("Infraestructura edilicia", "warning"), ("Servicios (agua/luz/gas)", "secondary"),
-    ("Gestión de residuos", "info"), ("Proveedores", "danger"),
-    ("Otros", "secondary")]
+# Tipos del seed: los 4 del enum histórico (HU 23: "algo se rompió" = equipos,
+# "hallazgo de plaga" = plagas, "devolución de cliente" = producto/cliente,
+# más higiene, el corazón del sistema) + Accidente y Otros (Deuda tecnica.md #1).
+TIPOS_INCIDENTE_OBLIGATORIOS = [("Higiene y limpieza", "info"), ("Plagas", "danger"),
+    ("Equipos e instalaciones", "primary"), ("Producto / cliente", "success")]
+TIPOS_INCIDENTE = TIPOS_INCIDENTE_OBLIGATORIOS + [
+    ("Accidente", "warning"), ("Otros", "secondary")]
 PERSONAS = [
     ("Lucía", "Fernández"), ("María", "Gómez"), ("Carlos", "Pérez"),
     ("Ana", "Rodríguez"), ("Diego", "Martínez"), ("Sofía", "López"),
@@ -253,8 +252,11 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                     plan.tareas = [tarea]
                 planes.append(plan)
 
-            for nombre_tipo, color in TIPOS_INCIDENTE:
-                crear(ModeloTipoIncidente, {"nombre": nombre_tipo}, color=color, activo=True)
+            tipos_obligatorios = []
+            for indice, (nombre_tipo, color) in enumerate(TIPOS_INCIDENTE):
+                tipo_creado, _ = crear(ModeloTipoIncidente, {"nombre": nombre_tipo}, color=color, activo=True)
+                if indice < len(TIPOS_INCIDENTE_OBLIGATORIOS):
+                    tipos_obligatorios.append(tipo_creado)
 
             for i, nombre in enumerate(TIPOS_DOCUMENTO):
                 tipo, _ = crear(TipoDocumento, {"nombre": nombre}, activo=True)
@@ -269,7 +271,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             for i, (descripcion, correccion, foto_indice) in enumerate(INCIDENTES):
                 reportante = personas[1] if i % 2 == 0 else operadores[i % len(operadores)]
                 incidente, nuevo = crear(Incidente, {"descripcion": descripcion}, reportado_por_dni=reportante.dni,
-                    tipo=list(TipoIncidente)[i % len(TipoIncidente)],
+                    tipo_id=tipos_obligatorios[i % len(tipos_obligatorios)].id,
                     fecha_hora=datetime.combine(hoy - timedelta(days=[1, 3, 7, 15, 30][i % 5]), time(9, i)), imagen_path=fotos[foto_indice],
                     estado=EstadoIncidente.CERRADO if i % 3 else EstadoIncidente.ABIERTO)
                 # Un cierre histórico por incidente; los abiertos tienen una reapertura.
@@ -286,12 +288,12 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                             personal_id=admin.id, fecha_hora=momento + timedelta(hours=2),
                             motivo="La revisión del turno siguiente solicita una nueva verificación del procedimiento.")
 
-            for i, tipo in enumerate(TipoIncidente):
+            for i, tipo in enumerate(tipos_obligatorios):
                 for dias in (1, 7, 30):
-                    descripcion = f"Demostración: incidente de {tipo.value} pendiente de resolución ({dias} días)."
+                    descripcion = f"Demostración: incidente de {tipo.nombre.lower()} pendiente de resolución ({dias} días)."
                     reportante = personas[1]
                     incidente, nuevo = crear(Incidente, {"descripcion": descripcion},
-                        tipo=tipo, reportado_por_dni=reportante.dni,
+                        tipo_id=tipo.id, reportado_por_dni=reportante.dni,
                         fecha_hora=datetime.combine(hoy - timedelta(days=dias), time(8)),
                         imagen_path=fotos[i % len(fotos)], estado=EstadoIncidente.ABIERTO)
                     if nuevo:
@@ -366,7 +368,9 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             # Descubrir los modelos registrados evita olvidar entidades nuevas silenciosamente.
             conteos = {m.class_.__name__: db.scalar(select(func.count()).select_from(m.class_))
                 for m in ModeloBase.registry.mappers}
-            faltantes = {nombre: total for nombre, total in conteos.items() if total < CANTIDAD}
+            # TipoIncidente es un catálogo corto (6 tipos del seed): se exige >= 1.
+            faltantes = {nombre: total for nombre, total in conteos.items()
+                if total < (1 if nombre == "TipoIncidente" else CANTIDAD)}
             if faltantes:
                 raise RuntimeError(f"Modelos con menos de {CANTIDAD} registros: {faltantes}")
             db.commit()

@@ -11,8 +11,10 @@ from src.incidente.auditoria import (
     MovimientoIncidente,
     registrar_movimiento,
 )
-from src.incidente.constants import EstadoIncidente, TipoIncidente
+from src.incidente.constants import EstadoIncidente
 from src.personal.models import Personal
+from src.tipoIncidente import exceptions as tipo_incidente_exceptions
+from src.tipoIncidente.models import TipoIncidente
 
 
 def validar_reportante(db: Session, personal_dni: str) -> Personal:
@@ -28,6 +30,18 @@ def validar_reportante(db: Session, personal_dni: str) -> Personal:
     return reportante
 
 
+def _validar_tipo(
+    db: Session, tipo_id: int, tipo_actual_id: int | None = None
+) -> None:
+    """El tipo debe existir; si está dado de baja, solo se acepta el que ya usa el incidente."""
+    query = select(TipoIncidente).where(
+        TipoIncidente.id == tipo_id,
+        (TipoIncidente.activo == True) | (TipoIncidente.id == tipo_actual_id),
+    )
+    if db.scalar(query) is None:
+        raise tipo_incidente_exceptions.TipoIncidenteNoEncontrado()
+
+
 def crear_incidente(
     db: Session,
     incidente: schemas.IncidenteCreate,
@@ -35,9 +49,10 @@ def crear_incidente(
     imagen_path: str | None = None,
 ) -> models.Incidente:
     reportante = validar_reportante(db, reportado_por_dni)
+    _validar_tipo(db, incidente.tipo_id)
     db_incidente = models.Incidente(
         descripcion=incidente.descripcion,
-         tipo=incidente.tipo,
+        tipo_id=incidente.tipo_id,
         reportado_por_dni=reportado_por_dni,
         imagen_path=imagen_path,
     )
@@ -62,6 +77,7 @@ def listar_incidentes(
     estado: EstadoIncidente | None = None,
     fecha_desde: date | None = None,
     fecha_hasta: date | None = None,
+    tipo_id: int | None = None,
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(models.Incidente).order_by(models.Incidente.fecha_hora.desc())
@@ -69,6 +85,8 @@ def listar_incidentes(
         query = query.where(models.Incidente.reportado_por_dni == reportado_por_dni)
     if estado is not None:
         query = query.where(models.Incidente.estado == estado)
+    if tipo_id is not None:
+        query = query.where(models.Incidente.tipo_id == tipo_id)
     if fecha_desde is not None:
         query = query.where(
             models.Incidente.fecha_hora >= datetime.combine(fecha_desde, time.min)
@@ -88,7 +106,7 @@ def listar_incidentes_abiertos(
     db: Session,
     page: int = 1,
     size: int = 10,
-    tipo: TipoIncidente | None = None,
+    tipo_id: int | None = None,
     dias_minimos: int | None = None,
     buscar: str = "",
 ) -> Dict[str, Any]:
@@ -102,8 +120,8 @@ def listar_incidentes_abiertos(
             models.Incidente.descripcion.ilike(termino)
             | models.Incidente.reportado_por_dni.ilike(termino)
         )
-    if tipo is not None:
-        query = query.where(models.Incidente.tipo == tipo)
+    if tipo_id is not None:
+        query = query.where(models.Incidente.tipo_id == tipo_id)
     if dias_minimos is not None:
         # "abiertos hace N días o más" = reportados antes de (hoy - N días)
         limite = datetime.now() - timedelta(days=dias_minimos)
@@ -118,15 +136,23 @@ def listar_incidentes_abiertos(
     return {"items": items, "total": total, "page": page, "size": size, "pages": pages}
 
 
-def contar_abiertos_por_tipo(db: Session) -> list[dict]:
-    """Cantidad de incidentes abiertos de cada tipo (incluye los tipos con 0)."""
+def contar_abiertos_por_tipo(db: Session) -> list[schemas.CantidadPorTipo]:
+    """Incidentes abiertos de cada tipo del maestro (incluye tipos en 0, activos o
+    dados de baja: nada debe desaparecer del tablero)."""
     filas = db.execute(
-        select(models.Incidente.tipo, func.count())
-        .where(models.Incidente.estado == EstadoIncidente.ABIERTO)
-        .group_by(models.Incidente.tipo)
+        select(TipoIncidente, func.count(models.Incidente.id))
+        .outerjoin(
+            models.Incidente,
+            (models.Incidente.tipo_id == TipoIncidente.id)
+            & (models.Incidente.estado == EstadoIncidente.ABIERTO),
+        )
+        .group_by(TipoIncidente.id)
+        .order_by(TipoIncidente.id)
     ).all()
-    conteo = {tipo: cantidad for tipo, cantidad in filas}
-    return [{"tipo": tipo, "cantidad": conteo.get(tipo, 0)} for tipo in TipoIncidente]
+    return [
+        schemas.CantidadPorTipo(tipo=tipo, cantidad=cantidad)
+        for tipo, cantidad in filas
+    ]
 
 
 def leer_incidente(db: Session, incidente_id: int) -> models.Incidente:
@@ -145,8 +171,9 @@ def modificar_incidente(
     imagen_path: str | None = None,
 ) -> models.Incidente:
     db_incidente = leer_incidente(db, incidente_id)
+    _validar_tipo(db, incidente.tipo_id, tipo_actual_id=db_incidente.tipo_id)
     db_incidente.descripcion = incidente.descripcion
-    db_incidente.tipo = incidente.tipo
+    db_incidente.tipo_id = incidente.tipo_id
     if incidente.estado is not None:
         db_incidente.estado = incidente.estado
     if imagen_path is not None:

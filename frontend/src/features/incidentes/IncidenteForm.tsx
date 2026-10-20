@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Card, Form } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { API_BASE_URL } from '../../shared/libreria/api';
 import { useAuth } from '../../shared/hooks/useAuth';
+import { getTiposIncidenteActivos } from '../tipoIncidente/tipoIncidenteApi';
 import type { Incidente, IncidenteCreateInput, IncidenteUpdateInput, TipoIncidente } from './types';
-import { TIPOS_INCIDENTE } from './types';
 
 interface IncidenteFormProps {
   incidenteInicial?: Incidente | null;
@@ -15,7 +15,9 @@ interface IncidenteFormProps {
 export function IncidenteForm({ incidenteInicial, onGuardar, onCancelar }: IncidenteFormProps) {
   const { currentUser } = useAuth();
   const [descripcion, setDescripcion] = useState(incidenteInicial?.descripcion ?? '');
-  const [tipo, setTipo] = useState<TipoIncidente | ''>(incidenteInicial?.tipo ?? '');
+  const [tipo, setTipo] = useState<number | ''>(incidenteInicial?.tipo.id ?? '');
+  const [tiposActivos, setTiposActivos] = useState<TipoIncidente[]>([]);
+  const [errorTipos, setErrorTipos] = useState<string | null>(null);
   const reportanteDni = incidenteInicial?.reportado_por_dni ?? currentUser?.dni ?? '';
   const [foto, setFoto] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -23,6 +25,27 @@ export function IncidenteForm({ incidenteInicial, onGuardar, onCancelar }: Incid
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
 
   const esEdicion = Boolean(incidenteInicial);
+
+  useEffect(() => {
+    let activo = true;
+    getTiposIncidenteActivos()
+      .then((datos) => {
+        if (activo) {
+          setTiposActivos(datos);
+          setErrorTipos(null);
+        }
+      })
+      .catch((err: unknown) => {
+        if (activo) {
+          setErrorTipos(
+            err instanceof Error ? err.message : 'No se pudieron cargar los tipos de incidente.',
+          );
+        }
+      });
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,7 +64,7 @@ export function IncidenteForm({ incidenteInicial, onGuardar, onCancelar }: Incid
     try {
       await onGuardar({
         descripcion: descripcion.trim(),
-        tipo: tipo as TipoIncidente,
+        tipo_id: tipo as number,
         foto,
       });
     } catch (err: unknown) {
@@ -81,16 +104,23 @@ export function IncidenteForm({ incidenteInicial, onGuardar, onCancelar }: Incid
             </Form.Text>
           </Form.Group>
           <Form.Group className="mb-3">
+            {errorTipos && <ErrorAlert mensaje={errorTipos} />}
             <Form.Label>Tipo de incidente</Form.Label>
             <Form.Select
               required
               value={tipo}
-              onChange={(e) => setTipo(e.target.value as TipoIncidente | '')}
+              onChange={(e) => setTipo(e.target.value === '' ? '' : Number(e.target.value))}
             >
               <option value="">Seleccioná un tipo...</option>
-              {TIPOS_INCIDENTE.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              {incidenteInicial &&
+                !tiposActivos.some((t) => t.id === incidenteInicial.tipo.id) && (
+                  <option value={incidenteInicial.tipo.id} disabled>
+                    {incidenteInicial.tipo.nombre} (dado de baja)
+                  </option>
+                )}
+              {tiposActivos.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre}
                 </option>
               ))}
             </Form.Select>

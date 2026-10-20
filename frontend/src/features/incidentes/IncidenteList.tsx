@@ -8,7 +8,7 @@ import { API_BASE_URL } from '../../shared/libreria/api';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { useIncidente } from './useIncidente';
 import type { EstadoIncidente, Incidente } from './types';
-import { ESTADOS_INCIDENTE, COLORES_INCIDENTE, etiquetaTipoIncidente } from './types';
+import { ESTADOS_INCIDENTE } from './types';
 
 interface IncidenteListProps {
   onNuevoClick: () => void;
@@ -39,6 +39,9 @@ export function IncidenteList({
     changePage,
     estado,
     setEstado,
+    tipoId,
+    setTipoId,
+    tiposActivos,
     fechaDesde,
     setFechaDesde,
     fechaHasta,
@@ -78,6 +81,19 @@ export function IncidenteList({
                 </option>
               ))}
             </Form.Select>
+            <Form.Select
+              aria-label="Filtrar por tipo"
+              value={tipoId}
+              onChange={(e) => setTipoId(e.target.value)}
+              style={{ width: '200px', maxWidth: '100%' }}
+            >
+              <option value="">Todos los tipos</option>
+              {tiposActivos.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre}
+                </option>
+              ))}
+            </Form.Select>
             <Form.Control
               type="date"
               aria-label="Filtrar desde fecha"
@@ -95,7 +111,7 @@ export function IncidenteList({
             <Button
               variant="success"
               onClick={limpiarFiltros}
-              disabled={!estado && !fechaDesde && !fechaHasta}
+              disabled={!estado && !tipoId && !fechaDesde && !fechaHasta}
               className="d-flex align-items-center gap-1"
             >
               <i className="bi bi-x-lg"></i>
@@ -137,7 +153,7 @@ export function IncidenteList({
               {incidentes.length === 0 ? (
                 <tr>
                   <td colSpan={esAdministrador ? 7 : 6} className="text-center py-4 text-muted">
-                    {estado || fechaDesde || fechaHasta
+                    {estado || tipoId || fechaDesde || fechaHasta
                       ? 'No hay incidentes para los filtros actuales.'
                       : esAdministrador
                         ? 'No hay incidentes registrados.'
@@ -152,10 +168,10 @@ export function IncidenteList({
                       <td>{formatearFecha(incidente.fecha_hora)}</td>
                       <td>
                         <Badge
-                          bg={COLORES_INCIDENTE[incidente.tipo]}
-                          text={incidente.tipo === 'higiene' ? 'dark' : undefined}
+                          bg={incidente.tipo.color}
+                          text={['info', 'warning', 'light'].includes(incidente.tipo.color) ? 'dark' : undefined}
                         >
-                          {etiquetaTipoIncidente(incidente.tipo)}
+                          {incidente.tipo.nombre}
                         </Badge>
                       </td>
 

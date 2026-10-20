@@ -92,3 +92,12 @@ def eliminar_tipo_incidente(
     db.commit()
     db.refresh(db_tipo_incidente)
     return db_tipo_incidente
+
+
+def listar_tipos_incidente_activos(db: Session) -> list[models.TipoIncidente]:
+    """Listado plano (sin paginar) de tipos activos, para selects de reportes y filtros."""
+    return db.scalars(
+        select(models.TipoIncidente)
+        .where(models.TipoIncidente.activo == True)  # noqa: E712 — forma del equipo (ver tipoDocumento/services.py)
+        .order_by(models.TipoIncidente.nombre)
+    ).all()

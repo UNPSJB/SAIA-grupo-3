@@ -19,6 +19,12 @@ export async function getTiposIncidente(
   return response.json();
 }
 
+export async function getTiposIncidenteActivos(): Promise<TipoIncidente[]> {
+  const response = await fetchWithAuth(`${API_URL}/activos`);
+  if (!response.ok) throw new Error('Error al obtener los tipos de incidente activos.');
+  return response.json();
+}
+
 export async function createTipoIncidente(datos: { nombre: string; color: string }): Promise<TipoIncidente> {
   const response = await fetchWithAuth(API_URL, {
     method: 'POST',
