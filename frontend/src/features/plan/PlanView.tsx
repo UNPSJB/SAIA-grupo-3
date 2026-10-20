@@ -49,7 +49,7 @@ export function PlanView({ plan, onEditar, onVolver, onDesvincularTarea }: PlanV
           <div className="row mb-4">
             <div className="col-md-4">
               <span className="text-muted small d-block">Responsable</span>
-              <strong>{plan.responsable ? `${plan.responsable.apellido}, ${plan.responsable.nombre}` : `DNI: ${plan.responsable_id}`}</strong>
+              <strong>{plan.responsable ? `${plan.responsable.apellido}, ${plan.responsable.nombre}` : 'Sin datos del responsable'}</strong>
             </div>
             <div className="col-md-4">
               <span className="text-muted small d-block">Sector</span>

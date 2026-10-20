@@ -24,7 +24,7 @@ export function ElementoDeleteView({
       await onConfirmarEliminar(elemento.id);
     } catch (err: unknown) {
       setErrorBackend(
-        err instanceof Error ? err.message : 'Error al procesar la baja del equipo.'
+        err instanceof Error ? err.message : 'Error al procesar la baja del elemento.'
       );
       setEliminando(false);
     }
@@ -34,7 +34,7 @@ export function ElementoDeleteView({
     <Card className="border-danger shadow-sm mx-auto" style={{ maxWidth: '650px' }}>
       <Card.Header className="bg-danger text-white d-flex align-items-center gap-2 py-3">
         <i className="bi bi-exclamation-triangle-fill fs-5"></i>
-        <h5 className="mb-0">Dar de Baja Equipo</h5>
+        <h5 className="mb-0">Dar de Baja Elemento de Limpieza</h5>
       </Card.Header>
       <Card.Body className="p-4">
         {errorBackend && (
@@ -44,7 +44,7 @@ export function ElementoDeleteView({
           </Alert>
         )}
         <p className="text-secondary fs-6">
-          ¿Estás seguro de que deseas dar de baja este equipo del inventario activo?
+          ¿Estás seguro de que deseas dar de baja este elemento de limpieza?
         </p>
         <div className="bg-light p-3 rounded border mb-4">
           <div className="row mb-2">
@@ -58,7 +58,7 @@ export function ElementoDeleteView({
         </div>
         <Alert variant="warning" className="small mb-0">
           <i className="bi bi-info-circle me-1"></i>
-          <strong>Atención:</strong> Esta acción aplicará una baja lógica; el equipo dejará de estar visible en el inventario activo pero no se borrará físicamente.
+          <strong>Atención:</strong> Esta acción aplicará una baja lógica; el elemento dejará de estar disponible para asignarlo a tareas de limpieza, pero no se borrará físicamente.
         </Alert>
       </Card.Body>
       <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">

@@ -39,7 +39,11 @@ export function PlanDeleteView({ plan, onConfirmarEliminar, onCancelar }: PlanDe
           </div>
           <div className="row">
             <span className="col-4 text-muted fw-semibold">Responsable:</span>
-            <span className="col-8">{plan.responsable_id}</span>
+            <span className="col-8">
+              {plan.responsable
+                ? `${plan.responsable.apellido}, ${plan.responsable.nombre}`
+                : 'Sin datos del responsable'}
+            </span>
           </div>
         </div>
       </Card.Body>

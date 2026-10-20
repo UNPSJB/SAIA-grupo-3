@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Button, Card, Form, Modal, Table } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { getTiposDocumento } from '../tipoDocumento/tipoDocumentoApi';
+import { avisarCambioNotificaciones } from '../notificaciones/events';
 import {
   createDocumento,
   deleteDocumento,
@@ -95,6 +96,8 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
         const creado = await createDocumento(personalId, datos);
         setDocumentos((actuales) => [...actuales, creado]);
       }
+      // El aviso de vencimientos cambia al cargar o editar documentación: refresca la campanita.
+      avisarCambioNotificaciones();
       setMostrarFormulario(false);
       setDocumentoEditando(null);
     } catch (err: unknown) {
@@ -108,6 +111,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
     try {
       await deleteDocumento(documento.id);
       setDocumentos((actuales) => actuales.filter((actual) => actual.id !== documento.id));
+      avisarCambioNotificaciones();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al eliminar el documento.');
     }

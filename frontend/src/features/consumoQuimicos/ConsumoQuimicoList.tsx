@@ -90,7 +90,7 @@ export function ConsumoQuimicoList({
                   Producto Químico
                 </SortableHeader>
                 <SortableHeader
-                  column="cantidad"
+                  column="cantidad_utilizada"
                   ordenarPor={ordenarPor}
                   orden={orden}
                   cambiarOrden={cambiarOrden}

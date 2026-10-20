@@ -13,7 +13,8 @@ export interface TareaRealizada {
 }
 
 export interface PersonalResumen {
-  dni: number;
+  id: number;
+  dni: string;
   nombre: string;
   apellido: string;
 }
