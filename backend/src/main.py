@@ -1,11 +1,10 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from src.database import engine
 from src.models import ModeloBase
 
 # Importamos la configuración validada por Pydantic
-from src.config import settings, UPLOADS_DIR
+from src.config import settings
 
 # Importamos configuracion de logger
 from src.logger import setup_logging
@@ -34,6 +33,7 @@ from src.notificaciones.scheduler import iniciar_scheduler, detener_scheduler
 from src.documentoTecnico.router import router as documento_tecnico_router
 from src.registroCalibracion.router import router as registro_calibracion_router
 from src.accionCorrectiva.router import router as accion_correctiva_router
+from src.archivos.router import router as archivos_router
 
 from src.documentoTecnico.consulta_router import router as documentos_vigentes_router
 
@@ -92,6 +92,4 @@ app.include_router(documentos_vigentes_router)
 
 app.include_router(registro_calibracion_router)
 app.include_router(accion_correctiva_router)
-
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
+app.include_router(archivos_router)

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, Button, Badge, ListGroup, Modal } from 'react-bootstrap';
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { ImagenProtegida } from '../../shared/components/ImagenProtegida';
 import type { PlanRealizado, TareaRealizada } from './types';
 
 interface AuditoriaViewProps {
@@ -87,8 +87,8 @@ export function AuditoriaView({ plan, onVolver }: AuditoriaViewProps) {
         </Modal.Header>
         <Modal.Body className="text-center">
           {tareaConFoto?.foto_path && (
-            <img
-              src={`${API_BASE_URL}${tareaConFoto.foto_path}`}
+            <ImagenProtegida
+              ruta={tareaConFoto.foto_path}
               alt={`Foto de ${tareaConFoto.nombre}`}
               className="img-fluid rounded"
               style={{ maxHeight: '70vh' }}

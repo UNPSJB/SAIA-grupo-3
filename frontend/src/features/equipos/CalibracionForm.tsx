@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
+import { FORMATOS_IMAGEN_Y_PDF, validarArchivo } from '../../shared/libreria/archivos';
 import type { Calibracion, CalibracionInput } from './types';
 import { esCertificadoPdf } from './types';
 
@@ -11,8 +12,6 @@ interface CalibracionFormProps {
   onGuardar: (datos: CalibracionInput) => Promise<void>;
   onCancelar: () => void;
 }
-
-const FORMATOS_ACEPTADOS = 'image/*,application/pdf';
 
 function hoyISO(): string {
   const hoy = new Date();
@@ -30,6 +29,7 @@ export function CalibracionForm({
   const [fechaCalibracion, setFechaCalibracion] = useState('');
   const [otorgadoPor, setOtorgadoPor] = useState('');
   const [certificado, setCertificado] = useState<File | null>(null);
+  const [errorCertificado, setErrorCertificado] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [validated, setValidated] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
@@ -45,6 +45,7 @@ export function CalibracionForm({
       setOtorgadoPor('');
     }
     setCertificado(null);
+    setErrorCertificado(null);
     setErrorEnvio(null);
     setValidated(false);
   }, [calibracionInicial]);
@@ -122,29 +123,32 @@ export function CalibracionForm({
         </Form.Label>
         <Form.Control
           type="file"
-          accept={FORMATOS_ACEPTADOS}
+          accept={FORMATOS_IMAGEN_Y_PDF}
           required={!esEdicion}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setCertificado(e.target.files?.[0] ?? null)
-          }
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            const archivo = e.target.files?.[0] ?? null;
+            const error = validarArchivo(archivo, FORMATOS_IMAGEN_Y_PDF);
+            setErrorCertificado(error);
+            setCertificado(error ? null : archivo);
+            if (error) e.target.value = '';
+          }}
         />
+        {errorCertificado && <Form.Text className="text-danger d-block">{errorCertificado}</Form.Text>}
         <Form.Control.Feedback type="invalid">
           Adjuntá el certificado o una foto de la calibración.
         </Form.Control.Feedback>
         {esEdicion && calibracionInicial?.certificado_path && !certificado && (
           <Form.Text className="text-muted">
             Evidencia actual:{' '}
-            <a
-              href={`${API_BASE_URL}${calibracionInicial.certificado_path}`}
-              target="_blank"
-              rel="noreferrer"
+            <EnlaceArchivo
+              ruta={calibracionInicial.certificado_path}
               className="btn btn-outline-primary btn-sm d-inline-flex align-items-center justify-content-center gap-1 text-nowrap"
             >
               <i className={`bi ${esCertificadoPdf(calibracionInicial.certificado_path) ? 'bi-file-earmark-pdf' : 'bi-image'}`} aria-hidden="true"></i>
               {esCertificadoPdf(calibracionInicial.certificado_path)
                 ? 'Ver PDF actual'
                 : 'Ver foto actual'}
-            </a>
+            </EnlaceArchivo>
             . Si elegís un archivo se reemplaza.
           </Form.Text>
         )}

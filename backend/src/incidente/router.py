@@ -1,12 +1,10 @@
-import shutil
-import uuid
 from datetime import date
-from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import Depends, File, Form, Query, UploadFile
 from sqlalchemy.orm import Session
 
-from src.config import UPLOADS_DIR
+from src.archivos.constants import EXTENSIONES_IMAGEN
+from src.archivos.services import borrar_archivo, guardar_archivo
 from src.database import get_db
 from src.incidente import schemas, services
 from src.incidente.constants import EstadoIncidente, TipoIncidente
@@ -21,19 +19,6 @@ from src.personal.models import Personal
 router = PermissionedRouter(prefix="/incidentes", tags=["incidentes"])
 
 
-def _guardar_imagen(foto: UploadFile | None) -> str | None:
-    if foto is None or not foto.filename:
-        return None
-    if not (foto.content_type or "").startswith("image/"):
-        raise HTTPException(status_code=400, detail="El archivo debe ser una imagen.")
-
-    extension = Path(foto.filename).suffix.lower()
-    nombre_archivo = f"{uuid.uuid4().hex}{extension}"
-    with open(UPLOADS_DIR / nombre_archivo, "wb") as destino:
-        shutil.copyfileobj(foto.file, destino)
-    return f"/uploads/{nombre_archivo}"
-
-
 @router.post("/", response_model=schemas.Incidente, dependencies=[Depends(tiene_permiso_operar)])
 def create_incidente(
     descripcion: str = Form(..., min_length=1, max_length=1000),
@@ -44,12 +29,11 @@ def create_incidente(
 ):
     reportado_por_dni = current_personal.dni
     incidente = validar_schema(schemas.IncidenteCreate, descripcion=descripcion, tipo=tipo)
-    imagen_path = _guardar_imagen(foto)
+    imagen_path = guardar_archivo(foto, EXTENSIONES_IMAGEN)
     try:
         return services.crear_incidente(db, incidente, reportado_por_dni, imagen_path)
     except Exception:
-        if imagen_path is not None:
-            (UPLOADS_DIR / Path(imagen_path).name).unlink(missing_ok=True)
+        borrar_archivo(imagen_path)
         raise
 
 
@@ -128,17 +112,16 @@ def update_incidente(
 ):
     incidente = validar_schema(schemas.IncidenteUpdate, descripcion=descripcion, tipo=tipo)
     imagen_anterior = services.leer_incidente(db, incidente_id).imagen_path
-    imagen_nueva = _guardar_imagen(foto)
+    imagen_nueva = guardar_archivo(foto, EXTENSIONES_IMAGEN)
     try:
         incidente_actualizado = services.modificar_incidente(
             db, incidente_id, incidente, imagen_nueva
         )
     except Exception:
-        if imagen_nueva is not None:
-            (UPLOADS_DIR / Path(imagen_nueva).name).unlink(missing_ok=True)
+        borrar_archivo(imagen_nueva)
         raise
-    if imagen_nueva is not None and imagen_anterior is not None:
-        (UPLOADS_DIR / Path(imagen_anterior).name).unlink(missing_ok=True)
+    if imagen_nueva is not None:
+        borrar_archivo(imagen_anterior)
     return incidente_actualizado
 
 

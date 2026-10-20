@@ -4,7 +4,7 @@ import './incidentes.css';
 import { Badge, Button, Card, Form, Table } from 'react-bootstrap';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { useIncidente } from './useIncidente';
 import type { EstadoIncidente, Incidente } from './types';
@@ -172,17 +172,15 @@ export function IncidenteList({
                       )}
                       <td>
                         {incidente.imagen_path ? (
-                          <a
-                            href={`${API_BASE_URL}${incidente.imagen_path}`}
-                            target="_blank"
-                            rel="noreferrer"
+                          <EnlaceArchivo
+                            ruta={incidente.imagen_path}
                             className="btn btn-outline-primary btn-sm d-inline-flex align-items-center justify-content-center gap-1 text-nowrap"
                             title="Ver foto"
                             aria-label="Ver foto del incidente (abre en otra pestaña)"
                           >
                             <i className="bi bi-image" aria-hidden="true"></i>
                             <span>Ver foto</span>
-                          </a>
+                          </EnlaceArchivo>
                         ) : (
                           <Badge bg="secondary">Sin foto</Badge>
                         )}

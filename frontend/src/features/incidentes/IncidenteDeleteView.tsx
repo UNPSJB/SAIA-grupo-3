@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert, Badge, Button, Card } from 'react-bootstrap';
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
 import type { Incidente } from './types';
 
 interface IncidenteDeleteViewProps {
@@ -70,13 +70,7 @@ export function IncidenteDeleteView({
             <span className="col-4 text-muted fw-semibold">Foto:</span>
             <span className="col-8">
               {incidente.imagen_path ? (
-                <a
-                  href={`${API_BASE_URL}${incidente.imagen_path}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Ver foto
-                </a>
+                <EnlaceArchivo ruta={incidente.imagen_path}>Ver foto</EnlaceArchivo>
               ) : (
                 <Badge bg="secondary">Sin foto</Badge>
               )}

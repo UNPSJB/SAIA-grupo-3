@@ -1,7 +1,7 @@
 import { Badge, Button, Card, Table } from 'react-bootstrap';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
 import { useAuth } from '../../shared/hooks/useAuth';
 import type { Calibracion } from './types';
 import { esCertificadoPdf } from './types';
@@ -108,16 +108,14 @@ export function CalibracionList({
                         )}
                       </td>
                       <td>
-                        <a
-                          href={`${API_BASE_URL}${calibracion.certificado_path}`}
-                          target="_blank"
-                          rel="noreferrer"
+                        <EnlaceArchivo
+                          ruta={calibracion.certificado_path}
                           className="btn btn-outline-primary btn-sm d-inline-flex align-items-center justify-content-center gap-1 text-nowrap"
                           aria-label={`${esPdf ? 'Ver PDF' : 'Ver foto'} de la calibración (abre en otra pestaña)`}
                         >
                           <i className={`bi ${esPdf ? 'bi-file-earmark-pdf' : 'bi-image'}`} aria-hidden="true"></i>
                           {esPdf ? 'Ver PDF' : 'Ver foto'}
-                        </a>
+                        </EnlaceArchivo>
                       </td>
                       {currentUser?.administrar && (
                         <td className="text-center">

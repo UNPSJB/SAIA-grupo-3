@@ -16,7 +16,3 @@ class FechaCalibracionRequerida(BadRequest):
 
 class CertificadoRequerido(BadRequest):
     DETAIL = ErrorCode.CERTIFICADO_REQUERIDO
-
-
-class FormatoArchivoInvalido(BadRequest):
-    DETAIL = ErrorCode.FORMATO_ARCHIVO_INVALIDO

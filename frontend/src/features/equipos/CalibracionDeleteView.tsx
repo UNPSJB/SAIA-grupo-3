@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert, Button, Card } from 'react-bootstrap';
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
 import type { Calibracion } from './types';
 import { esCertificadoPdf } from './types';
 
@@ -67,15 +67,13 @@ export function CalibracionDeleteView({
           <div className="row">
             <span className="col-4 text-muted fw-semibold">Evidencia:</span>
             <span className="col-8">
-              <a
-                href={`${API_BASE_URL}${calibracion.certificado_path}`}
-                target="_blank"
-                rel="noreferrer"
+              <EnlaceArchivo
+                ruta={calibracion.certificado_path}
                 className="btn btn-outline-primary d-inline-flex align-items-center justify-content-center gap-2 text-nowrap"
               >
                 <i className={`bi ${esCertificadoPdf(calibracion.certificado_path) ? 'bi-file-earmark-pdf' : 'bi-image'}`} aria-hidden="true"></i>
                 {esCertificadoPdf(calibracion.certificado_path) ? 'Ver PDF' : 'Ver foto'}
-              </a>
+              </EnlaceArchivo>
             </span>
           </div>
         </div>

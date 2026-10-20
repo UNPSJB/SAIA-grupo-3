@@ -1,17 +1,15 @@
 import logging
-import shutil
-import uuid
 from datetime import date
-from pathlib import Path
 
 from fastapi import Depends, File, Form, HTTPException, UploadFile
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from src.archivos.constants import EXTENSIONES_IMAGEN
+from src.archivos.services import borrar_archivo, guardar_archivo
 from src.auth.dependencies import get_current_personal, tiene_permiso_operar
 from src.auth.router_base import PermissionedRouter
 from src.checklist import schemas, services
-from src.config import UPLOADS_DIR
 from src.database import get_db
 from src.exceptions import PermissionDenied
 from src.personal.models import Personal
@@ -54,23 +52,6 @@ def finalizar_tarea_checklist(
     db: Session = Depends(get_db),
     current_personal: Personal = Depends(get_current_personal),
 ):
-    foto_path = None
-
-    if foto and foto.filename:
-        if not (foto.content_type or "").startswith("image/"):
-            raise HTTPException(
-                status_code=400,
-                detail="El archivo debe ser una imagen.",
-            )
-
-        extension = Path(foto.filename).suffix.lower()
-        nombre_archivo = f"{uuid.uuid4().hex}{extension}"
-
-        with open(UPLOADS_DIR / nombre_archivo, "wb") as destino:
-            shutil.copyfileobj(foto.file, destino)
-
-        foto_path = f"/uploads/{nombre_archivo}"
-
     try:
         datos = schemas.ItemFinalizarRequest.model_validate_json(consumos_json)
     except ValidationError as exc:
@@ -79,11 +60,16 @@ def finalizar_tarea_checklist(
             detail=exc.errors(),
         ) from exc
 
-    # La identidad sale del token validado, no de un campo enviado por el navegador.
-    return services.finalizar_item_checklist(
-        db=db,
-        item_id=item_id,
-        personal_id=current_personal.id,
-        foto_path=foto_path,
-        consumos=datos.consumos,
-    )
+    foto_path = guardar_archivo(foto, EXTENSIONES_IMAGEN)
+    try:
+        # La identidad sale del token validado, no de un campo enviado por el navegador.
+        return services.finalizar_item_checklist(
+            db=db,
+            item_id=item_id,
+            personal_id=current_personal.id,
+            foto_path=foto_path,
+            consumos=datos.consumos,
+        )
+    except Exception:
+        borrar_archivo(foto_path)
+        raise

@@ -1,5 +1,5 @@
 import { Badge, Button, Card } from 'react-bootstrap';
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
 import { useAuth } from '../../shared/hooks/useAuth';
 import type { EstadoIncidente, Incidente } from './types';
 import { ESTADOS_INCIDENTE, etiquetaTipoIncidente } from './types';
@@ -63,17 +63,15 @@ export function IncidenteView({ incidente, onEditar, onVolver }: IncidenteViewPr
             <span className="col-4 text-muted fw-semibold">Foto:</span>
             <span className="col-8">
               {incidente.imagen_path ? (
-                <a
-                  href={`${API_BASE_URL}${incidente.imagen_path}`}
-                  target="_blank"
-                  rel="noreferrer"
+                <EnlaceArchivo
+                  ruta={incidente.imagen_path}
                   className="btn btn-outline-primary d-inline-flex align-items-center justify-content-center gap-2 text-nowrap"
                   title="Ver foto"
                   aria-label="Ver foto del incidente (abre en otra pestaña)"
                 >
                   <i className="bi bi-image" aria-hidden="true"></i>
                   <span>Ver foto</span>
-                </a>
+                </EnlaceArchivo>
               ) : (
                 <Badge bg="secondary">Sin foto</Badge>
               )}

@@ -8,6 +8,7 @@ import { Alert, Badge, Button, Card, Form, Modal, ProgressBar, Table } from 'rea
 
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { FORMATOS_IMAGEN, validarArchivo } from '../../shared/libreria/archivos';
 import type { ConsumoTareaInput } from './checklistApi';
 import { useChecklist } from './useChecklist';
 import type { ItemChecklist } from './types';
@@ -34,6 +35,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
 
   const [itemAFinalizar, setItemAFinalizar] = useState<ItemChecklist | null>(null);
   const [imagen, setImagen] = useState<File | null>(null);
+  const [errorImagen, setErrorImagen] = useState<string | null>(null);
   const form = useForm<{ cantidades: Record<string, string> }>({
     defaultValues: { cantidades: {} },
     shouldUnregister: true,
@@ -44,6 +46,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
   const handleAbrirModal = (item: ItemChecklist) => {
     setItemAFinalizar(item);
     setImagen(null);
+    setErrorImagen(null);
     setErrorConsumo(null);
 
     const cantidadesIniciales = Object.fromEntries(
@@ -322,11 +325,17 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
 
                 <Form.Control
                   type="file"
-                  accept="image/*"
+                  accept={FORMATOS_IMAGEN}
+                  isInvalid={errorImagen !== null}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    setImagen(event.target.files?.[0] ?? null);
+                    const archivo = event.target.files?.[0] ?? null;
+                    const error = validarArchivo(archivo, FORMATOS_IMAGEN);
+                    setErrorImagen(error);
+                    setImagen(error ? null : archivo);
+                    if (error) event.target.value = '';
                   }}
                 />
+                {errorImagen && <Form.Text className="text-danger d-block">{errorImagen}</Form.Text>}
               </Form.Group>
             </>
           )}

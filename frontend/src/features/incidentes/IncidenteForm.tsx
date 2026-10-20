@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Button, Card, Form } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
-import { API_BASE_URL } from '../../shared/libreria/api';
+import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
+import { FORMATOS_IMAGEN, validarArchivo } from '../../shared/libreria/archivos';
 import { useAuth } from '../../shared/hooks/useAuth';
 import type { Incidente, IncidenteCreateInput, IncidenteUpdateInput, TipoIncidente } from './types';
 import { TIPOS_INCIDENTE } from './types';
@@ -18,6 +19,7 @@ export function IncidenteForm({ incidenteInicial, onGuardar, onCancelar }: Incid
   const [tipo, setTipo] = useState<TipoIncidente | ''>(incidenteInicial?.tipo ?? '');
   const reportanteDni = incidenteInicial?.reportado_por_dni ?? currentUser?.dni ?? '';
   const [foto, setFoto] = useState<File | null>(null);
+  const [errorFoto, setErrorFoto] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [validated, setValidated] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
@@ -118,24 +120,28 @@ export function IncidenteForm({ incidenteInicial, onGuardar, onCancelar }: Incid
             <Form.Label>Foto (opcional)</Form.Label>
             <Form.Control
               type="file"
-              accept="image/*"
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setFoto(e.target.files?.[0] ?? null)
-              }
+              accept={FORMATOS_IMAGEN}
+              isInvalid={errorFoto !== null}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                const archivo = e.target.files?.[0] ?? null;
+                const error = validarArchivo(archivo, FORMATOS_IMAGEN);
+                setErrorFoto(error);
+                setFoto(error ? null : archivo);
+                if (error) e.target.value = '';
+              }}
             />
+            {errorFoto && <Form.Text className="text-danger d-block">{errorFoto}</Form.Text>}
             {esEdicion && incidenteInicial?.imagen_path && !foto && (
               <Form.Text className="text-muted">
                 Foto actual:{' '}
-                <a
-                  href={`${API_BASE_URL}${incidenteInicial.imagen_path}`}
-                  target="_blank"
-                  rel="noreferrer"
+                <EnlaceArchivo
+                  ruta={incidenteInicial.imagen_path}
                   className="btn btn-outline-primary btn-sm d-inline-flex align-items-center justify-content-center gap-1 text-nowrap"
                   aria-label="Ver foto actual del incidente (abre en otra pestaña)"
                 >
                   <i className="bi bi-image" aria-hidden="true"></i>
                   <span>Ver foto actual</span>
-                </a>
+                </EnlaceArchivo>
                 . Si elegís un archivo se reemplaza.
               </Form.Text>
             )}
