@@ -27,8 +27,9 @@ from src.tarea.models import Tarea, TareaInsumoQuimico, FrecuenciaTarea
 from src.plan.models import Plan
 from src.documentacion.models import Documentacion
 from src.tipoDocumento.models import TipoDocumento
+from src.tipoIncidente.models import TipoIncidente as ModeloTipoIncidente
 from src.incidente.models import Incidente
-from src.incidente.constants import EstadoIncidente, TipoIncidente
+from src.incidente.constants import EstadoIncidente
 from src.incidente.auditoria import AccionMovimientoIncidente, MovimientoIncidente
 from src.accionCorrectiva.models import AccionCorrectiva
 from src.registroCalibracion.models import RegistroCalibracion
@@ -46,6 +47,21 @@ PASSWORD_OPERARIO = "opera123"
 ASSETS_DIR = Path(__file__).resolve().parent / "seed_assets"
 
 # Nombres verosímiles; todos los perfiles, DNIs y legajos son datos ficticios.
+# Tipos del seed: los 4 del enum histórico (HU 23: "algo se rompió" = equipos,
+# "hallazgo de plaga" = plagas, "devolución de cliente" = producto/cliente,
+# más higiene, el corazón del sistema) + Accidente y Otros (Deuda tecnica.md #1).
+TIPOS_INCIDENTE_OBLIGATORIOS = [("Higiene y limpieza", "info"), ("Plagas", "danger"),
+    ("Equipos e instalaciones", "primary"), ("Producto / cliente", "success")]
+TIPOS_INCIDENTE = TIPOS_INCIDENTE_OBLIGATORIOS + [
+    ("Accidente", "warning"), ("Otros", "secondary")]
+# Tipo dado de baja: sirve para probar que no aparece al reportar ni en los filtros,
+# pero que los incidentes que ya lo usan lo siguen mostrando (y se pueden editar).
+TIPO_INCIDENTE_INACTIVO = ("Reclamo de proveedor", "dark")
+INCIDENTES_TIPO_INACTIVO = [
+    ("Un proveedor entregó cajas de insumos con el embalaje dañado.", None, 5),
+    ("Un proveedor entregó un lote sin la etiqueta de trazabilidad.",
+     "Se devolvió el lote y se pidió al proveedor que lo reemplace etiquetado.", 20),
+]
 PERSONAS = [
     ("Lucía", "Fernández"), ("María", "Gómez"), ("Carlos", "Pérez"),
     ("Ana", "Rodríguez"), ("Diego", "Martínez"), ("Sofía", "López"),
@@ -244,6 +260,16 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                     plan.tareas = [tarea]
                 planes.append(plan)
 
+            tipos_obligatorios, tipos_activos = [], []
+            for indice, (nombre_tipo, color) in enumerate(TIPOS_INCIDENTE):
+                tipo_creado, _ = crear(ModeloTipoIncidente, {"nombre": nombre_tipo}, color=color, activo=True)
+                tipos_activos.append(tipo_creado)
+                if indice < len(TIPOS_INCIDENTE_OBLIGATORIOS):
+                    tipos_obligatorios.append(tipo_creado)
+            nombre_inactivo, color_inactivo = TIPO_INCIDENTE_INACTIVO
+            tipo_inactivo, _ = crear(ModeloTipoIncidente, {"nombre": nombre_inactivo},
+                color=color_inactivo, activo=False)
+
             for i, nombre in enumerate(TIPOS_DOCUMENTO):
                 tipo, _ = crear(TipoDocumento, {"nombre": nombre}, activo=True)
                 crear(Documentacion, {"personal_id": operadores[i % len(operadores)].id, "tipo_documento_id": tipo.id},
@@ -257,7 +283,8 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             for i, (descripcion, correccion, foto_indice) in enumerate(INCIDENTES):
                 reportante = personas[1] if i % 2 == 0 else operadores[i % len(operadores)]
                 incidente, nuevo = crear(Incidente, {"descripcion": descripcion}, reportado_por_dni=reportante.dni,
-                    tipo=list(TipoIncidente)[i % len(TipoIncidente)],
+                    # Recorre los 6 tipos activos: todos tienen historial en el listado.
+                    tipo_id=tipos_activos[i % len(tipos_activos)].id,
                     fecha_hora=datetime.combine(hoy - timedelta(days=[1, 3, 7, 15, 30][i % 5]), time(9, i)), imagen_path=fotos[foto_indice],
                     estado=EstadoIncidente.CERRADO if i % 3 else EstadoIncidente.ABIERTO)
                 # Un cierre histórico por incidente; los abiertos tienen una reapertura.
@@ -274,18 +301,40 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                             personal_id=admin.id, fecha_hora=momento + timedelta(hours=2),
                             motivo="La revisión del turno siguiente solicita una nueva verificación del procedimiento.")
 
-            for i, tipo in enumerate(TipoIncidente):
+            # Abiertos de demostración para las tarjetas por tipo (con hover) de Incidentes
+            # Abiertos: los 4 históricos + Accidente con 1, 7 y 30 días. "Otros" queda
+            # sin abiertos a propósito, para ver una tarjeta en 0.
+            tipos_con_abiertos = tipos_obligatorios + [tipos_activos[len(TIPOS_INCIDENTE_OBLIGATORIOS)]]
+            for i, tipo in enumerate(tipos_con_abiertos):
                 for dias in (1, 7, 30):
-                    descripcion = f"Demostración: incidente de {tipo.value} pendiente de resolución ({dias} días)."
+                    descripcion = f"Demostración: incidente de {tipo.nombre.lower()} pendiente de resolución ({dias} días)."
                     reportante = personas[1]
                     incidente, nuevo = crear(Incidente, {"descripcion": descripcion},
-                        tipo=tipo, reportado_por_dni=reportante.dni,
+                        tipo_id=tipo.id, reportado_por_dni=reportante.dni,
                         fecha_hora=datetime.combine(hoy - timedelta(days=dias), time(8)),
                         imagen_path=fotos[i % len(fotos)], estado=EstadoIncidente.ABIERTO)
                     if nuevo:
                         crear(MovimientoIncidente,
                             {"incidente_id": incidente.id, "accion": AccionMovimientoIncidente.REPORTADO},
                             personal_id=reportante.id, fecha_hora=incidente.fecha_hora)
+
+            # Incidentes con el tipo dado de baja: uno abierto y uno cerrado.
+            for i, (descripcion, correccion, dias) in enumerate(INCIDENTES_TIPO_INACTIVO):
+                reportante = personas[1]
+                incidente, nuevo = crear(Incidente, {"descripcion": descripcion},
+                    tipo_id=tipo_inactivo.id, reportado_por_dni=reportante.dni,
+                    fecha_hora=datetime.combine(hoy - timedelta(days=dias), time(11, i)),
+                    imagen_path=fotos[i % len(fotos)],
+                    estado=EstadoIncidente.CERRADO if correccion else EstadoIncidente.ABIERTO)
+                if nuevo:
+                    momento = incidente.fecha_hora
+                    crear(MovimientoIncidente, {"incidente_id": incidente.id, "accion": AccionMovimientoIncidente.REPORTADO},
+                        personal_id=reportante.id, fecha_hora=momento)
+                    if correccion:
+                        crear(AccionCorrectiva, {"incidente_id": incidente.id, "descripcion": correccion},
+                            responsable_id=admin.id, fecha_cierre=momento + timedelta(hours=1), vigente=True)
+                        crear(MovimientoIncidente, {"incidente_id": incidente.id, "accion": AccionMovimientoIncidente.CERRADO},
+                            personal_id=admin.id, fecha_hora=momento + timedelta(hours=1), motivo=correccion)
 
             carpeta = ARCHIVOS_DIR / "documentos-tecnicos"
             carpeta.mkdir(parents=True, exist_ok=True)
@@ -354,7 +403,9 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             # Descubrir los modelos registrados evita olvidar entidades nuevas silenciosamente.
             conteos = {m.class_.__name__: db.scalar(select(func.count()).select_from(m.class_))
                 for m in ModeloBase.registry.mappers}
-            faltantes = {nombre: total for nombre, total in conteos.items() if total < CANTIDAD}
+            # TipoIncidente es un catálogo corto (6 activos + 1 dado de baja): se exige >= 1.
+            faltantes = {nombre: total for nombre, total in conteos.items()
+                if total < (1 if nombre == "TipoIncidente" else CANTIDAD)}
             if faltantes:
                 raise RuntimeError(f"Modelos con menos de {CANTIDAD} registros: {faltantes}")
             db.commit()

@@ -16,6 +16,7 @@ from src.personal.router import router as personal_router
 from src.equipos.router import router as equipos_router 
 from src.documentacion.router import router as documentacion_router
 from src.tipoDocumento.router import router as tipo_documento_router
+from src.tipoIncidente.router import router as tipo_incidente_router
 from src.insumos.router import router as insumos_router
 from src.unidadMedida.router import router as unidad_medida_router
 from src.sector.router import router as sector_router
@@ -72,6 +73,7 @@ app.add_middleware(
 app.include_router(personal_router)
 app.include_router(documentacion_router)
 app.include_router(tipo_documento_router)
+app.include_router(tipo_incidente_router)
 app.include_router(equipos_router)
 app.include_router(insumos_router)
 app.include_router(unidad_medida_router)

@@ -16,6 +16,7 @@ import { InsumoPage } from '../features/insumos';
 import { InsumoQuimicoPage } from '../features/insumosQuimicos';
 import { UnidadMedidaPage } from '../features/unidadMedida/unidadMedidaPage';
 import { TipoDocumentoPage } from '../features/tipoDocumento/TipoDocumentoPage';
+import { TipoIncidentePage } from '../features/tipoIncidente/TipoIncidentePage';
 import { TareaPage } from '../features/tarea';
 import { SectorPage } from '../features/sectores/SectorPage';
 import { ElementoPage } from '../features/elementos/ElementoPage';
@@ -86,6 +87,10 @@ export function AppRouter() {
               <Route path="tipos-documento/nuevo" element={<TipoDocumentoPage />} />
               <Route path="tipos-documento/:id" element={<TipoDocumentoPage />} />
               <Route path="tipos-documento/:id/:action" element={<TipoDocumentoPage />} />
+              <Route path="tipos-incidente" element={<TipoIncidentePage />} />
+              <Route path="tipos-incidente/nuevo" element={<TipoIncidentePage />} />
+              <Route path="tipos-incidente/:id" element={<TipoIncidentePage />} />
+              <Route path="tipos-incidente/:id/:action" element={<TipoIncidentePage />} />
               <Route path="equipos" element={<EquipoPage />} />
               <Route path="equipos/nuevo" element={<EquipoPage />} />
               <Route path="equipos/:id" element={<EquipoPage />} />

@@ -5,7 +5,6 @@ import { Badge, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
 import { ErrorAlert } from '../../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../../shared/components/LoadingSpinner';
 import { useIncidentesAbiertos } from './useIncidentesAbiertos';
-import { TIPOS_INCIDENTE, etiquetaTipoIncidente, type TipoIncidente } from '../types';
 
 // Umbrales del resaltado: a partir de cuántos días abierto se pinta la fila
 const DIAS_ALERTA = 7; // amarillo
@@ -34,7 +33,7 @@ export function IncidentesAbiertosPage() {
     totalPages,
     total,
     setPage,
-    tipo,
+    tipoId,
     cambiarTipo,
     diasMinimos,
     cambiarDiasMinimos,
@@ -67,15 +66,22 @@ export function IncidentesAbiertosPage() {
           </Card>
         </Col>
         {porTipo.map((p) => (
-          <Col xs={6} md key={p.tipo}>
+          <Col xs={6} md key={p.tipo.id}>
             <Card
               role="button"
-              title={tipo === p.tipo ? 'Quitar filtro' : 'Filtrar por este tipo'}
-              onClick={() => cambiarTipo(tipo === p.tipo ? '' : p.tipo)}
-              className={`h-100 shadow-sm text-center ${tipo === p.tipo ? 'border-primary border-2' : 'border-0'}`}
+              title={Number(tipoId) === p.tipo.id ? 'Quitar filtro' : 'Filtrar por este tipo'}
+              onClick={() => cambiarTipo(Number(tipoId) === p.tipo.id ? '' : p.tipo.id)}
+              className={`h-100 shadow-sm text-center tarjeta-tipo-incidente ${Number(tipoId) === p.tipo.id ? 'border-primary border-2' : 'border-0'}`}
             >
               <Card.Body className="py-3">
-                <div className="small text-muted">{etiquetaTipoIncidente(p.tipo)}</div>
+                <div className="small">
+                  <Badge
+                    bg={p.tipo.color}
+                    text={['info', 'warning', 'light'].includes(p.tipo.color) ? 'dark' : undefined}
+                  >
+                    {p.tipo.nombre}
+                  </Badge>
+                </div>
                 <div className="fs-3 fw-bold">{p.cantidad}</div>
               </Card.Body>
             </Card>
@@ -88,14 +94,14 @@ export function IncidentesAbiertosPage() {
         <div className="d-flex flex-column gap-2" style={{ width: 220, maxWidth: '100%' }}>
           <Form.Select
             aria-label="Filtrar por tipo"
-            value={tipo}
-            onChange={(e) => cambiarTipo(e.target.value as TipoIncidente | '')}
+            value={tipoId}
+            onChange={(e) => cambiarTipo(e.target.value === '' ? '' : Number(e.target.value))}
             style={{ width: '220px', maxWidth: '100%' }}
           >
             <option value="">Todos los tipos</option>
-            {TIPOS_INCIDENTE.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
+            {porTipo.map((p) => (
+              <option key={p.tipo.id} value={p.tipo.id}>
+                {p.tipo.nombre}
               </option>
             ))}
           </Form.Select>
@@ -137,7 +143,7 @@ export function IncidentesAbiertosPage() {
               {incidentes.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-4 text-muted">
-                    {tipo || diasMinimos !== ''
+                    {tipoId || diasMinimos !== ''
                       ? 'No hay incidentes abiertos para los filtros actuales.'
                       : 'No hay incidentes abiertos. ¡Todo resuelto!'}
                   </td>
@@ -156,7 +162,14 @@ export function IncidentesAbiertosPage() {
                         </Badge>
                       </td>
                       <td>{formatearFecha(incidente.fecha_hora)}</td>
-                      <td>{etiquetaTipoIncidente(incidente.tipo)}</td>
+                      <td>
+                        <Badge
+                          bg={incidente.tipo.color}
+                          text={['info', 'warning', 'light'].includes(incidente.tipo.color) ? 'dark' : undefined}
+                        >
+                          {incidente.tipo.nombre}
+                        </Badge>
+                      </td>
                       <td className="text-break">{incidente.descripcion}</td>
                       <td>
                         {incidente.reportado_por.apellido}, {incidente.reportado_por.nombre}

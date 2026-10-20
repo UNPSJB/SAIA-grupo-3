@@ -7,7 +7,7 @@ from src.archivos.constants import EXTENSIONES_IMAGEN
 from src.archivos.services import borrar_archivo, guardar_archivo
 from src.database import get_db
 from src.incidente import schemas, services
-from src.incidente.constants import EstadoIncidente, TipoIncidente
+from src.incidente.constants import EstadoIncidente
 from src.pagination import PaginatedResponse
 from src.auth.router_base import PermissionedRouter
 from src.auth.dependencies import (get_current_personal, tiene_permiso_operar,
@@ -22,13 +22,13 @@ router = PermissionedRouter(prefix="/incidentes", tags=["incidentes"])
 @router.post("/", response_model=schemas.Incidente, dependencies=[Depends(tiene_permiso_operar)])
 def create_incidente(
     descripcion: str = Form(..., min_length=1, max_length=1000),
-    tipo: TipoIncidente = Form(...),
+    tipo_id: int = Form(..., gt=0),
     current_personal: Personal = Depends(tiene_permiso_operar),
     foto: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
     reportado_por_dni = current_personal.dni
-    incidente = validar_schema(schemas.IncidenteCreate, descripcion=descripcion, tipo=tipo)
+    incidente = validar_schema(schemas.IncidenteCreate, descripcion=descripcion, tipo_id=tipo_id)
     imagen_path = guardar_archivo(foto, EXTENSIONES_IMAGEN)
     try:
         return services.crear_incidente(db, incidente, reportado_por_dni, imagen_path)
@@ -48,6 +48,7 @@ def read_incidentes(
     estado: EstadoIncidente | None = Query(None, description="abierto o cerrado"),
     fecha_desde: date | None = Query(None, description="Desde (inclusive, formato YYYY-MM-DD)"),
     fecha_hasta: date | None = Query(None, description="Hasta (inclusive, formato YYYY-MM-DD)"),
+    tipo_id: int | None = Query(None, ge=1, description="Solo incidentes de este tipo"),
     current_personal: Personal = Depends(get_current_personal),
 ):
     dni = None if current_personal.administrar else current_personal.dni
@@ -58,6 +59,7 @@ def read_incidentes(
         estado=estado,
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
+        tipo_id=tipo_id,
     )
 
 @router.get(
@@ -69,12 +71,12 @@ def read_incidentes_abiertos(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
-    tipo: TipoIncidente | None = Query(None),
+    tipo_id: int | None = Query(None, ge=1),
     dias_minimos: int | None = Query(None, ge=0, description="Solo los abiertos hace N días o más"),
     buscar: str = Query(""),
 ):
     """Incidentes sin acción correctiva, del más viejo al más nuevo."""
-    return services.listar_incidentes_abiertos(db, page, size, tipo, dias_minimos, buscar)
+    return services.listar_incidentes_abiertos(db, page, size, tipo_id, dias_minimos, buscar)
 
 
 @router.get(
@@ -105,12 +107,12 @@ def read_incidente(
 @router.put("/{incidente_id}", response_model=schemas.Incidente)
 def update_incidente(
     incidente_id: int,
-    tipo: TipoIncidente = Form(...),
+    tipo_id: int = Form(..., gt=0),
     descripcion: str = Form(..., min_length=1, max_length=1000),
     foto: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-    incidente = validar_schema(schemas.IncidenteUpdate, descripcion=descripcion, tipo=tipo)
+    incidente = validar_schema(schemas.IncidenteUpdate, descripcion=descripcion, tipo_id=tipo_id)
     imagen_anterior = services.leer_incidente(db, incidente_id).imagen_path
     imagen_nueva = guardar_archivo(foto, EXTENSIONES_IMAGEN)
     try:

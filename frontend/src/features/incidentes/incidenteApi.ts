@@ -8,7 +8,6 @@ import type {
   IncidenteUpdateInput,
   PaginatedIncidentes,
   PaginatedIncidentesAbiertos,
-  TipoIncidente,
 } from './types';
 
 export async function getIncidentes(
@@ -17,11 +16,13 @@ export async function getIncidentes(
   estado: EstadoIncidente | '' = '',
   fechaDesde = '',
   fechaHasta = '',
+  tipoId: number | '' = '',
 ): Promise<PaginatedIncidentes> {
   let url = `${API_BASE_URL}/incidentes/?page=${page}&size=${size}`;
   if (estado) url += `&estado=${estado}`;
   if (fechaDesde) url += `&fecha_desde=${fechaDesde}`;
   if (fechaHasta) url += `&fecha_hasta=${fechaHasta}`;
+  if (tipoId !== '') url += `&tipo_id=${tipoId}`;
 
   const res = await fetchWithAuth(url);
   if (!res.ok) {
@@ -37,7 +38,7 @@ export async function guardarIncidente(
 ): Promise<Incidente> {
   const formData = new FormData();
   formData.append('descripcion', datos.descripcion);
-  formData.append('tipo', datos.tipo);
+  formData.append('tipo_id', String(datos.tipo_id));
   if (datos.foto) {
     formData.append('foto', datos.foto);
   }
@@ -77,13 +78,13 @@ export async function getIncidenteById(id: number): Promise<Incidente> {
 export async function getIncidentesAbiertos(
   page = 1,
   size = 10,
-  tipo: TipoIncidente | '' = '',
+  tipoId: number | '' = '',
   diasMinimos: number | '' = '',
   busqueda = '',
 ): Promise<PaginatedIncidentesAbiertos> {
   let url = `${API_BASE_URL}/incidentes/abiertos?page=${page}&size=${size}`;
   if (busqueda.trim()) url += `&buscar=${encodeURIComponent(busqueda.trim())}`;
-  if (tipo) url += `&tipo=${tipo}`;
+  if (tipoId !== '') url += `&tipo_id=${tipoId}`;
   if (diasMinimos !== '') url += `&dias_minimos=${diasMinimos}`;
 
   const res = await fetchWithAuth(url);

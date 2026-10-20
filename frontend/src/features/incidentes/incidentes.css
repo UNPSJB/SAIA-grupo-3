@@ -24,3 +24,14 @@
 .incidentes-abiertos .incidente-critico td:first-child {
   border-left-color: var(--bs-danger);
 }
+
+/* Tarjetas del indicador por tipo (E7): son botones que filtran al hacer click. */
+.tarjeta-tipo-incidente {
+  cursor: pointer;
+  transition: transform 0.12s ease-in-out, box-shadow 0.12s ease-in-out;
+}
+
+.tarjeta-tipo-incidente:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--bs-box-shadow) !important;
+}

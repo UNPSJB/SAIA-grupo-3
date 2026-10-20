@@ -2,7 +2,7 @@ import { Badge, Button, Card } from 'react-bootstrap';
 import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
 import { useAuth } from '../../shared/hooks/useAuth';
 import type { EstadoIncidente, Incidente } from './types';
-import { ESTADOS_INCIDENTE, etiquetaTipoIncidente } from './types';
+import { ESTADOS_INCIDENTE } from './types';
 import { HistorialIncidente } from './HistorialIncidente';
 
 interface IncidenteViewProps {
@@ -32,7 +32,14 @@ export function IncidenteView({ incidente, onEditar, onVolver }: IncidenteViewPr
           </div>
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Tipo:</span>
-            <span className="col-8">{etiquetaTipoIncidente(incidente.tipo)}</span>
+            <span className="col-8">
+              <Badge
+                bg={incidente.tipo.color}
+                text={['info', 'warning', 'light'].includes(incidente.tipo.color) ? 'dark' : undefined}
+              >
+                {incidente.tipo.nombre}
+              </Badge>
+            </span>
           </div>
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Reportado por:</span>

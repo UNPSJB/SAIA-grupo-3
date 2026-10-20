@@ -1,33 +1,58 @@
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { usePagedList } from '../../shared/hooks/usePagedList';
 import { eliminarIncidente, guardarIncidente } from './incidenteApi';
+import { getTiposIncidenteActivos } from '../tipoIncidente/tipoIncidenteApi';
 import type {
   EstadoIncidente,
   Incidente,
   IncidenteCreateInput,
   IncidenteUpdateInput,
+  TipoIncidente,
 } from './types';
 
 export function useIncidente(enabled = true) {
   const [params] = useSearchParams();
   const estado = (params.get('estado') || '') as EstadoIncidente | '';
+  const tipoId = params.get('tipo_id') || '';
   const fechaDesde = params.get('fecha_desde') || '';
   const fechaHasta = params.get('fecha_hasta') || '';
   const filtros = new URLSearchParams();
   if (estado) filtros.set('estado', estado);
+  if (tipoId) filtros.set('tipo_id', tipoId);
   if (fechaDesde) filtros.set('fecha_desde', fechaDesde);
   if (fechaHasta) filtros.set('fecha_hasta', fechaHasta);
   const list = usePagedList<Incidente>('incidentes/', enabled, `&${filtros}`, 'fecha_hora', 'desc');
+  const [tiposActivos, setTiposActivos] = useState<TipoIncidente[]>([]);
+
+  useEffect(() => {
+    let activo = true;
+    getTiposIncidenteActivos()
+      .then((datos) => {
+        if (activo) setTiposActivos(datos);
+      })
+      .catch(() => {
+        if (activo) setTiposActivos([]);
+      });
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   return {
     ...list,
     incidentes: list.items,
     estado,
+    tipoId,
     fechaDesde,
     fechaHasta,
+    tiposActivos,
     setEstado: (value: EstadoIncidente | '') => list.update({ estado: value }),
+    setTipoId: (value: string) => list.update({ tipo_id: value }),
     setFechaDesde: (value: string) => list.update({ fecha_desde: value }),
     setFechaHasta: (value: string) => list.update({ fecha_hasta: value }),
-    limpiarFiltros: () => list.update({ estado: '', fecha_desde: '', fecha_hasta: '' }),
+    limpiarFiltros: () =>
+      list.update({ estado: '', tipo_id: '', fecha_desde: '', fecha_hasta: '' }),
     eliminar: async (id: number) => {
       await eliminarIncidente(id);
       list.refetch(true);
