@@ -1,6 +1,7 @@
 import { Card, Button, Badge } from 'react-bootstrap';
 import type { InsumoQuimico } from './types';
 import { TIPOS_QUIMICOS } from './types';
+import { etiquetaDe } from '../../shared/libreria/etiquetas';
 
 interface InsumoQuimicoViewProps {
   insumo: InsumoQuimico;
@@ -9,8 +10,7 @@ interface InsumoQuimicoViewProps {
 }
 
 export function InsumoQuimicoView({ insumo, onEditar, onVolver }: InsumoQuimicoViewProps) {
-  const etiquetaTipo =
-    TIPOS_QUIMICOS.find((t) => t.value === insumo.tipo_quimico)?.label ?? insumo.tipo_quimico;
+  const etiquetaTipo = etiquetaDe(TIPOS_QUIMICOS, insumo.tipo_quimico);
 
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>

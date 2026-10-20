@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, Button, Alert, Badge } from 'react-bootstrap';
 import type { InsumoQuimico } from './types';
 import { TIPOS_QUIMICOS } from './types';
+import { etiquetaDe } from '../../shared/libreria/etiquetas';
 
 interface InsumoQuimicoDeleteViewProps {
   insumo: InsumoQuimico;
@@ -17,8 +18,7 @@ export function InsumoQuimicoDeleteView({
   const [eliminando, setEliminando] = useState(false);
   const [errorBackend, setErrorBackend] = useState<string | null>(null);
 
-  const etiquetaTipo =
-    TIPOS_QUIMICOS.find((t) => t.value === insumo.tipo_quimico)?.label ?? insumo.tipo_quimico;
+  const etiquetaTipo = etiquetaDe(TIPOS_QUIMICOS, insumo.tipo_quimico);
 
   const handleEliminar = async () => {
     setEliminando(true);

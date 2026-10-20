@@ -5,8 +5,9 @@ import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
 import { useInsumoQuimico } from './useInsumoQuimico';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
-import type { InsumoQuimico, TipoQuimico } from './types';
-import { TIPOS_QUIMICOS } from './types';
+import type { InsumoQuimico } from './types';
+import { COLORES_QUIMICO, TIPOS_QUIMICOS } from './types';
+import { etiquetaDe, textoBadge } from '../../shared/libreria/etiquetas';
 
 interface InsumoQuimicoListProps {
   onNuevoClick: () => void;
@@ -38,24 +39,6 @@ export function InsumoQuimicoList({
     busqueda,
     setBusqueda,
   } = useInsumoQuimico();
-
-  const getLabelTipo = (valor: TipoQuimico) => {
-    const encontrado = TIPOS_QUIMICOS.find((t) => t.value === valor);
-    return encontrado ? encontrado.label : valor;
-  };
-
-  const getBadgeVariant = (valor: TipoQuimico) => {
-    switch (valor) {
-      case 'desinfectante':
-        return 'primary';
-      case 'detergente':
-        return 'info';
-      case 'desengrasante':
-        return 'warning';
-      default:
-        return 'secondary';
-    }
-  };
 
   return (
     <>
@@ -161,15 +144,10 @@ export function InsumoQuimicoList({
                     </td>
                     <td>
                       <Badge
-                        bg={getBadgeVariant(item.tipo_quimico)}
-                        className={
-                          item.tipo_quimico === 'detergente' ||
-                          item.tipo_quimico === 'desengrasante'
-                            ? 'text-dark'
-                            : ''
-                        }
+                        bg={COLORES_QUIMICO[item.tipo_quimico] ?? 'secondary'}
+                        text={textoBadge(COLORES_QUIMICO[item.tipo_quimico] ?? 'secondary')}
                       >
-                        {getLabelTipo(item.tipo_quimico)}
+                        {etiquetaDe(TIPOS_QUIMICOS, item.tipo_quimico)}
                       </Badge>
                     </td>
                     <td>{item.cantidad}</td>

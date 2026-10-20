@@ -5,6 +5,7 @@ import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { getHistorialIncidente } from './historialApi';
 import type { AccionMovimientoIncidente, MovimientoIncidente } from './historialTypes';
 import { ACCIONES_MOVIMIENTO_INCIDENTE } from './historialTypes';
+import { formatearFechaHora } from '../../shared/libreria/fechas';
 
 interface HistorialIncidenteProps {
   incidenteId: number;
@@ -75,7 +76,7 @@ export function HistorialIncidente({ incidenteId }: HistorialIncidenteProps) {
                       {info.label}
                     </Badge>{' '}
                     <small className="text-muted">
-                      {new Date(movimiento.fecha_hora).toLocaleString()}
+                      {formatearFechaHora(movimiento.fecha_hora)}
                     </small>
                   </div>
                   <div className="small">

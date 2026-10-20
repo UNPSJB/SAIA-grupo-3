@@ -1,4 +1,5 @@
-import { formatearFecha } from '../../shared/libreria/fechas';
+import { formatearFechaHora } from '../../shared/libreria/fechas';
+import { etiquetaDe, textoBadge } from '../../shared/libreria/etiquetas';
 import { ListControls } from '../../shared/components/ListControls';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { SortableHeader } from '../../shared/components/SortableHeader';
@@ -12,10 +13,6 @@ import {
   type DocumentoTecnicoResumen,
   type TipoDocumentoTecnico,
 } from './types';
-
-function etiquetaTipo(tipo: TipoDocumentoTecnico): string {
-  return TIPOS_DOCUMENTO_TECNICO.find((t) => t.value === tipo)?.label ?? tipo;
-}
 
 interface DocumentoTecnicoListProps {
   onNuevo: () => void;
@@ -144,13 +141,9 @@ export function DocumentoTecnicoList({ onNuevo, onVer, onEditar }: DocumentoTecn
                       <td>
                         <Badge
                           bg={COLORES_DOCUMENTO_TECNICO[doc.tipo]}
-                          text={
-                            doc.tipo === 'ficha_tecnica' || doc.tipo === 'procedimiento'
-                              ? 'dark'
-                              : 'white'
-                          }
+                          text={textoBadge(COLORES_DOCUMENTO_TECNICO[doc.tipo])}
                         >
-                          {etiquetaTipo(doc.tipo)}
+                          {etiquetaDe(TIPOS_DOCUMENTO_TECNICO, doc.tipo)}
                         </Badge>
                       </td>
                       <td>
@@ -167,7 +160,7 @@ export function DocumentoTecnicoList({ onNuevo, onVer, onEditar }: DocumentoTecn
                                 {doc.vigencia_actual.personal.nombre}
                               </small>
                               <small className="d-block text-muted">
-                                Vigente desde {formatearFecha(doc.vigencia_actual.fecha_vigencia)}
+                                Vigente desde {formatearFechaHora(doc.vigencia_actual.fecha_vigencia)}
                               </small>
                             </>
                           ) : (
@@ -176,7 +169,7 @@ export function DocumentoTecnicoList({ onNuevo, onVer, onEditar }: DocumentoTecn
                       </td>
                       <td>
                         {doc.version_vigente
-                          ? formatearFecha(doc.version_vigente.fecha_subida)
+                          ? formatearFechaHora(doc.version_vigente.fecha_subida)
                           : '—'}
                       </td>
                       <td className="text-center">

@@ -2,15 +2,7 @@ import { Dropdown, Badge, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useNotificaciones } from './useNotificaciones';
 import type { Notificacion } from './types';
-
-function formatearFecha(fechaIso: string) {
-  return new Date(fechaIso).toLocaleString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+import { formatearFechaHora } from '../../shared/libreria/fechas';
 
 export function NotificacionesBell() {
   const navigate = useNavigate();
@@ -88,7 +80,7 @@ export function NotificacionesBell() {
                   </small>
                   <div className="text-body-secondary">{n.mensaje}</div>
                   <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                    {formatearFecha(n.fecha_creacion)}
+                    {formatearFechaHora(n.fecha_creacion)}
                   </div>
                 </div>
                 {n.enlace && <i className="bi bi-chevron-right text-muted align-self-center"></i>}

@@ -8,25 +8,10 @@ import {
   TIPOS_DOCUMENTO_TECNICO,
   COLORES_DOCUMENTO_TECNICO,
   type DocumentoTecnico,
-  type TipoDocumentoTecnico,
   type VersionDocumentoTecnico,
 } from './types';
-
-// DEUDA TÉCNICA: duplicada en DocumentoTecnicoList.tsx
-function etiquetaTipo(tipo: TipoDocumentoTecnico): string {
-  return TIPOS_DOCUMENTO_TECNICO.find((t) => t.value === tipo)?.label ?? tipo;
-}
-
-// DEUDA TÉCNICA: duplicada en DocumentoTecnicoList.tsx
-function formatearFecha(fechaIso: string): string {
-  return new Date(fechaIso).toLocaleString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+import { formatearFechaHora } from '../../shared/libreria/fechas';
+import { etiquetaDe, textoBadge } from '../../shared/libreria/etiquetas';
 
 function formatearTamanio(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -126,13 +111,9 @@ export function DocumentoTecnicoView({
           <h5 className="mb-0 flex-grow-1">{documento.nombre}</h5>
           <Badge
             bg={COLORES_DOCUMENTO_TECNICO[documento.tipo]}
-            text={
-              documento.tipo === 'ficha_tecnica' || documento.tipo === 'procedimiento'
-                ? 'dark'
-                : 'white'
-            }
+            text={textoBadge(COLORES_DOCUMENTO_TECNICO[documento.tipo])}
           >
-            {etiquetaTipo(documento.tipo)}
+            {etiquetaDe(TIPOS_DOCUMENTO_TECNICO, documento.tipo)}
           </Badge>
         </Card.Header>
 
@@ -149,13 +130,13 @@ export function DocumentoTecnicoView({
                   {vigente.nombre_original} · {formatearTamanio(vigente.tamanio_bytes)}
                 </small>
                 <small className="text-muted d-block">
-                  Cargada el {formatearFecha(vigente.fecha_subida)} por{' '}
+                  Cargada el {formatearFechaHora(vigente.fecha_subida)} por{' '}
                   {vigente.subido_por.apellido}, {vigente.subido_por.nombre}
                 </small>
                 {documento.vigencia_actual ? (
                   <>
                     <small className="text-muted d-block">
-                      Vigente desde {formatearFecha(documento.vigencia_actual.fecha_vigencia)}
+                      Vigente desde {formatearFechaHora(documento.vigencia_actual.fecha_vigencia)}
                     </small>
                     <small className="text-muted d-block">
                       Marcada por {documento.vigencia_actual.personal.apellido},{' '}
@@ -233,7 +214,7 @@ export function DocumentoTecnicoView({
               <option value="">Desplegar versiones anteriores...</option>
               {documento.versiones.map((version) => (
                 <option key={version.id} value={version.id}>
-                  Versión {version.numero} · Subida el {formatearFecha(version.fecha_subida)} {version.estado === 'vigente' ? '(Vigente actual)' : '(Archivada)'}
+                  Versión {version.numero} · Subida el {formatearFechaHora(version.fecha_subida)} {version.estado === 'vigente' ? '(Vigente actual)' : '(Archivada)'}
                 </option>
               ))}
             </Form.Select>
@@ -261,7 +242,7 @@ export function DocumentoTecnicoView({
                       <strong>Subido por:</strong> {vSelec.subido_por.apellido}, {vSelec.subido_por.nombre}
                     </small>
                     <small className="text-muted d-block mb-1">
-                      <strong>Fecha de subida:</strong> {formatearFecha(vSelec.fecha_subida)}
+                      <strong>Fecha de subida:</strong> {formatearFechaHora(vSelec.fecha_subida)}
                     </small>
                     <div className="small mt-2">
                       <strong>Entradas en vigencia:</strong>
@@ -270,7 +251,7 @@ export function DocumentoTecnicoView({
                       ) : (
                         <ul className="mb-0">
                           {documento.cambios_vigencia.filter((cambio) => cambio.version_id === vSelec.id).slice().reverse().map((cambio, indice) => (
-                            <li key={indice}>{formatearFecha(cambio.fecha_vigencia)} · {cambio.personal.apellido}, {cambio.personal.nombre}</li>
+                            <li key={indice}>{formatearFechaHora(cambio.fecha_vigencia)} · {cambio.personal.apellido}, {cambio.personal.nombre}</li>
                           ))}
                         </ul>
                       )}

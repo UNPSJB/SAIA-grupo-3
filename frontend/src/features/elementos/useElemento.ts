@@ -8,6 +8,7 @@ import {
 
 import type { Elemento as ListItem } from './types';
 import { usePagedList } from '../../shared/hooks/usePagedList';
+import { fechaHoyIso } from '../../shared/libreria/fechas';
 
 export function useElemento(enabled = true) {
   const list = usePagedList<ListItem>('elementos', enabled, '');
@@ -23,7 +24,7 @@ export function useElemento(enabled = true) {
     }
     list.refetch();
   };
-  const registrarRecambio = async (id: number, fecha = new Date().toLocaleDateString('en-CA')) => {
+  const registrarRecambio = async (id: number, fecha = fechaHoyIso()) => {
     await registrarRecambioApi(id, fecha);
     list.refetch();
   };

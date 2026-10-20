@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert, Badge, Button, Card } from 'react-bootstrap';
 import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
 import type { Incidente } from './types';
+import { formatearFechaHora } from '../../shared/libreria/fechas';
 
 interface IncidenteDeleteViewProps {
   incidente: Incidente;
@@ -51,7 +52,7 @@ export function IncidenteDeleteView({
         <div className="bg-light p-3 rounded border mb-4">
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Fecha y hora:</span>
-            <span className="col-8">{new Date(incidente.fecha_hora).toLocaleString()}</span>
+            <span className="col-8">{formatearFechaHora(incidente.fecha_hora)}</span>
           </div>
 
           <div className="row mb-2">

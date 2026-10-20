@@ -6,6 +6,7 @@ import { usePlan } from './usePlan';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { Plan } from './types';
+import { formatearFecha } from '../../shared/libreria/fechas';
 
 interface PlanListProps {
   onNuevoClick: () => void;
@@ -137,8 +138,8 @@ export function PlanList({
                     <td className="text-truncate" style={{ maxWidth: '200px' }}>
                       {p.descripcion}
                     </td>
-                    <td>{p.fecha_inicio || 'N/A'}</td>
-                    <td>{p.fecha_fin || 'N/A'}</td>
+                    <td>{formatearFecha(p.fecha_inicio, 'N/A')}</td>
+                    <td>{formatearFecha(p.fecha_fin, 'N/A')}</td>
                     <td>
                       {p.activo ? (
                         <Badge bg="success">Activo</Badge>

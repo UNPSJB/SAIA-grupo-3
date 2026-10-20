@@ -6,17 +6,10 @@ import { useAuditoria } from './useAuditoria';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { PlanRealizado } from './types';
+import { formatearFecha } from '../../shared/libreria/fechas';
 
 interface AuditoriaListProps {
   onViewClick: (plan: PlanRealizado) => void;
-}
-
-function formatearFecha(fechaIso: string) {
-  return new Date(fechaIso).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
 }
 
 export function AuditoriaList({ onViewClick }: AuditoriaListProps) {

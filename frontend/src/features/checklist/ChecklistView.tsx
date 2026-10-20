@@ -12,14 +12,10 @@ import { FORMATOS_IMAGEN, validarArchivo } from '../../shared/libreria/archivos'
 import type { ConsumoTareaInput } from './checklistApi';
 import { useChecklist } from './useChecklist';
 import type { ItemChecklist } from './types';
+import { formatearFecha } from '../../shared/libreria/fechas';
 
 interface ChecklistViewProps {
   personalId: number;
-}
-
-function formatearFecha(fecha: string): string {
-  const [anio, mes, dia] = fecha.split('-');
-  return `${dia}/${mes}/${anio}`;
 }
 
 function textoPeriodo(item: ItemChecklist): string {

@@ -3,6 +3,7 @@ import { Alert, Button } from 'react-bootstrap';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { getAccionesCorrectivas } from './accionCorrectivaApi';
 import type { AccionCorrectiva } from './accionCorrectivaTypes';
+import { formatearFechaHora } from '../../shared/libreria/fechas';
 
 interface AccionCorrectivaVigenteProps {
   incidenteId: number;
@@ -56,7 +57,7 @@ export function AccionCorrectivaVigente({ incidenteId, onEditar }: AccionCorrect
             <strong>
               {accion.responsable.apellido}, {accion.responsable.nombre}
             </strong>{' '}
-            el {new Date(accion.fecha_cierre).toLocaleString()}
+            el {formatearFechaHora(accion.fecha_cierre)}
           </small>
         </div>
         {currentUser?.administrar && (

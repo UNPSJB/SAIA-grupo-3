@@ -15,15 +15,10 @@ import {
   type DocumentoDatos,
 } from './documentacionApi';
 import type { Documento, TipoDocumento } from './types';
+import { formatearFecha } from '../../shared/libreria/fechas';
 
 interface DocumentosPersonalProps {
   personalId: number;
-}
-
-function formatearFecha(fecha: string | null): string {
-  if (!fecha) return 'Sin fecha cargada';
-  const [anio, mes, dia] = fecha.split('-');
-  return `${dia}/${mes}/${anio}`;
 }
 
 export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
@@ -164,7 +159,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
                       <td>
                         <strong>{documento.tipo_documento.nombre}</strong>
                       </td>
-                      <td>{formatearFecha(documento.fecha_vencimiento)}</td>
+                      <td>{formatearFecha(documento.fecha_vencimiento, 'Sin fecha cargada')}</td>
                       <td className="text-center">
                         <div className="d-flex justify-content-center gap-2">
                           <Button

@@ -4,6 +4,7 @@ import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { useAuth } from '../../shared/hooks/useAuth';
 import type { Incidente } from './types';
 import type { AccionCorrectiva, AccionCorrectivaInput } from './accionCorrectivaTypes';
+import { formatearFechaHora } from '../../shared/libreria/fechas';
 
 interface AccionCorrectivaFormProps {
   incidente: Incidente;
@@ -54,7 +55,7 @@ export function AccionCorrectivaForm({
       ? `${currentUser.apellido}, ${currentUser.nombre}`
       : 'Sin usuario';
   const fecha = accionInicial
-    ? new Date(accionInicial.fecha_cierre).toLocaleString()
+    ? formatearFechaHora(accionInicial.fecha_cierre)
     : 'Se registra al guardar';
 
   return (

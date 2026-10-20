@@ -8,6 +8,12 @@ export const TIPOS_QUIMICOS: { value: TipoQuimico; label: string }[] = [
   { value: 'desengrasante', label: 'Desengrasante' },
 ];
 
+export const COLORES_QUIMICO: Record<TipoQuimico, string> = {
+  desinfectante: 'primary',
+  detergente: 'info',
+  desengrasante: 'warning',
+};
+
 export interface InsumoQuimico {
   id: number;
   nombre: string;

@@ -7,7 +7,8 @@ import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { usePagedList } from '../../shared/hooks/usePagedList';
 import { API_BASE_URL, fetchWithAuth, mensajeDeError } from '../../shared/libreria/api';
-import { formatearFecha } from '../../shared/libreria/fechas';
+import { formatearFechaHora } from '../../shared/libreria/fechas';
+import { etiquetaDe, textoBadge } from '../../shared/libreria/etiquetas';
 import {
   COLORES_DOCUMENTO_TECNICO,
   TIPOS_DOCUMENTO_TECNICO,
@@ -203,14 +204,9 @@ export function DocumentosVigentesPage() {
                       <td>
                         <Badge
                           bg={COLORES_DOCUMENTO_TECNICO[doc.tipo]}
-                          text={
-                            doc.tipo === 'ficha_tecnica' || doc.tipo === 'procedimiento'
-                              ? 'dark'
-                              : 'white'
-                          }
+                          text={textoBadge(COLORES_DOCUMENTO_TECNICO[doc.tipo])}
                         >
-                          {TIPOS_DOCUMENTO_TECNICO.find((t) => t.value === doc.tipo)?.label ||
-                            doc.tipo}
+                          {etiquetaDe(TIPOS_DOCUMENTO_TECNICO, doc.tipo)}
                         </Badge>
                       </td>
                       <td>
@@ -222,7 +218,7 @@ export function DocumentosVigentesPage() {
                       </td>
                       <td>
                         {doc.fecha_vigencia
-                          ? formatearFecha(doc.fecha_vigencia)
+                          ? formatearFechaHora(doc.fecha_vigencia)
                           : 'Fecha de vigencia no registrada'}
                       </td>
                       <td className="text-center">
@@ -262,13 +258,9 @@ export function DocumentosVigentesPage() {
           <Card.Body className="p-4">
             <Badge
               bg={COLORES_DOCUMENTO_TECNICO[detalle.tipo]}
-              text={
-                detalle.tipo === 'ficha_tecnica' || detalle.tipo === 'procedimiento'
-                  ? 'dark'
-                  : 'white'
-              }
+              text={textoBadge(COLORES_DOCUMENTO_TECNICO[detalle.tipo])}
             >
-              {TIPOS_DOCUMENTO_TECNICO.find((t) => t.value === detalle.tipo)?.label || detalle.tipo}
+              {etiquetaDe(TIPOS_DOCUMENTO_TECNICO, detalle.tipo)}
             </Badge>
             {errorArchivo && <ErrorAlert mensaje={errorArchivo} />}
             <div className="border rounded p-3 mt-3">
@@ -283,7 +275,7 @@ export function DocumentosVigentesPage() {
                   <p className="mb-1 text-break">{detalle.version_vigente.nombre_original}</p>
                   <p className="text-muted">
                     {detalle.fecha_vigencia
-                      ? `Vigente desde ${formatearFecha(detalle.fecha_vigencia)}`
+                      ? `Vigente desde ${formatearFechaHora(detalle.fecha_vigencia)}`
                       : 'Fecha de vigencia no registrada'}
                   </p>
                   <div className="d-flex flex-wrap gap-2">
@@ -384,7 +376,7 @@ export function DocumentosVigentesPage() {
                       {version.estado === 'vigente' ? 'Vigente' : 'Archivada — no usar para operar'}
                     </Badge>
                     <p className="text-muted mb-2">
-                      Subida el {formatearFecha(version.fecha_subida)}
+                      Subida el {formatearFechaHora(version.fecha_subida)}
                     </p>
                     <div className="d-flex flex-wrap gap-2">
                       {esVisualizable(version.tipo_contenido) && (

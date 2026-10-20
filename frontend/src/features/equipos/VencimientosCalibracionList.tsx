@@ -4,20 +4,11 @@ import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { EstadoVencimientoCalibracion, VencimientoCalibracion } from './types';
 import { ESTADOS_VENCIMIENTO_CALIBRACION, TIPOS_EQUIPOS } from './types';
+import { formatearFecha, textoDiasRestantes } from '../../shared/libreria/fechas';
+import { etiquetaDe } from '../../shared/libreria/etiquetas';
 
 interface VencimientosCalibracionListProps {
   onVerEquipo: (vencimiento: VencimientoCalibracion) => void;
-}
-
-function formatearFecha(fecha: string): string {
-  const [anio, mes, dia] = fecha.split('-');
-  return `${dia}/${mes}/${anio}`;
-}
-
-function textoDias(dias: number): string {
-  if (dias < 0) return `Venció hace ${Math.abs(dias)} ${Math.abs(dias) === 1 ? 'día' : 'días'}`;
-  if (dias === 0) return 'Vence hoy';
-  return `Faltan ${dias} ${dias === 1 ? 'día' : 'días'}`;
 }
 
 export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibracionListProps) {
@@ -31,8 +22,7 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
   const getEstado = (valor: EstadoVencimientoCalibracion) =>
     ESTADOS_VENCIMIENTO_CALIBRACION.find((e) => e.value === valor) ?? { label: valor, variante: 'secondary' };
 
-  const getTipo = (valor: string) =>
-    TIPOS_EQUIPOS.find((t) => t.value === valor)?.label ?? valor;
+  const getTipo = (valor: string) => etiquetaDe(TIPOS_EQUIPOS, valor);
 
   const renderIconoOrden = (columna: string) => {
     if (ordenarPor !== columna) {
@@ -142,7 +132,7 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
                         <td>
                           {formatearFecha(v.fecha_vencimiento)}
                           <br />
-                          <small className="text-muted">{textoDias(v.dias_restantes)}</small>
+                          <small className="text-muted">{textoDiasRestantes(v.dias_restantes)}</small>
                         </td>
                         <td>
                           <Badge

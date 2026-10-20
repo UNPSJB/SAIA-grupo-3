@@ -5,12 +5,12 @@ import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
 import { useAuth } from '../../shared/hooks/useAuth';
 import type { Calibracion } from './types';
 import { esCertificadoPdf } from './types';
+import { formatearFecha } from '../../shared/libreria/fechas';
 
 interface CalibracionListProps {
   calibraciones: Calibracion[];
   loading: boolean;
   error: string | null;
-  formatearFecha: (fecha: string | null) => string;
   onNuevoClick: () => void;
   onEditarClick: (calibracion: Calibracion) => void;
   onEliminarClick: (calibracion: Calibracion) => void;
@@ -27,7 +27,6 @@ export function CalibracionList({
   calibraciones,
   loading,
   error,
-  formatearFecha,
   onNuevoClick,
   onEditarClick,
   onEliminarClick,

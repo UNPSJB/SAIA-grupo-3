@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { Card, Form, Button, Alert, InputGroup } from 'react-bootstrap';
 import type { ConsumoQuimico } from './types';
 import { getInsumosQuimicos } from '../insumosQuimicos/insumoQuimicoApi';
+import { fechaHoyIso } from '../../shared/libreria/fechas';
 
 interface ConsumoQuimicoFormProps {
   consumoInicial?: ConsumoQuimico | null;
@@ -29,7 +30,7 @@ export function ConsumoQuimicoForm({
     defaultValues: {
       insumoId: '',
       cantidad: '',
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: fechaHoyIso(),
       tarea: '',
     },
   });

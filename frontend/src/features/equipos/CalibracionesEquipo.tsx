@@ -14,12 +14,6 @@ interface CalibracionesEquipoProps {
 
 type ModoVista = 'listado' | 'crear' | 'editar' | 'eliminar';
 
-function formatearFecha(fecha: string | null): string {
-  if (!fecha) return 'Sin fecha';
-  const [anio, mes, dia] = fecha.split('-');
-  return `${dia}/${mes}/${anio}`;
-}
-
 export function CalibracionesEquipo({
   equipoId,
   periodicidadDias,
@@ -71,7 +65,6 @@ export function CalibracionesEquipo({
           calibraciones={calibraciones}
           loading={loading}
           error={error}
-          formatearFecha={formatearFecha}
           onNuevoClick={handleNuevoClick}
           onEditarClick={handleEditarClick}
           onEliminarClick={handleEliminarClick}
@@ -101,7 +94,6 @@ export function CalibracionesEquipo({
       {modo === 'eliminar' && calibracionSeleccionada && (
         <CalibracionDeleteView
           calibracion={calibracionSeleccionada}
-          formatearFecha={formatearFecha}
           onConfirmarEliminar={handleConfirmarEliminar}
           onCancelar={volverAlListado}
         />

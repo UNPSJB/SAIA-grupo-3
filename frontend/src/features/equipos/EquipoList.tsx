@@ -5,8 +5,9 @@ import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
 import { useEquipo } from './useEquipo';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
-import type { Equipo, TipoEquipo } from './types';
-import { TIPOS_EQUIPOS } from './types';
+import type { Equipo } from './types';
+import { COLORES_EQUIPO, TIPOS_EQUIPOS } from './types';
+import { etiquetaDe, textoBadge } from '../../shared/libreria/etiquetas';
 
 interface EquipoListProps {
   onNuevoClick: () => void;
@@ -38,24 +39,6 @@ export function EquipoList({
     busqueda,
     setBusqueda,
   } = useEquipo();
-
-  const getLabelTipo = (valor: TipoEquipo) => {
-    const encontrado = TIPOS_EQUIPOS.find((t) => t.value === valor);
-    return encontrado ? encontrado.label : valor;
-  };
-
-  const getBadgeVariant = (valor: TipoEquipo) => {
-    switch (valor) {
-      case 'equipo':
-        return 'primary';
-      case 'herramienta':
-        return 'warning';
-      case 'instrumento':
-        return 'info';
-      default:
-        return 'secondary';
-    }
-  };
 
   return (
     <>
@@ -141,11 +124,8 @@ export function EquipoList({
                       <strong>{e.nombre}</strong>
                     </td>
                     <td>
-                      <Badge
-                        bg={getBadgeVariant(e.tipo)}
-                        className={e.tipo === 'herramienta' ? 'text-dark' : ''}
-                      >
-                        {getLabelTipo(e.tipo)}
+                      <Badge bg={COLORES_EQUIPO[e.tipo]} text={textoBadge(COLORES_EQUIPO[e.tipo])}>
+                        {etiquetaDe(TIPOS_EQUIPOS, e.tipo)}
                       </Badge>
                     </td>
                     <td>

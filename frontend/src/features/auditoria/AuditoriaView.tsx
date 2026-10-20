@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, Button, Badge, ListGroup, Modal } from 'react-bootstrap';
 import { ImagenProtegida } from '../../shared/components/ImagenProtegida';
 import type { PlanRealizado, TareaRealizada } from './types';
+import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
 
 interface AuditoriaViewProps {
   plan: PlanRealizado;
@@ -25,7 +26,7 @@ export function AuditoriaView({ plan, onVolver }: AuditoriaViewProps) {
           <div className="row mb-2">
             <span className="col-sm-3 text-muted fw-semibold">Fecha:</span>
             <span className="col-sm-9">
-              {new Date(plan.fecha_ejecucion).toLocaleDateString('es-AR')}
+              {formatearFecha(plan.fecha_ejecucion)}
             </span>
           </div>
           <div className="row">
@@ -49,10 +50,7 @@ export function AuditoriaView({ plan, onVolver }: AuditoriaViewProps) {
                   <div className="d-flex align-items-center gap-2">
                     <small className="text-muted">
                       <i className="bi bi-clock me-1"></i>
-                      {new Date(tarea.fecha_registro).toLocaleString('es-AR', {
-                        day: '2-digit', month: '2-digit', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit'
-                      })}
+                      {formatearFechaHora(tarea.fecha_registro)}
                     </small>
                     <Badge bg="info" className="text-dark text-capitalize">{tarea.frecuencia}</Badge>
                   </div>

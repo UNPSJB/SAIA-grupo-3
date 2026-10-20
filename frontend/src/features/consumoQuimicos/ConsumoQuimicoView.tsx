@@ -1,5 +1,6 @@
 import { Card, Button, Badge } from 'react-bootstrap';
 import type { ConsumoQuimico } from './types';
+import { formatearFecha } from '../../shared/libreria/fechas';
 
 interface ConsumoQuimicoViewProps {
   consumo: ConsumoQuimico;
@@ -22,7 +23,7 @@ export function ConsumoQuimicoView({ consumo, onEditar, onVolver }: ConsumoQuimi
           </div>
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Fecha:</span>
-            <span className="col-8 fw-bold">{consumo.fecha}</span>
+            <span className="col-8 fw-bold">{formatearFecha(consumo.fecha)}</span>
           </div>
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Insumo Químico:</span>

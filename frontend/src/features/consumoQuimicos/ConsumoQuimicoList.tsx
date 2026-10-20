@@ -6,6 +6,7 @@ import { useConsumoQuimico } from './useConsumoQuimico';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { ConsumoQuimico } from './types';
+import { formatearFecha } from '../../shared/libreria/fechas';
 
 interface ConsumoQuimicoListProps {
   onNuevoClick: () => void;
@@ -133,7 +134,7 @@ export function ConsumoQuimicoList({
                         #{item.id}
                       </Badge>
                     </td>
-                    <td>{item.fecha}</td>
+                    <td>{formatearFecha(item.fecha)}</td>
                     <td>
                       <strong>{item.insumo?.nombre || `ID: ${item.insumo_quimico_id}`}</strong>
                     </td>

@@ -1,10 +1,11 @@
 import { ListPagination } from '../../../shared/components/ListPagination';
-import { formatearFecha } from '../../../shared/libreria/fechas';
+import { formatearFechaHora, textoAntiguedad } from '../../../shared/libreria/fechas';
 import '../incidentes.css';
 import { Badge, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
 import { ErrorAlert } from '../../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../../shared/components/LoadingSpinner';
 import { useIncidentesAbiertos } from './useIncidentesAbiertos';
+import { textoBadge } from '../../../shared/libreria/etiquetas';
 
 // Umbrales del resaltado: a partir de cuántos días abierto se pinta la fila
 const DIAS_ALERTA = 7; // amarillo
@@ -14,11 +15,6 @@ function nivelAntiguedad(dias: number) {
   if (dias >= DIAS_CRITICO) return { fila: 'incidente-critico', badge: 'danger' };
   if (dias >= DIAS_ALERTA) return { fila: 'incidente-alerta', badge: 'warning' };
   return { fila: '', badge: 'secondary' };
-}
-
-function textoDias(dias: number): string {
-  if (dias === 0) return 'Hoy';
-  return dias === 1 ? '1 día' : `${dias} días`;
 }
 
 export function IncidentesAbiertosPage() {
@@ -158,14 +154,14 @@ export function IncidentesAbiertosPage() {
                           bg={nivel.badge}
                           text={nivel.badge === 'warning' ? 'dark' : undefined}
                         >
-                          {textoDias(incidente.dias_abierto)}
+                          {textoAntiguedad(incidente.dias_abierto)}
                         </Badge>
                       </td>
-                      <td>{formatearFecha(incidente.fecha_hora)}</td>
+                      <td>{formatearFechaHora(incidente.fecha_hora)}</td>
                       <td>
                         <Badge
                           bg={incidente.tipo.color}
-                          text={['info', 'warning', 'light'].includes(incidente.tipo.color) ? 'dark' : undefined}
+                          text={textoBadge(incidente.tipo.color)}
                         >
                           {incidente.tipo.nombre}
                         </Badge>

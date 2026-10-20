@@ -1,5 +1,5 @@
 import { ListPagination } from '../../shared/components/ListPagination';
-import { formatearFecha } from '../../shared/libreria/fechas';
+import { formatearFechaHora } from '../../shared/libreria/fechas';
 import './incidentes.css';
 import { Badge, Button, Card, Form, Table } from 'react-bootstrap';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -9,6 +9,7 @@ import { useAuth } from '../../shared/hooks/useAuth';
 import { useIncidente } from './useIncidente';
 import type { EstadoIncidente, Incidente } from './types';
 import { ESTADOS_INCIDENTE } from './types';
+import { textoBadge } from '../../shared/libreria/etiquetas';
 
 interface IncidenteListProps {
   onNuevoClick: () => void;
@@ -165,11 +166,11 @@ export function IncidenteList({
                   const infoEstado = getEstado(incidente.estado);
                   return (
                     <tr key={incidente.id}>
-                      <td>{formatearFecha(incidente.fecha_hora)}</td>
+                      <td>{formatearFechaHora(incidente.fecha_hora)}</td>
                       <td>
                         <Badge
                           bg={incidente.tipo.color}
-                          text={['info', 'warning', 'light'].includes(incidente.tipo.color) ? 'dark' : undefined}
+                          text={textoBadge(incidente.tipo.color)}
                         >
                           {incidente.tipo.nombre}
                         </Badge>

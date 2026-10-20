@@ -8,6 +8,7 @@ import { useAuth } from '../../shared/hooks/useAuth';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { Elemento } from './types';
+import { formatearFecha, parsearFecha } from '../../shared/libreria/fechas';
 
 interface ElementoListProps {
   onNuevoClick: () => void;
@@ -52,9 +53,7 @@ export function ElementoList({
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0); // Normalizamos a las 00:00
 
-    // Parseamos la fecha 'YYYY-MM-DD' preservando la zona horaria local
-    const [year, month, day] = fechaProximo.split('-');
-    const proximo = new Date(Number(year), Number(month) - 1, Number(day));
+    const proximo = parsearFecha(fechaProximo);
 
     const diffTime = proximo.getTime() - hoy.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -167,7 +166,7 @@ export function ElementoList({
                               {alerta.texto}
                             </Badge>
                             <br />
-                            <small className="text-muted">Vence: {e.fecha_proximo_recambio}</small>
+                            <small className="text-muted">Vence: {formatearFecha(e.fecha_proximo_recambio)}</small>
                           </div>
                         ) : (
                           <span className="text-muted small">Sin seguimiento</span>

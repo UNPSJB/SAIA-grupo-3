@@ -6,20 +6,10 @@ import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { EstadoVencimiento, Vencimiento } from './types';
 import { ESTADOS_VENCIMIENTO } from './types';
+import { formatearFecha, textoDiasRestantes } from '../../shared/libreria/fechas';
 
 interface VencimientosListProps {
   onVerLegajo: (vencimiento: Vencimiento) => void;
-}
-
-function formatearFecha(fecha: string): string {
-  const [anio, mes, dia] = fecha.split('-');
-  return `${dia}/${mes}/${anio}`;
-}
-
-function textoDias(dias: number): string {
-  if (dias < 0) return `Venció hace ${Math.abs(dias)} ${Math.abs(dias) === 1 ? 'día' : 'días'}`;
-  if (dias === 0) return 'Vence hoy';
-  return `Faltan ${dias} ${dias === 1 ? 'día' : 'días'}`;
 }
 
 export function VencimientosList({ onVerLegajo }: VencimientosListProps) {
@@ -169,7 +159,7 @@ export function VencimientosList({ onVerLegajo }: VencimientosListProps) {
                         <td>
                           {formatearFecha(v.fecha_vencimiento)}
                           <br />
-                          <small className="text-muted">{textoDias(v.dias_restantes)}</small>
+                          <small className="text-muted">{textoDiasRestantes(v.dias_restantes)}</small>
                         </td>
                         <td>
                           <Badge

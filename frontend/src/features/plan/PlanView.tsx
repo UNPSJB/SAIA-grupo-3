@@ -3,6 +3,7 @@ import { Card, Button, Badge, ListGroup, Modal } from 'react-bootstrap';
 import type { Plan } from './types';
 import type { Tarea } from '../tarea/types';
 import { TareaView } from '../tarea/TareaView';
+import { formatearFecha } from '../../shared/libreria/fechas';
 
 interface PlanViewProps {
   plan: Plan;
@@ -40,7 +41,7 @@ export function PlanView({ plan, onEditar, onVolver, onDesvincularTarea }: PlanV
             <div className="row mb-2">
               <span className="col-sm-3 text-muted fw-semibold">Fechas:</span>
               <span className="col-sm-9">
-                Inicio: {plan.fecha_inicio || 'N/A'} {plan.fecha_fin && ` | Fin: ${plan.fecha_fin}`}
+                Inicio: {formatearFecha(plan.fecha_inicio, 'N/A')} {plan.fecha_fin && ` | Fin: ${formatearFecha(plan.fecha_fin)}`}
               </span>
             </div>
           </div>

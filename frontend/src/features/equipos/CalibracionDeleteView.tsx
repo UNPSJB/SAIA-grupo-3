@@ -3,17 +3,16 @@ import { Alert, Button, Card } from 'react-bootstrap';
 import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
 import type { Calibracion } from './types';
 import { esCertificadoPdf } from './types';
+import { formatearFecha } from '../../shared/libreria/fechas';
 
 interface CalibracionDeleteViewProps {
   calibracion: Calibracion;
-  formatearFecha: (fecha: string | null) => string;
   onConfirmarEliminar: (id: number) => Promise<void>;
   onCancelar: () => void;
 }
 
 export function CalibracionDeleteView({
   calibracion,
-  formatearFecha,
   onConfirmarEliminar,
   onCancelar,
 }: CalibracionDeleteViewProps) {

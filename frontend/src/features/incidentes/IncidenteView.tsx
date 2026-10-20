@@ -4,6 +4,8 @@ import { useAuth } from '../../shared/hooks/useAuth';
 import type { EstadoIncidente, Incidente } from './types';
 import { ESTADOS_INCIDENTE } from './types';
 import { HistorialIncidente } from './HistorialIncidente';
+import { formatearFechaHora } from '../../shared/libreria/fechas';
+import { textoBadge } from '../../shared/libreria/etiquetas';
 
 interface IncidenteViewProps {
   incidente: Incidente;
@@ -28,14 +30,14 @@ export function IncidenteView({ incidente, onEditar, onVolver }: IncidenteViewPr
         <div className="bg-light p-3 rounded border mb-2">
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Fecha y hora:</span>
-            <span className="col-8">{new Date(incidente.fecha_hora).toLocaleString()}</span>
+            <span className="col-8">{formatearFechaHora(incidente.fecha_hora)}</span>
           </div>
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Tipo:</span>
             <span className="col-8">
               <Badge
                 bg={incidente.tipo.color}
-                text={['info', 'warning', 'light'].includes(incidente.tipo.color) ? 'dark' : undefined}
+                text={textoBadge(incidente.tipo.color)}
               >
                 {incidente.tipo.nombre}
               </Badge>

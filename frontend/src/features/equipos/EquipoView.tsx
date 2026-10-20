@@ -1,7 +1,9 @@
 import { Card, Button, Badge } from 'react-bootstrap';
-import { TIPOS_EQUIPOS } from './types';
-import type { Equipo, TipoEquipo } from './types';
+import { COLORES_EQUIPO, TIPOS_EQUIPOS } from './types';
+import type { Equipo } from './types';
 import { CalibracionesEquipo } from './CalibracionesEquipo';
+import { formatearFecha } from '../../shared/libreria/fechas';
+import { etiquetaDe, textoBadge } from '../../shared/libreria/etiquetas';
 
 interface EquipoViewProps {
   equipo: Equipo;
@@ -16,27 +18,7 @@ export function EquipoView({
   onVolver,
   onCalibracionesActualizadas,
 }: EquipoViewProps) {
-  const etiquetaTipo =
-    TIPOS_EQUIPOS.find((t) => t.value === equipo.tipo)?.label ?? equipo.tipo;
-
-  const getBadgeVariant = (valor: TipoEquipo) => {
-    switch (valor) {
-      case 'equipo':
-        return 'primary';
-      case 'herramienta':
-        return 'warning';
-      case 'instrumento':
-        return 'info';
-      default:
-        return 'secondary';
-    }
-  };
-
-  const formatFecha = (fechaStr?: string | null) => {
-    if (!fechaStr) return 'No registrada';
-    const [year, month, day] = fechaStr.split('-');
-    return `${day}/${month}/${year}`;
-  };
+  const etiquetaTipo = etiquetaDe(TIPOS_EQUIPOS, equipo.tipo);
 
   let fechaVencimiento: Date | null = null;
   let estaVencido = false;
@@ -73,10 +55,7 @@ export function EquipoView({
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Tipo:</span>
             <span className="col-8">
-              <Badge
-                bg={getBadgeVariant(equipo.tipo)}
-                className={equipo.tipo === 'herramienta' ? 'text-dark' : ''}
-              >
+              <Badge bg={COLORES_EQUIPO[equipo.tipo]} text={textoBadge(COLORES_EQUIPO[equipo.tipo])}>
                 {etiquetaTipo}
               </Badge>
             </span>
@@ -101,7 +80,7 @@ export function EquipoView({
 
           <div className="row mb-2">
             <span className="col-5 text-muted fw-semibold">Última Calibración:</span>
-            <span className="col-7">{formatFecha(equipo.fecha_ultima_calibracion)}</span>
+            <span className="col-7">{formatearFecha(equipo.fecha_ultima_calibracion, 'No registrada')}</span>
           </div>
           <div className="row mb-2">
             <span className="col-5 text-muted fw-semibold">Periodicidad:</span>
@@ -114,7 +93,7 @@ export function EquipoView({
             <span className="col-7">
               {fechaVencimiento ? (
                 <Badge bg={estaVencido ? 'danger' : 'success'} className="fs-6 fw-medium">
-                  {formatFecha(fechaVencimiento.toISOString().split('T')[0])}
+                  {formatearFecha(fechaVencimiento.toISOString())}
                   {estaVencido && ' (Vencido)'}
                 </Badge>
               ) : (

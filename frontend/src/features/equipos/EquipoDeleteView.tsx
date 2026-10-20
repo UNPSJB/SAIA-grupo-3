@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, Button, Alert, Badge } from 'react-bootstrap';
 import type { Equipo } from './types';
 import { TIPOS_EQUIPOS } from './types';
+import { etiquetaDe } from '../../shared/libreria/etiquetas';
 
 interface EquipoDeleteViewProps {
   equipo: Equipo;
@@ -17,8 +18,7 @@ export function EquipoDeleteView({
   const [eliminando, setEliminando] = useState(false);
   const [errorBackend, setErrorBackend] = useState<string | null>(null);
 
-  const etiquetaTipo =
-    TIPOS_EQUIPOS.find((t) => t.value === equipo.tipo)?.label ?? equipo.tipo;
+  const etiquetaTipo = etiquetaDe(TIPOS_EQUIPOS, equipo.tipo);
 
   const handleEliminar = async () => {
     if (equipo.id === undefined) return;

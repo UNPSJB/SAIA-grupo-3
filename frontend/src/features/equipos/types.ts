@@ -6,6 +6,12 @@ export const TIPOS_EQUIPOS: { value: TipoEquipo; label: string }[] = [
   { value: 'instrumento', label: 'Instrumento' },
 ];
 
+export const COLORES_EQUIPO: Record<TipoEquipo, string> = {
+  equipo: 'primary',
+  herramienta: 'warning',
+  instrumento: 'info',
+};
+
 export interface Equipo {
   id?: number;
   numero_serie: string;

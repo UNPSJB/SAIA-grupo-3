@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, Button, Card } from 'react-bootstrap';
 import type { Documento } from './types';
+import { formatearFecha } from '../../shared/libreria/fechas';
 
 interface DocumentoDeleteViewProps {
   documento: Documento;
@@ -57,7 +58,7 @@ export function DocumentoDeleteView({
 
           <div className="row">
             <span className="col-4 text-muted fw-semibold">Vencimiento:</span>
-            <span className="col-8">{documento.fecha_vencimiento ?? 'Sin fecha cargada'}</span>
+            <span className="col-8">{formatearFecha(documento.fecha_vencimiento, 'Sin fecha cargada')}</span>
           </div>
         </div>
 
