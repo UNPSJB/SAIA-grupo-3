@@ -27,6 +27,7 @@ from src.tarea.models import Tarea, TareaInsumoQuimico, FrecuenciaTarea
 from src.plan.models import Plan
 from src.documentacion.models import Documentacion
 from src.tipoDocumento.models import TipoDocumento
+from src.tipoIncidente.models import TipoIncidente as ModeloTipoIncidente
 from src.incidente.models import Incidente
 from src.incidente.constants import EstadoIncidente, TipoIncidente
 from src.incidente.auditoria import AccionMovimientoIncidente, MovimientoIncidente
@@ -46,6 +47,14 @@ PASSWORD_OPERARIO = "opera123"
 ASSETS_DIR = Path(__file__).resolve().parent / "seed_assets"
 
 # Nombres verosímiles; todos los perfiles, DNIs y legajos son datos ficticios.
+TIPOS_INCIDENTE = [("Higiene y limpieza", "info"), ("Plagas", "danger"),
+    ("Equipos e instalaciones", "primary"), ("Producto/cliente", "success"),
+    ("Seguridad del personal", "warning"), ("Documentación y registros", "secondary"),
+    ("Control de temperatura", "info"), ("Alérgenos", "danger"),
+    ("Trazabilidad", "primary"), ("Capacitación", "success"),
+    ("Infraestructura edilicia", "warning"), ("Servicios (agua/luz/gas)", "secondary"),
+    ("Gestión de residuos", "info"), ("Proveedores", "danger"),
+    ("Otros", "secondary")]
 PERSONAS = [
     ("Lucía", "Fernández"), ("María", "Gómez"), ("Carlos", "Pérez"),
     ("Ana", "Rodríguez"), ("Diego", "Martínez"), ("Sofía", "López"),
@@ -243,6 +252,9 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                 if nuevo:
                     plan.tareas = [tarea]
                 planes.append(plan)
+
+            for nombre_tipo, color in TIPOS_INCIDENTE:
+                crear(ModeloTipoIncidente, {"nombre": nombre_tipo}, color=color, activo=True)
 
             for i, nombre in enumerate(TIPOS_DOCUMENTO):
                 tipo, _ = crear(TipoDocumento, {"nombre": nombre}, activo=True)
