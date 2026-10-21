@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { Container, Modal } from 'react-bootstrap';
+import { Button, Container, Modal } from 'react-bootstrap';
 import { useAuth } from '../../shared/hooks/useAuth';
+import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
+import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { IncidenteList } from './IncidenteList';
 import { IncidenteView } from './IncidenteView';
 import { IncidenteForm } from './IncidenteForm';
@@ -9,6 +12,7 @@ import { AccionCorrectivaForm } from './AccionCorrectivaForm';
 import { AccionCorrectivaVigente } from './AccionCorrectivaVigente';
 import { ReabrirIncidenteForm } from './ReabrirIncidenteForm';
 import { useIncidente } from './useIncidente';
+import { getIncidenteById } from './incidenteApi';
 import {
   modificarAccionCorrectiva,
   reabrirIncidente,
@@ -21,61 +25,37 @@ import type {
   ReaperturaInput,
 } from './accionCorrectivaTypes';
 
-type ModoVista =
-  | 'ver'
-  | 'listado'
-  | 'crear'
-  | 'editar'
-  | 'eliminar'
-  | 'accionCorrectiva' // modal sobre el listado
-  | 'reabrir'; // modal sobre el listado
+type ModalListado = { tipo: 'accionCorrectiva' | 'reabrir'; incidente: Incidente } | null;
 
 export function IncidentePage() {
   const { currentUser } = useAuth();
-  const [modo, setModo] = useState<ModoVista>('listado');
-  const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<Incidente | null>(null);
-  // Acción que se está corrigiendo desde el detalle (modal sobre la vista 'ver')
+  const route = useCrudRoute<Incidente>('/incidentes', getIncidenteById);
+  const { mode: modo, item: incidenteSeleccionado } = route;
+
+  const [modalListado, setModalListado] = useState<ModalListado>(null);
   const [accionEnEdicion, setAccionEnEdicion] = useState<AccionCorrectiva | null>(null);
-  // Cambiar la key vuelve a montar el componente y fuerza que recargue sus datos
   const [recargaLista, setRecargaLista] = useState(0);
   const [recargaAccion, setRecargaAccion] = useState(0);
 
   const { guardar, eliminar } = useIncidente(false);
 
-  const volverAlListado = () => {
-    setModo('listado');
-    setIncidenteSeleccionado(null);
-  };
+  const cerrarModalListado = () => setModalListado(null);
 
   const handleNuevo = () => {
     if (!currentUser?.operar) return;
-    setIncidenteSeleccionado(null);
-    setModo('crear');
+    route.open();
   };
 
-  const handleView = (incidente: Incidente) => {
-    setIncidenteSeleccionado(incidente);
-    setModo('ver');
-  };
-
-  const handleEditar = (incidente: Incidente) => {
-    setIncidenteSeleccionado(incidente);
-    setModo('editar');
-  };
-
-  const handleEliminarClick = (incidente: Incidente) => {
-    setIncidenteSeleccionado(incidente);
-    setModo('eliminar');
-  };
+  const handleView = (incidente: Incidente) => route.open(incidente);
+  const handleEditar = (incidente: Incidente) => route.open(incidente, 'editar');
+  const handleEliminarClick = (incidente: Incidente) => route.open(incidente, 'eliminar');
 
   const handleAccionCorrectivaClick = (incidente: Incidente) => {
-    setIncidenteSeleccionado(incidente);
-    setModo('accionCorrectiva');
+    setModalListado({ tipo: 'accionCorrectiva', incidente });
   };
 
   const handleReabrirClick = (incidente: Incidente) => {
-    setIncidenteSeleccionado(incidente);
-    setModo('reabrir');
+    setModalListado({ tipo: 'reabrir', incidente });
   };
 
   const handleGuardar = async (datos: IncidenteCreateInput | IncidenteUpdateInput) => {
@@ -84,27 +64,26 @@ export function IncidentePage() {
     } else {
       await guardar(datos);
     }
-
-    volverAlListado();
+    route.back();
   };
 
   const handleConfirmarEliminar = async (id: number) => {
     await eliminar(id);
-    volverAlListado();
+    route.back();
   };
 
   const handleRegistrarAccion = async (datos: AccionCorrectivaInput) => {
-    if (!incidenteSeleccionado) return;
-    await registrarAccionCorrectiva(incidenteSeleccionado.id, datos);
+    if (!modalListado) return;
+    await registrarAccionCorrectiva(modalListado.incidente.id, datos);
     setRecargaLista((n) => n + 1);
-    volverAlListado();
+    cerrarModalListado();
   };
 
   const handleReabrir = async (datos: ReaperturaInput) => {
-    if (!incidenteSeleccionado) return;
-    await reabrirIncidente(incidenteSeleccionado.id, datos);
+    if (!modalListado) return;
+    await reabrirIncidente(modalListado.incidente.id, datos);
     setRecargaLista((n) => n + 1);
-    volverAlListado();
+    cerrarModalListado();
   };
 
   const handleModificarAccion = async (datos: AccionCorrectivaInput) => {
@@ -114,13 +93,22 @@ export function IncidentePage() {
     setRecargaAccion((n) => n + 1);
   };
 
-  const listaVisible = modo === 'listado' || modo === 'accionCorrectiva' || modo === 'reabrir';
-
   return (
     <Container className="py-2">
       <h2 className="mb-4 border-bottom pb-2 text-secondary">
         {currentUser?.administrar ? 'Gestión de Incidentes' : 'Mis incidentes'}
       </h2>
+
+      {route.loading && <LoadingSpinner mensaje="Cargando incidente..." />}
+
+      {route.error && (
+        <>
+          <ErrorAlert mensaje={route.error} />
+          <Button variant="secondary" onClick={route.back} className="mt-2">
+            Volver
+          </Button>
+        </>
+      )}
 
       {modo === 'ver' && incidenteSeleccionado && (
         <>
@@ -134,12 +122,12 @@ export function IncidentePage() {
           <IncidenteView
             incidente={incidenteSeleccionado}
             onEditar={() => handleEditar(incidenteSeleccionado)}
-            onVolver={volverAlListado}
+            onVolver={route.back}
           />
         </>
       )}
 
-      {listaVisible && (
+      {modo === 'listado' && !route.loading && !route.error && (
         <IncidenteList
           key={recargaLista}
           onViewClick={handleView}
@@ -152,12 +140,12 @@ export function IncidentePage() {
       )}
 
       {((modo === 'crear' && currentUser?.operar) ||
-        (modo === 'editar' && currentUser?.administrar)) && (
+        (modo === 'editar' && currentUser?.administrar && incidenteSeleccionado)) && (
         <IncidenteForm
           key={incidenteSeleccionado?.id ?? 'nuevo'}
-          incidenteInicial={incidenteSeleccionado}
+          incidenteInicial={modo === 'editar' ? incidenteSeleccionado : null}
           onGuardar={handleGuardar}
-          onCancelar={volverAlListado}
+          onCancelar={route.back}
         />
       )}
 
@@ -165,38 +153,38 @@ export function IncidentePage() {
         <IncidenteDeleteView
           incidente={incidenteSeleccionado}
           onConfirmarEliminar={handleConfirmarEliminar}
-          onCancelar={volverAlListado}
+          onCancelar={route.back}
         />
       )}
 
       {/* Registrar acción correctiva (cierra el incidente) */}
-      <Modal show={modo === 'accionCorrectiva'} onHide={volverAlListado} centered>
+      <Modal show={modalListado?.tipo === 'accionCorrectiva'} onHide={cerrarModalListado} centered>
         <Modal.Header closeButton>
           <Modal.Title>Registrar acción correctiva</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {incidenteSeleccionado && (
+          {modalListado?.tipo === 'accionCorrectiva' && (
             <AccionCorrectivaForm
-              key={`${incidenteSeleccionado.id}-${accionEnEdicion?.id ?? 'nueva'}`}
-              incidente={incidenteSeleccionado}
+              key={`${modalListado.incidente.id}-nueva`}
+              incidente={modalListado.incidente}
               onGuardar={handleRegistrarAccion}
-              onCancelar={volverAlListado}
+              onCancelar={cerrarModalListado}
             />
           )}
         </Modal.Body>
       </Modal>
 
       {/* Reabrir incidente (pide motivo) */}
-      <Modal show={modo === 'reabrir'} onHide={volverAlListado} centered>
+      <Modal show={modalListado?.tipo === 'reabrir'} onHide={cerrarModalListado} centered>
         <Modal.Header closeButton>
           <Modal.Title>Reabrir incidente</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {incidenteSeleccionado && (
+          {modalListado?.tipo === 'reabrir' && (
             <ReabrirIncidenteForm
-              incidente={incidenteSeleccionado}
+              incidente={modalListado.incidente}
               onConfirmar={handleReabrir}
-              onCancelar={volverAlListado}
+              onCancelar={cerrarModalListado}
             />
           )}
         </Modal.Body>
@@ -210,7 +198,7 @@ export function IncidentePage() {
         <Modal.Body>
           {incidenteSeleccionado && accionEnEdicion && (
             <AccionCorrectivaForm
-              key={`${incidenteSeleccionado.id}-${accionEnEdicion?.id ?? 'nueva'}`}
+              key={`${incidenteSeleccionado.id}-${accionEnEdicion.id}`}
               incidente={incidenteSeleccionado}
               accionInicial={accionEnEdicion}
               onGuardar={handleModificarAccion}

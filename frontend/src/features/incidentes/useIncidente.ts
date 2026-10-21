@@ -52,7 +52,7 @@ export function useIncidente(enabled = true) {
     setFechaDesde: (value: string) => list.update({ fecha_desde: value }),
     setFechaHasta: (value: string) => list.update({ fecha_hasta: value }),
     limpiarFiltros: () =>
-      list.update({ estado: '', tipo_id: '', fecha_desde: '', fecha_hasta: '' }),
+      list.update({ buscar: '', estado: '', tipo_id: '', fecha_desde: '', fecha_hasta: '' }),
     eliminar: async (id: number) => {
       await eliminarIncidente(id);
       list.refetch(true);

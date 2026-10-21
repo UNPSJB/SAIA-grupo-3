@@ -21,3 +21,22 @@ body {
   min-height: 100vh;
   background-color: #f8fafc;
 }
+
+.badge,
+.badge.text-dark,
+.badge.bg-warning,
+.badge.bg-info {
+  color: #ffffff !important;
+  font-size: 0.85rem !important;
+  padding: 0.4em 0.7em !important;
+}
+
+.btn {
+  font-size: 0.95rem !important;
+  padding: 0.5rem 1rem !important;
+}
+
+.btn-sm {
+  font-size: 0.825rem !important;
+  padding: 0.35rem 0.65rem !important;
+}

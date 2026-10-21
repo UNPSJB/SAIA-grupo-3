@@ -1,4 +1,5 @@
 import { ListPagination } from '../../shared/components/ListPagination';
+import { SortableHeader } from '../../shared/components/SortableHeader';
 import { formatearFechaHora } from '../../shared/libreria/fechas';
 import './incidentes.css';
 import { Badge, Button, Card, Form, Table } from 'react-bootstrap';
@@ -48,18 +49,15 @@ export function IncidenteList({
     fechaHasta,
     setFechaHasta,
     limpiarFiltros,
+    busqueda,
+    setBusqueda,
+    ordenarPor,
+    orden,
+    cambiarOrden,
   } = useIncidente();
 
   const getEstado = (valor: EstadoIncidente) =>
     ESTADOS_INCIDENTE.find((e) => e.value === valor) ?? { label: valor, variante: 'secondary' };
-
-  if (loading) {
-    return <LoadingSpinner mensaje="Cargando incidentes..." />;
-  }
-
-  if (error) {
-    return <ErrorAlert mensaje={error} />;
-  }
 
   return (
     <>
@@ -69,6 +67,14 @@ export function IncidenteList({
         </h4>
         <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
           <div className="d-flex flex-wrap align-items-center gap-2" style={{ maxWidth: '100%' }}>
+            <Form.Control
+              type="search"
+              aria-label="Buscar incidente"
+              placeholder="Buscar..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              style={{ width: '220px', maxWidth: '100%' }}
+            />
             <Form.Select
               aria-label="Filtrar por estado"
               value={estado}
@@ -112,7 +118,7 @@ export function IncidenteList({
             <Button
               variant="success"
               onClick={limpiarFiltros}
-              disabled={!estado && !tipoId && !fechaDesde && !fechaHasta}
+              disabled={!busqueda && !estado && !tipoId && !fechaDesde && !fechaHasta}
               className="d-flex align-items-center gap-1"
             >
               <i className="bi bi-x-lg"></i>
@@ -134,147 +140,168 @@ export function IncidenteList({
         </div>
       </div>
 
+      {error && <ErrorAlert mensaje={error} />}
+
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
-          <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
-              <tr>
-                <th>Fecha y hora</th>
-                <th>Tipo</th>
-                <th>Descripción</th>
-                {esAdministrador && <th>Reportado por</th>}
-                <th>Foto</th>
-                <th>Estado</th>
-                <th className="text-center" style={{ width: esAdministrador ? '200px' : '90px' }}>
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {incidentes.length === 0 ? (
+          {loading && incidentes.length === 0 ? (
+            <LoadingSpinner mensaje="Cargando incidentes..." />
+          ) : (
+            <Table striped hover responsive className="mb-0 align-middle">
+              <thead className="table-light">
                 <tr>
-                  <td colSpan={esAdministrador ? 7 : 6} className="text-center py-4 text-muted">
-                    {estado || tipoId || fechaDesde || fechaHasta
-                      ? 'No hay incidentes para los filtros actuales.'
-                      : esAdministrador
-                        ? 'No hay incidentes registrados.'
-                        : 'Todavía no reportaste incidentes.'}
-                  </td>
+                  <SortableHeader
+                    column="fecha_hora"
+                    ordenarPor={ordenarPor}
+                    orden={orden}
+                    cambiarOrden={cambiarOrden}
+                  >
+                    Fecha y hora
+                  </SortableHeader>
+                  <th>Tipo</th>
+                  <SortableHeader
+                    column="descripcion"
+                    ordenarPor={ordenarPor}
+                    orden={orden}
+                    cambiarOrden={cambiarOrden}
+                  >
+                    Descripción
+                  </SortableHeader>
+                  {esAdministrador && (
+                    <SortableHeader
+                      column="reportado_por_dni"
+                      ordenarPor={ordenarPor}
+                      orden={orden}
+                      cambiarOrden={cambiarOrden}
+                    >
+                      Reportado por
+                    </SortableHeader>
+                  )}
+                  <th>Foto</th>
+                  <th>Estado</th>
+                  <th className="text-center" style={{ width: esAdministrador ? '200px' : '90px' }}>
+                    Acciones
+                  </th>
                 </tr>
-              ) : (
-                incidentes.map((incidente) => {
-                  const infoEstado = getEstado(incidente.estado);
-                  return (
-                    <tr key={incidente.id}>
-                      <td>{formatearFechaHora(incidente.fecha_hora)}</td>
-                      <td>
-                        <Badge
-                          bg={incidente.tipo.color}
-                          text={textoBadge(incidente.tipo.color)}
-                        >
-                          {incidente.tipo.nombre}
-                        </Badge>
-                      </td>
-
-                      <td className="text-break">{incidente.descripcion}</td>
-                      {esAdministrador && (
+              </thead>
+              <tbody>
+                {incidentes.length === 0 ? (
+                  <tr>
+                    <td colSpan={esAdministrador ? 7 : 6} className="text-center py-4 text-muted">
+                      {estado || tipoId || fechaDesde || fechaHasta || busqueda
+                        ? 'No hay incidentes para los filtros actuales.'
+                        : esAdministrador
+                          ? 'No hay incidentes registrados.'
+                          : 'Todavía no reportaste incidentes.'}
+                    </td>
+                  </tr>
+                ) : (
+                  incidentes.map((incidente) => {
+                    const infoEstado = getEstado(incidente.estado);
+                    return (
+                      <tr key={incidente.id}>
+                        <td>{formatearFechaHora(incidente.fecha_hora)}</td>
                         <td>
-                          <span>
-                            {incidente.reportado_por.apellido}, {incidente.reportado_por.nombre}
-                          </span>
-                          <div>
-                            <small className="text-muted">DNI: {incidente.reportado_por_dni}</small>
+                          <Badge bg={incidente.tipo.color} text={textoBadge(incidente.tipo.color)}>
+                            {incidente.tipo.nombre}
+                          </Badge>
+                        </td>
+
+                        <td className="text-break">{incidente.descripcion}</td>
+                        {esAdministrador && (
+                          <td>
+                            <span>
+                              {incidente.reportado_por.apellido}, {incidente.reportado_por.nombre}
+                            </span>
+                            <div>
+                              <small className="text-muted">DNI: {incidente.reportado_por_dni}</small>
+                            </div>
+                          </td>
+                        )}
+                        <td>
+                          {incidente.imagen_path ? (
+                            <EnlaceArchivo
+                              ruta={incidente.imagen_path}
+                              className="btn btn-outline-primary btn-sm d-inline-flex align-items-center justify-content-center gap-1 text-nowrap"
+                              title="Ver foto"
+                              aria-label="Ver foto del incidente (abre en otra pestaña)"
+                            >
+                              <i className="bi bi-image" aria-hidden="true"></i>
+                              <span>Ver foto</span>
+                            </EnlaceArchivo>
+                          ) : (
+                            <Badge bg="secondary">Sin foto</Badge>
+                          )}
+                        </td>
+                        <td>
+                          <Badge bg={infoEstado.variante}>{infoEstado.label}</Badge>
+                        </td>
+                        <td className="text-center">
+                          <div className="d-flex justify-content-center gap-2">
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              className="text-white py-1 px-2 shadow-sm"
+                              title="Ver Detalle"
+                              onClick={() => onViewClick(incidente)}
+                            >
+                              <i className="bi bi-eye-fill"></i>
+                            </Button>
+                            {currentUser?.administrar && (
+                              <>
+                                {incidente.estado === 'abierto' ? (
+                                  <Button
+                                    variant="success"
+                                    size="sm"
+                                    className="py-1 px-2 shadow-sm"
+                                    title="Registrar acción correctiva y cerrar"
+                                    onClick={() => onAccionCorrectivaClick(incidente)}
+                                  >
+                                    <i className="bi bi-clipboard-check-fill"></i>
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="outline-secondary"
+                                    size="sm"
+                                    className="py-1 px-2 shadow-sm"
+                                    title="Reabrir incidente"
+                                    onClick={() => onReabrirClick(incidente)}
+                                  >
+                                    <i className="bi bi-arrow-counterclockwise"></i>
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="warning"
+                                  size="sm"
+                                  className="text-white py-1 px-2 shadow-sm"
+                                  title="Modificar"
+                                  onClick={() => onEditarClick(incidente)}
+                                >
+                                  <i className="bi bi-pencil-fill"></i>
+                                </Button>
+                                <Button
+                                  variant="danger"
+                                  size="sm"
+                                  className="py-1 px-2 shadow-sm"
+                                  title="Eliminar"
+                                  onClick={() => onEliminarClick(incidente)}
+                                >
+                                  <i className="bi bi-trash3-fill"></i>
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </td>
-                      )}
-                      <td>
-                        {incidente.imagen_path ? (
-                          <EnlaceArchivo
-                            ruta={incidente.imagen_path}
-                            className="btn btn-outline-primary btn-sm d-inline-flex align-items-center justify-content-center gap-1 text-nowrap"
-                            title="Ver foto"
-                            aria-label="Ver foto del incidente (abre en otra pestaña)"
-                          >
-                            <i className="bi bi-image" aria-hidden="true"></i>
-                            <span>Ver foto</span>
-                          </EnlaceArchivo>
-                        ) : (
-                          <Badge bg="secondary">Sin foto</Badge>
-                        )}
-                      </td>
-                      <td>
-                        <Badge
-                          bg={infoEstado.variante}
-                          className={incidente.estado === 'abierto' ? 'text-dark' : ''}
-                        >
-                          {infoEstado.label}
-                        </Badge>
-                      </td>
-                      <td className="text-center">
-                        <div className="d-flex justify-content-center gap-2">
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            className="text-white py-1 px-2 shadow-sm"
-                            title="Ver Detalle"
-                            onClick={() => onViewClick(incidente)}
-                          >
-                            <i className="bi bi-eye-fill"></i>
-                          </Button>
-                          {currentUser?.administrar && (
-                            <>
-                              {incidente.estado === 'abierto' ? (
-                                <Button
-                                  variant="success"
-                                  size="sm"
-                                  className="py-1 px-2 shadow-sm"
-                                  title="Registrar acción correctiva y cerrar"
-                                  onClick={() => onAccionCorrectivaClick(incidente)}
-                                >
-                                  <i className="bi bi-clipboard-check-fill"></i>
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="outline-secondary"
-                                  size="sm"
-                                  className="py-1 px-2 shadow-sm"
-                                  title="Reabrir incidente"
-                                  onClick={() => onReabrirClick(incidente)}
-                                >
-                                  <i className="bi bi-arrow-counterclockwise"></i>
-                                </Button>
-                              )}
-                              <Button
-                                variant="warning"
-                                size="sm"
-                                className="text-white py-1 px-2 shadow-sm"
-                                title="Modificar"
-                                onClick={() => onEditarClick(incidente)}
-                              >
-                                <i className="bi bi-pencil-fill"></i>
-                              </Button>
-                              <Button
-                                variant="danger"
-                                size="sm"
-                                className="py-1 px-2 shadow-sm"
-                                title="Eliminar"
-                                onClick={() => onEliminarClick(incidente)}
-                              >
-                                <i className="bi bi-trash3-fill"></i>
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </Table>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </Table>
+          )}
         </Card.Body>
 
-        {totalPages > 0 && (
+        {totalPages > 0 && !loading && (
           <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
             <ListPagination
               page={page}

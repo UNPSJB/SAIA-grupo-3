@@ -1,7 +1,10 @@
-import { Table, Card, Button, Badge, Pagination, Form } from 'react-bootstrap';
+import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
 import { useVencimientosCalibracion } from './useVencimientosCalibracion';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
+import { SortableHeader } from '../../shared/components/SortableHeader';
+import { ListPagination } from '../../shared/components/ListPagination';
+import { ListControls } from '../../shared/components/ListControls';
 import type { EstadoVencimientoCalibracion, VencimientoCalibracion } from './types';
 import { ESTADOS_VENCIMIENTO_CALIBRACION, TIPOS_EQUIPOS } from './types';
 import { formatearFecha, textoDiasRestantes } from '../../shared/libreria/fechas';
@@ -13,72 +16,73 @@ interface VencimientosCalibracionListProps {
 
 export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibracionListProps) {
   const {
-    vencimientos, loading, error, recargar,
-    page, totalPages, total, nextPage, prevPage, changePage,
-    estado, setEstado, busqueda, setBusqueda, limpiarFiltros,
-    ordenarPor, orden, cambiarOrden,
+    vencimientos,
+    loading,
+    error,
+    recargar,
+    page,
+    totalPages,
+    total,
+    changePage,
+    estado,
+    setEstado,
+    busqueda,
+    setBusqueda,
+    limpiarFiltros,
+    ordenarPor,
+    orden,
+    cambiarOrden,
   } = useVencimientosCalibracion();
 
   const getEstado = (valor: EstadoVencimientoCalibracion) =>
-    ESTADOS_VENCIMIENTO_CALIBRACION.find((e) => e.value === valor) ?? { label: valor, variante: 'secondary' };
+    ESTADOS_VENCIMIENTO_CALIBRACION.find((e) => e.value === valor) ?? {
+      label: valor,
+      variante: 'secondary',
+    };
 
   const getTipo = (valor: string) => etiquetaDe(TIPOS_EQUIPOS, valor);
-
-  const renderIconoOrden = (columna: string) => {
-    if (ordenarPor !== columna) {
-      return <i className="bi bi-chevron-expand text-muted ms-1" style={{ fontSize: '0.8rem' }}></i>;
-    }
-    return orden === 'asc'
-      ? <i className="bi bi-chevron-up ms-1 text-primary" style={{ fontSize: '0.8rem' }}></i>
-      : <i className="bi bi-chevron-down ms-1 text-primary" style={{ fontSize: '0.8rem' }}></i>;
-  };
 
   return (
     <>
       <h4 className="text-secondary fw-normal mb-3">Calibración de Equipos e Instrumentos</h4>
-      <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div className="d-flex flex-wrap align-items-center gap-2 flex-grow-1">
-          <Form.Control
-            type="search"
-            placeholder="Buscar equipo, N° de serie o sector..."
-            aria-label="Buscar vencimiento de calibración"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            style={{ width: '320px', maxWidth: '100%' }}
-          />
-          <Form.Select
-            aria-label="Filtrar por estado"
-            value={estado}
-            onChange={(e) => setEstado(e.target.value as EstadoVencimientoCalibracion | '')}
-            style={{ width: '220px', maxWidth: '100%' }}
-          >
-            <option value="">Todos los estados</option>
-            {ESTADOS_VENCIMIENTO_CALIBRACION.map((e) => (
-              <option key={e.value} value={e.value}>{e.label}</option>
-            ))}
-          </Form.Select>
-          <Button
-            variant="success"
-            onClick={limpiarFiltros}
-            disabled={!estado && !busqueda}
-            className="d-flex align-items-center gap-1"
-          >
-            <i className="bi bi-x-lg"></i><span>Limpiar</span>
-          </Button>
-        </div>
+
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda}>
+        <Form.Select
+          aria-label="Filtrar por estado"
+          value={estado}
+          onChange={(e) => setEstado(e.target.value as EstadoVencimientoCalibracion | '')}
+          style={{ width: '220px', maxWidth: '100%' }}
+        >
+          <option value="">Todos los estados</option>
+          {ESTADOS_VENCIMIENTO_CALIBRACION.map((e) => (
+            <option key={e.value} value={e.value}>
+              {e.label}
+            </option>
+          ))}
+        </Form.Select>
         <Button
           variant="success"
-          onClick={recargar}
-          disabled={loading}
-          className="d-flex align-items-center gap-1 shadow-sm flex-shrink-0 ms-auto"
+          onClick={limpiarFiltros}
+          disabled={!estado && !busqueda}
+          className="d-flex align-items-center gap-1"
         >
-          <i className="bi bi-arrow-clockwise"></i><span>Actualizar</span>
+          <i className="bi bi-x-lg"></i>
+          <span>Limpiar</span>
         </Button>
-      </div>
+        <Button
+          variant="success"
+          onClick={() => recargar()}
+          disabled={loading}
+          className="d-flex align-items-center gap-1 shadow-sm ms-auto"
+        >
+          <i className="bi bi-arrow-clockwise"></i>
+          <span>Actualizar</span>
+        </Button>
+      </ListControls>
 
       {error && <ErrorAlert mensaje={error} />}
 
-      <Card className="shadow-sm border-0">
+      <Card className="shadow-sm border-0 mt-3">
         <Card.Body className="p-0">
           {loading && vencimientos.length === 0 ? (
             <LoadingSpinner mensaje="Cargando estado de las calibraciones..." />
@@ -86,18 +90,35 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
             <Table striped hover responsive className="mb-0 align-middle">
               <thead className="table-light">
                 <tr>
-                  <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('equipo')}>
-                    Equipo {renderIconoOrden('equipo')}
-                  </th>
-                  <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('sector')}>
-                    Sector {renderIconoOrden('sector')}
-                  </th>
+                  <SortableHeader
+                    column="equipo"
+                    ordenarPor={ordenarPor}
+                    orden={orden}
+                    cambiarOrden={cambiarOrden}
+                  >
+                    Equipo
+                  </SortableHeader>
+                  <SortableHeader
+                    column="sector"
+                    ordenarPor={ordenarPor}
+                    orden={orden}
+                    cambiarOrden={cambiarOrden}
+                  >
+                    Sector
+                  </SortableHeader>
                   <th>Última calibración</th>
-                  <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => cambiarOrden('fecha_vencimiento')}>
-                    Vencimiento {renderIconoOrden('fecha_vencimiento')}
-                  </th>
+                  <SortableHeader
+                    column="fecha_vencimiento"
+                    ordenarPor={ordenarPor}
+                    orden={orden}
+                    cambiarOrden={cambiarOrden}
+                  >
+                    Vencimiento
+                  </SortableHeader>
                   <th>Estado</th>
-                  <th className="text-center" style={{ width: '150px' }}>Acciones</th>
+                  <th className="text-center" style={{ width: '150px' }}>
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -118,12 +139,15 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
                           <strong>{v.equipo.nombre}</strong>
                           <br />
                           <small className="text-muted">
-                            N° de serie: <span className="font-monospace">{v.equipo.numero_serie}</span>
+                            N° de serie:{' '}
+                            <span className="font-monospace">{v.equipo.numero_serie}</span>
                             {' · '}
                             <Badge bg="secondary">{getTipo(v.equipo.tipo)}</Badge>
                           </small>
                         </td>
-                        <td>{v.sector ? v.sector.nombre : <span className="text-muted">Sin sector</span>}</td>
+                        <td>
+                          {v.sector ? v.sector.nombre : <span className="text-muted">Sin sector</span>}
+                        </td>
                         <td>
                           {formatearFecha(v.fecha_ultima_calibracion)}
                           <br />
@@ -135,12 +159,7 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
                           <small className="text-muted">{textoDiasRestantes(v.dias_restantes)}</small>
                         </td>
                         <td>
-                          <Badge
-                            bg={infoEstado.variante}
-                            className={v.estado === 'por_vencer' ? 'text-dark' : ''}
-                          >
-                            {infoEstado.label}
-                          </Badge>
+                          <Badge bg={infoEstado.variante}>{infoEstado.label}</Badge>
                         </td>
                         <td className="text-center">
                           <Button
@@ -162,20 +181,14 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
           )}
         </Card.Body>
 
-        {totalPages > 0 && (
+        {totalPages > 0 && !loading && (
           <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
-            <span className="text-muted small mb-2 mb-md-0">
-              Mostrando página {page} de {totalPages} ({total} registros en total)
-            </span>
-            <Pagination className="mb-0" size="sm">
-              <Pagination.Prev onClick={prevPage} disabled={page === 1} />
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-                <Pagination.Item key={num} active={num === page} onClick={() => changePage(num)}>
-                  {num}
-                </Pagination.Item>
-              ))}
-              <Pagination.Next onClick={nextPage} disabled={page === totalPages} />
-            </Pagination>
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              changePage={changePage}
+            />
           </Card.Footer>
         )}
       </Card>

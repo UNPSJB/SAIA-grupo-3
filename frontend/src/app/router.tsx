@@ -28,15 +28,14 @@ import {
 } from '../features/consumoQuimicos/ConsumoQuimicoPage';
 import { VencimientosPage } from '../features/personal';
 import { DocumentoTecnicoPage } from '../features/documentosTecnicos';
-
 import { DocumentosVigentesPage } from '../features/documentosTecnicos/DocumentosVigentesPage';
+import { IncidentePage, IncidentesAbiertosPage } from '../features/incidentes';
+import { VencimientosCalibracionPage } from '../features/equipos';
 
 function HomeRedirect() {
   const { currentUser } = useAuth();
   return <Navigate to={homeFor(currentUser)} replace />;
 }
-import { IncidentePage, IncidentesAbiertosPage } from '../features/incidentes';
-import { VencimientosCalibracionPage } from '../features/equipos';
 
 export function AppRouter() {
   return (
@@ -68,21 +67,30 @@ export function AppRouter() {
             <Route element={<ProtectedRoute requireOperate />}>
               <Route path="checklist" element={<ChecklistPage />} />
               <Route path="documentos-vigentes" element={<DocumentosVigentesPage />} />
-
+              <Route path="incidentes/nuevo" element={<IncidentePage />} />
             </Route>
 
+            {/* Consulta compartida (Operador o Administrador) */}
             <Route element={<ProtectedRoute requireAdminOrOperate />}>
               <Route path="incidentes" element={<IncidentePage />} />
+              <Route path="incidentes/:id" element={<IncidentePage />} />
             </Route>
 
             {/* Administración */}
             <Route element={<ProtectedRoute requireAdmin />}>
+              <Route path="incidentes/abiertos" element={<IncidentesAbiertosPage />} />
+              <Route path="incidentes/:id/:action" element={<IncidentePage />} />
+
               <Route path="personal" element={<PersonalPage />} />
               <Route path="personal/nuevo" element={<PersonalPage />} />
               <Route path="personal/:id" element={<PersonalPage />} />
               <Route path="personal/:id/:action" element={<PersonalPage />} />
               <Route path="personal/vencimientos" element={<VencimientosPage />} />
+           
               <Route path="vencimientos/calibracion" element={<VencimientosCalibracionPage />} />
+              <Route path="vencimientos/calibracion/:id" element={<VencimientosCalibracionPage />} />
+              <Route path="vencimientos/calibracion/:id/:action" element={<VencimientosCalibracionPage />} />
+           
               <Route path="tipos-documento" element={<TipoDocumentoPage />} />
               <Route path="tipos-documento/nuevo" element={<TipoDocumentoPage />} />
               <Route path="tipos-documento/:id" element={<TipoDocumentoPage />} />
@@ -132,7 +140,9 @@ export function AppRouter() {
               <Route path="consumos/:id/:action" element={<ConsumoQuimicoPage />} />
               <Route path="reportes/consumos" element={<ReporteConsumosPage />} />
               <Route path="documentos-tecnicos" element={<DocumentoTecnicoPage />} />
-              <Route path="incidentes/abiertos" element={<IncidentesAbiertosPage />} />
+              <Route path="documentos-tecnicos/nuevo" element={<DocumentoTecnicoPage />} />
+              <Route path="documentos-tecnicos/:id" element={<DocumentoTecnicoPage />} />
+              <Route path="documentos-tecnicos/:id/:action" element={<DocumentoTecnicoPage />} />
             </Route>
           </Route>
         </Routes>
