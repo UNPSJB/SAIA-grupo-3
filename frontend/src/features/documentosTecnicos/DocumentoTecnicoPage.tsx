@@ -1,64 +1,56 @@
-import { useState } from 'react';
-import { Container } from 'react-bootstrap';
+import { Container, Button } from 'react-bootstrap';
 import { DocumentoTecnicoList } from './DocumentoTecnicoList';
 import { DocumentoTecnicoForm } from './DocumentoTecnicoForm';
 import { DocumentoTecnicoView } from './DocumentoTecnicoView';
-import type { DocumentoTecnicoResumen } from './types';
-
-type ModoVista = 'listado' | 'crear' | 'editar' | 'ver';
+import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
+import { getDocumentoTecnico } from './documentoTecnicoApi';
+import { ErrorAlert } from '../../shared/components/ErrorAlert';
+import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import type { DocumentoTecnico } from './types';
 
 export function DocumentoTecnicoPage() {
+  const route = useCrudRoute<DocumentoTecnico>('/documentos-tecnicos', getDocumentoTecnico);
 
-  const [modo, setModo] = useState<ModoVista>('listado');
-  const [seleccionado, setSeleccionado] = useState<DocumentoTecnicoResumen | null>(null);
-
-  const verDocumento = (documento: DocumentoTecnicoResumen) => {
-    setSeleccionado(documento);
-    setModo('ver');
-  };
-
-  const editarDocumento = (documento: DocumentoTecnicoResumen) => {
-    setSeleccionado(documento);
-    setModo('editar');
-  };
-
-  const nuevoDocumento = () => {
-    setSeleccionado(null);
-    setModo('crear');
-  };
-
-  const volverAlListado = () => {
-    setSeleccionado(null);
-    setModo('listado');
+  const handleGuardado = (documento: DocumentoTecnico) => {
+    route.open(documento);
   };
 
   return (
     <Container className="py-2">
       <h2 className="mb-4 border-bottom pb-2 text-secondary">Documentos Técnicos</h2>
 
-      {modo === 'listado' && (
+      {route.loading && <LoadingSpinner mensaje="Cargando documento..." />}
+      
+      {route.error && (
+        <>
+          <ErrorAlert mensaje={route.error} />
+          <Button variant="secondary" onClick={route.back} className="mt-2">Volver</Button>
+        </>
+      )}
+
+      {route.mode === 'listado' && !route.loading && !route.error && (
         <DocumentoTecnicoList
-          onNuevo={nuevoDocumento}
-          onVer={verDocumento}
-          onEditar={editarDocumento}
+          onNuevo={() => route.open()}
+          onVer={(doc) => route.open(doc as any)}
+          onEditar={(doc) => route.open(doc as any, 'editar')}
         />
       )}
 
-      {(modo === 'crear' || modo === 'editar') && (
+      {(route.mode === 'crear' || (route.mode === 'editar' && route.item)) && (
         <DocumentoTecnicoForm
-          key={seleccionado?.id ?? 'nuevo'}
-          documentoInicial={modo === 'editar' ? seleccionado : null}
-          onGuardado={verDocumento}                      // al guardar, se muestra el detalle
-          onCancelar={modo === 'editar' ? () => setModo('ver') : volverAlListado}
+          key={route.item?.id ?? 'nuevo'}
+          documentoInicial={route.item as any}
+          onGuardado={handleGuardado}
+          onCancelar={route.mode === 'editar' ? () => route.open(route.item!) : route.back}
         />
       )}
 
-      {modo === 'ver' && seleccionado && (
+      {route.mode === 'ver' && route.item && (
         <DocumentoTecnicoView
-          key={seleccionado.id}
-          documentoId={seleccionado.id}
-          onVolver={volverAlListado}
-          onEditar={editarDocumento}
+          key={route.item.id}
+          documentoId={route.item.id!}
+          onVolver={route.back}
+          onEditar={() => route.open(route.item!, 'editar')}
         />
       )}
     </Container>

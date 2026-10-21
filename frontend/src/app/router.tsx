@@ -72,6 +72,9 @@ export function AppRouter() {
 
             <Route element={<ProtectedRoute requireAdminOrOperate />}>
               <Route path="incidentes" element={<IncidentePage />} />
+              <Route path="incidentes/nuevo" element={<IncidentePage />} />
+              <Route path="incidentes/:id" element={<IncidentePage />} />
+              <Route path="incidentes/:id/:action" element={<IncidentePage />} />
             </Route>
 
             {/* Administración */}
@@ -120,13 +123,15 @@ export function AppRouter() {
               <Route path="planes/:id/:action" element={<PlanPage />} />
               <Route path="auditoria" element={<AuditoriaPage />} />
               <Route path="auditoria/:id" element={<AuditoriaPage />} />
-
               <Route path="consumos" element={<ConsumoQuimicoPage />} />
               <Route path="consumos/nuevo" element={<ConsumoQuimicoPage />} />
               <Route path="consumos/:id" element={<ConsumoQuimicoPage />} />
               <Route path="consumos/:id/:action" element={<ConsumoQuimicoPage />} />
               <Route path="reportes/consumos" element={<ReporteConsumosPage />} />
               <Route path="documentos-tecnicos" element={<DocumentoTecnicoPage />} />
+              <Route path="documentos-tecnicos/nuevo" element={<DocumentoTecnicoPage />} />
+              <Route path="documentos-tecnicos/:id" element={<DocumentoTecnicoPage />} />
+              <Route path="documentos-tecnicos/:id/:action" element={<DocumentoTecnicoPage />} />
               <Route path="incidentes/abiertos" element={<IncidentesAbiertosPage />} />
             </Route>
           </Route>

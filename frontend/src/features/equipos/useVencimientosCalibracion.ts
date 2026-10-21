@@ -1,58 +1,27 @@
-import { useState, useEffect, useCallback } from 'react';
-import { getVencimientosCalibracion } from './calibracionApi';
+import { useSearchParams } from 'react-router-dom';
+import { usePagedList } from '../../shared/hooks/usePagedList';
 import type { EstadoVencimientoCalibracion, VencimientoCalibracion } from './types';
 
-export function useVencimientosCalibracion() {
-  const [vencimientos, setVencimientos] = useState<VencimientoCalibracion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function useVencimientosCalibracion(enabled = true) {
+  const [params] = useSearchParams();
+  const estado = (params.get('estado') || '') as EstadoVencimientoCalibracion | '';
 
-  const [page, setPage] = useState(1);
-  const [size] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const filtros = new URLSearchParams();
+  if (estado) filtros.set('estado', estado);
 
-  const [estado, setEstado] = useState<EstadoVencimientoCalibracion | ''>('');
-  const [busqueda, setBusqueda] = useState('');
-  const [ordenarPor, setOrdenarPor] = useState('fecha_vencimiento');
-  const [orden, setOrden] = useState<'asc' | 'desc'>('asc');
-
-  const cargarVencimientos = useCallback(() => {
-    setLoading(true);
-    getVencimientosCalibracion(page, size, estado, busqueda, ordenarPor, orden)
-      .then((data) => {
-        setVencimientos(data.items);
-        setTotalPages(data.pages);
-        setTotal(data.total);
-        setPage(data.page);
-        setError(null);
-      })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [page, size, estado, busqueda, ordenarPor, orden]);
-
-  // Al cambiar un filtro volvemos a la primera página
-  useEffect(() => { setPage(1); }, [estado, busqueda]);
-  useEffect(() => { cargarVencimientos(); }, [cargarVencimientos]);
-
-  const cambiarOrden = (columna: string) => {
-    if (ordenarPor === columna) { setOrden(orden === 'asc' ? 'desc' : 'asc'); }
-    else { setOrdenarPor(columna); setOrden('asc'); }
-  };
-
-  const limpiarFiltros = () => {
-    setEstado('');
-    setBusqueda('');
-  };
-
-  const nextPage = () => { if (page < totalPages) setPage((prev) => prev + 1); };
-  const prevPage = () => { if (page > 1) setPage((prev) => prev - 1); };
-  const changePage = (newPage: number) => setPage(newPage);
+  const list = usePagedList<VencimientoCalibracion>(
+    'calibraciones/vencimientos',
+    enabled,
+    filtros.toString() ? `&${filtros.toString()}` : '',
+    'fecha_vencimiento',
+    'asc'
+  );
 
   return {
-    vencimientos, loading, error, recargar: cargarVencimientos,
-    page, totalPages, total, nextPage, prevPage, changePage,
-    estado, setEstado, busqueda, setBusqueda, limpiarFiltros,
-    ordenarPor, orden, cambiarOrden,
+    ...list,
+    vencimientos: list.items,
+    estado,
+    setEstado: (valor: EstadoVencimientoCalibracion | '') => list.update({ estado: valor }),
+    limpiarFiltros: () => list.update({ buscar: '', estado: '' })
   };
 }

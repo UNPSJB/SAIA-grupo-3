@@ -88,9 +88,11 @@ def read_incidentes_abiertos(
     tipo: TipoIncidente | None = Query(None),
     dias_minimos: int | None = Query(None, ge=0, description="Solo los abiertos hace N días o más"),
     buscar: str = Query(""),
+    ordenar_por: str = Query("fecha_hora"),
+    orden: str = Query("asc"),
 ):
-    """Incidentes sin acción correctiva, del más viejo al más nuevo."""
-    return services.listar_incidentes_abiertos(db, page, size, tipo, dias_minimos, buscar)
+    """Incidentes sin acción correctiva"""
+    return services.listar_incidentes_abiertos(db, page, size, tipo, dias_minimos, buscar, ordenar_por, orden)
 
 
 @router.get(
