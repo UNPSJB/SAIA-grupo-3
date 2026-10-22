@@ -22,6 +22,10 @@ def read_unidades(
 ):
     return services.listar_unidades_medida(db, page, size, mostrar_inactivos, ordenar_por, orden, buscar)
 
+@router.get("/{unidad_id}", response_model=schemas.UnidadMedida)
+def read_unidad(unidad_id: int, db: Session = Depends(get_db)):
+    return services.leer_unidad_medida(db, unidad_id)
+
 @router.post("", response_model=schemas.UnidadMedida)
 def create_unidad(unidad: schemas.UnidadMedidaCreate, db: Session = Depends(get_db)):
     return services.crear_unidad_medida(db, unidad)

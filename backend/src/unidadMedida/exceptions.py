@@ -11,5 +11,5 @@ class TipoUnidadInvalido(ValueError):
         message = f"{ErrorCode.TIPO_UNIDAD_INVALIDO} {posibles_tipos}."
         super().__init__(message)
 
-class UnidadDuplicada(ValueError):
+class UnidadDuplicada(BadRequest):
     DETAIL=ErrorCode.UNIDAD_DUPLICADA

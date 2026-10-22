@@ -1,22 +1,35 @@
-from src.pagination import filtrar_ordenar
-from typing import List, Dict, Any
+from typing import Dict, Any
 from sqlalchemy import select, update, func
 from sqlalchemy.orm import Session
+from src.pagination import filtrar_ordenar
+from src.unidadMedida.models import UnidadMedida
 from src.unidadMedida import models, schemas, exceptions
 
-def _validar_duplicados_unidad(db: Session, unidad: schemas.UnidadMedidaBase, excluir_id: int | None = None) -> None:
-    query = select(models.UnidadMedida).where(
-        func.lower(models.UnidadMedida.sufijo) == unidad.sufijo.strip().lower()
+#def _validar_duplicados_unidad(db: Session, unidad: schemas.UnidadMedidaBase, excluir_id: int | None = None) -> None:
+#    query = select(models.UnidadMedida).where(
+#        func.lower(models.UnidadMedida.sufijo) == unidad.sufijo.strip().lower()
+#    )
+#    if excluir_id is not None:
+#        query = query.where(models.UnidadMedida.id != excluir_id)
+#    if db.scalar(query) is not None:
+#        raise exceptions.UnidadDuplicada()
+
+def _validar_duplicados_unidad(db: Session, sufijo: str, excluir_id: int | None = None) -> None:
+    query = select(UnidadMedida).where(
+        func.lower(UnidadMedida.sufijo) == sufijo.strip().lower()
     )
     if excluir_id is not None:
-        query = query.where(models.UnidadMedida.id != excluir_id)
+        query = query.where(UnidadMedida.id != excluir_id)
+    
     if db.scalar(query) is not None:
         raise exceptions.UnidadDuplicada()
 
 def crear_unidad_medida(db: Session, unidad: schemas.UnidadMedidaCreate) -> models.UnidadMedida:
-    _validar_duplicados_unidad(db, unidad)
+    _validar_duplicados_unidad(db, unidad.sufijo) 
     
-    _unidad = models.UnidadMedida(**unidad.model_dump())
+    datos = unidad.model_dump()
+    datos["sufijo"] = datos["sufijo"].strip()
+    _unidad = UnidadMedida(**datos)
     db.add(_unidad)
     db.commit()
     db.refresh(_unidad)
@@ -55,8 +68,9 @@ def modificar_unidad_medida(db: Session, unidad_id: int, unidad_in: schemas.Unid
 
     if "sufijo" in datos_actualizar and datos_actualizar["sufijo"] is not None:
         _validar_duplicados_unidad(db, datos_actualizar["sufijo"], excluir_id=unidad_id)
-        
-    db.execute(update(models.UnidadMedida).where(models.UnidadMedida.id == unidad_id).values(**datos_actualizar))
+        datos_actualizar["sufijo"] = datos_actualizar["sufijo"].strip()
+
+    db.execute(update(UnidadMedida).where(UnidadMedida.id == unidad_id).values(**datos_actualizar))
     db.commit()
     db.refresh(db_unidad)
     return db_unidad
