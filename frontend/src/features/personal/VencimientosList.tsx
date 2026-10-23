@@ -40,56 +40,72 @@ export function VencimientosList({ onVerLegajo }: VencimientosListProps) {
   return (
     <>
       <h4 className="text-secondary fw-normal mb-3">Documentación del Personal</h4>
-      <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div className="d-flex flex-wrap align-items-center gap-2 flex-grow-1">
-          <Form.Control
-            type="search"
-            placeholder="Buscar empleado, DNI o documento..."
-            aria-label="Buscar vencimiento"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            style={{ width: '320px', maxWidth: '100%' }}
-          />
-          <Form.Select
-            aria-label="Filtrar por estado"
-            value={estado}
-            onChange={(e) => setEstado(e.target.value as EstadoVencimiento | '')}
-            style={{ width: '220px', maxWidth: '100%' }}
-          >
-            <option value="">Todos los estados</option>
-            {ESTADOS_VENCIMIENTO.map((e) => (
-              <option key={e.value} value={e.value}>
-                {e.label}
-              </option>
-            ))}
-          </Form.Select>
-          <Form.Check
-            type="switch"
-            id="solo-alertas-documentacion"
-            label="Solo vencidos y próximos"
-            checked={soloAlertas}
-            onChange={(e) => setSoloAlertas(e.target.checked)}
-          />
-          <Button
-            variant="success"
-            onClick={limpiarFiltros}
-            disabled={!estado && !busqueda && !soloAlertas}
-            className="d-flex align-items-center gap-1"
-          >
-            <i className="bi bi-x-lg"></i>
-            <span>Limpiar</span>
-          </Button>
-        </div>
-        <Button
-          variant="success"
-          onClick={recargar}
-          disabled={loading}
-          className="d-flex align-items-center gap-1 shadow-sm flex-shrink-0 ms-auto"
-        >
-          <i className="bi bi-arrow-clockwise"></i>
-          <span>Actualizar</span>
-        </Button>
-      </div>
+      
+      <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
+  <Form.Control
+    type="search"
+    placeholder="Buscar empleado, DNI o documento..."
+    aria-label="Buscar vencimiento"
+    value={busqueda}
+    onChange={(e) => setBusqueda(e.target.value)}
+    style={{
+      flex: '1 1 240px',
+      width: 'auto',
+      minWidth: 0,
+    }}
+  />
+
+  <Form.Select
+    aria-label="Filtrar por estado"
+    value={estado}
+    onChange={(e) =>
+      setEstado(e.target.value as EstadoVencimiento | '')
+    }
+    style={{
+      flex: '0 1 180px',
+      width: 'auto',
+      maxWidth: '100%',
+    }}
+  >
+    <option value="">Todos los estados</option>
+    {ESTADOS_VENCIMIENTO.map((e) => (
+      <option key={e.value} value={e.value}>
+        {e.label}
+      </option>
+    ))}
+  </Form.Select>
+
+  <Form.Check
+    type="switch"
+    id="solo-alertas-documentacion"
+    label="Solo vencidos y próximos"
+    checked={soloAlertas}
+    onChange={(e) => setSoloAlertas(e.target.checked)}
+    className="mb-0 text-nowrap"
+  />
+
+  <div className="d-flex flex-wrap align-items-center gap-2 ms-auto">
+    <Button
+      variant="success"
+      onClick={limpiarFiltros}
+      disabled={!estado && !busqueda && !soloAlertas}
+      className="d-flex align-items-center gap-1"
+    >
+      <i className="bi bi-x-lg" aria-hidden="true"></i>
+      <span>Limpiar</span>
+    </Button>
+
+    <Button
+      variant="success"
+      onClick={recargar}
+      disabled={loading}
+      className="d-flex align-items-center gap-1 shadow-sm"
+    >
+      <i className="bi bi-arrow-clockwise" aria-hidden="true"></i>
+      <span>Actualizar</span>
+    </Button>
+  </div>
+</div>
 
       {error && <ErrorAlert mensaje={error} />}
 
@@ -99,7 +115,7 @@ export function VencimientosList({ onVerLegajo }: VencimientosListProps) {
             <LoadingSpinner mensaje="Cargando estado de la documentación..." />
           ) : (
             <Table striped hover responsive className="mb-0 align-middle">
-              <thead className="table-light">
+              <thead className="table-theme">
                 <tr>
                   <SortableHeader
                     column="empleado"
@@ -190,7 +206,7 @@ export function VencimientosList({ onVerLegajo }: VencimientosListProps) {
         </Card.Body>
 
         {totalPages > 0 && (
-          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
+          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-body border-top">
             <ListPagination
               page={page}
               totalPages={totalPages}

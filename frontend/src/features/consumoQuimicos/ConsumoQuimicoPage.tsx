@@ -129,7 +129,7 @@ export function ReporteConsumosPage() {
       </div>
 
       <ListControls {...filters} />
-      <Card className="shadow-sm border-0 mb-4 bg-white">
+      <Card className="shadow-sm border-0 mb-4 bg-body">
         <Card.Body>
           <Row className="g-3 align-items-end">
             <Col xs={12} md="auto">
@@ -168,7 +168,7 @@ export function ReporteConsumosPage() {
         </Card.Body>
       </Card>
 
-      <Card className="shadow-sm border-0 bg-white">
+      <Card className="shadow-sm border-0 bg-body">
         <Card.Body className="p-0">
           {error && (
             <Alert variant="danger" className="m-3">
@@ -188,11 +188,8 @@ export function ReporteConsumosPage() {
             </div>
           ) : (
             <Table responsive hover className="mb-0 align-middle">
-              <thead className="table-light">
+              <thead className="table-theme">
                 <tr>
-                  <SortableHeader column="insumo_id" {...filters}>
-                    ID
-                  </SortableHeader>
                   <SortableHeader column="nombre_insumo" {...filters}>
                     Producto Químico
                   </SortableHeader>
@@ -207,8 +204,7 @@ export function ReporteConsumosPage() {
               <tbody>
                 {reporte.map((item) => (
                   <tr key={item.insumo_id}>
-                    <td className="px-4 text-muted">#{item.insumo_id}</td>
-                    <td className="fw-medium text-dark">{item.nombre_insumo}</td>
+                    <td className="fw-medium text-body">{item.nombre_insumo}</td>
                     <td className="text-end fw-bold text-primary fs-5">
                       {item.cantidad_total.toLocaleString('es-AR')}
                     </td>

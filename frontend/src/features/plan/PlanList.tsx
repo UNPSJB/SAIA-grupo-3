@@ -64,16 +64,8 @@ export function PlanList({
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
-                <SortableHeader
-                  column="id"
-                  ordenarPor={ordenarPor}
-                  orden={orden}
-                  cambiarOrden={cambiarOrden}
-                >
-                  ID
-                </SortableHeader>
                 <SortableHeader
                   column="nombre"
                   ordenarPor={ordenarPor}
@@ -122,16 +114,13 @@ export function PlanList({
             <tbody>
               {planes.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-4 text-muted">
+                  <td colSpan={6} className="text-center py-4 text-muted">
                     No hay planes registrados.
                   </td>
                 </tr>
               ) : (
                 planes.map((p) => (
                   <tr key={p.id}>
-                    <td>
-                      <Badge bg="secondary">#{p.id}</Badge>
-                    </td>
                     <td>
                       <strong>{p.nombre}</strong>
                     </td>
@@ -199,7 +188,7 @@ export function PlanList({
           </Table>
         </Card.Body>
         {totalPages > 0 && (
-          <Card.Footer className="d-flex justify-content-between align-items-center bg-white border-top">
+          <Card.Footer className="d-flex justify-content-between align-items-center bg-body border-top">
             <ListPagination
               page={page}
               totalPages={totalPages}

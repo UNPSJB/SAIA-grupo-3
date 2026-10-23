@@ -106,7 +106,7 @@ export function DocumentoTecnicoView({
   return (
     <>
       <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '800px' }}>
-        <Card.Header className="bg-light text-secondary d-flex flex-wrap align-items-center gap-2 py-3">
+        <Card.Header className="bg-body-tertiary text-secondary d-flex flex-wrap align-items-center gap-2 py-3">
           <i className="bi bi-file-earmark-text fs-5"></i>
           <h5 className="mb-0 flex-grow-1">{documento.nombre}</h5>
           <Badge
@@ -121,7 +121,7 @@ export function DocumentoTecnicoView({
           {documento.descripcion && <p className="text-muted">{documento.descripcion}</p>}
 
           {vigente ? (
-            <div className="bg-light p-3 rounded border d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div className="bg-body-tertiary p-3 rounded border d-flex flex-wrap justify-content-between align-items-center gap-2">
               <div>
                 <div className="fw-semibold">
                   Versión vigente <Badge bg="secondary">v{vigente.numero}</Badge>
@@ -167,7 +167,7 @@ export function DocumentoTecnicoView({
             <p className="text-muted">Este documento no tiene un archivo vigente.</p>
           )}
         </Card.Body>
-        <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+        <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
           
           {currentUser?.administrar && documento.versiones.length > 0 && (
             <Button 
@@ -221,7 +221,7 @@ export function DocumentoTecnicoView({
           </Form.Group>
 
           {versionHistorialElegida && (
-            <div className="mt-4 p-4 bg-light border rounded">
+            <div className="mt-4 p-4 bg-body-tertiary border rounded">
               {(() => {
                 const vSelec = documento.versiones.find((v) => v.id === Number(versionHistorialElegida));
                 if (!vSelec) return null;

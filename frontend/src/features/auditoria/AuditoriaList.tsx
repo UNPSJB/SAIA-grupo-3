@@ -1,7 +1,7 @@
 import { SortableHeader } from '../../shared/components/SortableHeader';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { ListControls } from '../../shared/components/ListControls';
-import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
+import { Table, Card, Button, Form } from 'react-bootstrap';
 import { useAuditoria } from './useAuditoria';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -76,16 +76,8 @@ export function AuditoriaList({ onViewClick }: AuditoriaListProps) {
             </Button>
           </div>
           <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
-                <SortableHeader
-                  column="id"
-                  ordenarPor={ordenarPor}
-                  orden={orden}
-                  cambiarOrden={cambiarOrden}
-                >
-                  ID Ejecución
-                </SortableHeader>
                 <SortableHeader
                   column="fecha_ejecucion"
                   ordenarPor={ordenarPor}
@@ -109,7 +101,7 @@ export function AuditoriaList({ onViewClick }: AuditoriaListProps) {
             <tbody>
               {planesRealizados.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-4 text-muted">
+                  <td colSpan={4} className="text-center py-4 text-muted">
                     {desde || hasta
                       ? 'No hay registros en el rango de fechas seleccionado.'
                       : 'No hay registros de planes realizados.'}
@@ -118,9 +110,6 @@ export function AuditoriaList({ onViewClick }: AuditoriaListProps) {
               ) : (
                 planesRealizados.map((p) => (
                   <tr key={p.id}>
-                    <td>
-                      <Badge bg="secondary">#{p.id}</Badge>
-                    </td>
                     <td>{formatearFecha(p.fecha_ejecucion)}</td>
                     <td>
                       <strong>{p.nombre}</strong>
@@ -149,7 +138,7 @@ export function AuditoriaList({ onViewClick }: AuditoriaListProps) {
           </Table>
         </Card.Body>
         {totalPages > 0 && (
-          <Card.Footer className="d-flex justify-content-between align-items-center bg-white border-top">
+          <Card.Footer className="d-flex justify-content-between align-items-center bg-body border-top">
             <ListPagination
               page={page}
               totalPages={totalPages}

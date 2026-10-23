@@ -21,7 +21,14 @@ export function EquipoForm({ equipoInicial, onGuardar, onCancelar }: EquipoFormP
     nombre: string;
     tipo: TipoEquipo;
     sectorId: number | '';
-  }>({ defaultValues: { numeroSerie: '', nombre: '', tipo: 'equipo', sectorId: '' } });
+  }>({
+  defaultValues: {
+    numeroSerie: equipoInicial?.numero_serie ?? '',
+    nombre: equipoInicial?.nombre ?? '',
+    tipo: equipoInicial?.tipo ?? 'equipo',
+    sectorId: equipoInicial?.sector_id ?? '',
+  },
+  });
   const enviando = form.formState.isSubmitting;
   const {
     field: {
@@ -86,8 +93,12 @@ export function EquipoForm({ equipoInicial, onGuardar, onCancelar }: EquipoFormP
     },
   });
 
-  const [fechaCalibracion, setFechaCalibracion] = useState('');
-  const [periodicidad, setPeriodicidad] = useState<number | ''>('');
+  const [fechaCalibracion, setFechaCalibracion] = useState(
+    () => equipoInicial?.fecha_ultima_calibracion ?? '',
+  );
+  const [periodicidad, setPeriodicidad] = useState<number | ''>(
+    () => equipoInicial?.periodicidad_dias ?? '',
+  );
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [cargandoSectores, setCargandoSectores] = useState(true);
 
@@ -97,18 +108,6 @@ export function EquipoForm({ equipoInicial, onGuardar, onCancelar }: EquipoFormP
       .catch((err: Error) => alert(err.message))
       .finally(() => setCargandoSectores(false));
   }, []);
-
-  useEffect(() => {
-    if (equipoInicial) {
-      setNumeroSerie(equipoInicial.numero_serie);
-      setNombre(equipoInicial.nombre);
-      setTipo(equipoInicial.tipo as TipoEquipo);
-      setSectorId(equipoInicial.sector_id);
-      
-      setFechaCalibracion(equipoInicial.fecha_ultima_calibracion || '');
-      setPeriodicidad(equipoInicial.periodicidad_dias || '');
-    }
-  }, [equipoInicial, setNumeroSerie, setNombre, setTipo, setSectorId]);
 
   const handleSubmit = form.handleSubmit(async () => {
     form.clearErrors('root');
@@ -133,7 +132,7 @@ export function EquipoForm({ equipoInicial, onGuardar, onCancelar }: EquipoFormP
 
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '750px' }}>
-      <Card.Header as="h5" className="bg-light text-secondary py-3">
+      <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
         {esEdicion ? `Modificar Equipo: ${equipoInicial?.numero_serie}` : 'Registrar Nuevo Equipo'}
       </Card.Header>
       <Card.Body className="p-4">
@@ -217,7 +216,7 @@ export function EquipoForm({ equipoInicial, onGuardar, onCancelar }: EquipoFormP
           
           <h6 className="text-secondary fw-bold mt-4 mb-3 border-bottom pb-2">Calibración y Mantenimiento
           </h6>
-          <div className="row mb-4 bg-light rounded p-2 pt-3 mx-0 border">
+          <div className="row mb-4 bg-body-tertiary rounded p-2 pt-3 mx-0 border">
             <Form.Group className="col-md-6 mb-3">
               <Form.Label className="text-secondary small fw-medium">Última Calibración</Form.Label>
               <Form.Control

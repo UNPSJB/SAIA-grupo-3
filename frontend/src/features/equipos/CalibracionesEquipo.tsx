@@ -14,6 +14,8 @@ interface CalibracionesEquipoProps {
 
 type ModoVista = 'listado' | 'crear' | 'editar' | 'eliminar';
 
+
+
 export function CalibracionesEquipo({
   equipoId,
   periodicidadDias,
@@ -83,6 +85,7 @@ export function CalibracionesEquipo({
         </Modal.Header>
         <Modal.Body>
           <CalibracionForm
+            key={`${modo}-${calibracionSeleccionada?.id ?? 'nueva'}`}
             calibracionInicial={calibracionSeleccionada}
             periodicidadDias={periodicidadDias}
             onGuardar={handleGuardar}

@@ -1,7 +1,7 @@
 import { SortableHeader } from '../../shared/components/SortableHeader';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { ListControls } from '../../shared/components/ListControls';
-import { Table, Card, Button, Badge } from 'react-bootstrap';
+import { Table, Card, Button } from 'react-bootstrap';
 import { useTarea } from './useTarea';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -53,16 +53,8 @@ export function TareaList({
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
-                <SortableHeader
-                  column="id"
-                  ordenarPor={ordenarPor}
-                  orden={orden}
-                  cambiarOrden={cambiarOrden}
-                >
-                  ID
-                </SortableHeader>
                 <SortableHeader
                   column="nombre"
                   ordenarPor={ordenarPor}
@@ -95,16 +87,13 @@ export function TareaList({
             <tbody>
               {tareas.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-4 text-muted">
+                  <td colSpan={4} className="text-center py-4 text-muted">
                     No hay tareas registradas.
                   </td>
                 </tr>
               ) : (
                 tareas.map((t) => (
                   <tr key={t.id}>
-                    <td>
-                      <Badge bg="secondary">#{t.id}</Badge>
-                    </td>
                     <td>
                       <strong>{t.nombre}</strong>
                     </td>
@@ -146,7 +135,7 @@ export function TareaList({
         </Card.Body>
 
         {totalPages > 0 && (
-          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
+          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-body border-top">
             <ListPagination
               page={page}
               totalPages={totalPages}

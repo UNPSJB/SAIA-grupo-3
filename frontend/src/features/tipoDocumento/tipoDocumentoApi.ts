@@ -1,5 +1,9 @@
-import { fetchWithAuth, API_BASE_URL, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
-import type { PaginatedTiposDocumento, TipoDocumento, TipoDocumentoDatos } from './types';
+import {
+  API_BASE_URL,
+  fetchWithAuth,
+  mensajeDeRespuesta,
+} from '../../shared/libreria/api';
+import type { PaginatedTiposDocumento } from './types';
 
 const API_URL = `${API_BASE_URL}/tipos-documento`;
 
@@ -12,46 +16,19 @@ export async function getTiposDocumento(
   buscar = '',
 ): Promise<PaginatedTiposDocumento> {
   let url = `${API_URL}?page=${page}&size=${size}&mostrar_inactivos=${mostrarInactivos}&ordenar_por=${ordenarPor}&orden=${orden}`;
+
   if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
 
   const response = await fetchWithAuth(url);
-  if (!response.ok) throw new Error(await mensajeDeRespuesta(response, 'Error al obtener los tipos de documento.'));
-  return response.json();
-}
 
-export async function createTipoDocumento(datos: { nombre: string }): Promise<TipoDocumento> {
-  const response = await fetchWithAuth(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(datos),
-  });
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(mensajeDeError(errorData.detail, 'Error al crear el tipo de documento.'));
+    throw new Error(
+      await mensajeDeRespuesta(
+        response,
+        'Error al obtener los tipos de documento.',
+      ),
+    );
   }
-  return response.json();
-}
 
-export async function updateTipoDocumento(
-  id: number,
-  datos: TipoDocumentoDatos,
-): Promise<TipoDocumento> {
-  const response = await fetchWithAuth(`${API_URL}/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(datos),
-  });
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(mensajeDeError(errorData.detail, 'Error al actualizar el tipo de documento.'));
-  }
   return response.json();
-}
-
-export async function deleteTipoDocumento(id: number): Promise<void> {
-  const response = await fetchWithAuth(`${API_URL}/${id}`, { method: 'DELETE' });
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(mensajeDeError(errorData.detail, 'Error al dar de baja el tipo de documento.'));
-  }
 }

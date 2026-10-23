@@ -49,7 +49,7 @@ export function TipoIncidenteDeleteView({
           ¿Estás seguro de que deseas dar de baja este tipo de incidente?
         </p>
 
-        <div className="bg-light p-3 rounded border mb-4">
+        <div className="bg-body-tertiary p-3 rounded border mb-4">
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Nombre:</span>
             <span className="col-8 fw-bold">{tipoIncidente.nombre}</span>
@@ -81,7 +81,7 @@ export function TipoIncidenteDeleteView({
         </Alert>
       </Card.Body>
 
-      <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button
           variant="secondary"
           onClick={onCancelar}

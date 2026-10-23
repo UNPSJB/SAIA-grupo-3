@@ -62,7 +62,7 @@ export function CalibracionList({
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
                 <th>Fecha</th>
                 <th>Otorgado por</th>

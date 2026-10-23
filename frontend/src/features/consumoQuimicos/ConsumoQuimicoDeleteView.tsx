@@ -44,7 +44,7 @@ export function ConsumoQuimicoDeleteView({
         <p className="text-secondary fs-6">
           ¿Estás seguro de que deseas eliminar este registro de consumo?
         </p>
-        <div className="bg-light p-3 rounded border mb-4">
+        <div className="bg-body-tertiary p-3 rounded border mb-4">
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">ID Registro:</span>
             <span className="col-8"><Badge bg="secondary">#{consumo.id}</Badge></span>
@@ -63,7 +63,7 @@ export function ConsumoQuimicoDeleteView({
           <strong>Atención:</strong> Al eliminar este registro, la cantidad de <strong>{consumo.cantidad_utilizada}</strong> será devuelta al stock del insumo químico correspondiente.
         </Alert>
       </Card.Body>
-      <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onCancelar} disabled={eliminando}>
           Cancelar
         </Button>

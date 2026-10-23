@@ -136,7 +136,7 @@ export function ConsumoQuimicoForm({
 
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
-      <Card.Header as="h5" className="bg-light text-secondary py-3">
+      <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
         {esEdicion ? 'Modificar Consumo Registrado' : 'Registrar Consumo Diario'}
       </Card.Header>
       <Card.Body className="p-4">
@@ -186,7 +186,7 @@ export function ConsumoQuimicoForm({
               />
               {/* Aquí mostramos el cartelito con la unidad pegado al input */}
               {insumoId !== '' && sufijoUnidad && (
-                <InputGroup.Text className="bg-light text-secondary fw-bold">
+                <InputGroup.Text className="bg-body-tertiary text-secondary fw-bold">
                   {sufijoUnidad}
                 </InputGroup.Text>
               )}

@@ -2,13 +2,6 @@
    1. Ajustes base del layout
    ========================================================================== */
 
-/* Fondo claro solo cuando NO está activo el tema oscuro */
-[data-bs-theme='light'] body,
-:root:not([data-bs-theme='dark']) body {
-  background-color: #f8fafc;
-  color: #1e293b;
-}
-
 .shadow-xs {
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
@@ -32,95 +25,37 @@
   }
 }
 
-/* ==========================================================================
-   2. Paginación Adaptable (Modo Claro por defecto)
-   ========================================================================== */
+/* Superficies y estados que responden a data-bs-theme de Bootstrap. */
+.table-theme {
+  --bs-table-bg: var(--bs-tertiary-bg);
+  --bs-table-color: var(--bs-body-color);
+  --bs-table-border-color: var(--bs-border-color);
+}
+
+.pagination {
+  --bs-pagination-color: var(--bs-body-color);
+  --bs-pagination-bg: var(--bs-body-bg);
+  --bs-pagination-border-color: var(--bs-border-color);
+  --bs-pagination-hover-color: var(--bs-emphasis-color);
+  --bs-pagination-hover-bg: var(--bs-tertiary-bg);
+  --bs-pagination-hover-border-color: var(--bs-border-color);
+  --bs-pagination-focus-color: var(--bs-emphasis-color);
+  --bs-pagination-focus-bg: var(--bs-tertiary-bg);
+  --bs-pagination-active-color: var(--bs-primary-text-emphasis);
+  --bs-pagination-active-bg: var(--bs-primary-bg-subtle);
+  --bs-pagination-active-border-color: var(--bs-primary-border-subtle);
+  --bs-pagination-disabled-color: var(--bs-secondary-color);
+  --bs-pagination-disabled-bg: var(--bs-secondary-bg);
+  --bs-pagination-disabled-border-color: var(--bs-border-color);
+}
+
 .pagination .page-item.active .page-link {
-  background-color: #e2e8f0 !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-  font-weight: 600 !important;
+  font-weight: 600;
 }
 
-.pagination .page-link {
-  color: #64748b !important;
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-}
-
-.pagination .page-link:hover {
-  background-color: #f1f5f9 !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-}
-
-.pagination .page-link:focus {
-  box-shadow: none !important;
-}
-
-.hover-bg-light:hover {
-  background-color: #f1f5f9;
-  color: #0f172a !important;
-}
-
-/* ==========================================================================
-   3. REGLAS GLOBALES PARA MODO OSCURO (Afectan a todos los módulos a la vez)
-   ========================================================================== */
-
-/* A. Encabezados de tablas: anula 'table-light' y fondo claro en todos los listados */
-[data-bs-theme='dark'] .table th,
-[data-bs-theme='dark'] .table-light,
-[data-bs-theme='dark'] thead.table-light th {
-  background-color: var(--bs-tertiary-bg) !important;
-  color: var(--bs-body-color) !important;
-  border-color: var(--bs-border-color) !important;
-}
-
-/* B. Pies de tarjeta: oscurece automáticamente cualquier footer con 'bg-white' */
-[data-bs-theme='dark'] .card-footer,
-[data-bs-theme='dark'] .card-footer.bg-white,
-[data-bs-theme='dark'] .bg-white {
-  background-color: var(--bs-body-bg) !important;
-  color: var(--bs-body-color) !important;
-  border-color: var(--bs-border-color) !important;
-}
-
-/* C. Cajas de detalles y encabezados con 'bg-light' en tarjetas y formularios */
-[data-bs-theme='dark'] .bg-light,
-[data-bs-theme='dark'] .card-header.bg-light {
-  background-color: var(--bs-tertiary-bg) !important;
-  color: var(--bs-body-color) !important;
-  border-color: var(--bs-border-color) !important;
-}
-
-/* D. Paginación en modo oscuro */
-[data-bs-theme='dark'] .pagination .page-item.active .page-link {
-  background-color: var(--bs-primary) !important;
-  border-color: var(--bs-primary) !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-}
-
-[data-bs-theme='dark'] .pagination .page-link {
-  color: var(--bs-body-color) !important;
-  background-color: var(--bs-body-bg) !important;
-  border-color: var(--bs-border-color) !important;
-}
-
-[data-bs-theme='dark'] .pagination .page-link:hover {
-  background-color: var(--bs-tertiary-bg) !important;
-  border-color: var(--bs-border-color) !important;
-  color: var(--bs-primary) !important;
-}
-
-/* E. Elementos secundarios y hovers en modo oscuro */
-[data-bs-theme='dark'] .hover-bg-light:hover {
-  background-color: var(--bs-tertiary-bg) !important;
-  color: var(--bs-body-color) !important;
-}
-
-[data-bs-theme='dark'] .text-dark {
-  color: var(--bs-body-color) !important;
+.hover-bg-body:hover {
+  background-color: var(--bs-tertiary-bg);
+  color: var(--bs-emphasis-color) !important;
 }
 
 /* Campanita de notificaciones: sin la flecha del dropdown */
@@ -179,9 +114,6 @@
   --bs-table-hover-color: var(--bs-body-color);
 }
 
-[data-bs-theme='dark'] .badge.text-dark {
-  color: #212529 !important;
-}
 
 /* Permite que las tablas responsivas se desplacen dentro del contenido. */
 .main-content {

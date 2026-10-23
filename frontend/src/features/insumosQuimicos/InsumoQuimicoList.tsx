@@ -69,16 +69,8 @@ export function InsumoQuimicoList({
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
-                <SortableHeader
-                  column="id"
-                  ordenarPor={ordenarPor}
-                  orden={orden}
-                  cambiarOrden={cambiarOrden}
-                >
-                  ID
-                </SortableHeader>
                 <SortableHeader
                   column="nombre"
                   ordenarPor={ordenarPor}
@@ -127,18 +119,13 @@ export function InsumoQuimicoList({
             <tbody>
               {insumosQuimicos.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-4 text-muted">
+                  <td colSpan={6} className="text-center py-4 text-muted">
                     No hay insumos químicos registrados para los filtros actuales.
                   </td>
                 </tr>
               ) : (
                 insumosQuimicos.map((item) => (
                   <tr key={item.id}>
-                    <td>
-                      <Badge bg="secondary" className="font-monospace">
-                        #{item.id}
-                      </Badge>
-                    </td>
                     <td>
                       <strong>{item.nombre}</strong>
                     </td>
@@ -151,7 +138,7 @@ export function InsumoQuimicoList({
                       </Badge>
                     </td>
                     <td>{item.cantidad}</td>
-                    <td>{item.unidadMedidaObj?.sufijo ?? `ID: ${item.unidad_medida_id}`}</td>
+                    <td>{item.unidadMedidaObj?.sufijo ?? 'No disponible'}</td>
                     <td>
                       {item.activo ? (
                         <Badge bg="success">Activo</Badge>
@@ -220,7 +207,7 @@ export function InsumoQuimicoList({
         </Card.Body>
 
         {totalPages > 0 && (
-          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
+          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-body border-top">
             <ListPagination
               page={page}
               totalPages={totalPages}

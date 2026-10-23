@@ -64,17 +64,3 @@ export async function getEquipoById(id: number): Promise<Equipo> {
   if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'Error al obtener el equipo'));
   return res.json();
 }
-
-export async function registrarCalibracionEquipo(
-  id: number, 
-  datosCalibracion: Partial<Equipo>
-): Promise<Equipo> {
-  const res = await fetchWithAuth(`${API_BASE_URL}/equipos/${id}`, {
-    method: 'PUT', 
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(datosCalibracion),
-  });
-  if (!res.ok) throw new Error(await mensajeDeRespuesta(res, 'Error al registrar la calibración del equipo.'));
-
-  return res.json();
-}

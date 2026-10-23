@@ -65,7 +65,7 @@ export function EquipoList({
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
                 <SortableHeader
                   column="numero_serie"
@@ -130,9 +130,9 @@ export function EquipoList({
                     </td>
                     <td>
                       {e.sector ? (
-                        <span className="fw-medium text-dark">{e.sector.nombre}</span>
+                        <span className="fw-medium text-body">{e.sector.nombre}</span>
                       ) : (
-                        <span className="text-muted">Sector #{e.sector_id}</span>
+                        <span className="text-muted">No disponible</span>
                       )}
                     </td>
                     <td>
@@ -208,7 +208,7 @@ export function EquipoList({
         </Card.Body>
 
         {totalPages > 0 && (
-          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
+          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-body border-top">
             <ListPagination
               page={page}
               totalPages={totalPages}

@@ -3,7 +3,7 @@ import { loadAllPages } from '../../shared/libreria/options';
 import { useForm, useController } from 'react-hook-form';
 import { FormErrors } from '../../shared/components/FormErrors';
 import { useState, useEffect } from 'react';
-import { Card, Form, Button, Alert, Modal, Table, Badge } from 'react-bootstrap';
+import { Card, Form, Button, Alert, Modal, Table } from 'react-bootstrap';
 import type { PlanCreate, Plan } from './types';
 import { getPersonal, type Personal } from '../personal';
 import { getSectores, type Sector } from '../sectores';
@@ -256,7 +256,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
   return (
     <>
       <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '800px' }}>
-        <Card.Header as="h5" className="bg-light text-secondary py-3">
+        <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
           {planInicial ? 'Modificar Plan' : 'Crear Plan de Limpieza'}
         </Card.Header>
         <Card.Body className="p-4">
@@ -319,7 +319,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
               </SearchableSelect>
             </Form.Group>
 
-            <div className="p-3 bg-light rounded border mb-4">
+            <div className="p-3 bg-body-tertiary rounded border mb-4">
               <h6 className="mb-3 text-secondary">Ubicación / Destino</h6>
               <div className="row">
                 <Form.Group controlId="PlanForm-sectorId" className="col-md-6 mb-3 mb-md-0">
@@ -393,7 +393,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
                 </div>
               </div>
 
-              <div className="border rounded bg-white">
+              <div className="border rounded bg-body">
                 {tareasSeleccionadas.length === 0 ? (
                   <div className="text-muted p-3 small text-center">
                     No hay tareas seleccionadas para este plan. Utiliza los botones superiores para
@@ -461,7 +461,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
             {tareaAEditar ? `Modificar Tarea #${tareaAEditar.id}` : 'Nueva Tarea'}
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body className="bg-light">
+        <Modal.Body className="bg-body-tertiary">
           <TareaForm
             tareaInicial={tareaAEditar}
             equipoIdFijo={equipoId === '' ? null : Number(equipoId)}
@@ -475,7 +475,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
       </Modal>
 
       <Modal show={mostrarModalSeleccion} onHide={() => setMostrarModalSeleccion(false)} size="lg">
-        <Modal.Header closeButton className="bg-light">
+        <Modal.Header closeButton className="bg-body-tertiary">
           <Modal.Title className="text-secondary fs-5">Seleccionar Tareas Existentes</Modal.Title>
         </Modal.Header>
         <Modal.Body className="p-0">
@@ -489,9 +489,8 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
             />
           </div>
           <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
-                <th className="ps-4">ID</th>
                 <th>Nombre de la Tarea</th>
                 <th>Frecuencia</th>
                 <th className="text-center pe-4" style={{ width: '130px' }}>
@@ -502,7 +501,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
             <tbody>
               {tareasVisibles.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-4 text-muted">
+                  <td colSpan={3} className="text-center py-4 text-muted">
                     No hay tareas disponibles para este equipo/sector.
                   </td>
                 </tr>
@@ -511,9 +510,6 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
                   const seleccionada = t.id !== undefined && tareasSeleccionadas.includes(t.id);
                   return (
                     <tr key={`modal-${t.id}`}>
-                      <td className="ps-4">
-                        <Badge bg="secondary">#{t.id}</Badge>
-                      </td>
                       <td>{t.nombre}</td>
                       <td className="text-capitalize">{t.frecuencia}</td>
                       <td className="text-center pe-4">
@@ -541,7 +537,7 @@ export function PlanForm({ planInicial, onGuardar, onCancelar }: PlanFormProps) 
             </tbody>
           </Table>
         </Modal.Body>
-        <Modal.Footer className="bg-light">
+        <Modal.Footer className="bg-body-tertiary">
           <Button variant="primary" onClick={() => setMostrarModalSeleccion(false)}>
             Finalizar Selección
           </Button>

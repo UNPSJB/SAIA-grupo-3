@@ -63,16 +63,8 @@ export function SectorList({
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
-                <SortableHeader
-                  column="id"
-                  ordenarPor={ordenarPor}
-                  orden={orden}
-                  cambiarOrden={cambiarOrden}
-                >
-                  ID
-                </SortableHeader>
                 <SortableHeader
                   column="nombre"
                   ordenarPor={ordenarPor}
@@ -97,18 +89,13 @@ export function SectorList({
             <tbody>
               {sectores.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-4 text-muted">
+                  <td colSpan={3} className="text-center py-4 text-muted">
                     No hay sectores registrados.
                   </td>
                 </tr>
               ) : (
                 sectores.map((s) => (
                   <tr key={s.id}>
-                    <td>
-                      <Badge bg="secondary" className="font-monospace px-2 py-1">
-                        #{s.id}
-                      </Badge>
-                    </td>
                     <td>
                       <strong>{s.nombre}</strong>
                     </td>
@@ -180,7 +167,7 @@ export function SectorList({
         </Card.Body>
 
         {totalPages > 0 && (
-          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
+          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-body border-top">
             <ListPagination
               page={page}
               totalPages={totalPages}

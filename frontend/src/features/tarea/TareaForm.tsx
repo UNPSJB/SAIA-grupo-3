@@ -221,7 +221,7 @@ export function TareaForm({ tareaInicial, equipoIdFijo, onGuardar, onCancelar }:
   return (
     <>
       <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '800px' }}>
-        <Card.Header as="h5" className="bg-light text-secondary py-3">
+        <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
           {tareaInicial ? `Modificar Tarea #${tareaInicial?.id}` : 'Registrar Nueva Tarea'}
         </Card.Header>
         <Card.Body className="p-4">
@@ -304,7 +304,7 @@ export function TareaForm({ tareaInicial, equipoIdFijo, onGuardar, onCancelar }:
                   </Button>
                 </div>
               </div>
-              <div className="border rounded bg-white">
+              <div className="border rounded bg-body">
                 {elementosSeleccionados.length === 0 ? (
                   <div className="text-muted p-3 small text-center">
                     No hay elementos seleccionados.
@@ -356,14 +356,14 @@ export function TareaForm({ tareaInicial, equipoIdFijo, onGuardar, onCancelar }:
                   </Button>
                 </div>
               </div>
-              <div className="border rounded bg-white">
+              <div className="border rounded bg-body">
                 {insumosSeleccionados.length === 0 ? (
                   <div className="text-muted p-3 small text-center">
                     No hay insumos químicos seleccionados.
                   </div>
                 ) : (
                   <Table size="sm" striped hover className="mb-0 align-middle">
-                    <thead className="table-light">
+                    <thead className="table-theme">
                       <tr>
                         <th className="ps-3">Insumo</th>
                         <th style={{ width: '200px' }}>Cantidad Fija</th>
@@ -445,7 +445,7 @@ export function TareaForm({ tareaInicial, equipoIdFijo, onGuardar, onCancelar }:
 
       {/* MODALES DE SELECCIÓN */}
       <Modal show={mostrarModalElementos} onHide={() => setMostrarModalElementos(false)} size="lg">
-        <Modal.Header closeButton className="bg-light">
+        <Modal.Header closeButton className="bg-body-tertiary">
           <Modal.Title className="text-secondary fs-5">Seleccionar Elementos</Modal.Title>
         </Modal.Header>
         <Modal.Body className="p-0">
@@ -459,7 +459,7 @@ export function TareaForm({ tareaInicial, equipoIdFijo, onGuardar, onCancelar }:
             />
           </div>
           <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
                 <th className="ps-4">Nombre</th>
                 <th className="text-center pe-4" style={{ width: '130px' }}>
@@ -504,7 +504,7 @@ export function TareaForm({ tareaInicial, equipoIdFijo, onGuardar, onCancelar }:
       </Modal>
 
       <Modal show={mostrarModalInsumos} onHide={() => setMostrarModalInsumos(false)} size="lg">
-        <Modal.Header closeButton className="bg-light">
+        <Modal.Header closeButton className="bg-body-tertiary">
           <Modal.Title className="text-secondary fs-5">Seleccionar Insumos Químicos</Modal.Title>
         </Modal.Header>
         <Modal.Body className="p-0">
@@ -518,7 +518,7 @@ export function TareaForm({ tareaInicial, equipoIdFijo, onGuardar, onCancelar }:
             />
           </div>
           <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
                 <th className="ps-4">Nombre</th>
                 <th>Tipo</th>
@@ -570,7 +570,7 @@ export function TareaForm({ tareaInicial, equipoIdFijo, onGuardar, onCancelar }:
         onHide={() => setMostrarModalNuevoElemento(false)}
         size="lg"
       >
-        <Modal.Body className="bg-light p-0">
+        <Modal.Body className="bg-body-tertiary p-0">
           <ElementoForm
             onGuardar={handleGuardarNuevoElemento}
             onCancelar={() => setMostrarModalNuevoElemento(false)}
@@ -583,7 +583,7 @@ export function TareaForm({ tareaInicial, equipoIdFijo, onGuardar, onCancelar }:
         onHide={() => setMostrarModalNuevoInsumo(false)}
         size="lg"
       >
-        <Modal.Body className="bg-light p-0">
+        <Modal.Body className="bg-body-tertiary p-0">
           <InsumoQuimicoForm
             onGuardar={handleGuardarNuevoInsumo}
             onCancelar={() => setMostrarModalNuevoInsumo(false)}

@@ -134,7 +134,7 @@ export function IncidentesAbiertosPage() {
             <LoadingSpinner mensaje="Cargando incidentes abiertos..." />
           ) : (
             <Table hover responsive className="incidentes-abiertos mb-0 align-middle">
-              <thead className="table-light">
+              <thead className="table-theme">
                 <tr>
                   <th>Antigüedad</th>
                   <SortableHeader
@@ -204,7 +204,7 @@ export function IncidentesAbiertosPage() {
         </Card.Body>
 
         {totalPages > 0 && !loading && (
-          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
+          <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-body border-top">
             <ListPagination
               page={page}
               totalPages={totalPages}

@@ -67,7 +67,7 @@ export function ElementoForm({ elementoInicial, onGuardar, onCancelar }: Element
 
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
-      <Card.Header as="h5" className="bg-light text-secondary py-3">
+      <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
         {esEdicion ? `Modificar Elemento: ${elementoInicial?.nombre}` : 'Registrar Nuevo Elemento'}
       </Card.Header>
       <Card.Body className="p-4">

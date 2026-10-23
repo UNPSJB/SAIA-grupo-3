@@ -25,8 +25,30 @@ export function useCalibracionesEquipo(equipoId: number) {
   }, [equipoId]);
 
   useEffect(() => {
-    void cargar();
-  }, [cargar]);
+    let activo = true;
+
+    getCalibracionesEquipo(equipoId)
+      .then((datos) => {
+        if (!activo) return;
+        setCalibraciones(datos);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (!activo) return;
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Error al cargar las calibraciones.',
+        );
+      })
+      .finally(() => {
+        if (activo) setLoading(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [equipoId]);
 
   const guardar = async (datos: CalibracionInput, idExistente?: number) => {
     await guardarCalibracion(equipoId, datos, idExistente);

@@ -232,7 +232,7 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
 
   return (
     <Card className="shadow-sm border-0">
-      <Card.Header as="h5" className="bg-light text-secondary py-3">
+      <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
         {esEdicion
           ? `Modificar Personal: ${personalInicial?.apellido}, ${personalInicial?.nombre}`
           : 'Registrar Nuevo Personal'}

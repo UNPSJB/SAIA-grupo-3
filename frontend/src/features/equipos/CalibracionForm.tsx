@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
@@ -26,8 +26,12 @@ export function CalibracionForm({
   onGuardar,
   onCancelar,
 }: CalibracionFormProps) {
-  const [fechaCalibracion, setFechaCalibracion] = useState('');
-  const [otorgadoPor, setOtorgadoPor] = useState('');
+  const [fechaCalibracion, setFechaCalibracion] = useState(
+    () => calibracionInicial?.fecha_calibracion ?? hoyISO(),
+  );
+  const [otorgadoPor, setOtorgadoPor] = useState(
+    () => calibracionInicial?.otorgado_por ?? '',
+  );
   const [certificado, setCertificado] = useState<File | null>(null);
   const [errorCertificado, setErrorCertificado] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -35,20 +39,6 @@ export function CalibracionForm({
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
 
   const esEdicion = Boolean(calibracionInicial);
-
-  useEffect(() => {
-    if (calibracionInicial) {
-      setFechaCalibracion(calibracionInicial.fecha_calibracion);
-      setOtorgadoPor(calibracionInicial.otorgado_por);
-    } else {
-      setFechaCalibracion(hoyISO());
-      setOtorgadoPor('');
-    }
-    setCertificado(null);
-    setErrorCertificado(null);
-    setErrorEnvio(null);
-    setValidated(false);
-  }, [calibracionInicial]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

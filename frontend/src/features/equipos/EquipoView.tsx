@@ -37,13 +37,13 @@ export function EquipoView({
   return (
     <div className="mx-auto" style={{ maxWidth: '850px' }}>
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
-      <Card.Header className="bg-light text-secondary d-flex align-items-center gap-2 py-3">
+      <Card.Header className="bg-body-tertiary text-secondary d-flex align-items-center gap-2 py-3">
         <i className="bi bi-tools fs-5 flex-shrink-0"></i>
         <h5 className="mb-0">Detalle del Equipo</h5>
       </Card.Header>
       
       <Card.Body className="p-4">
-        <div className="bg-light p-3 rounded border mb-3">
+        <div className="bg-body-tertiary p-3 rounded border mb-3">
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">N° de Serie:</span>
             <span className="col-8 fw-bold font-monospace">{equipo.numero_serie}</span>
@@ -64,14 +64,14 @@ export function EquipoView({
             <span className="col-4 text-muted fw-semibold">Sector Asignado:</span>
             <span className="col-8">
               {equipo.sector ? (
-                <span className="fw-medium text-dark">{equipo.sector.nombre}</span>
+                <span className="fw-medium text-body">{equipo.sector.nombre}</span>
               ) : (
                 <span className="text-muted">Sector #{equipo.sector_id}</span>
               )}
             </span>
           </div>
         </div>
-        <div className={`bg-white p-3 rounded border ${estaVencido ? 'border-danger-subtle' : 'border-secondary-subtle'}`}>
+        <div className={`bg-body p-3 rounded border ${estaVencido ? 'border-danger-subtle' : 'border-secondary-subtle'}`}>
           <div className="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
             <h6 className="text-secondary fw-bold mb-0">
               Calibración y Mantenimiento
@@ -105,7 +105,7 @@ export function EquipoView({
 
       </Card.Body>
 
-      <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>
           Volver
         </Button>

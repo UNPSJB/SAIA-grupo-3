@@ -138,7 +138,7 @@ export function DocumentoTecnicoForm({
   return (
     <>
       <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '700px' }}>
-        <Card.Header as="h5" className="bg-light text-secondary py-3">
+        <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
           {documentoInicial ? 'Modificar documento técnico' : 'Nuevo documento técnico'}
         </Card.Header>
         <Card.Body className="p-4">
@@ -185,7 +185,7 @@ export function DocumentoTecnicoForm({
             </Form.Group>
 
             {documentoInicial ? (
-              <div className="border rounded p-3 mb-4 bg-light">
+              <div className="border rounded p-3 mb-4 bg-body-tertiary">
                 <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
                   <div>
                     <div className="fw-semibold">

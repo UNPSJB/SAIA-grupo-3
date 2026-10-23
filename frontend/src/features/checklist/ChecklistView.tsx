@@ -157,7 +157,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <Table striped hover responsive className="mb-0 align-middle">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
                 <SortableHeader column="tarea" {...filters}>
                   Tarea
@@ -239,7 +239,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
         centered
         size="lg"
       >
-        <Modal.Header closeButton className="bg-light">
+        <Modal.Header closeButton className="bg-body-tertiary">
           <Modal.Title className="fs-5 text-secondary">
             <i className="bi bi-card-checklist me-2" />
             Detalle de tarea
@@ -259,7 +259,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
                 </Badge>
               </div>
 
-              <div className="bg-light p-3 rounded border mb-4">
+              <div className="bg-body-tertiary p-3 rounded border mb-4">
                 <h6 className="fw-bold border-bottom pb-2 mb-3">Procedimiento a seguir</h6>
                 <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
                   {itemAFinalizar.tarea.procedimiento}
@@ -267,7 +267,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
               </div>
 
               {(itemAFinalizar.tarea.insumos_quimicos ?? []).length > 0 && (
-                <div className="bg-light p-3 rounded border mb-4">
+                <div className="bg-body-tertiary p-3 rounded border mb-4">
                   <h6 className="fw-bold border-bottom pb-2 mb-3">
                     Consumo aproximado de productos químicos
                   </h6>

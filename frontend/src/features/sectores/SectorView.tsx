@@ -13,12 +13,12 @@ export function SectorView({ sector, onEditar, onVolver }: SectorViewProps) {
 
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
-      <Card.Header className="bg-light text-secondary d-flex align-items-center gap-2 py-3">
+      <Card.Header className="bg-body-tertiary text-secondary d-flex align-items-center gap-2 py-3">
         <i className="bi bi-building fs-5"></i>
         <h5 className="mb-0">Detalle del Sector</h5>
       </Card.Header>
       <Card.Body className="p-4">
-        <div className="bg-light p-3 rounded border mb-4">
+        <div className="bg-body-tertiary p-3 rounded border mb-4">
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">ID de Sector:</span>
             <span className="col-8 fw-bold font-monospace">#{sector.id}</span>
@@ -32,7 +32,7 @@ export function SectorView({ sector, onEditar, onVolver }: SectorViewProps) {
         <h6 className="text-secondary fw-semibold mb-3 border-bottom pb-2">Equipos Asignados</h6>
 
         {!sector.equipos || sector.equipos.length === 0 ? (
-          <p className="text-muted small text-center py-3 bg-light rounded border">
+          <p className="text-muted small text-center py-3 bg-body-tertiary rounded border">
             No hay equipos asignados a este sector actualmente.
           </p>
         ) : (
@@ -43,7 +43,7 @@ export function SectorView({ sector, onEditar, onVolver }: SectorViewProps) {
                 className="d-flex justify-content-between align-items-center py-3"
               >
                 <div>
-                  <span className="fw-medium text-dark">{equipo.nombre}</span>
+                  <span className="fw-medium text-body">{equipo.nombre}</span>
                   <br />
                   <span className="text-muted small">
                     <i className="bi bi-upc-scan me-1"></i>
@@ -69,7 +69,7 @@ export function SectorView({ sector, onEditar, onVolver }: SectorViewProps) {
           </ListGroup>
         )}
       </Card.Body>
-      <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>
           Volver
         </Button>

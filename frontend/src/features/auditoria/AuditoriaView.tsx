@@ -13,12 +13,12 @@ export function AuditoriaView({ plan, onVolver }: AuditoriaViewProps) {
   const [tareaConFoto, setTareaConFoto] = useState<TareaRealizada | null>(null);
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '900px' }}>
-      <Card.Header className="bg-light text-secondary d-flex align-items-center gap-2 py-3">
+      <Card.Header className="bg-body-tertiary text-secondary d-flex align-items-center gap-2 py-3">
         <i className="bi bi-clipboard-check fs-5"></i>
         <h5 className="mb-0">Auditoría: Plan Realizado #{plan.id}</h5>
       </Card.Header>
       <Card.Body className="p-4">
-        <div className="bg-light p-3 rounded border mb-4">
+        <div className="bg-body-tertiary p-3 rounded border mb-4">
           <div className="row mb-2">
             <span className="col-sm-3 text-muted fw-semibold">Nombre del Plan:</span>
             <span className="col-sm-9 fw-bold">{plan.nombre}</span>
@@ -40,7 +40,7 @@ export function AuditoriaView({ plan, onVolver }: AuditoriaViewProps) {
 
         <h6 className="fw-bold border-bottom pb-2">Tareas Completadas ({plan.tareas_realizadas.length})</h6>
         {!plan.tareas_realizadas || plan.tareas_realizadas.length === 0 ? (
-          <p className="text-muted small py-3 text-center border rounded bg-light">No hay registro de tareas.</p>
+          <p className="text-muted small py-3 text-center border rounded bg-body-tertiary">No hay registro de tareas.</p>
         ) : (
           <ListGroup variant="flush" className="border rounded shadow-sm">
             {plan.tareas_realizadas.map((tarea) => (
@@ -55,7 +55,7 @@ export function AuditoriaView({ plan, onVolver }: AuditoriaViewProps) {
                     <Badge bg="info" className="text-dark text-capitalize">{tarea.frecuencia}</Badge>
                   </div>
                 </div>
-                <div className="text-muted small bg-light p-2 rounded border-0">
+                <div className="text-muted small bg-body-tertiary p-2 rounded border-0">
                   <strong>Procedimiento empleado:</strong>
                   <p className="mb-0 mt-1" style={{ whiteSpace: 'pre-wrap' }}>{tarea.procedimiento}</p>
                 </div>
@@ -74,7 +74,7 @@ export function AuditoriaView({ plan, onVolver }: AuditoriaViewProps) {
           </ListGroup>
         )}
       </Card.Body>
-      <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>Volver al Listado</Button>
       </Card.Footer>
       <Modal show={tareaConFoto !== null} onHide={() => setTareaConFoto(null)} centered size="lg">

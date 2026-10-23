@@ -104,11 +104,11 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const menuContent = (
     <>
       <div className="d-flex align-items-center gap-2 px-4 py-4 mb-2">
-        <span className="fs-5 fw-bold text-dark tracking-tight">SAIA</span>
+        <span className="fs-5 fw-bold text-body tracking-tight">SAIA</span>
       </div>
 
       {currentUser && (
-        <div className="mx-3 p-2 bg-light rounded text-center mb-3 border">
+        <div className="mx-3 p-2 bg-body-tertiary rounded text-center mb-3 border">
           <span className="fw-bold d-block text-truncate">
             {currentUser.nombre} {currentUser.apellido}
           </span>
@@ -129,7 +129,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
                       setGruposAbiertos((prev) => ({ ...prev, [grupo]: !abierto }))
                     }
                     className={`nav-link w-100 border-0 bg-transparent d-flex justify-content-between align-items-center px-3 py-2 rounded-3 fw-medium ${
-                      grupoActivo === grupo ? 'text-dark' : 'text-secondary hover-bg-light'
+                      grupoActivo === grupo ? 'text-body' : 'text-body-secondary hover-bg-body'
                     }`}
                     aria-controls={collapseId}
                     aria-expanded={abierto}
@@ -142,7 +142,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
                     <i
                       className={`bi ${
                         abierto ? 'bi-chevron-up' : 'bi-chevron-down'
-                      } text-dark ms-2`}
+                      } text-body ms-2`}
                     ></i>
                   </button>
 
@@ -159,7 +159,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
                               `nav-link d-flex align-items-center gap-2 py-2 rounded-3 small fw-medium ${
                                 isActive
                                   ? 'bg-primary text-white shadow-sm'
-                                  : 'text-secondary hover-bg-light'
+                                  : 'text-body-secondary hover-bg-body'
                               }`
                             }
                             style={{ paddingLeft: '2rem' }}
@@ -184,7 +184,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
                 onClick={onClose}
                 className={({ isActive }) =>
                   `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium text-wrap overflow-hidden ${
-                    isActive ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light'
+                    isActive ? 'bg-primary text-white shadow-sm' : 'text-body-secondary hover-bg-body'
                   }`
                 }
                 style={{ wordBreak: 'break-word', lineHeight: '1.2' }}

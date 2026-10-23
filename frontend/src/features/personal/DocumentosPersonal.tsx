@@ -115,7 +115,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
   return (
     <>
       <Card className="shadow-sm border-0 mt-4">
-        <Card.Header className="bg-light text-secondary d-flex justify-content-between align-items-center gap-2 py-3">
+        <Card.Header className="bg-body-tertiary text-secondary d-flex justify-content-between align-items-center gap-2 py-3">
           <h5 className="mb-0">
             <i className="bi bi-file-earmark-text me-2"></i>Documentación y vencimientos
           </h5>
@@ -139,7 +139,7 @@ export function DocumentosPersonal({ personalId }: DocumentosPersonalProps) {
             <p className="text-muted text-center my-4">Cargando documentos...</p>
           ) : (
             <Table striped hover responsive className="mb-0 align-middle">
-              <thead className="table-light">
+              <thead className="table-theme">
                 <tr>
                   <th>Tipo de documento</th>
                   <th>Fecha de vencimiento</th>

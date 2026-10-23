@@ -22,12 +22,12 @@ export function IncidenteView({ incidente, onEditar, onVolver }: IncidenteViewPr
 
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
-      <Card.Header className="bg-light text-secondary d-flex align-items-center gap-2 py-3">
+      <Card.Header className="bg-body-tertiary text-secondary d-flex align-items-center gap-2 py-3">
         <i className="bi bi-exclamation-triangle fs-5"></i>
         <h5 className="mb-0">Detalle del Incidente</h5>
       </Card.Header>
       <Card.Body className="p-4">
-        <div className="bg-light p-3 rounded border mb-2">
+        <div className="bg-body-tertiary p-3 rounded border mb-2">
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Fecha y hora:</span>
             <span className="col-8">{formatearFechaHora(incidente.fecha_hora)}</span>
@@ -91,7 +91,7 @@ export function IncidenteView({ incidente, onEditar, onVolver }: IncidenteViewPr
         {currentUser?.administrar === true && <HistorialIncidente incidenteId={incidente.id} />}
       </Card.Body>
 
-      <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>
           Volver
         </Button>

@@ -134,7 +134,7 @@ export function InsumoQuimicoForm({
 
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
-      <Card.Header as="h5" className="bg-light text-secondary py-3">
+      <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
         {esEdicion
           ? `Modificar Químico: ${insumoInicial?.nombre}`
           : 'Registrar Nuevo Insumo Químico'}

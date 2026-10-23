@@ -117,11 +117,8 @@ export function CatalogPage({ title, endpoint, fields, options, colorField, load
           <Card className="shadow-sm border-0">
             <Card.Body className="p-0">
               <Table responsive striped hover className="mb-0 align-middle">
-                <thead className="table-light">
+                <thead className="table-theme">
                   <tr>
-                    <SortableHeader column="id" {...list}>
-                      ID
-                    </SortableHeader>
                     {columnasVisibles.map(([key, label]) => (
                       <SortableHeader key={key} column={key} {...list}>
                         {label}
@@ -138,9 +135,6 @@ export function CatalogPage({ title, endpoint, fields, options, colorField, load
                 <tbody>
                   {list.items.map((item) => (
                     <tr key={item.id}>
-                      <td>
-                        <Badge bg="secondary">#{item.id}</Badge>
-                      </td>
                       {columnasVisibles.map(([key]) => (
                         <td key={key}>
                           {esEtiquetaColor(key) ? celdaColor(item) : String(item[key as keyof RecordItem] ?? '')}
@@ -214,7 +208,7 @@ export function CatalogPage({ title, endpoint, fields, options, colorField, load
                   {!list.loading && list.items.length === 0 && (
                     <tr>
                       <td
-                        colSpan={columnasVisibles.length + 3}
+                        colSpan={columnasVisibles.length + 2}
                         className="text-center py-4 text-muted"
                       >
                         No hay resultados.
@@ -225,7 +219,7 @@ export function CatalogPage({ title, endpoint, fields, options, colorField, load
               </Table>
             </Card.Body>
             {list.totalPages > 0 && (
-              <Card.Footer className="bg-white border-top">
+              <Card.Footer className="bg-body border-top">
                 <ListPagination {...list} />
               </Card.Footer>
             )}

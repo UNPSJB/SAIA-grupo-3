@@ -45,7 +45,7 @@ export function ReabrirIncidenteForm({
     <Form noValidate validated={validated} onSubmit={handleSubmit}>
       {errorEnvio && <ErrorAlert mensaje={errorEnvio} />}
 
-      <div className="bg-light p-3 rounded border mb-3 small">
+      <div className="bg-body-tertiary p-3 rounded border mb-3 small">
         <div className="text-muted fw-semibold mb-1">Incidente</div>
         <div className="text-break">{incidente.descripcion}</div>
       </div>

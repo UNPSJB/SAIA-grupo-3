@@ -1,149 +1,52 @@
-import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Badge, Button, Card, Container, Form, Modal, Table } from 'react-bootstrap';
+import {
+  Badge,
+  Button,
+  Card,
+  Container,
+  Form,
+  Modal,
+  Table,
+} from 'react-bootstrap';
 import { ListControls } from '../../shared/components/ListControls';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
-import { usePagedList } from '../../shared/hooks/usePagedList';
-import { API_BASE_URL, fetchWithAuth, mensajeDeError } from '../../shared/libreria/api';
 import { formatearFechaHora } from '../../shared/libreria/fechas';
-import { etiquetaDe, textoBadge } from '../../shared/libreria/etiquetas';
+import {
+  etiquetaDe,
+  textoBadge,
+} from '../../shared/libreria/etiquetas';
 import {
   COLORES_DOCUMENTO_TECNICO,
   TIPOS_DOCUMENTO_TECNICO,
-  type TipoDocumentoTecnico,
 } from './types';
-interface DocumentoVigente {
-  id: number;
-  nombre: string;
-  tipo: TipoDocumentoTecnico;
-  fecha_vigencia: string | null;
-  version_vigente: {
-    id: number;
-    numero: number;
-    nombre_original: string;
-    tipo_contenido: string;
-  } | null;
-}
-interface VersionHistorial {
-  id: number;
-  numero: number;
-  estado: 'vigente' | 'archivado';
-  fecha_subida: string;
-  nombre_original: string;
-  tipo_contenido: string;
-}
-interface VistaArchivo {
-  url: string;
-  tipo: string;
-  titulo: string;
-}
-const esVisualizable = (tipo: string) => tipo === 'application/pdf' || tipo.startsWith('image/');
+import { useDocumentosVigentes } from './useDocumentosVigentes';
+
+const esVisualizable = (tipo: string) =>
+  tipo === 'application/pdf' || tipo.startsWith('image/');
+
 export function DocumentosVigentesPage() {
-  const [params] = useSearchParams();
-  const tipo = params.get('tipo') || '';
-  const lista = usePagedList<DocumentoVigente>(
-    'documentos-vigentes/',
-    true,
-    tipo ? `&tipo=${encodeURIComponent(tipo)}` : '',
-    'nombre',
-  );
-  const [seleccionado, setSeleccionado] = useState<DocumentoVigente | null>(null);
-  const detalle = lista.items.find((doc) => doc.id === seleccionado?.id) || seleccionado;
-  const [versionElegida, setVersionElegida] = useState('');
-  const [vista, setVista] = useState<VistaArchivo | null>(null);
-  const [errorArchivo, setErrorArchivo] = useState<string | null>(null);
-  const [ocupado, setOcupado] = useState<number | null>(null);
-  const [historial, setHistorial] = useState<DocumentoVigente | null>(null);
-  const [versiones, setVersiones] = useState<VersionHistorial[]>([]);
-  const [cargandoHistorial, setCargandoHistorial] = useState(false);
-  const [errorHistorial, setErrorHistorial] = useState<string | null>(null);
-  const consultaHistorial = useRef(0);
-  const montado = useRef(true);
-  async function verHistorial(doc: DocumentoVigente) {
-    const consulta = ++consultaHistorial.current;
-    setHistorial(doc);
-    setVersionElegida('');
-    setVersiones([]);
-    setErrorHistorial(null);
-    setErrorArchivo(null);
-    setCargandoHistorial(true);
-    try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/documentos-vigentes/${doc.id}/historial`);
-      const datos = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(mensajeDeError(datos.detail, 'No se pudo cargar el historial.'));
-      if (montado.current && consulta === consultaHistorial.current) setVersiones(datos);
-    } catch (error) {
-      if (montado.current && consulta === consultaHistorial.current)
-        setErrorHistorial(
-          error instanceof Error ? error.message : 'No se pudo cargar el historial.',
-        );
-    } finally {
-      if (montado.current && consulta === consultaHistorial.current) setCargandoHistorial(false);
-    }
-  }
-  useEffect(() => {
-    montado.current = true;
-    return () => {
-      montado.current = false;
-    };
-  }, []);
-  useEffect(
-    () => () => {
-      if (vista) URL.revokeObjectURL(vista.url);
-    },
-    [vista],
-  );
-  async function abrirArchivo(
-    doc: DocumentoVigente,
-    visualizar: boolean,
-    version?: VersionHistorial,
-  ) {
-    setOcupado(doc.id);
-    setErrorArchivo(null);
-    try {
-      const res = await fetchWithAuth(
-        `${API_BASE_URL}/documentos-vigentes/${doc.id}/${version ? `historial/${version.id}/archivo` : 'archivo'}`,
-      );
-      if (!res.ok) {
-        const datos = await res.json().catch(() => ({}));
-        throw new Error(
-          mensajeDeError(datos.detail, 'No se pudo cargar el archivo de esta versión.'),
-        );
-      }
-      const blob = await res.blob();
-      if (!montado.current) return;
-      const numero = res.headers.get('X-Version-Numero');
-      const versionId = Number(res.headers.get('X-Version-Id'));
-      const nombre = decodeURIComponent(res.headers.get('X-Archivo-Nombre') || 'documento');
-      if (!version && versionId !== doc.version_vigente?.id) lista.refetch();
-      const archivada = res.headers.get('X-Version-Estado') === 'archivado';
-      const url = URL.createObjectURL(blob);
-      if (visualizar && esVisualizable(blob.type))
-        setVista({
-          url,
-          tipo: blob.type,
-          titulo: `${doc.nombre} — v${numero}${archivada ? ' — Archivada: no usar para operar' : ' — Vigente'}`,
-        });
-      else {
-        const enlace = document.createElement('a');
-        enlace.href = url;
-        enlace.download = nombre;
-        document.body.appendChild(enlace);
-        enlace.click();
-        enlace.remove();
-        URL.revokeObjectURL(url);
-      }
-    } catch (error) {
-      if (montado.current) {
-        setErrorArchivo(error instanceof Error ? error.message : 'No se pudo cargar el archivo.');
-        lista.refetch();
-      }
-    } finally {
-      if (montado.current) setOcupado(null);
-    }
-  }
+  const {
+    tipo,
+    lista,
+    detalle,
+    setSeleccionado,
+    versionElegida,
+    setVersionElegida,
+    vista,
+    setVista,
+    errorArchivo,
+    setErrorArchivo,
+    ocupado,
+    historial,
+    versiones,
+    cargandoHistorial,
+    errorHistorial,
+    verHistorial,
+    abrirArchivo,
+    cerrarHistorial,
+  } = useDocumentosVigentes();
+
   return (
     <Container className="py-2">
       <h2 className="mb-4 border-bottom pb-2 text-secondary">Documentos vigentes</h2>
@@ -252,7 +155,7 @@ export function DocumentosVigentesPage() {
       )}
       {detalle && (
         <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '800px' }}>
-          <Card.Header className="bg-light text-secondary d-flex flex-wrap align-items-center gap-2 py-3">
+          <Card.Header className="bg-body-tertiary text-secondary d-flex flex-wrap align-items-center gap-2 py-3">
             <h5 className="mb-0 text-break">{detalle.nombre}</h5>
           </Card.Header>
           <Card.Body className="p-4">
@@ -328,10 +231,7 @@ export function DocumentosVigentesPage() {
       )}
       <Modal
         show={historial !== null && vista === null}
-        onHide={() => {
-          consultaHistorial.current++;
-          setHistorial(null);
-        }}
+        onHide={cerrarHistorial}
         size="lg"
         fullscreen="md-down"
         centered

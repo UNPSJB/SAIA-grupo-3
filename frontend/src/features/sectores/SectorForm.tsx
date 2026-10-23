@@ -45,7 +45,7 @@ export function SectorForm({ sectorInicial, onGuardar, onCancelar }: SectorFormP
 
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
-      <Card.Header as="h5" className="bg-light text-secondary py-3">
+      <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
         {esEdicion ? `Modificar Sector: ${sectorInicial?.nombre}` : 'Registrar Nuevo Sector'}
       </Card.Header>
       <Card.Body className="p-4">

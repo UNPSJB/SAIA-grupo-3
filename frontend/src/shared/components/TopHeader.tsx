@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Button, Dropdown } from 'react-bootstrap';
 import { useAuth } from '../hooks/useAuth';
 import { NotificacionesBell } from '../../features/notificaciones';
+import { aplicarTema, leerTema, type Tema } from '../libreria/tema';
 
 interface TopHeaderProps {
   onToggleSidebar: () => void;
@@ -11,15 +12,13 @@ interface TopHeaderProps {
 export function TopHeader({ onToggleSidebar }: TopHeaderProps) {
   const { currentUser, logout } = useAuth();
   const [cerrandoSesion, setCerrandoSesion] = useState(false);
-  // Leemos si el usuario ya tenía un tema guardado, o usamos 'light' por defecto
-  const [tema, setTema] = useState<'light' | 'dark'>(() => {
-    return (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
-  });
+  const [tema, setTema] = useState<Tema>(() =>
+    document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : leerTema(),
+  );
 
   // Aplicamos el atributo a <html> cada vez que cambia el tema y lo guardamos
   useEffect(() => {
-    document.documentElement.setAttribute('data-bs-theme', tema);
-    localStorage.setItem('theme', tema);
+    aplicarTema(tema);
   }, [tema]);
 
   const cambiarTema = () => {
@@ -41,8 +40,8 @@ export function TopHeader({ onToggleSidebar }: TopHeaderProps) {
       style={{ height: '64px' }}
     >
       <Button
-        variant="light"
-        className="d-md-none border-0"
+        variant="outline-secondary"
+        className="d-md-none border-0 bg-body text-body"
         onClick={onToggleSidebar}
         aria-label="Abrir menú"
       >

@@ -78,7 +78,7 @@ export function DocumentoTecnicoList({ onNuevo, onVer, onEditar }: DocumentoTecn
         <Card className="shadow-sm border-0">
           <Card.Body className="p-0">
             <Table striped hover responsive className="mb-0 align-middle">
-              <thead className="table-light">
+              <thead className="table-theme">
                 <tr>
                   <SortableHeader
                     column="nombre"
@@ -202,7 +202,7 @@ export function DocumentoTecnicoList({ onNuevo, onVer, onEditar }: DocumentoTecn
           </Card.Body>
 
           {totalPages > 0 && (
-            <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white border-top">
+            <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-body border-top">
               <ListPagination
                 page={page}
                 totalPages={totalPages}

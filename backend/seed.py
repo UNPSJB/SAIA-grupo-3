@@ -8,7 +8,7 @@ import shutil
 from pathlib import Path
 from datetime import date, datetime, time, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import func, inspect, select
 
 # Importar la app registra todos los modelos en la metadata SQLAlchemy.
 from src.main import app  # noqa: F401
@@ -419,5 +419,25 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             raise
 
 
+def comprobar_estructura():
+    inspector = inspect(engine)
+
+    if not inspector.has_table("incidentes"):
+        return
+
+    columnas = {
+        columna["name"]
+        for columna in inspector.get_columns("incidentes")
+    }
+
+    if "tipo_id" not in columnas or "tipo" in columnas:
+        raise RuntimeError(
+            "La base tiene una estructura vieja de incidentes. "
+            "Usá una base nueva para pruebas o migrá la existente. "
+            "El seed no modifica columnas ni elimina datos."
+        )
+
+
 if __name__ == "__main__":
+    comprobar_estructura()
     cargar_seed()

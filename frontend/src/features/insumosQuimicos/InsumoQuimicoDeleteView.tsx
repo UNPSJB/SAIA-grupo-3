@@ -47,7 +47,7 @@ export function InsumoQuimicoDeleteView({
         <p className="text-secondary fs-6">
           ¿Estás seguro de que deseas dar de baja este insumo químico del inventario activo?
         </p>
-        <div className="bg-light p-3 rounded border mb-4">
+        <div className="bg-body-tertiary p-3 rounded border mb-4">
           <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">ID:</span>
             <span className="col-8">
@@ -74,7 +74,7 @@ export function InsumoQuimicoDeleteView({
           <strong>Atención:</strong> Esta acción aplicará una baja lógica; el insumo químico dejará de estar visible en el inventario activo pero no se borrará físicamente.
         </Alert>
       </Card.Body>
-      <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onCancelar} disabled={eliminando}>
           Cancelar
         </Button>

@@ -10,12 +10,12 @@ interface TareaViewProps {
 export function TareaView({ tarea, onEditar, onVolver }: TareaViewProps) {
   return (
     <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '800px' }}>
-      <Card.Header className="bg-light text-secondary d-flex align-items-center gap-2 py-3">
+      <Card.Header className="bg-body-tertiary text-secondary d-flex align-items-center gap-2 py-3">
         <i className="bi bi-card-checklist fs-5"></i>
         <h5 className="mb-0">Detalle de Tarea</h5>
       </Card.Header>
       <Card.Body className="p-4">
-        <div className="bg-light p-3 rounded border mb-4">
+        <div className="bg-body-tertiary p-3 rounded border mb-4">
           <div className="row mb-2">
             <span className="col-sm-3 text-muted fw-semibold">Nombre:</span>
             <span className="col-sm-9 fw-bold">{tarea.nombre}</span>
@@ -48,7 +48,7 @@ export function TareaView({ tarea, onEditar, onVolver }: TareaViewProps) {
                 {tarea.insumos_quimicos.map(i => (
                   <li key={i.insumo_quimico_id}>
                     {i.insumo_quimico?.nombre}{' '}
-                    <Badge bg="light" text="dark" className="border ms-1">
+                    <Badge bg="body-tertiary" className="text-body border ms-1">
                       {i.cantidad} {i.insumo_quimico?.unidadMedidaObj?.sufijo}
                     </Badge>
                   </li>
@@ -62,13 +62,13 @@ export function TareaView({ tarea, onEditar, onVolver }: TareaViewProps) {
 
         <div>
           <h6 className="fw-bold border-bottom pb-2">Procedimiento</h6>
-          <p className="mb-0 bg-light p-3 rounded border" style={{ whiteSpace: 'pre-wrap' }}>
+          <p className="mb-0 bg-body-tertiary p-3 rounded border" style={{ whiteSpace: 'pre-wrap' }}>
             {tarea.procedimiento}
           </p>
         </div>
 
       </Card.Body>
-      <Card.Footer className="bg-white border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>Volver</Button>
         <Button variant="warning" onClick={onEditar}>Editar</Button>
       </Card.Footer>
