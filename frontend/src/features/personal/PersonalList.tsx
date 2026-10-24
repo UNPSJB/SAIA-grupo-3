@@ -135,14 +135,6 @@ export function PersonalList({
                 >
                   Apellido y Nombre
                 </SortableHeader>
-                <SortableHeader
-                  column="email"
-                  ordenarPor={ordenarPor}
-                  orden={orden}
-                  cambiarOrden={cambiarOrden}
-                >
-                  Email
-                </SortableHeader>
                 <th>Permisos</th>
                 <SortableHeader
                   column="activo"
@@ -161,7 +153,7 @@ export function PersonalList({
             <tbody>
               {personal.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-4 text-muted">
+                  <td colSpan={6} className="text-center py-4 text-muted">
                     {proximosAVencer
                       ? 'No hay personal con documentación vencida o por vencer.'
                       : 'No hay personal registrado para los filtros actuales.'}
@@ -181,8 +173,7 @@ export function PersonalList({
                         <strong>
                           {p.apellido}, {p.nombre}
                         </strong>
-                      </td>
-                      <td>{p.email}</td>
+                      </td>   
                       <td>
                         <Badge bg={capacidad.variant}>{capacidad.label}</Badge>
                       </td>

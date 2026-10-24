@@ -4,7 +4,7 @@ import { useListState } from '../../shared/hooks/useListState';
 import { ListControls } from '../../shared/components/ListControls';
 import { FormErrors } from '../../shared/components/FormErrors';
 import { useState } from 'react';
-import { Alert, Badge, Button, Card, Form, Modal, ProgressBar, Table } from 'react-bootstrap';
+import { Badge, Button, Card, Form, Modal, ProgressBar, Table } from 'react-bootstrap';
 
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -32,55 +32,36 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
   const [itemAFinalizar, setItemAFinalizar] = useState<ItemChecklist | null>(null);
   const [imagen, setImagen] = useState<File | null>(null);
   const [errorImagen, setErrorImagen] = useState<string | null>(null);
-  const form = useForm<{ cantidades: Record<string, string> }>({
-    defaultValues: { cantidades: {} },
-    shouldUnregister: true,
-  });
+  const form = useForm();
   const filters = useListState('tarea');
-  const [errorConsumo, setErrorConsumo] = useState<string | null>(null);
-
+  
   const handleAbrirModal = (item: ItemChecklist) => {
-    setItemAFinalizar(item);
-    setImagen(null);
-    setErrorImagen(null);
-    setErrorConsumo(null);
-
-    const cantidadesIniciales = Object.fromEntries(
-      (item.tarea.insumos_quimicos ?? []).map((requisito) => [requisito.insumo_quimico_id, '']),
-    );
-
-    form.reset({ cantidades: cantidadesIniciales });
+  setItemAFinalizar(item);
+  setImagen(null);
+  setErrorImagen(null);
+  form.reset();
   };
 
-  const handleConfirmarFinalizacion = form.handleSubmit(
-    async ({ cantidades: cantidadesConsumo }) => {
-      if (!itemAFinalizar) return;
+  const handleConfirmarFinalizacion = form.handleSubmit(async () => {
+    if (!itemAFinalizar) return;
 
-      const requisitos = itemAFinalizar.tarea.insumos_quimicos ?? [];
+  const consumos: ConsumoTareaInput[] = (
+    itemAFinalizar.tarea.insumos_quimicos ?? []
+  ).map((requisito) => ({
+    insumo_quimico_id: requisito.insumo_quimico_id,
+    cantidad_utilizada: requisito.cantidad,
+  }));
 
-      const faltaCantidad = requisitos.some((requisito) => {
-        const cantidad = cantidadesConsumo[requisito.insumo_quimico_id];
-
-        return cantidad === undefined || cantidad.trim() === '';
-      });
-
-      if (faltaCantidad) {
-        setErrorConsumo('Ingresá el consumo aproximado de cada producto químico.');
-        return;
-      }
-
-      const consumos: ConsumoTareaInput[] = requisitos.map((requisito) => ({
-        insumo_quimico_id: requisito.insumo_quimico_id,
-        cantidad_utilizada: Number(cantidadesConsumo[requisito.insumo_quimico_id]),
-      }));
-
-      const finalizada = await finalizarTarea(itemAFinalizar.id, imagen, consumos);
-
-      if (finalizada) {
-        setItemAFinalizar(null);
-      }
-    },
+  const finalizada = await finalizarTarea(
+    itemAFinalizar.id,
+    imagen,
+    consumos,
   );
+
+  if (finalizada) {
+    setItemAFinalizar(null);
+  }
+  });
 
   if (loading && !checklist) {
     return <LoadingSpinner mensaje="Cargando checklist..." />;
@@ -123,12 +104,6 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
         </h4>
         <small className="text-muted">Checklist del {formatearFecha(checklist.fecha)}</small>
       </div>
-
-      {error && (
-        <Alert variant="danger" dismissible onClose={() => void recargar()}>
-          {error}
-        </Alert>
-      )}
 
       {checklist.total > 0 && (
         <div className="mb-3">
@@ -248,6 +223,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
 
         <Modal.Body className="p-4">
           <FormErrors errors={form.formState.errors} />
+          {error && <ErrorAlert mensaje={error} />}
           {itemAFinalizar && (
             <>
               <h5 className="fw-bold mb-1">{itemAFinalizar.tarea.nombre}</h5>
@@ -269,47 +245,33 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
               {(itemAFinalizar.tarea.insumos_quimicos ?? []).length > 0 && (
                 <div className="bg-body-tertiary p-3 rounded border mb-4">
                   <h6 className="fw-bold border-bottom pb-2 mb-3">
-                    Consumo aproximado de productos químicos
+                    Insumos químicos utilizados
                   </h6>
 
-                  {errorConsumo && (
-                    <Alert variant="warning" className="py-2">
-                      {errorConsumo}
-                    </Alert>
-                  )}
+                  <ul className="mb-2 ps-3">
+                    {itemAFinalizar.tarea.insumos_quimicos?.map((requisito) => {
+                      const insumo = requisito.insumo_quimico;
+                      const unidad = insumo?.unidadMedidaObj?.sufijo ?? '';
 
-                  {itemAFinalizar.tarea.insumos_quimicos?.map((requisito) => {
-                    const insumo = requisito.insumo_quimico;
-                    const unidad = insumo?.unidadMedidaObj?.sufijo ?? '';
+                      return (
+                        <li key={requisito.insumo_quimico_id} className="mb-2">
+                          {insumo?.nombre ?? 'Producto químico no disponible'}
 
-                    return (
-                      <Form.Group className="mb-3" key={requisito.insumo_quimico_id}>
-                        <Form.Label>
-                          {insumo?.nombre ?? `Producto ${requisito.insumo_quimico_id}`}
-                          {unidad ? ` (${unidad})` : ''}
-                          <span className="text-muted">
-                            {' '}
-                            — referencia del plan: {requisito.cantidad} {unidad}
-                          </span>
-                        </Form.Label>
+                          <Badge
+                            bg="body-tertiary"
+                            className="text-body border ms-2"
+                          >
+                            {requisito.cantidad} {unidad}
+                          </Badge>
+                        </li>
+                      );
+                    })}
+                  </ul>
 
-                        <Form.Control
-                          type="number"
-                          min="0"
-                          step="any"
-                          {...form.register(`cantidades.${requisito.insumo_quimico_id}`, {
-                            validate: (value) =>
-                              (value !== '' &&
-                                value !== undefined &&
-                                Number.isFinite(Number(value)) &&
-                                Number(value) >= 0) ||
-                              'Ingresá una cantidad válida mayor o igual a cero.',
-                          })}
-                          placeholder="Cantidad realmente utilizada"
-                        />
-                      </Form.Group>
-                    );
-                  })}
+                  <p className="text-body-secondary small mb-0">
+                    Al realizar la tarea se descontarán automáticamente las
+                    cantidades configuradas en el plan.
+                  </p>
                 </div>
               )}
 

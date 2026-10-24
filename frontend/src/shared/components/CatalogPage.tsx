@@ -301,17 +301,70 @@ export function CatalogPage({ title, endpoint, fields, options, colorField, load
         </Card>
       )}
       {route.mode === 'ver' && route.item && (
-        <Card body>
-          {columnasVisibles.map(([key, label]) => (
-            <p key={key}>
-              <strong>{label}:</strong>{' '}
-              {esEtiquetaColor(key) ? celdaColor(route.item!) : String(route.item?.[key as keyof RecordItem] ?? options?.[key]?.[0] ?? '')}
-            </p>
-          ))}
-          <Button onClick={route.back}>Volver</Button>{' '}
-          <Button variant="warning" onClick={() => route.open(route.item!, 'editar')}>
-            Editar
-          </Button>
+        <Card
+          className="shadow-sm border-0 mx-auto"
+          style={{ maxWidth: '650px' }}
+        >
+          <Card.Header className="bg-body-tertiary text-secondary d-flex align-items-center gap-2 py-3">
+            <i
+              className={`bi ${
+                endpoint === 'tipos-incidente'
+                  ? 'bi-exclamation-triangle'
+                  : endpoint === 'tipos-documento'
+                    ? 'bi-file-earmark-text'
+                    : 'bi-rulers'
+              } fs-5`}
+              aria-hidden="true"
+            ></i>
+
+            <h5 className="mb-0">
+              {endpoint === 'tipos-incidente'
+                ? 'Detalle del Tipo de Incidente'
+                : endpoint === 'tipos-documento'
+                  ? 'Detalle del Tipo de Documento'
+                  : 'Detalle de la Unidad de Medida'}
+            </h5>
+          </Card.Header>
+
+          <Card.Body className="p-4">
+            <div className="bg-body-tertiary p-3 rounded border mb-2">
+              {columnasVisibles.map(([key, label], index) => (
+                <div
+                  key={key}
+                  className={`d-flex align-items-start gap-2 ${
+                    index < columnasVisibles.length - 1 ? 'mb-2' : ''
+                  }`}
+                >
+                  <span className="text-muted fw-semibold flex-shrink-0">
+                    {label}:
+                  </span>
+
+                  <span className="text-break" style={{ minWidth: 0 }}>
+                    {esEtiquetaColor(key)
+                      ? celdaColor(route.item!)
+                      : String(
+                          route.item?.[key as keyof RecordItem] ??
+                            options?.[key]?.[0] ??
+                            '',
+                        )}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card.Body>
+
+          <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+            <Button variant="secondary" onClick={route.back}>
+              Volver
+            </Button>
+
+            <Button
+              variant="warning"
+              onClick={() => route.open(route.item!, 'editar')}
+            >
+              Editar
+            </Button>
+          </Card.Footer>
         </Card>
       )}
       {route.mode === 'eliminar' && route.item && (

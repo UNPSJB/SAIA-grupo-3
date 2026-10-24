@@ -16,6 +16,7 @@ from src.exceptions import BadRequest
 from src.consumoQuimico.models import ConsumoQuimico 
 from src.insumosQuimicos.models import InsumoQuimico
 from src.personal.services import leer_personal
+from math import isfinite
 
 def validar_operador(db: Session, personal_id: int) -> Personal:
     personal = db.get(Personal, personal_id)
@@ -224,10 +225,40 @@ def finalizar_item_checklist(
             )
         )
 
-    cantidades_por_insumo = {
-        consumo.insumo_quimico_id: consumo.cantidad_utilizada
-        for consumo in consumos
-    }
+    # La cantidad a descontar sale de la configuración de la tarea.
+    cantidades_por_insumo = {}
+
+    for requisito in item.tarea.insumos_quimicos:
+        cantidad = requisito.cantidad
+
+        if (
+            cantidad is None
+            or not isfinite(cantidad)
+            or cantidad < 0
+        ):
+            raise BadRequest(
+                detail=(
+                    "La tarea tiene una cantidad de insumo inválida. "
+                    "Corregí su configuración antes de realizarla."
+                )
+            )
+
+        cantidades_por_insumo[requisito.insumo_quimico_id] = cantidad
+
+    # Evita aceptar cantidades distintas o una configuración
+    # que cambió desde que el operario abrió el checklist.
+    for consumo in consumos:
+        cantidad_configurada = cantidades_por_insumo[
+            consumo.insumo_quimico_id
+        ]
+
+        if consumo.cantidad_utilizada != cantidad_configurada:
+            raise BadRequest(
+                detail=(
+                    "Las cantidades deben coincidir con las configuradas "
+                    "en la tarea. Actualizá el checklist y volvé a intentarlo."
+                )
+            )
 
     # Valida el stock antes de marcar la tarea como realizada.
     errores_stock = []
