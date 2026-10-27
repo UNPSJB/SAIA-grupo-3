@@ -12,6 +12,7 @@ import { AccionCorrectivaForm } from './AccionCorrectivaForm';
 import { AccionCorrectivaVigente } from './AccionCorrectivaVigente';
 import { ReabrirIncidenteForm } from './ReabrirIncidenteForm';
 import { useIncidente } from './useIncidente';
+import { avisarCambioIncidentes } from './eventos';
 import { getIncidenteById } from './incidenteApi';
 import {
   modificarAccionCorrectiva,
@@ -75,6 +76,7 @@ export function IncidentePage() {
   const handleRegistrarAccion = async (datos: AccionCorrectivaInput) => {
     if (!modalListado) return;
     await registrarAccionCorrectiva(modalListado.incidente.id, datos);
+    avisarCambioIncidentes();
     setRecargaLista((n) => n + 1);
     cerrarModalListado();
   };
@@ -82,6 +84,7 @@ export function IncidentePage() {
   const handleReabrir = async (datos: ReaperturaInput) => {
     if (!modalListado) return;
     await reabrirIncidente(modalListado.incidente.id, datos);
+    avisarCambioIncidentes();
     setRecargaLista((n) => n + 1);
     cerrarModalListado();
   };

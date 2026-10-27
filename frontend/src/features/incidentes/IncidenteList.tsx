@@ -1,6 +1,7 @@
+import { lazy, Suspense, useRef } from 'react';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { SortableHeader } from '../../shared/components/SortableHeader';
-import { formatearFechaHora } from '../../shared/libreria/fechas';
+import { formatearFechaHora, type RangoFechas } from '../../shared/libreria/fechas';
 import './incidentes.css';
 import { Badge, Button, Card, Form, Table } from 'react-bootstrap';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -8,9 +9,16 @@ import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { EnlaceArchivo } from '../../shared/components/EnlaceArchivo';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { useIncidente } from './useIncidente';
-import type { EstadoIncidente, Incidente } from './types';
+import type { EstadoIncidente, Incidente, TipoIncidente } from './types';
 import { ESTADOS_INCIDENTE } from './types';
 import { textoBadge } from '../../shared/libreria/etiquetas';
+
+// Los gráficos (Recharts) se descargan solo cuando un administrador abre el listado.
+const PanelEstadisticasIncidentes = lazy(() =>
+  import('./estadisticas/PanelEstadisticasIncidentes').then((modulo) => ({
+    default: modulo.PanelEstadisticasIncidentes,
+  })),
+);
 
 interface IncidenteListProps {
   onNuevoClick: () => void;
@@ -54,14 +62,35 @@ export function IncidenteList({
     ordenarPor,
     orden,
     cambiarOrden,
+    filtrarPorTipo,
   } = useIncidente();
+  const listadoRef = useRef<HTMLDivElement>(null);
+
+  const seleccionarTipoDesdeGrafico = (tipo: TipoIncidente | null, rango: RangoFechas) => {
+    if (tipo === null) {
+      setTipoId('');
+      return;
+    }
+    filtrarPorTipo(String(tipo.id), rango.desde, rango.hasta);
+    listadoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  // Un tipo dado de baja elegido desde el gráfico no está entre las opciones del filtro.
+  const tipoFiltradoInactivo = tipoId !== '' && !tiposActivos.some((t) => String(t.id) === tipoId);
 
   const getEstado = (valor: EstadoIncidente) =>
     ESTADOS_INCIDENTE.find((e) => e.value === valor) ?? { label: valor, variante: 'secondary' };
 
   return (
     <>
-      <div className="mb-3">
+      {esAdministrador && (
+        <Suspense fallback={<LoadingSpinner mensaje="Cargando estadísticas..." />}>
+          <PanelEstadisticasIncidentes
+            tipoSeleccionadoId={tipoId ? Number(tipoId) : null}
+            onSeleccionarTipo={seleccionarTipoDesdeGrafico}
+          />
+        </Suspense>
+      )}
+      <div className="mb-3" ref={listadoRef} style={{ scrollMarginTop: '1rem' }}>
         <h4 className="text-secondary fw-normal mb-3">
           {esAdministrador ? 'Registro de Incidentes' : 'Incidentes que reportaste'}
         </h4>
@@ -95,6 +124,7 @@ export function IncidenteList({
               style={{ width: '200px', maxWidth: '100%' }}
             >
               <option value="">Todos los tipos</option>
+              {tipoFiltradoInactivo && <option value={tipoId}>Tipo dado de baja</option>}
               {tiposActivos.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.nombre}

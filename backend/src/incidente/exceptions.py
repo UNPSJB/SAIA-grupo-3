@@ -8,3 +8,11 @@ class IncidenteNoEncontrado(NotFound):
 
 class OperadorNoValido(BadRequest):
     DETAIL = ErrorCode.OPERADOR_NO_VALIDO
+
+
+class RangoFechasInvalido(BadRequest):
+    DETAIL = ErrorCode.RANGO_FECHAS_INVALIDO
+
+
+class RangoFechasExcedido(BadRequest):
+    DETAIL = ErrorCode.RANGO_FECHAS_EXCEDIDO

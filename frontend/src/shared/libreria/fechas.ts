@@ -63,3 +63,29 @@ export function textoAntiguedad(diasTranscurridos: number): string {
   if (diasTranscurridos === 0) return 'Hoy';
   return dias(diasTranscurridos);
 }
+
+/** Suma (o resta, con números negativos) días a una fecha "aaaa-mm-dd". */
+export function sumarDias(fecha: string, cantidad: number): string {
+  const resultado = parsearFecha(fecha);
+  resultado.setDate(resultado.getDate() + cantidad);
+  const mes = String(resultado.getMonth() + 1).padStart(2, '0');
+  const dia = String(resultado.getDate()).padStart(2, '0');
+  return `${resultado.getFullYear()}-${mes}-${dia}`;
+}
+
+/** Período entre dos fechas "aaaa-mm-dd", ambas incluidas. */
+export interface RangoFechas {
+  desde: string;
+  hasta: string;
+}
+
+/** Los últimos `dias` días contando hoy (ej. 7 → hoy y los 6 anteriores). */
+export function rangoUltimosDias(dias: number): RangoFechas {
+  const hasta = fechaHoyIso();
+  return { desde: sumarDias(hasta, -(dias - 1)), hasta };
+}
+
+/** "01/10/2026 al 26/10/2026". */
+export function textoRango({ desde, hasta }: RangoFechas): string {
+  return `${formatearFecha(desde)} al ${formatearFecha(hasta)}`;
+}

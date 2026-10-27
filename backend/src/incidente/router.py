@@ -92,6 +92,20 @@ def read_abiertos_por_tipo(db: Session = Depends(get_db)):
     return services.contar_abiertos_por_tipo(db)
 
 
+@router.get(
+    "/estadisticas",
+    response_model=schemas.EstadisticasIncidentes,
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_estadisticas(
+    db: Session = Depends(get_db),
+    fecha_desde: date | None = Query(None, description="Desde (inclusive). Por defecto, hace 30 días"),
+    fecha_hasta: date | None = Query(None, description="Hasta (inclusive). Por defecto, hoy"),
+):
+    """Incidentes por tipo y por período, para los gráficos del listado (E7)."""
+    return services.estadisticas_incidentes(db, fecha_desde, fecha_hasta)
+
+
 @router.get("/{incidente_id}", response_model=schemas.Incidente, dependencies=[Depends(puede_consultar_operacion)])
 def read_incidente(
     incidente_id: int,
