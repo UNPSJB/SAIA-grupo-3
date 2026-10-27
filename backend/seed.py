@@ -398,6 +398,18 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                 crear(ItemChecklist, {"plan_id": plan.id, "tarea_id": tarea.id,
                     "frecuencia": FrecuenciaTarea.DIARIA, "periodo_inicio": hoy}, periodo_fin=hoy,
                     responsable_id=responsable, estado=EstadoItem.PENDIENTE)
+                //datos ficticios para el grafico de cumplimiento
+                for dias_atras in range(2, 31):
+                    fecha = hoy - timedelta(days=dias_atras)
+                    fin_de_semana = fecha.weekday() >= 5
+                    semana_baja = 14 <= dias_atras <= 20
+                    cumplida = not ((fin_de_semana and i % 2 == 0) or (semana_baja and i % 3 == 0))
+                    crear(ItemChecklist, {"plan_id": plan.id, "tarea_id": tarea.id,
+                        "frecuencia": FrecuenciaTarea.DIARIA, "periodo_inicio": fecha}, periodo_fin=fecha,
+                        responsable_id=responsable,
+                        realizada_por_id=responsable if cumplida else None,
+                        estado=EstadoItem.REALIZADA if cumplida else EstadoItem.PENDIENTE,
+                        realizada_en=datetime.combine(fecha, time(10, i)) if cumplida else None)
 
             db.flush()
             # Descubrir los modelos registrados evita olvidar entidades nuevas silenciosamente.

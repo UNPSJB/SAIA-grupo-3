@@ -35,7 +35,7 @@ from src.documentoTecnico.router import router as documento_tecnico_router
 from src.registroCalibracion.router import router as registro_calibracion_router
 from src.accionCorrectiva.router import router as accion_correctiva_router
 from src.archivos.router import router as archivos_router
-
+from src.tablero.router import router as tablero_router
 from src.documentoTecnico.consulta_router import router as documentos_vigentes_router
 
 ENV = settings.ENV.upper()
@@ -91,7 +91,7 @@ app.include_router(notificaciones_router)
 app.include_router(incidente_router)
 app.include_router(documento_tecnico_router)
 app.include_router(documentos_vigentes_router)
-
 app.include_router(registro_calibracion_router)
 app.include_router(accion_correctiva_router)
 app.include_router(archivos_router)
+app.include_router(tablero_router)
