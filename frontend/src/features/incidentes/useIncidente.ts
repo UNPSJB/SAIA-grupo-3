@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { usePagedList } from '../../shared/hooks/usePagedList';
 import { eliminarIncidente, guardarIncidente } from './incidenteApi';
 import { getTiposIncidenteActivos } from '../tipoIncidente/tipoIncidenteApi';
+import { avisarCambioIncidentes } from './eventos';
 import type {
   EstadoIncidente,
   Incidente,
@@ -51,14 +52,19 @@ export function useIncidente(enabled = true) {
     setTipoId: (value: string) => list.update({ tipo_id: value }),
     setFechaDesde: (value: string) => list.update({ fecha_desde: value }),
     setFechaHasta: (value: string) => list.update({ fecha_hasta: value }),
+    /** Desde el gráfico: muestra los incidentes de un tipo en el período del gráfico. */
+    filtrarPorTipo: (tipoIdNuevo: string, desde: string, hasta: string) =>
+      list.update({ tipo_id: tipoIdNuevo, fecha_desde: desde, fecha_hasta: hasta }),
     limpiarFiltros: () =>
       list.update({ buscar: '', estado: '', tipo_id: '', fecha_desde: '', fecha_hasta: '' }),
     eliminar: async (id: number) => {
       await eliminarIncidente(id);
+      avisarCambioIncidentes();
       list.refetch(true);
     },
     guardar: async (datos: IncidenteCreateInput | IncidenteUpdateInput, idExistente?: number) => {
       await guardarIncidente(datos, idExistente);
+      avisarCambioIncidentes();
       list.refetch();
     },
   };

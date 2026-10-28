@@ -2,6 +2,7 @@ import { fetchWithAuth } from '../../shared/libreria/api';
 import { API_BASE_URL, mensajeDeError, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type {
   CantidadPorTipo,
+  EstadisticasIncidentes,
   EstadoIncidente,
   Incidente,
   IncidenteCreateInput,
@@ -102,6 +103,18 @@ export async function getAbiertosPorTipo(): Promise<CantidadPorTipo[]> {
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(mensajeDeError(errorData.detail, 'No se pudo cargar el resumen por tipo.'));
+  }
+  return res.json();
+}
+
+export async function getEstadisticasIncidentes(
+  fechaDesde: string,
+  fechaHasta: string,
+): Promise<EstadisticasIncidentes> {
+  const params = new URLSearchParams({ fecha_desde: fechaDesde, fecha_hasta: fechaHasta });
+  const res = await fetchWithAuth(`${API_BASE_URL}/incidentes/estadisticas?${params}`);
+  if (!res.ok) {
+    throw new Error(await mensajeDeRespuesta(res, 'No se pudieron cargar las estadísticas de incidentes.'));
   }
   return res.json();
 }

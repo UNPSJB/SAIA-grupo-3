@@ -8,3 +8,5 @@ export * from './useIncidente';
 export * from './incidenteApi';
 export * from './abiertos/IncidentesAbiertosPage';
 export * from './abiertos/useIncidentesAbiertos';
+export * from './estadisticas/useEstadisticasIncidentes';
+export * from './eventos';

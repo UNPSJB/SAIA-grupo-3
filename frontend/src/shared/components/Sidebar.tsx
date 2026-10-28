@@ -30,6 +30,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
 
 
   const menuItems: MenuItem[] = [
+    { to: '/tablero', label: 'Tablero de gestión', icono: 'bi bi-graph-up' },
     { to: '/planes', label: 'Planes de Limpieza', icono: 'bi bi-clipboard2-check' },
     { to: '/auditoria', label: 'Historial Checklist', icono: 'bi bi-clock-history' },
     { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square', permiso: 'operar' },

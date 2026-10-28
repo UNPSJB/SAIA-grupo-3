@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.checklist.schemas import PersonalResumen
 from src.incidente.auditoria import AccionMovimientoIncidente
-from src.incidente.constants import EstadoIncidente
+from src.incidente.constants import AgrupacionPeriodo, EstadoIncidente
 from src.tipoIncidente.schemas import TipoIncidente
 
 
@@ -69,3 +69,30 @@ class CantidadPorTipo(BaseModel):
     """Indicador 'incidentes abiertos por tipo' (lo consume el tablero de E7)."""
     tipo: TipoIncidente
     cantidad: int
+
+
+class EstadisticaPorTipo(BaseModel):
+    """Incidentes de un tipo dentro del período consultado."""
+    tipo: TipoIncidente
+    total: int
+    abiertos: int
+    cerrados: int
+
+
+class EstadisticaPorPeriodo(BaseModel):
+    """Incidentes reportados en un día, semana (empieza el lunes) o mes."""
+    periodo: date
+    cantidad: int
+
+
+class EstadisticasIncidentes(BaseModel):
+    """Resumen de incidentes de un período para los gráficos del listado (E7)."""
+    fecha_desde: date
+    fecha_hasta: date
+    agrupacion: AgrupacionPeriodo
+    total: int
+    abiertos: int
+    cerrados: int
+    promedio_horas_resolucion: Optional[float] = None
+    por_tipo: list[EstadisticaPorTipo]
+    evolucion: list[EstadisticaPorPeriodo]

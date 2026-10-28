@@ -1,4 +1,5 @@
 import type { TipoIncidente } from '../tipoIncidente/types';
+import type { AgrupacionPeriodo } from '../../shared/libreria/graficos';
 
 export type { TipoIncidente };
 
@@ -58,4 +59,29 @@ export interface PaginatedIncidentesAbiertos {
 export interface CantidadPorTipo {
   tipo: TipoIncidente;
   cantidad: number;
+}
+
+// Estadísticas del listado de incidentes (E7).
+export interface EstadisticaPorTipo {
+  tipo: TipoIncidente;
+  total: number;
+  abiertos: number;
+  cerrados: number;
+}
+
+export interface EstadisticaPorPeriodo {
+  periodo: string;
+  cantidad: number;
+}
+
+export interface EstadisticasIncidentes {
+  fecha_desde: string;
+  fecha_hasta: string;
+  agrupacion: AgrupacionPeriodo;
+  total: number;
+  abiertos: number;
+  cerrados: number;
+  promedio_horas_resolucion: number | null;
+  por_tipo: EstadisticaPorTipo[];
+  evolucion: EstadisticaPorPeriodo[];
 }

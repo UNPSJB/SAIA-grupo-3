@@ -22,6 +22,8 @@ from src.tipoDocumento.router import router as tipo_documento_router
 from src.tipoIncidente.router import router as tipo_incidente_router
 from src.insumos.router import router as insumos_router
 from src.unidadMedida.router import router as unidad_medida_router
+from src.producto.router import router as producto_router
+from src.loteProduccion.router import router as lote_produccion_router
 from src.sector.router import router as sector_router
 from src.elementos.router import router as elementos_router
 from src.insumosQuimicos.router import router as insumos_quimicos_router
@@ -38,7 +40,7 @@ from src.documentoTecnico.router import router as documento_tecnico_router
 from src.registroCalibracion.router import router as registro_calibracion_router
 from src.accionCorrectiva.router import router as accion_correctiva_router
 from src.archivos.router import router as archivos_router
-
+from src.tablero.router import router as tablero_router
 from src.documentoTecnico.consulta_router import router as documentos_vigentes_router
 
 ENV = settings.ENV.upper()
@@ -81,6 +83,8 @@ app.include_router(tipo_incidente_router)
 app.include_router(equipos_router)
 app.include_router(insumos_router)
 app.include_router(unidad_medida_router)
+app.include_router(producto_router)
+app.include_router(lote_produccion_router)
 app.include_router(sector_router)
 app.include_router(tarea_router)
 app.include_router(elementos_router)
@@ -95,7 +99,7 @@ app.include_router(notificaciones_router)
 app.include_router(incidente_router)
 app.include_router(documento_tecnico_router)
 app.include_router(documentos_vigentes_router)
-
 app.include_router(registro_calibracion_router)
 app.include_router(accion_correctiva_router)
 app.include_router(archivos_router)
+app.include_router(tablero_router)

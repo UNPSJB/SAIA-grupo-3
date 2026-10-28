@@ -5,6 +5,7 @@ from src.database import get_db
 from src.unidadMedida import schemas, services
 from src.pagination import PaginatedResponse
 from src.auth.router_base import PermissionedRouter
+from src.auth.dependencies import puede_consultar_operacion
 
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,10 @@ def read_unidades(
     buscar: str = Query("")
 ):
     return services.listar_unidades_medida(db, page, size, mostrar_inactivos, ordenar_por, orden, buscar)
+
+@router.get("/activas", response_model=list[schemas.UnidadMedida], dependencies=[Depends(puede_consultar_operacion)])
+def read_unidades_activas(db: Session = Depends(get_db)):
+    return services.listar_unidades_medida_activas(db)
 
 @router.get("/{unidad_id}", response_model=schemas.UnidadMedida)
 def read_unidad(unidad_id: int, db: Session = Depends(get_db)):

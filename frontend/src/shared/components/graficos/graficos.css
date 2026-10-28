@@ -1,0 +1,91 @@
+/* Estilos comunes de los gráficos: usan las variables de Bootstrap para
+   verse bien en tema claro y oscuro. */
+
+.grafico-tarjeta .card-header {
+  background: transparent;
+}
+
+.grafico-cuerpo {
+  position: relative;
+  transition: opacity 0.15s ease-in-out;
+}
+
+/* Mientras llegan datos nuevos se mantiene el gráfico anterior atenuado. */
+.grafico-cuerpo.actualizando {
+  opacity: 0.55;
+}
+
+.grafico-tooltip {
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-box-shadow-sm);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  min-width: 140px;
+}
+
+.grafico-tooltip .grafico-tooltip-titulo {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.grafico-tooltip .grafico-tooltip-marca {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+  margin-right: 0.375rem;
+}
+
+.grafico-indicador {
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: var(--bs-border-radius-lg);
+  padding: 0.75rem 1rem;
+  height: 100%;
+  background: var(--bs-body-bg);
+}
+
+.grafico-indicador .grafico-indicador-valor {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.grafico-indicador .grafico-indicador-titulo {
+  font-size: 0.8125rem;
+  color: var(--bs-secondary-color);
+}
+
+/* Las barras que se pueden tocar muestran la manito. */
+.grafico-clickeable .recharts-bar-rectangle {
+  cursor: pointer;
+}
+
+.grafico-tabla th,
+.grafico-tabla td {
+  font-variant-numeric: tabular-nums;
+}
+
+/* En pantallas chicas el selector de período ocupa todo el ancho y se acomoda. */
+@media (max-width: 575.98px) {
+  .selector-periodo,
+  .selector-periodo-rapidos,
+  .selector-periodo-fechas {
+    width: 100%;
+  }
+
+  .selector-periodo-rapidos > .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+
+  .selector-periodo-fechas .form-control {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto !important;
+  }
+}
