@@ -8,10 +8,12 @@ interface SelectorPeriodoProps {
   onCambiar: (rango: RangoFechas) => void;
   /** Prefijo para los ids de los campos (si hay más de un selector en la pantalla). */
   id?: string;
+  accesosRapidos?: boolean;
+  fechaMinima?: string;
 }
 
 /** Accesos rápidos (7 días, 30 días...) más un período a medida. */
-export function SelectorPeriodo({ rango, onCambiar, id = 'periodo' }: SelectorPeriodoProps) {
+export function SelectorPeriodo({ rango, onCambiar, id = 'periodo', accesosRapidos = true, fechaMinima }: SelectorPeriodoProps) {
   const hoy = fechaHoyIso();
   const activo = PERIODOS_RAPIDOS.find(({ dias }) => {
     const candidato = rangoUltimosDias(dias);
@@ -29,20 +31,22 @@ export function SelectorPeriodo({ rango, onCambiar, id = 'periodo' }: SelectorPe
 
   return (
     <div className="selector-periodo d-flex flex-wrap align-items-center gap-2">
-      <ButtonGroup size="sm" aria-label="Períodos rápidos" className="selector-periodo-rapidos">
-        {PERIODOS_RAPIDOS.map(({ dias, etiqueta }) => (
-          <Button
-            key={dias}
-            className="text-nowrap"
-            variant={activo?.dias === dias ? 'primary' : 'outline-primary'}
-            aria-pressed={activo?.dias === dias}
-            onClick={() => onCambiar(rangoUltimosDias(dias))}
-          >
-            {etiqueta}
-          </Button>
-        ))}
-      </ButtonGroup>
-      <div className="selector-periodo-fechas d-flex align-items-center gap-1">
+      {accesosRapidos && (
+        <ButtonGroup size="sm" aria-label="Períodos rápidos" className="selector-periodo-rapidos">
+          {PERIODOS_RAPIDOS.map(({ dias, etiqueta }) => (
+            <Button
+              key={dias}
+              className="text-nowrap"
+              variant={activo?.dias === dias ? 'primary' : 'outline-primary'}
+              aria-pressed={activo?.dias === dias}
+              onClick={() => onCambiar(rangoUltimosDias(dias))}
+            >
+              {etiqueta}
+            </Button>
+          ))}
+        </ButtonGroup>
+      )}
+        <div className="selector-periodo-fechas d-flex align-items-center gap-1">
         <Form.Label htmlFor={`${id}-desde`} className="visually-hidden">
           Desde
         </Form.Label>
@@ -51,6 +55,7 @@ export function SelectorPeriodo({ rango, onCambiar, id = 'periodo' }: SelectorPe
           type="date"
           size="sm"
           value={rango.desde}
+          min={fechaMinima}
           max={hoy}
           onChange={(e) => cambiarDesde(e.target.value)}
           style={{ width: '150px' }}
@@ -64,6 +69,7 @@ export function SelectorPeriodo({ rango, onCambiar, id = 'periodo' }: SelectorPe
           type="date"
           size="sm"
           value={rango.hasta}
+          min={fechaMinima}
           max={hoy}
           onChange={(e) => cambiarHasta(e.target.value)}
           style={{ width: '150px' }}

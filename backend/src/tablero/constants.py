@@ -7,7 +7,6 @@ DIAS_MAXIMOS_RANGO = 366
 class Agrupacion(StrEnum):
     DIA = "dia"
     SEMANA = "semana"
-    MES = "mes"
 
 
 class ErrorCode:

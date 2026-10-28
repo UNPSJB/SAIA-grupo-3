@@ -31,6 +31,7 @@ import { DocumentoTecnicoPage } from '../features/documentosTecnicos';
 import { DocumentosVigentesPage } from '../features/documentosTecnicos/DocumentosVigentesPage';
 import { IncidentePage, IncidentesAbiertosPage } from '../features/incidentes';
 import { VencimientosCalibracionPage } from '../features/equipos';
+import { TableroPage } from '../features/tablero';
 
 function HomeRedirect() {
   const { currentUser } = useAuth();
@@ -133,7 +134,7 @@ export function AppRouter() {
               <Route path="planes/:id/:action" element={<PlanPage />} />
               <Route path="auditoria" element={<AuditoriaPage />} />
               <Route path="auditoria/:id" element={<AuditoriaPage />} />
-
+              <Route path="tablero" element={<TableroPage />} />
               <Route path="consumos" element={<ConsumoQuimicoPage />} />
               <Route path="consumos/nuevo" element={<ConsumoQuimicoPage />} />
               <Route path="consumos/:id" element={<ConsumoQuimicoPage />} />

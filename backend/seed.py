@@ -398,7 +398,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                 crear(ItemChecklist, {"plan_id": plan.id, "tarea_id": tarea.id,
                     "frecuencia": FrecuenciaTarea.DIARIA, "periodo_inicio": hoy}, periodo_fin=hoy,
                     responsable_id=responsable, estado=EstadoItem.PENDIENTE)
-                //datos ficticios para el grafico de cumplimiento
+                #datos ficticios para el grafico de cumplimiento
                 for dias_atras in range(2, 31):
                     fecha = hoy - timedelta(days=dias_atras)
                     fin_de_semana = fecha.weekday() >= 5

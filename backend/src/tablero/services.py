@@ -1,6 +1,5 @@
-import calendar
 from datetime import date, timedelta
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from src.checklist.models import EstadoItem, ItemChecklist
@@ -11,16 +10,12 @@ from src.tablero.constants import DIAS_MAXIMOS_RANGO, DIAS_POR_DEFECTO, Agrupaci
 def _inicio_del_grupo(dia: date, agrupacion: Agrupacion) -> date:
     if agrupacion == Agrupacion.SEMANA:
         return dia - timedelta(days=dia.weekday())
-    if agrupacion == Agrupacion.MES:
-        return dia.replace(day=1)
     return dia
 
 
 def _fin_del_grupo(inicio: date, agrupacion: Agrupacion) -> date:
     if agrupacion == Agrupacion.SEMANA:
         return inicio + timedelta(days=6)
-    if agrupacion == Agrupacion.MES:
-        return inicio.replace(day=calendar.monthrange(inicio.year, inicio.month)[1])
     return inicio
 
 
@@ -45,6 +40,7 @@ def calcular_cumplimiento(db: Session, fecha_desde: date | None, fecha_hasta: da
             ItemChecklist.periodo_fin <= ultimo_dia_cerrado,
         )
     ).all()
+    primera_fecha = db.scalar(select(func.min(ItemChecklist.periodo_fin)))
 
     conteo: dict[date, list[int]] = {}
     for periodo_fin, estado in filas:
@@ -77,4 +73,5 @@ def calcular_cumplimiento(db: Session, fecha_desde: date | None, fecha_hasta: da
         "realizadas": realizadas,
         "porcentaje": _porcentaje(realizadas, total),
         "puntos": puntos,
+        "primera_fecha": primera_fecha,
     }

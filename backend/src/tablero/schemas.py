@@ -13,6 +13,7 @@ class CumplimientoChecklist(BaseModel):
     agrupacion: Agrupacion
     desde: date
     hasta: date
+    primera_fecha: date | None
     total: int
     realizadas: int
     porcentaje: float | None
