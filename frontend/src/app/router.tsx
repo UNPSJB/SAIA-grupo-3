@@ -31,11 +31,8 @@ import { DocumentoTecnicoPage } from '../features/documentosTecnicos';
 import { DocumentosVigentesPage } from '../features/documentosTecnicos/DocumentosVigentesPage';
 import { IncidentePage, IncidentesAbiertosPage } from '../features/incidentes';
 import { VencimientosCalibracionPage } from '../features/equipos';
-<<<<<<< HEAD
 import { VencimientosPage as VencimientosConsolidadosPage } from '../features/vencimientos';
-=======
 import { TableroPage } from '../features/tablero';
->>>>>>> dev
 
 function HomeRedirect() {
   const { currentUser } = useAuth();
