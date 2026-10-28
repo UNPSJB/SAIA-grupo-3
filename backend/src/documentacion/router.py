@@ -1,14 +1,20 @@
+from typing import Literal
+
 from fastapi import Depends, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.documentacion import schemas, services
 from src.auth.router_base import PermissionedRouter
 from src.documentacion.constants import EstadoVencimiento
-from src.documentacion.vencimientos import listar_vencimientos
+from src.documentacion.vencimientos import (
+    listar_vencimientos,
+    listar_vencimientos_consolidados,
+)
 from src.pagination import PaginatedResponse
 
 
 router = PermissionedRouter(prefix="/documentacion", tags=["documentacion"])
+vencimientos_router = PermissionedRouter(prefix="/vencimientos", tags=["vencimientos"])
 
 # Rutas para Documentos
 
@@ -57,3 +63,33 @@ def update_documento(
 @router.delete("/{documento_id}", response_model=schemas.DocumentoDelete)
 def delete_documento(documento_id: int, db: Session = Depends(get_db)):
     return services.eliminar_documento(db, documento_id)
+
+
+@vencimientos_router.get(
+    "/consolidados",
+    response_model=PaginatedResponse[schemas.VencimientoConsolidado],
+)
+def read_vencimientos_consolidados(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    size: int = Query(10, ge=1, le=100),
+    origen: Literal["todos", "documentacion", "calibracion"] = Query("todos"),
+    estado: EstadoVencimiento | None = Query(None),
+    solo_alertas: bool = Query(False),
+    buscar: str = Query(""),
+    ordenar_por: Literal["fecha_vencimiento", "elemento"] = Query(
+        "fecha_vencimiento"
+    ),
+    orden: Literal["asc", "desc"] = Query("asc"),
+):
+    return listar_vencimientos_consolidados(
+        db,
+        page=page,
+        size=size,
+        origen=origen,
+        estado=estado,
+        solo_alertas=solo_alertas,
+        buscar=buscar,
+        ordenar_por=ordenar_por,
+        orden=orden,
+    )

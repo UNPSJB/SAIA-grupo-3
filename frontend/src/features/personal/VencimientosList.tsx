@@ -114,7 +114,7 @@ export function VencimientosList({ onVerLegajo }: VencimientosListProps) {
           {loading && vencimientos.length === 0 ? (
             <LoadingSpinner mensaje="Cargando estado de la documentación..." />
           ) : (
-            <Table striped hover responsive className="mb-0 align-middle">
+            <Table striped hover responsive className="mb-0 align-middle tabla-vencimientos">
               <thead className="table-theme">
                 <tr>
                   <SortableHeader

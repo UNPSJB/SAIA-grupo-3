@@ -67,11 +67,14 @@ def read_vencimientos_calibracion(
     page: int = Query(1, ge=1, description="Número de página"),
     size: int = Query(10, ge=1, le=100, description="Cantidad de registros por página"),
     estado: EstadoVencimiento | None = Query(None, description="vencido, por_vencer o vigente"),
+    solo_alertas: bool = Query(False, description="Solo vencidos y próximos a vencer"),
     buscar: str = Query("", description="Búsqueda por nombre de equipo, número de serie o sector"),
     ordenar_por: str = Query("fecha_vencimiento", description="fecha_vencimiento, equipo, numero_serie o sector"),
     orden: str = Query("asc", description="asc o desc"),
 ):
-    return listar_vencimientos_calibracion(db, page, size, estado, buscar, ordenar_por, orden)
+    return listar_vencimientos_calibracion(
+        db, page, size, estado, buscar, ordenar_por, orden, solo_alertas=solo_alertas
+    )
 
 
 @router.get("/{registro_id}", response_model=schemas.RegistroCalibracion)

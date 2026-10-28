@@ -1,6 +1,8 @@
 from datetime import date
+from typing import Annotated, Literal, Union
 from pydantic import BaseModel, ConfigDict, Field
 from src.documentacion.constants import EstadoVencimiento
+from src.registroCalibracion.schemas import EquipoResumen, SectorResumen
 from src.tipoDocumento.schemas import TipoDocumento
 
 
@@ -49,3 +51,37 @@ class Vencimiento(BaseModel):
     dias_restantes: int  # negativo si ya venció
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class VencimientoDocumentacion(BaseModel):
+    id: int
+    detalle_id: int
+    origen: Literal["documentacion"]
+    fecha_vencimiento: date
+    tipo_documento: TipoDocumento
+    personal: EmpleadoResumen
+    estado: EstadoVencimiento
+    dias_restantes: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class VencimientoCalibracion(BaseModel):
+    id: int
+    detalle_id: int
+    origen: Literal["calibracion"]
+    fecha_vencimiento: date
+    fecha_ultima_calibracion: date
+    periodicidad_dias: int
+    equipo: EquipoResumen
+    sector: SectorResumen | None = None
+    estado: EstadoVencimiento
+    dias_restantes: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+VencimientoConsolidado = Annotated[
+    Union[VencimientoDocumentacion, VencimientoCalibracion],
+    Field(discriminator="origen"),
+]

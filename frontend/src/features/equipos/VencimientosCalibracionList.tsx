@@ -4,7 +4,6 @@ import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { SortableHeader } from '../../shared/components/SortableHeader';
 import { ListPagination } from '../../shared/components/ListPagination';
-import { ListControls } from '../../shared/components/ListControls';
 import type { EstadoVencimientoCalibracion, VencimientoCalibracion } from './types';
 import { ESTADOS_VENCIMIENTO_CALIBRACION, TIPOS_EQUIPOS } from './types';
 import { formatearFecha, textoDiasRestantes } from '../../shared/libreria/fechas';
@@ -32,6 +31,8 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
     ordenarPor,
     orden,
     cambiarOrden,
+    soloAlertas,
+    setSoloAlertas,
   } = useVencimientosCalibracion();
 
   const getEstado = (valor: EstadoVencimientoCalibracion) =>
@@ -46,12 +47,31 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
     <>
       <h4 className="text-secondary fw-normal mb-3">Calibración de Equipos e Instrumentos</h4>
 
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda}>
+      <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
+        <Form.Control
+          type="search"
+          placeholder="Buscar equipo, número de serie o sector..."
+          aria-label="Buscar vencimiento de calibración"
+          value={busqueda}
+          onChange={(event) => setBusqueda(event.target.value)}
+          style={{
+            flex: '1 1 240px',
+            width: 'auto',
+            minWidth: 0,
+          }}
+        />
+
         <Form.Select
           aria-label="Filtrar por estado"
           value={estado}
-          onChange={(e) => setEstado(e.target.value as EstadoVencimientoCalibracion | '')}
-          style={{ width: '220px', maxWidth: '100%' }}
+          onChange={(event) =>
+            setEstado(event.target.value as EstadoVencimientoCalibracion | '')
+          }
+          style={{
+            flex: '0 1 180px',
+            width: 'auto',
+            maxWidth: '100%',
+          }}
         >
           <option value="">Todos los estados</option>
           {ESTADOS_VENCIMIENTO_CALIBRACION.map((e) => (
@@ -60,25 +80,37 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
             </option>
           ))}
         </Form.Select>
-        <Button
-          variant="success"
-          onClick={limpiarFiltros}
-          disabled={!estado && !busqueda}
-          className="d-flex align-items-center gap-1"
-        >
-          <i className="bi bi-x-lg"></i>
-          <span>Limpiar</span>
-        </Button>
-        <Button
-          variant="success"
-          onClick={() => recargar()}
-          disabled={loading}
-          className="d-flex align-items-center gap-1 shadow-sm ms-auto"
-        >
-          <i className="bi bi-arrow-clockwise"></i>
-          <span>Actualizar</span>
-        </Button>
-      </ListControls>
+
+        <Form.Check
+          type="switch"
+          id="solo-alertas-calibracion"
+          label="Solo vencidos y próximos"
+          checked={soloAlertas}
+          onChange={(event) => setSoloAlertas(event.target.checked)}
+          className="mb-0 text-nowrap"
+        />
+
+        <div className="d-flex flex-wrap align-items-center gap-2 ms-auto">
+          <Button
+            variant="success"
+            onClick={limpiarFiltros}
+            disabled={!estado && !busqueda && !soloAlertas}
+            className="d-flex align-items-center gap-1"
+          >
+            <i className="bi bi-x-lg" aria-hidden="true"></i>
+            <span>Limpiar</span>
+          </Button>
+          <Button
+            variant="success"
+            onClick={() => recargar()}
+            disabled={loading}
+            className="d-flex align-items-center gap-1 shadow-sm"
+          >
+            <i className="bi bi-arrow-clockwise" aria-hidden="true"></i>
+            <span>Actualizar</span>
+          </Button>
+        </div>
+      </div>
 
       {error && <ErrorAlert mensaje={error} />}
 
@@ -87,7 +119,7 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
           {loading && vencimientos.length === 0 ? (
             <LoadingSpinner mensaje="Cargando estado de las calibraciones..." />
           ) : (
-            <Table striped hover responsive className="mb-0 align-middle">
+            <Table striped hover responsive className="mb-0 align-middle tabla-vencimientos">
               <thead className="table-theme">
                 <tr>
                   <SortableHeader
@@ -125,7 +157,7 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
                 {vencimientos.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center py-4 text-muted">
-                      {estado || busqueda
+                      {estado || busqueda || soloAlertas
                         ? 'No hay equipos para los filtros actuales.'
                         : 'No hay equipos con calibración y periodicidad registradas.'}
                     </td>
@@ -151,7 +183,9 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
                         <td>
                           {formatearFecha(v.fecha_ultima_calibracion)}
                           <br />
-                          <small className="text-muted">Cada {v.periodicidad_dias} días</small>
+                          <small className="text-muted">
+                            Cada {v.periodicidad_dias} días
+                          </small>
                         </td>
                         <td>
                           {formatearFecha(v.fecha_vencimiento)}

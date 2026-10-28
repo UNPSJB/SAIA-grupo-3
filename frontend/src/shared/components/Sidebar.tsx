@@ -15,7 +15,7 @@ interface MenuItem {
   label: string;
   icono: string;
   permiso?: Permiso;
-  grupo?: 'incidentes' | 'vencimientos' | 'maestros';
+  grupo?: 'incidentes' | 'maestros';
   subItems?: {
     to: string;
     label: string;
@@ -37,6 +37,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: "/consumos", label: "Registros de Consumo", icono: "bi bi-droplet" },
     { to: "/documentos-vigentes", label: "Documentos vigentes", icono: "bi bi-journal-check", permiso: "operar" },
     { to: "/documentos-tecnicos", label: "Documentos Técnicos", icono: "bi bi-journal-text" },
+    { to: '/vencimientos', label: 'Vencimientos', icono: 'bi bi-calendar-x' },
     ...(currentUser?.administrar ? [{
       label: 'Incidentes',
       icono: 'bi bi-exclamation-triangle',
@@ -51,15 +52,6 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       icono: 'bi bi-exclamation-triangle',
       permiso: 'operar',
     } satisfies MenuItem]),
-    {
-      label: 'Vencimientos',
-      icono: 'bi bi-calendar-x',
-      grupo: 'vencimientos',
-      subItems: [
-        { to: '/personal/vencimientos', label: 'Personal', icono: 'bi bi-person-vcard' },
-        { to: '/vencimientos/calibracion', label: 'Calibración', icono: 'bi bi-tools' },
-      ],
-    },
     {
       label: 'Datos Maestros',
       icono: 'bi bi-database',
@@ -98,7 +90,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   )?.grupo;
 
   const [gruposAbiertos, setGruposAbiertos] = useState<
-    Partial<Record<'incidentes' | 'vencimientos' | 'maestros', boolean>>
+    Partial<Record<'incidentes' | 'maestros', boolean>>
   >({});
 
   const menuContent = (

@@ -14,7 +14,10 @@ from src.plan.router import router as plan_router
 from src.tarea.router import router as tarea_router
 from src.personal.router import router as personal_router
 from src.equipos.router import router as equipos_router 
-from src.documentacion.router import router as documentacion_router
+from src.documentacion.router import (
+    router as documentacion_router,
+    vencimientos_router as vencimientos_consolidados_router,
+)
 from src.tipoDocumento.router import router as tipo_documento_router
 from src.tipoIncidente.router import router as tipo_incidente_router
 from src.insumos.router import router as insumos_router
@@ -72,6 +75,7 @@ app.add_middleware(
 # asociamos los routers a nuestra app
 app.include_router(personal_router)
 app.include_router(documentacion_router)
+app.include_router(vencimientos_consolidados_router)
 app.include_router(tipo_documento_router)
 app.include_router(tipo_incidente_router)
 app.include_router(equipos_router)

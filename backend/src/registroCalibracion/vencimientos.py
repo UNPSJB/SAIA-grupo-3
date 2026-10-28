@@ -32,6 +32,7 @@ def listar_vencimientos_calibracion(
     buscar: str = "",
     ordenar_por: str = "fecha_vencimiento",
     orden: str = "asc",
+    solo_alertas: bool = False,
     hoy: date | None = None,
 ) -> Dict[str, Any]:
     """Listado paginado del próximo vencimiento de calibración de cada equipo activo.
@@ -71,6 +72,8 @@ def listar_vencimientos_calibracion(
         vencimiento = _fecha_vencimiento(equipo)
         estado_equipo = calcular_estado(vencimiento, hoy)
         if estado is not None and estado_equipo != estado:
+            continue
+        if solo_alertas and vencimiento > hoy + timedelta(days=DIAS_AVISO_VENCIMIENTO):
             continue
         filas.append({
             "id": equipo.id,

@@ -35,3 +35,28 @@ body {
   font-size: 0.825rem !important;
   padding: 0.35rem 0.65rem !important;
 }
+
+.tabla-vencimientos {
+  font-size: 0.9rem;
+}
+
+.tabla-vencimientos thead th {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  vertical-align: middle;
+}
+
+.tabla-vencimientos thead th .btn {
+  display: inline-flex;
+  align-items: center;
+  line-height: inherit;
+  vertical-align: middle;
+}
+
+.tabla-vencimientos small,
+.tabla-vencimientos .badge,
+.tabla-vencimientos th .btn,
+.tabla-vencimientos td .btn {
+  font-size: inherit !important;
+}
