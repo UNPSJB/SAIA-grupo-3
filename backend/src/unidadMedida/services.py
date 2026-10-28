@@ -52,6 +52,9 @@ def listar_unidades_medida(
 
     return {"items": items, "total": total, "page": page, "size": size, "pages": pages}
 
+def listar_unidades_medida_activas(db: Session) -> list[models.UnidadMedida]:
+    return list(db.scalars(select(models.UnidadMedida).where(models.UnidadMedida.activo.is_(True)).order_by(models.UnidadMedida.sufijo)).all())
+
 def leer_unidad_medida(db: Session, unidad_id: int, incluir_inactivos: bool = False) -> models.UnidadMedida:
     query = select(models.UnidadMedida).where(models.UnidadMedida.id == unidad_id)
     if not incluir_inactivos:

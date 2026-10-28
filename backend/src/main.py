@@ -19,6 +19,8 @@ from src.tipoDocumento.router import router as tipo_documento_router
 from src.tipoIncidente.router import router as tipo_incidente_router
 from src.insumos.router import router as insumos_router
 from src.unidadMedida.router import router as unidad_medida_router
+from src.producto.router import router as producto_router
+from src.loteProduccion.router import router as lote_produccion_router
 from src.sector.router import router as sector_router
 from src.elementos.router import router as elementos_router
 from src.insumosQuimicos.router import router as insumos_quimicos_router
@@ -77,6 +79,8 @@ app.include_router(tipo_incidente_router)
 app.include_router(equipos_router)
 app.include_router(insumos_router)
 app.include_router(unidad_medida_router)
+app.include_router(producto_router)
+app.include_router(lote_produccion_router)
 app.include_router(sector_router)
 app.include_router(tarea_router)
 app.include_router(elementos_router)

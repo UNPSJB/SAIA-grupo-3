@@ -38,6 +38,8 @@ from src.planRealizado.models import PlanRealizado
 from src.tareaRealizada.models import TareaRealizada
 from src.consumoQuimico.models import ConsumoQuimico
 from src.notificaciones.models import Notificacion, TipoNotificacion
+from src.producto.models import Producto
+from src.loteProduccion.models import LoteProduccion
 
 from src.documentoTecnico.models import (DocumentoTecnico, VersionDocumentoTecnico, CambioVigenciaDocumentoTecnico, TipoDocumentoTecnico, EstadoDocumento)
 
@@ -104,6 +106,23 @@ DOCUMENTOS_TECNICOS = ["Manual de buenas prácticas de manufactura", "POES de re
     "Receta de demostración para preparación de vegetales"]
 # Fotografías de contexto, no evidencia de sucesos reales. Créditos en seed_assets/FUENTES.md.
 FOTOS = ["cocina-industrial.jpg", "lavado-utensilios.jpg", "mesada-lavado.jpg"]
+PRODUCTOS = [
+    ("Pan de molde blanco", "Pan de molde de 500 g en bolsa", "un"),
+    ("Pan francés", "Pan del día, venta a granel", "kg"),
+    ("Facturas surtidas", "Medialunas, vigilantes y bolas de fraile", "un"),
+    ("Prepizza", "Base de pizza precocida", "un"),
+    ("Tapas de empanada", "Paquete de 12 tapas", "paquete"),
+    ("Masa de hojaldre", "Bloque de hojaldre para horno", "kg"),
+    ("Galletitas de agua", "Paquete de 250 g", "paquete"),
+    ("Budín de vainilla", "Budín de 400 g", "un"),
+    ("Torta de chocolate", "Torta entera de 20 cm", "un"),
+    ("Alfajores de maicena", "Caja de 6 unidades", "caja"),
+    ("Salsa de tomate", "Salsa casera para pizzas y pastas", "L"),
+    ("Dulce de leche repostero", "Para relleno de facturas y tortas", "kg"),
+    ("Empanadas de carne", "Empanadas al horno", "un"),
+    ("Tarta de verduras", "Tarta de acelga y queso", "un"),
+    ("Ñoquis de papa", "Pasta fresca", "kg"),
+]
 INCIDENTES = [
     ("El área de recepción requiere repetir la limpieza de la mesada antes del ingreso del lote.", "Se repitió la limpieza y se verificó la liberación de la mesada.", 0),
     ("El registro de higiene del depósito quedó incompleto al finalizar el turno.", "Se completó el registro y se capacitó al responsable del turno.", 0),
@@ -398,6 +417,21 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                 crear(ItemChecklist, {"plan_id": plan.id, "tarea_id": tarea.id,
                     "frecuencia": FrecuenciaTarea.DIARIA, "periodo_inicio": hoy}, periodo_fin=hoy,
                     responsable_id=responsable, estado=EstadoItem.PENDIENTE)
+
+            unidades_por_sufijo = {u.sufijo: u for u in unidades}
+            productos = []
+            for nombre, descripcion, sufijo in PRODUCTOS:
+                producto, _ = crear(Producto, {"nombre": nombre}, descripcion=descripcion,
+                    unidad_medida_id=unidades_por_sufijo[sufijo].id, activo=True)
+                productos.append(producto)
+            for i in range(CANTIDAD):
+                fecha_lote = hoy - timedelta(days=[0, 1, 2, 3, 5, 7, 9, 12, 14, 17, 20, 23, 25, 28, 30][i])
+                crear(LoteProduccion, {"codigo": f"L-SEED-{i + 1:03d}"},
+                    producto_id=productos[i % len(productos)].id, fecha_produccion=fecha_lote,
+                    cantidad=float([24, 15, 60, 30, 20, 8, 40, 12, 6, 36, 10, 5, 48, 9, 7][i]),
+                    observaciones=None if i % 3 else "Lote de demostración del seed.",
+                    registrado_por_id=operadores[i % len(operadores)].id,
+                    fecha_registro=datetime.combine(fecha_lote, time(7 + i % 8, 30)), activo=True)
 
             db.flush()
             # Descubrir los modelos registrados evita olvidar entidades nuevas silenciosamente.
