@@ -1,4 +1,6 @@
 import type { Producto } from '../productos/types';
+export type EstadoLote = 'abierto' | 'cerrado';
+
 
 export interface PersonalResumen {
   id: number;
@@ -19,6 +21,10 @@ export interface LoteProduccion {
   registrado_por: PersonalResumen;
   fecha_registro: string;
   activo: boolean;
+  estado: EstadoLote;
+  fecha_cierre: string | null;
+  cerrado_por_id: number | null;
+  cerrado_por: PersonalResumen | null;
 }
 
 export interface LoteProduccionCreate {

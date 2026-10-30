@@ -33,6 +33,8 @@ import { IncidentePage, IncidentesAbiertosPage } from '../features/incidentes';
 import { VencimientosCalibracionPage } from '../features/equipos';
 import { VencimientosPage as VencimientosConsolidadosPage } from '../features/vencimientos';
 import { TableroPage } from '../features/tablero';
+import { HistorialLotesPage } from '../features/lotesProduccion';
+
 
 function HomeRedirect() {
   const { currentUser } = useAuth();
@@ -137,6 +139,8 @@ export function AppRouter() {
               <Route path="auditoria" element={<AuditoriaPage />} />
               <Route path="auditoria/:id" element={<AuditoriaPage />} />
               <Route path="tablero" element={<TableroPage />} />
+              <Route path="lotes" element={<HistorialLotesPage />} />
+              <Route path="lotes/:id" element={<HistorialLotesPage />} />
               <Route path="consumos" element={<ConsumoQuimicoPage />} />
               <Route path="consumos/nuevo" element={<ConsumoQuimicoPage />} />
               <Route path="consumos/:id" element={<ConsumoQuimicoPage />} />

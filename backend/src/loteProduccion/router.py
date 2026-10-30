@@ -3,7 +3,7 @@ from datetime import date
 from fastapi import Depends, Query
 from sqlalchemy.orm import Session
 
-from src.auth.dependencies import puede_consultar_operacion, tiene_permiso_operar
+from src.auth.dependencies import puede_consultar_operacion, tiene_permiso_administrar, tiene_permiso_operar
 from src.auth.router_base import PermissionedRouter
 from src.database import get_db
 from src.exceptions import PermissionDenied
@@ -45,6 +45,15 @@ def read_lotes(
         fecha_hasta=fecha_hasta,
         registrado_por_id=registrado_por_id,
     )
+
+
+@router.post("/{lote_id}/cerrar", response_model=schemas.LoteProduccion, dependencies=[Depends(tiene_permiso_administrar)])
+def cerrar_lote(
+    lote_id: int,
+    db: Session = Depends(get_db),
+    current_personal: Personal = Depends(tiene_permiso_administrar),
+):
+    return services.cerrar_lote(db, lote_id, current_personal.id)
 
 
 @router.get("/{lote_id}", response_model=schemas.LoteProduccion, dependencies=[Depends(puede_consultar_operacion)])

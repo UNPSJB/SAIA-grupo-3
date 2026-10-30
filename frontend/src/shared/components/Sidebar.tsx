@@ -33,6 +33,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: '/tablero', label: 'Tablero de gestión', icono: 'bi bi-graph-up' },
     { to: '/planes', label: 'Planes de Limpieza', icono: 'bi bi-clipboard2-check' },
     { to: '/auditoria', label: 'Historial Checklist', icono: 'bi bi-clock-history' },
+    { to: '/lotes', label: 'Historial de lotes', icono: 'bi bi-box-seam' },
     { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square', permiso: 'operar' },
     { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
     { to: "/consumos", label: "Registros de Consumo", icono: "bi bi-droplet" },

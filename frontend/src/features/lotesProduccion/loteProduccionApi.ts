@@ -79,3 +79,11 @@ export async function deleteLoteProduccion(id: number): Promise<LoteProduccion> 
     );
   return response.json();
 }
+
+
+export async function cerrarLoteProduccion(id: number): Promise<LoteProduccion> {
+  const response = await fetchWithAuth(`${API_URL}/${id}/cerrar`, { method: 'POST' });
+  if (!response.ok)
+    throw new Error(await mensajeDeRespuesta(response, 'Error al cerrar el lote de producción.'));
+  return response.json();
+}

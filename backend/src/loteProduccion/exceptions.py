@@ -16,3 +16,7 @@ class ProductoInactivo(BadRequest):
 
 class RangoFechasInvalido(BadRequest):
     DETAIL = ErrorCode.RANGO_FECHAS_INVALIDO
+
+
+class LoteCerrado(BadRequest):
+    DETAIL = ErrorCode.LOTE_CERRADO
