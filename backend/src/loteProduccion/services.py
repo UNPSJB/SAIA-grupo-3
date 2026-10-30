@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 
 from src.loteProduccion import exceptions, schemas
 from src.loteProduccion.constants import PREFIJO_CODIGO, EstadoLote
-from src.loteProduccion.models import LoteProduccion
+from src.loteProduccion.models import LoteProduccion, LoteInsumo
+from src.insumos.models import Insumo
 from src.pagination import filtrar_ordenar
 from src.producto.models import Producto
 from src.producto.services import leer_producto
@@ -42,15 +43,47 @@ def _generar_codigo(db: Session, fecha: date) -> str:
 def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_id: int) -> LoteProduccion:
     _validar_producto(db, lote.producto_id)
     _validar_fecha(lote.fecha_produccion)
+    ids_insumos = [item.insumo_id for item in lote.insumos]
+    if len(ids_insumos) != len(set(ids_insumos)):
+        raise exceptions.InsumoDuplicado()
+
+    insumos_por_id = {}
+    if ids_insumos:
+        insumos_por_id = {
+            insumo.id: insumo
+            for insumo in db.scalars(select(Insumo).where(Insumo.id.in_(ids_insumos))).all()
+        }
+        if len(insumos_por_id) != len(ids_insumos):
+            raise exceptions.InsumoNoEncontrado()
+        if any(not insumo.activo for insumo in insumos_por_id.values()):
+            raise exceptions.InsumoInactivo()
+
     db_lote = LoteProduccion(
-        **lote.model_dump(),
+        **lote.model_dump(exclude={"insumos"}),
         codigo=_generar_codigo(db, lote.fecha_produccion),
         registrado_por_id=registrado_por_id,
+        insumos_asociados=[
+            LoteInsumo(
+                insumo=insumos_por_id[item.insumo_id],
+                cantidad_usada=item.cantidad_usada,
+            )
+            for item in lote.insumos
+        ],
     )
-    db.add(db_lote)
-    db.commit()
-    db.refresh(db_lote)
+    try:
+        db.add(db_lote)
+        db.commit()
+        db.refresh(db_lote)
+    except Exception:
+        db.rollback()
+        raise
     return db_lote
+
+
+def listar_insumos_disponibles(db: Session) -> list[Insumo]:
+    return db.scalars(
+        select(Insumo).where(Insumo.activo.is_(True)).order_by(func.lower(Insumo.nombre))
+    ).all()
 
 
 def listar_lotes(

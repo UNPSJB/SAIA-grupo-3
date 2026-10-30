@@ -74,9 +74,32 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
         </div>
 
         <h6 className="fw-bold border-bottom pb-2">Insumos utilizados</h6>
-        <p className="text-muted small py-3 text-center border rounded bg-body-tertiary">
-          Este lote no tiene insumos asociados.
-        </p>
+        {lote.insumos_asociados.length === 0 ? (
+          <p className="text-muted small py-3 text-center border rounded bg-body-tertiary">
+            Este lote no tiene insumos asociados.
+          </p>
+        ) : (
+          <div className="table-responsive">
+            <table className="table table-striped table-hover align-middle">
+              <thead className="table-light">
+                <tr>
+                  <th>Insumo</th>
+                  <th className="text-end">Cantidad utilizada</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lote.insumos_asociados.map(({ insumo_id, insumo, cantidad_usada }) => (
+                  <tr key={insumo_id}>
+                    <td>{insumo.nombre}</td>
+                    <td className="text-end">
+                      {cantidad_usada.toLocaleString('es-AR')} {insumo.unidadMedidaObj.sufijo}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card.Body>
       <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>

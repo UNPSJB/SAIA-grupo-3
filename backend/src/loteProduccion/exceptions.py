@@ -20,3 +20,15 @@ class RangoFechasInvalido(BadRequest):
 
 class LoteCerrado(BadRequest):
     DETAIL = ErrorCode.LOTE_CERRADO
+
+
+class InsumoNoEncontrado(NotFound):
+    DETAIL = ErrorCode.INSUMO_NO_ENCONTRADO
+
+
+class InsumoInactivo(BadRequest):
+    DETAIL = ErrorCode.INSUMO_INACTIVO
+
+
+class InsumoDuplicado(BadRequest):
+    DETAIL = ErrorCode.INSUMO_DUPLICADO

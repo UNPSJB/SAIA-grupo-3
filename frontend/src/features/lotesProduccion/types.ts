@@ -1,6 +1,26 @@
 import type { Producto } from '../productos/types';
 export type EstadoLote = 'abierto' | 'cerrado';
 
+export interface InsumoSeleccionable {
+  id: number;
+  nombre: string;
+  unidadMedidaObj: {
+    id: number;
+    tipo: string;
+    sufijo: string;
+  };
+}
+
+export interface LoteInsumoCreate {
+  insumo_id: number;
+  cantidad_usada: number;
+}
+
+export interface LoteInsumo {
+  insumo_id: number;
+  insumo: InsumoSeleccionable;
+  cantidad_usada: number;
+}
 
 export interface PersonalResumen {
   id: number;
@@ -25,6 +45,7 @@ export interface LoteProduccion {
   fecha_cierre: string | null;
   cerrado_por_id: number | null;
   cerrado_por: PersonalResumen | null;
+  insumos_asociados: LoteInsumo[];
 }
 
 export interface LoteProduccionCreate {
@@ -32,6 +53,7 @@ export interface LoteProduccionCreate {
   fecha_produccion: string;
   cantidad: number;
   observaciones?: string | null;
+  insumos: LoteInsumoCreate[];
 }
 
 export interface LoteProduccionUpdate {

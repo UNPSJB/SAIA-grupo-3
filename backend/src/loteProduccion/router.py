@@ -23,6 +23,15 @@ def create_lote(
     return services.crear_lote(db, lote, current_personal.id)
 
 
+@router.get(
+    "/insumos-disponibles",
+    response_model=list[schemas.InsumoSeleccionable],
+    dependencies=[Depends(puede_consultar_operacion)],
+)
+def read_insumos_disponibles(db: Session = Depends(get_db)):
+    return services.listar_insumos_disponibles(db)
+
+
 @router.get("/", response_model=PaginatedResponse[schemas.LoteProduccion], dependencies=[Depends(puede_consultar_operacion)])
 def read_lotes(
     db: Session = Depends(get_db),

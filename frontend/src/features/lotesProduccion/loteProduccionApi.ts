@@ -1,6 +1,7 @@
 import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type {
   FiltrosLotesProduccion,
+  InsumoSeleccionable,
   LoteProduccion,
   LoteProduccionCreate,
   LoteProduccionUpdate,
@@ -39,6 +40,15 @@ export async function getLoteProduccionById(id: number): Promise<LoteProduccion>
   const response = await fetchWithAuth(`${API_URL}/${id}`);
   if (!response.ok)
     throw new Error(await mensajeDeRespuesta(response, 'No se encontró el lote de producción.'));
+  return response.json();
+}
+
+export async function getInsumosDisponibles(): Promise<InsumoSeleccionable[]> {
+  const response = await fetchWithAuth(`${API_URL}/insumos-disponibles`);
+  if (!response.ok)
+    throw new Error(
+      await mensajeDeRespuesta(response, 'Error al obtener los insumos disponibles.'),
+    );
   return response.json();
 }
 

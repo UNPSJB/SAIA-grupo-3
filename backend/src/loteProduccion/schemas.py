@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.checklist.schemas import PersonalResumen
+from src.unidadMedida.schemas import UnidadMedida
 from src.producto.schemas import Producto
 from src.loteProduccion.constants import EstadoLote
 
@@ -20,6 +21,7 @@ class LoteProduccionCreate(BaseModel):
     fecha_produccion: date
     cantidad: float = Field(gt=0)
     observaciones: Optional[str] = Field(default=None, max_length=500)
+    insumos: list["LoteInsumoCreate"] = Field(default_factory=list)
 
     @field_validator("observaciones", mode="before")
     @classmethod
@@ -57,5 +59,31 @@ class LoteProduccion(BaseModel):
     fecha_cierre: Optional[datetime] = None
     cerrado_por_id: Optional[int] = None
     cerrado_por: Optional[PersonalResumen] = None
+    insumos_asociados: list["LoteInsumoDetalle"] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LoteInsumoCreate(BaseModel):
+    insumo_id: int = Field(gt=0)
+    cantidad_usada: float = Field(gt=0)
+
+
+class InsumoSeleccionable(BaseModel):
+    id: int
+    nombre: str
+    unidadMedidaObj: UnidadMedida
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LoteInsumoDetalle(BaseModel):
+    insumo_id: int
+    insumo: InsumoSeleccionable
+    cantidad_usada: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+LoteProduccionCreate.model_rebuild()
+LoteProduccion.model_rebuild()
