@@ -35,6 +35,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square', permiso: 'operar' },
     { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
     { to: "/consumos", label: "Registros de Consumo", icono: "bi bi-droplet" },
+    { to: '/lotes-produccion', label: 'Lotes de Producción', icono: 'bi bi-box2', permiso: 'consultarOperacion' },
     { to: "/documentos-vigentes", label: "Documentos vigentes", icono: "bi bi-journal-check", permiso: "operar" },
     { to: "/documentos-tecnicos", label: "Documentos Técnicos", icono: "bi bi-journal-text" },
     ...(currentUser?.administrar ? [{
@@ -72,6 +73,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         { to: '/equipos', label: 'Equipos e Instrumentos', icono: 'bi bi-tools' },
         { to: '/insumos', label: 'Insumos / Ingredientes', icono: 'bi bi-box-seam', end: true },
         { to: '/insumos-quimicos', label: 'Insumos Químicos', icono: 'bi bi-droplet-half' },
+        { to: '/productos', label: 'Productos', icono: 'bi bi-basket' },
         { to: '/unidades-medida', label: 'Unidad de Medida', icono: 'bi bi-rulers' },
         { to: '/elementos', label: 'Elementos de Limpieza', icono: 'bi bi-bucket-fill' },
         { to: '/tarea', label: 'Tareas', icono: 'bi bi-list-task' },
