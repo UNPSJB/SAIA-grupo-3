@@ -13,6 +13,8 @@ import { PlanPage } from '../features/plan';
 import { EquipoPage } from '../features/equipos';
 import { PersonalPage } from '../features/personal';
 import { InsumoPage } from '../features/insumos';
+import { ProductoPage } from '../features/productos';
+import { LoteProduccionPage } from '../features/lotesProduccion';
 import { InsumoQuimicoPage } from '../features/insumosQuimicos';
 import { UnidadMedidaPage } from '../features/unidadMedida/unidadMedidaPage';
 import { TipoDocumentoPage } from '../features/tipoDocumento/TipoDocumentoPage';
@@ -70,12 +72,15 @@ export function AppRouter() {
               <Route path="checklist" element={<ChecklistPage />} />
               <Route path="documentos-vigentes" element={<DocumentosVigentesPage />} />
               <Route path="incidentes/nuevo" element={<IncidentePage />} />
+              <Route path="lotes-produccion/nuevo" element={<LoteProduccionPage />} />
             </Route>
 
             {/* Consulta compartida (Operador o Administrador) */}
             <Route element={<ProtectedRoute requireAdminOrOperate />}>
               <Route path="incidentes" element={<IncidentePage />} />
               <Route path="incidentes/:id" element={<IncidentePage />} />
+              <Route path="lotes-produccion" element={<LoteProduccionPage />} />
+              <Route path="lotes-produccion/:id" element={<LoteProduccionPage />} />
             </Route>
 
             {/* Administración */}
@@ -106,6 +111,10 @@ export function AppRouter() {
               <Route path="equipos/nuevo" element={<EquipoPage />} />
               <Route path="equipos/:id" element={<EquipoPage />} />
               <Route path="equipos/:id/:action" element={<EquipoPage />} />
+              <Route path="productos" element={<ProductoPage />} />
+              <Route path="productos/nuevo" element={<ProductoPage />} />
+              <Route path="productos/:id" element={<ProductoPage />} />
+              <Route path="productos/:id/:action" element={<ProductoPage />} />
               <Route path="insumos" element={<InsumoPage />} />
               <Route path="insumos/nuevo" element={<InsumoPage />} />
               <Route path="insumos/:id" element={<InsumoPage />} />
