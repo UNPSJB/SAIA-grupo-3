@@ -4,6 +4,7 @@ import { Button, Dropdown } from 'react-bootstrap';
 import { useAuth } from '../hooks/useAuth';
 import { NotificacionesBell } from '../../features/notificaciones';
 import { aplicarTema, leerTema, type Tema } from '../libreria/tema';
+import { useLocation } from 'react-router-dom';
 
 interface TopHeaderProps {
   onToggleSidebar: () => void;
@@ -11,6 +12,8 @@ interface TopHeaderProps {
 
 export function TopHeader({ onToggleSidebar }: TopHeaderProps) {
   const { currentUser, logout } = useAuth();
+  const { pathname } = useLocation();
+  const esInicio = pathname === '/inicio';
   const [cerrandoSesion, setCerrandoSesion] = useState(false);
   const [tema, setTema] = useState<Tema>(() =>
     document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : leerTema(),
@@ -48,8 +51,25 @@ export function TopHeader({ onToggleSidebar }: TopHeaderProps) {
         <i className="bi bi-list fs-3 text-secondary"></i>
       </Button>
 
+      {esInicio && (
+        <span className="d-none d-md-inline small text-body-secondary">
+          Inicio / Administración
+        </span>
+      )}
+
       <div className="ms-auto d-flex align-items-center gap-2">
         {/* Botón para alternar modo claro / oscuro */}
+
+        {esInicio && (
+          <span className="d-none d-lg-inline small text-body-secondary me-2">
+            {new Date().toLocaleDateString('es-AR', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })}
+          </span>
+        )}
+
         <Button
           variant="outline-secondary"
           onClick={cambiarTema}

@@ -4,5 +4,9 @@ export function permissions(user: AuthUser | null) {
 }
 export function homeFor(user: AuthUser | null): string {
   const { canAdmin, canOperate } = permissions(user);
-  return canOperate ? '/checklist' : canAdmin ? '/personal' : '/sin-permisos';
+
+  if (canAdmin) return '/inicio';
+  if (canOperate) return '/checklist';
+
+  return '/sin-permisos';
 }

@@ -9,6 +9,7 @@ import { ProtectedRoute } from '../shared/components/ProtectedRoute';
 import { LoginPage } from '../features/auth/LoginPage';
 
 // Importamos todas las páginas
+import { InicioAdminPage } from '../features/inicio/InicioAdminPage';
 import { PlanPage } from '../features/plan';
 import { EquipoPage } from '../features/equipos';
 import { PersonalPage } from '../features/personal';
@@ -36,6 +37,8 @@ import { VencimientosCalibracionPage } from '../features/equipos';
 import { VencimientosPage as VencimientosConsolidadosPage } from '../features/vencimientos';
 import { TableroPage } from '../features/tablero';
 import { HistorialLotesPage } from '../features/lotesProduccion';
+import { ConfiguracionVistaPublicaPage } from '../features/vistaPublica/ConfiguracionVistaPublicaPage';
+import { VistaPublicaPage } from '../features/vistaPublica/VistaPublicaPage';
 
 
 function HomeRedirect() {
@@ -49,6 +52,7 @@ export function AppRouter() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/saia-publica" element={<VistaPublicaPage />} />
 
           <Route
             path="/"
@@ -87,6 +91,8 @@ export function AppRouter() {
 
             {/* Administración */}
             <Route element={<ProtectedRoute requireAdmin />}>
+              <Route path="inicio" element={<InicioAdminPage />} />
+              <Route path="vista-publica/configuracion" element={<ConfiguracionVistaPublicaPage />}/>
               <Route path="vencimientos" element={<VencimientosConsolidadosPage />} />
               <Route path="incidentes/abiertos" element={<IncidentesAbiertosPage />} />
               <Route path="incidentes/:id/:action" element={<IncidentePage />} />

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Button, ButtonGroup, Col, Row } from 'react-bootstrap';
 import {
@@ -49,7 +50,16 @@ export function TableroPage() {
   );
 
   return (
-    <div className="p-3">
+      <div className="p-3">
+        <div className="d-flex justify-content-end mb-3">
+          <Link
+            to="/vista-publica/configuracion"
+            className="btn btn-outline-primary"
+          >
+            <i className="bi bi-globe me-2" aria-hidden="true" />
+            Configurar indicadores públicos
+          </Link>
+        </div>
       <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <h4 className="mb-0">
           <i className="bi bi-graph-up me-2" aria-hidden="true" />

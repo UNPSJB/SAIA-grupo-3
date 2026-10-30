@@ -508,8 +508,13 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             conteos = {m.class_.__name__: db.scalar(select(func.count()).select_from(m.class_))
                 for m in ModeloBase.registry.mappers}
             # TipoIncidente es un catálogo corto (6 activos + 1 dado de baja): se exige >= 1.
-            faltantes = {nombre: total for nombre, total in conteos.items()
-                if total < (1 if nombre == "TipoIncidente" else CANTIDAD)}
+            # La configuración pública puede no existir hasta que se configure.
+            faltantes = {
+                nombre: total
+                for nombre, total in conteos.items()
+                if nombre != "ConfiguracionVistaPublica"
+                and total < (1 if nombre == "TipoIncidente" else CANTIDAD)
+            }
             if faltantes:
                 raise RuntimeError(f"Modelos con menos de {CANTIDAD} registros: {faltantes}")
             db.commit()

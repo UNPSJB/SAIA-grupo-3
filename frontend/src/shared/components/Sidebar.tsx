@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Offcanvas, Collapse } from 'react-bootstrap';
 import { useAuth } from '../hooks/useAuth';
@@ -12,6 +12,7 @@ type Permiso = 'operar' | 'administrar' | 'consultarOperacion';
 
 interface MenuItem {
   to?: string;
+  end?: boolean;
   label: string;
   icono: string;
   permiso?: Permiso;
@@ -30,6 +31,8 @@ export function Sidebar({ show, onClose }: SidebarProps) {
 
 
   const menuItems: MenuItem[] = [
+    { to: '/inicio', label: 'Inicio', icono: 'bi bi-house-door', permiso: 'administrar'},
+    { to: '/vista-publica/configuracion', label: 'Vista pública', icono: 'bi bi-globe', permiso: 'administrar'},
     { to: '/tablero', label: 'Tablero de gestión', icono: 'bi bi-graph-up' },
     { to: '/planes', label: 'Planes de Limpieza', icono: 'bi bi-clipboard2-check' },
     { to: '/auditoria', label: 'Historial Checklist', icono: 'bi bi-clock-history' },
@@ -86,110 +89,134 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     )
     .filter((item) => (item.subItems ? item.subItems.length > 0 : puedeVer(item.permiso)));
 
-  const grupoActivo = menuItems.find((item) =>
-    item.subItems?.some(
-      (sub) =>
-        location.pathname === sub.to || (!sub.end && location.pathname.startsWith(`${sub.to}/`)),
-    ),
-  )?.grupo;
+  const instanceId = useId();
+  const secciones = [
+    { id: 'gestion', label: 'Gestión', icono: 'bi bi-graph-up', rutas: ['/tablero', '/vista-publica/configuracion'] },
+    { id: 'operacion', label: 'Operación', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/planes', '/lotes-produccion', '/reportes/consumos', '/consumos'] },
+    { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/vencimientos', '/incidentes', '/auditoria', '/lotes'] },
+    { id: 'documentacion', label: 'Documentación', icono: 'bi bi-files', rutas: ['/documentos-vigentes', '/documentos-tecnicos'] },
+  ].map((seccion) => ({
+    ...seccion,
+    items: seccion.rutas.flatMap((ruta): MenuItem[] => {
+      if (ruta === '/incidentes') {
+        const incidentes = menuVisible.find((item) => item.grupo === 'incidentes');
+        if (incidentes?.subItems) {
+          return incidentes.subItems.map((item) => ({
+            ...item,
+            label: item.to === '/incidentes/abiertos' ? 'Incidentes abiertos' : item.label,
+          }));
+        }
+      }
+      return menuVisible.filter((item) => item.to === ruta);
+    }),
+  })).filter((seccion) => seccion.items.length > 0);
 
-  const [gruposAbiertos, setGruposAbiertos] = useState<
-    Partial<Record<'incidentes' | 'maestros', boolean>>
-  >({});
+  const maestros = menuVisible.find((item) => item.grupo === 'maestros');
+  const grupos = [
+    ...secciones,
+    ...(maestros?.subItems?.length ? [{
+      id: 'maestros', label: 'Datos maestros', icono: maestros.icono, items: maestros.subItems,
+    }] : []),
+  ];
+  const esRutaActiva = (item: MenuItem) => Boolean(item.to && (
+    location.pathname === item.to || (!item.end && location.pathname.startsWith(`${item.to}/`))
+  ));
+  const grupoActivo = grupos.find((grupo) => grupo.items.some(esRutaActiva))?.id;
+  const [expansion, setExpansion] = useState<{ pathname: string; grupo: string | null } | null>(null);
+  const grupoAbierto = expansion?.pathname === location.pathname
+    ? expansion.grupo
+    : grupoActivo ?? null;
+  const accesos = ['/checklist', '/vencimientos', '/tablero']
+    .flatMap((ruta) => menuVisible.filter((item) => item.to === ruta));
+  const inicio = menuVisible.find((item) => item.to === '/inicio');
+  const rol = currentUser?.administrar
+    ? currentUser.operar ? 'Administración y operación' : 'Administración'
+    : currentUser?.operar ? 'Operación' : 'Sin permisos';
+  const iniciales = `${currentUser?.nombre?.charAt(0) ?? ''}${currentUser?.apellido?.charAt(0) ?? ''}`;
 
-  const menuContent = (
+  const renderEnlace = (item: MenuItem, secundario = false) => item.to && (
+    <NavLink
+      key={item.to}
+      to={item.to}
+      end={item.end}
+      onClick={onClose}
+      className={({ isActive }) =>
+        `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-wrap ${secundario ? 'small' : 'fw-medium'} ${
+          isActive ? 'bg-primary-subtle text-primary-emphasis' : 'text-body-secondary hover-bg-body'
+        }`
+      }
+      style={{ minHeight: '44px' }}
+    >
+      {!secundario && <i className={`${item.icono} flex-shrink-0 fs-5`} aria-hidden="true" />}
+      <span>{item.label}</span>
+    </NavLink>
+  );
+
+  const renderGrupo = (grupo: typeof grupos[number], superficie: string) => {
+    const abierto = grupoAbierto === grupo.id;
+    const collapseId = `${instanceId}-${superficie}-${grupo.id}`;
+    return (
+      <div key={grupo.id}>
+        <button
+          type="button"
+          onClick={() => setExpansion({ pathname: location.pathname, grupo: abierto ? null : grupo.id })}
+          className={`nav-link w-100 border-0 d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-start fw-medium hover-bg-body ${
+            grupoActivo === grupo.id ? 'text-body' : 'text-body-secondary'
+          }`}
+          style={{ minHeight: '44px' }}
+          aria-controls={collapseId}
+          aria-expanded={abierto}
+        >
+          <i className={`${grupo.icono} flex-shrink-0 fs-5`} aria-hidden="true" />
+          <span className="flex-grow-1">{grupo.label}</span>
+          <i className={`bi ${abierto ? 'bi-chevron-down' : 'bi-chevron-right'} small`} aria-hidden="true" />
+        </button>
+        <Collapse in={abierto}>
+          <div id={collapseId}>
+            <div className="d-flex flex-column gap-1 border-start ms-4 ps-2 my-1">
+              {grupo.items.map((item) => renderEnlace(item, true))}
+            </div>
+          </div>
+        </Collapse>
+      </div>
+    );
+  };
+
+  const renderMenu = (superficie: string) => (
     <>
-      <div className="d-flex align-items-center gap-2 px-4 py-4 mb-2">
+      <div className="px-4 pt-4 pb-3">
         <span className="fs-5 fw-bold text-body tracking-tight">SAIA</span>
       </div>
-
       {currentUser && (
-        <div className="mx-3 p-2 bg-body-tertiary rounded text-center mb-3 border">
-          <span className="fw-bold d-block text-truncate">
-            {currentUser.nombre} {currentUser.apellido}
-          </span>
+        <div className="mx-3 p-3 bg-body-tertiary rounded-3 mb-3 d-flex align-items-center gap-2">
+          <span className="rounded-circle border d-flex align-items-center justify-content-center small flex-shrink-0"
+            style={{ width: '34px', height: '34px' }} aria-hidden="true">{iniciales}</span>
+          <div style={{ minWidth: 0 }}>
+            <span className="fw-semibold d-block text-break small">{currentUser.nombre} {currentUser.apellido}</span>
+            <span className="text-body-secondary small">{rol}</span>
+          </div>
         </div>
       )}
-
-      <nav className="nav nav-pills flex-column px-3 gap-1 mb-auto">
-        {menuVisible.map((item) => {
-            if (item.grupo) {
-              const grupo = item.grupo;
-              const abierto = gruposAbiertos[grupo] ?? grupoActivo === grupo;
-              const collapseId = `${grupo}-collapse`;
-              return (
-                <div key={item.label}>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setGruposAbiertos((prev) => ({ ...prev, [grupo]: !abierto }))
-                    }
-                    className={`nav-link w-100 border-0 bg-transparent d-flex justify-content-between align-items-center px-3 py-2 rounded-3 fw-medium ${
-                      grupoActivo === grupo ? 'text-body' : 'text-body-secondary hover-bg-body'
-                    }`}
-                    aria-controls={collapseId}
-                    aria-expanded={abierto}
-                  >
-                    <span className="d-flex align-items-center gap-3">
-                      <i className={item.icono}></i>
-                      {item.label}
-                    </span>
-
-                    <i
-                      className={`bi ${
-                        abierto ? 'bi-chevron-up' : 'bi-chevron-down'
-                      } text-body ms-2`}
-                    ></i>
-                  </button>
-
-                  <Collapse in={abierto}>
-                    <div id={collapseId}>
-                      <div className="d-flex flex-column gap-1 mt-1">
-                        {item.subItems?.map((sub) => (
-                          <NavLink
-                            key={sub.to}
-                            to={sub.to}
-                            end={sub.end}
-                            onClick={onClose}
-                            className={({ isActive }) =>
-                              `nav-link d-flex align-items-center gap-2 py-2 rounded-3 small fw-medium ${
-                                isActive
-                                  ? 'bg-primary text-white shadow-sm'
-                                  : 'text-body-secondary hover-bg-body'
-                              }`
-                            }
-                            style={{ paddingLeft: '2rem' }}
-                          >
-                            <i className={`${sub.icono} flex-shrink-0`}></i>
-                            <span>{sub.label}</span>
-                          </NavLink>
-                        ))}
-                      </div>
-                    </div>
-                  </Collapse>
-                </div>
-              );
-            }
-
-            if (!item.to) return null;
-
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={onClose}
-                className={({ isActive }) =>
-                  `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 fw-medium text-wrap overflow-hidden ${
-                    isActive ? 'bg-primary text-white shadow-sm' : 'text-body-secondary hover-bg-body'
-                  }`
-                }
-                style={{ wordBreak: 'break-word', lineHeight: '1.2' }}
-              >
-                <i className={`${item.icono} flex-shrink-0 fs-5`}></i>
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          })}
+      <nav aria-label="Navegación principal" className="nav nav-pills flex-column px-3 gap-1 mb-auto pb-3">
+        {inicio && renderEnlace(inicio)}
+        {accesos.length > 0 && (
+          <>
+            <div className="text-uppercase text-body-secondary small fw-semibold px-3 mt-3 mb-1">Accesos frecuentes</div>
+            {accesos.map((item) => renderEnlace(item))}
+          </>
+        )}
+        {secciones.length > 0 && (
+          <>
+            <div className="text-uppercase text-body-secondary small fw-semibold px-3 mt-3 mb-1">Todas las secciones</div>
+            {secciones.map((grupo) => renderGrupo(grupo, superficie))}
+          </>
+        )}
+        {maestros && (
+          <>
+            <div className="text-uppercase text-body-secondary small fw-semibold px-3 mt-3 mb-1">Administración</div>
+            {grupos.filter((grupo) => grupo.id === 'maestros').map((grupo) => renderGrupo(grupo, superficie))}
+          </>
+        )}
       </nav>
     </>
   );
@@ -200,7 +227,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         className="position-fixed top-0 start-0 bottom-0 bg-body border-end d-none d-md-flex flex-column z-3 shadow-sm overflow-auto"
         style={{ width: '260px' }}
       >
-        {menuContent}
+        {renderMenu('desktop')}
       </aside>
 
       <Offcanvas show={show} onHide={onClose} placement="start" className="d-md-none">
@@ -208,7 +235,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
           <Offcanvas.Title className="fw-bold">Menú</Offcanvas.Title>
         </Offcanvas.Header>
 
-        <Offcanvas.Body className="d-flex flex-column p-0">{menuContent}</Offcanvas.Body>
+        <Offcanvas.Body className="d-flex flex-column p-0">{renderMenu('mobile')}</Offcanvas.Body>
       </Offcanvas>
     </>
   );
