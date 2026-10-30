@@ -42,6 +42,11 @@ from src.accionCorrectiva.router import router as accion_correctiva_router
 from src.archivos.router import router as archivos_router
 from src.tablero.router import router as tablero_router
 from src.documentoTecnico.consulta_router import router as documentos_vigentes_router
+from src.vistaPublica import models as vista_publica_models
+from src.vistaPublica.router import (
+    router as vista_publica_router,
+    publico_router as vista_publica_publico_router,
+)
 
 ENV = settings.ENV.upper()
 ROOT_PATH = getattr(settings, f"ROOT_PATH_{ENV}", "")
@@ -103,3 +108,5 @@ app.include_router(registro_calibracion_router)
 app.include_router(accion_correctiva_router)
 app.include_router(archivos_router)
 app.include_router(tablero_router)
+app.include_router(vista_publica_router)
+app.include_router(vista_publica_publico_router)
