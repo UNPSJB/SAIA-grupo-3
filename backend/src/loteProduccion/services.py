@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Any, Dict
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from src.loteProduccion import exceptions, schemas
@@ -57,6 +57,11 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_i
             raise exceptions.InsumoNoEncontrado()
         if any(not insumo.activo for insumo in insumos_por_id.values()):
             raise exceptions.InsumoInactivo()
+        if any(
+            insumos_por_id[item.insumo_id].cantidad < item.cantidad_usada
+            for item in lote.insumos
+        ):
+            raise exceptions.StockInsuficiente()
 
     db_lote = LoteProduccion(
         **lote.model_dump(exclude={"insumos"}),
@@ -71,6 +76,19 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_i
         ],
     )
     try:
+        for item in lote.insumos:
+            resultado = db.execute(
+                update(Insumo)
+                .where(
+                    Insumo.id == item.insumo_id,
+                    Insumo.activo.is_(True),
+                    Insumo.cantidad >= item.cantidad_usada,
+                )
+                .values(cantidad=Insumo.cantidad - item.cantidad_usada)
+                .execution_options(synchronize_session=False)
+            )
+            if resultado.rowcount != 1:
+                raise exceptions.StockInsuficiente()
         db.add(db_lote)
         db.commit()
         db.refresh(db_lote)

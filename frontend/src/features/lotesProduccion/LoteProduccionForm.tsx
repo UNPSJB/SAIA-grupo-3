@@ -128,6 +128,7 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
     const insumoDisponible: InsumoSeleccionable = {
       id: nuevo.id,
       nombre: nuevo.nombre,
+      cantidad: nuevo.cantidad,
       unidadMedidaObj: nuevo.unidadMedidaObj,
     };
     setInsumos((actuales) =>
@@ -143,6 +144,15 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
     );
     if (hayCantidadInvalida) {
       form.setError('root', { message: 'Indicá una cantidad mayor a cero para cada insumo.' });
+      return;
+    }
+    const insumoSinStock = insumosSeleccionados.find(
+      ({ insumo, cantidadUsada }) => Number(cantidadUsada) > insumo.cantidad,
+    );
+    if (insumoSinStock) {
+      form.setError('root', {
+        message: `La cantidad de ${insumoSinStock.insumo.nombre} supera el stock disponible (${insumoSinStock.insumo.cantidad} ${insumoSinStock.insumo.unidadMedidaObj.sufijo}).`,
+      });
       return;
     }
     form.clearErrors('root');
@@ -248,7 +258,7 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
             </div>
             <Form.Group className="mb-4">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <Form.Label className="mb-0">Insumos utilizados (opcional)</Form.Label>
+                <Form.Label className="mb-0">Insumos utilizados</Form.Label>
                 <div className="d-flex gap-2">
                   <Button
                     variant="outline-primary"
@@ -278,14 +288,21 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
                     <tbody>
                       {insumosSeleccionados.map(({ insumo, cantidadUsada }) => (
                         <tr key={insumo.id}>
-                          <td className="ps-3 py-2">{insumo.nombre}</td>
+                          <td className="ps-3 py-2">
+                            <div>{insumo.nombre}</div>
+                            <small className="text-muted">
+                              Disponible: {insumo.cantidad.toLocaleString('es-AR')}{' '}
+                              {insumo.unidadMedidaObj.sufijo}
+                            </small>
+                          </td>
                           <td className="py-2" style={{ width: '220px' }}>
-                            <InputGroup size="sm">
+                            <InputGroup size="sm" hasValidation>
                               <Form.Control
                                 type="number"
                                 min="0"
                                 step="any"
                                 value={cantidadUsada}
+                                isInvalid={Number(cantidadUsada) > insumo.cantidad}
                                 aria-label={`Cantidad utilizada de ${insumo.nombre}`}
                                 onChange={(evento) => {
                                   const valor = evento.target.value;
@@ -299,6 +316,9 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
                                 }}
                               />
                               <InputGroup.Text>{insumo.unidadMedidaObj.sufijo}</InputGroup.Text>
+                              <Form.Control.Feedback type="invalid">
+                                Supera el stock disponible.
+                              </Form.Control.Feedback>
                             </InputGroup>
                           </td>
                           <td className="text-end pe-3 py-2" style={{ width: '80px' }}>
@@ -387,6 +407,7 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
               <thead className="table-theme">
                 <tr>
                   <th>Nombre del insumo</th>
+                  <th>Stock disponible</th>
                   <th>Unidad</th>
                   <th className="text-center pe-4" style={{ width: '130px' }}>
                     Acción
@@ -396,7 +417,7 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
               <tbody>
                 {insumosFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="text-center py-4 text-muted">
+                    <td colSpan={4} className="text-center py-4 text-muted">
                       No hay insumos disponibles.
                     </td>
                   </tr>
@@ -408,6 +429,7 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
                     return (
                       <tr key={`modal-${insumo.id}`}>
                         <td>{insumo.nombre}</td>
+                        <td>{insumo.cantidad.toLocaleString('es-AR')}</td>
                         <td>{insumo.unidadMedidaObj.sufijo}</td>
                         <td className="text-center pe-4">
                           <Button

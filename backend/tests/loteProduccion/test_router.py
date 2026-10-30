@@ -51,6 +51,7 @@ def test_endpoint_registrar_lote_con_insumos(
         otro_insumo_activo.id: 1.25,
     }
     assert detalles[insumo_activo.id]["insumo"]["unidadMedidaObj"]["sufijo"] == "kg"
+    assert "cantidad" not in detalles[insumo_activo.id]["insumo"]
 
 
 def test_endpoint_listar_insumos_disponibles_solo_activos(
@@ -70,6 +71,7 @@ def test_endpoint_listar_insumos_disponibles_solo_activos(
     assert respuesta.status_code == 200
     assert [insumo["id"] for insumo in datos] == [insumo_activo.id]
     assert datos[0]["nombre"] == "Harina"
+    assert datos[0]["cantidad"] == 50
     assert datos[0]["unidadMedidaObj"]["sufijo"] == "kg"
 
 
@@ -158,3 +160,28 @@ def test_endpoint_no_registra_lote_con_cantidad_usada_cero(
 
     # Assert
     assert respuesta.status_code == 422
+
+
+def test_endpoint_no_registra_lote_si_falta_stock(
+    client,
+    headers_operadora,
+    producto,
+    insumo_activo,
+):
+    # Act
+    respuesta = client.post(
+        "/lotes-produccion/",
+        headers=headers_operadora,
+        json={
+            "producto_id": producto.id,
+            "fecha_produccion": date.today().isoformat(),
+            "cantidad": 12.5,
+            "insumos": [{"insumo_id": insumo_activo.id, "cantidad_usada": 51}],
+        },
+    )
+
+    # Assert
+    assert respuesta.status_code == 400
+    assert respuesta.json()["detail"] == (
+        "Uno o más insumos no tienen stock suficiente para las cantidades indicadas."
+    )

@@ -73,13 +73,22 @@ class InsumoSeleccionable(BaseModel):
     id: int
     nombre: str
     unidadMedidaObj: UnidadMedida
+    cantidad: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InsumoResumen(BaseModel):
+    id: int
+    nombre: str
+    unidadMedidaObj: UnidadMedida
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class LoteInsumoDetalle(BaseModel):
     insumo_id: int
-    insumo: InsumoSeleccionable
+    insumo: InsumoResumen
     cantidad_usada: float
 
     model_config = ConfigDict(from_attributes=True)

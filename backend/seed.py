@@ -41,7 +41,7 @@ from src.tareaRealizada.models import TareaRealizada
 from src.consumoQuimico.models import ConsumoQuimico
 from src.notificaciones.models import Notificacion, TipoNotificacion
 from src.producto.models import Producto
-from src.loteProduccion.models import LoteProduccion
+from src.loteProduccion.models import LoteInsumo, LoteProduccion
 
 
 from src.documentoTecnico.models import (DocumentoTecnico, VersionDocumentoTecnico, CambioVigenciaDocumentoTecnico, TipoDocumentoTecnico, EstadoDocumento)
@@ -87,6 +87,26 @@ INSUMOS = ["Guantes de nitrilo", "Cofias descartables", "Barbijos tricapa", "Del
     "Bolsas para residuos", "Papel para secado de manos", "Paños descartables", "Film alimentario",
     "Bolsas de envasado al vacío", "Etiquetas de trazabilidad", "Precintos de seguridad",
     "Esponjas no abrasivas", "Cepillos de uñas", "Fundas para calzado", "Papel absorbente industrial"]
+INGREDIENTES = [
+    ("Harina de trigo", "kg", 500.0),
+    ("Azúcar", "kg", 200.0),
+    ("Agua", "L", 500.0),
+    ("Levadura", "g", 5000.0),
+    ("Aceite", "L", 100.0),
+    ("Sal", "kg", 100.0),
+]
+RECETAS_LOTES_DEMO = {
+    "Pan de molde blanco": [("Harina de trigo", 8.0), ("Azúcar", 0.6), ("Agua", 4.0), ("Levadura", 150.0), ("Aceite", 0.5), ("Sal", 0.12)],
+    "Pan francés": [("Harina de trigo", 10.0), ("Agua", 6.0), ("Levadura", 200.0), ("Sal", 0.2)],
+    "Facturas surtidas": [("Harina de trigo", 8.0), ("Azúcar", 1.0), ("Agua", 2.0), ("Levadura", 250.0), ("Aceite", 1.0), ("Sal", 0.1)],
+    "Prepizza": [("Harina de trigo", 6.0), ("Agua", 3.5), ("Levadura", 100.0), ("Aceite", 0.5), ("Sal", 0.12)],
+    "Tapas de empanada": [("Harina de trigo", 8.0), ("Agua", 2.0), ("Aceite", 1.5), ("Sal", 0.12)],
+    "Masa de hojaldre": [("Harina de trigo", 6.0), ("Agua", 2.0), ("Aceite", 0.5), ("Sal", 0.1)],
+    "Galletitas de agua": [("Harina de trigo", 5.0), ("Azúcar", 1.5), ("Agua", 1.5), ("Aceite", 1.0), ("Sal", 0.15)],
+    "Budín de vainilla": [("Harina de trigo", 3.0), ("Azúcar", 2.0), ("Agua", 1.5), ("Aceite", 1.2), ("Sal", 0.05)],
+    "Torta de chocolate": [("Harina de trigo", 3.0), ("Azúcar", 1.5), ("Agua", 2.0), ("Aceite", 1.0)],
+    "Alfajores de maicena": [("Harina de trigo", 3.5), ("Azúcar", 1.0), ("Agua", 1.0), ("Aceite", 0.6), ("Sal", 0.05)],
+}
 QUIMICOS = ["Detergente neutro para vajilla", "Detergente alcalino para hornos", "Desinfectante clorado",
     "Sanitizante de amonio cuaternario", "Alcohol etílico al 70 %", "Desengrasante de cocina",
     "Limpiador de acero inoxidable", "Detergente para lavavajillas", "Abrillantador de vajilla",
@@ -156,6 +176,24 @@ def obtener_o_crear(db, modelo, filtros, valores):
     return registro, creado
 
 
+def asociar_ingredientes_demo(db, lote, ingredientes_por_nombre):
+    """Asocia ingredientes de demostración y descuenta stock solo al crear la relación."""
+    for nombre, cantidad_usada in RECETAS_LOTES_DEMO.get(lote.producto.nombre, []):
+        ingrediente = ingredientes_por_nombre[nombre]
+        asociacion, asociacion_nueva = obtener_o_crear(
+            db,
+            LoteInsumo,
+            {"lote_id": lote.id, "insumo_id": ingrediente.id},
+            {"cantidad_usada": cantidad_usada},
+        )
+        if asociacion_nueva:
+            if ingrediente.cantidad < asociacion.cantidad_usada:
+                raise RuntimeError(
+                    f"Stock insuficiente para asociar {nombre} al lote {lote.codigo} durante el seed."
+                )
+            ingrediente.cantidad -= asociacion.cantidad_usada
+
+
 def foto_contexto(indice):
     origen = ASSETS_DIR / FOTOS[indice % len(FOTOS)]
     if not origen.is_file() or origen.read_bytes()[:3] != b"\xff\xd8\xff":
@@ -204,7 +242,7 @@ def _pdf_certificado(titulo: str, lineas: list[str]) -> bytes:
 
 
 def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
-    """Carga 15 ejemplos por entidad; conserva datos existentes y no descuenta stock.
+    """Carga ejemplos por entidad, conserva datos y descuenta una vez por asociación nueva.
 
     Los historiales y tablas de asociación pueden superar 15 filas. Los nombres
     son ficticios y los archivos PDF se identifican como documentos de prueba.
@@ -281,6 +319,18 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                 if nuevo:
                     plan.tareas = [tarea]
                 planes.append(plan)
+
+            unidades_por_sufijo = {u.sufijo: u for u in unidades}
+            ingredientes_por_nombre = {}
+            for nombre, sufijo, stock_inicial in INGREDIENTES:
+                ingrediente, _ = crear(
+                    Insumo,
+                    {"nombre": nombre},
+                    cantidad=stock_inicial,
+                    unidad_medida_id=unidades_por_sufijo[sufijo].id,
+                    activo=True,
+                )
+                ingredientes_por_nombre[nombre] = ingrediente
 
             tipos_obligatorios, tipos_activos = [], []
             for indice, (nombre_tipo, color) in enumerate(TIPOS_INCIDENTE):
@@ -433,7 +483,6 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                         estado=EstadoItem.REALIZADA if cumplida else EstadoItem.PENDIENTE,
                         realizada_en=datetime.combine(fecha, time(10, i)) if cumplida else None)
 
-            unidades_por_sufijo = {u.sufijo: u for u in unidades}
             productos = []
             for nombre, descripcion, sufijo in PRODUCTOS:
                 producto, _ = crear(Producto, {"nombre": nombre}, descripcion=descripcion,
@@ -442,7 +491,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             for i in range(CANTIDAD):
                 fecha_lote = hoy - timedelta(days=[0, 1, 2, 3, 5, 7, 9, 12, 14, 17, 20, 23, 25, 28, 30][i])
                 cerrado = i >= 8
-                crear(LoteProduccion, {"codigo": f"L-SEED-{i + 1:03d}"},
+                lote_demo, _ = crear(LoteProduccion, {"codigo": f"L-SEED-{i + 1:03d}"},
                     producto_id=productos[i % len(productos)].id, fecha_produccion=fecha_lote,
                     cantidad=float([24, 15, 60, 30, 20, 8, 40, 12, 6, 36, 10, 5, 48, 9, 7][i]),
                     observaciones=None if i % 3 else "Lote de demostración del seed.",
@@ -451,6 +500,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                     estado=EstadoLote.CERRADO if cerrado else EstadoLote.ABIERTO,
                     fecha_cierre=datetime.combine(fecha_lote + timedelta(days=1), time(18, 0)) if cerrado else None,
                     cerrado_por_id=admin.id if cerrado else None)
+                asociar_ingredientes_demo(db, lote_demo, ingredientes_por_nombre)
 
 
             db.flush()

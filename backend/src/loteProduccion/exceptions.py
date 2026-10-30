@@ -32,3 +32,7 @@ class InsumoInactivo(BadRequest):
 
 class InsumoDuplicado(BadRequest):
     DETAIL = ErrorCode.INSUMO_DUPLICADO
+
+
+class StockInsuficiente(BadRequest):
+    DETAIL = ErrorCode.STOCK_INSUFICIENTE

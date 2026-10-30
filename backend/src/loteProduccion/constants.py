@@ -17,3 +17,4 @@ class ErrorCode:
     INSUMO_NO_ENCONTRADO = "Uno o más insumos seleccionados no existen."
     INSUMO_INACTIVO = "No se pueden asociar insumos dados de baja."
     INSUMO_DUPLICADO = "No se puede asociar el mismo insumo más de una vez al lote."
+    STOCK_INSUFICIENTE = "Uno o más insumos no tienen stock suficiente para las cantidades indicadas."

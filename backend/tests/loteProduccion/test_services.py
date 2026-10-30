@@ -1,7 +1,7 @@
 from datetime import date
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from src.loteProduccion import exceptions, schemas, services
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
@@ -16,7 +16,7 @@ from tests.database import (
 )
 
 
-def test_crear_lote_asocia_insumos_y_no_modifica_stock(
+def test_crear_lote_asocia_insumos_y_descuenta_stock(
     db_session,
     persona_operadora,
     producto,
@@ -42,6 +42,57 @@ def test_crear_lote_asocia_insumos_y_no_modifica_stock(
         insumo_activo.id: 2.5,
         otro_insumo_activo.id: 1.25,
     }
+    db_session.refresh(insumo_activo)
+    db_session.refresh(otro_insumo_activo)
+    assert insumo_activo.cantidad == 47.5
+    assert otro_insumo_activo.cantidad == 18.75
+
+
+def test_crear_lote_permite_agotar_exactamente_el_stock(
+    db_session,
+    persona_operadora,
+    producto,
+    insumo_activo,
+):
+    lote_a_crear = schemas.LoteProduccionCreate(
+        producto_id=producto.id,
+        fecha_produccion=date.today(),
+        cantidad=12.5,
+        insumos=[schemas.LoteInsumoCreate(insumo_id=insumo_activo.id, cantidad_usada=50)],
+    )
+
+    # Act
+    services.crear_lote(db_session, lote_a_crear, persona_operadora.id)
+
+    # Assert
+    db_session.refresh(insumo_activo)
+    assert insumo_activo.cantidad == 0
+
+
+def test_crear_lote_rechaza_stock_insuficiente_sin_cambios_parciales(
+    db_session,
+    persona_operadora,
+    producto,
+    insumo_activo,
+    otro_insumo_activo,
+):
+    lote_a_crear = schemas.LoteProduccionCreate(
+        producto_id=producto.id,
+        fecha_produccion=date.today(),
+        cantidad=12.5,
+        insumos=[
+            schemas.LoteInsumoCreate(insumo_id=insumo_activo.id, cantidad_usada=5),
+            schemas.LoteInsumoCreate(insumo_id=otro_insumo_activo.id, cantidad_usada=21),
+        ],
+    )
+
+    # Act
+    with pytest.raises(exceptions.StockInsuficiente):
+        services.crear_lote(db_session, lote_a_crear, persona_operadora.id)
+
+    # Assert
+    assert db_session.scalars(select(LoteProduccion)).all() == []
+    assert db_session.scalars(select(LoteInsumo)).all() == []
     db_session.refresh(insumo_activo)
     db_session.refresh(otro_insumo_activo)
     assert insumo_activo.cantidad == 50
@@ -79,7 +130,7 @@ def test_crear_lote_rechaza_insumo_inexistente(
         services.crear_lote(db_session, lote_a_crear, persona_operadora.id)
 
     # Assert
-    assert db_session.scalar(select(func.count()).select_from(LoteProduccion)) == 0
+    assert db_session.scalars(select(LoteProduccion)).all() == []
 
 
 def test_crear_lote_rechaza_insumo_inactivo(
@@ -102,7 +153,7 @@ def test_crear_lote_rechaza_insumo_inactivo(
         services.crear_lote(db_session, lote_a_crear, persona_operadora.id)
 
     # Assert
-    assert db_session.scalar(select(func.count()).select_from(LoteProduccion)) == 0
+    assert db_session.scalars(select(LoteProduccion)).all() == []
 
 
 def test_crear_lote_rechaza_insumos_duplicados(
@@ -126,7 +177,7 @@ def test_crear_lote_rechaza_insumos_duplicados(
         services.crear_lote(db_session, lote_a_crear, persona_operadora.id)
 
     # Assert
-    assert db_session.scalar(select(func.count()).select_from(LoteProduccion)) == 0
+    assert db_session.scalars(select(LoteProduccion)).all() == []
 
 
 def test_crear_lote_revierte_lote_y_asociaciones_si_falla_commit(
@@ -153,8 +204,10 @@ def test_crear_lote_revierte_lote_y_asociaciones_si_falla_commit(
         services.crear_lote(db_session, lote_a_crear, persona_operadora.id)
 
     # Assert
-    assert db_session.scalar(select(func.count()).select_from(LoteProduccion)) == 0
-    assert db_session.scalar(select(func.count()).select_from(LoteInsumo)) == 0
+    assert db_session.scalars(select(LoteProduccion)).all() == []
+    assert db_session.scalars(select(LoteInsumo)).all() == []
+    db_session.refresh(insumo_activo)
+    assert insumo_activo.cantidad == 50
 
 
 def test_listar_insumos_disponibles_devuelve_solo_activos(

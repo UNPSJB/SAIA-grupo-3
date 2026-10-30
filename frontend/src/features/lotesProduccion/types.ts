@@ -1,7 +1,7 @@
 import type { Producto } from '../productos/types';
 export type EstadoLote = 'abierto' | 'cerrado';
 
-export interface InsumoSeleccionable {
+export interface InsumoResumen {
   id: number;
   nombre: string;
   unidadMedidaObj: {
@@ -11,6 +11,10 @@ export interface InsumoSeleccionable {
   };
 }
 
+export interface InsumoSeleccionable extends InsumoResumen {
+  cantidad: number;
+}
+
 export interface LoteInsumoCreate {
   insumo_id: number;
   cantidad_usada: number;
@@ -18,7 +22,7 @@ export interface LoteInsumoCreate {
 
 export interface LoteInsumo {
   insumo_id: number;
-  insumo: InsumoSeleccionable;
+  insumo: InsumoResumen;
   cantidad_usada: number;
 }
 
