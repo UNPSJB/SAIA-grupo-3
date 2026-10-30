@@ -1,11 +1,11 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Any, Dict
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from src.loteProduccion import exceptions, schemas
-from src.loteProduccion.constants import PREFIJO_CODIGO
+from src.loteProduccion.constants import PREFIJO_CODIGO, EstadoLote
 from src.loteProduccion.models import LoteProduccion
 from src.pagination import filtrar_ordenar
 from src.producto.models import Producto
@@ -21,6 +21,11 @@ def _validar_producto(db: Session, producto_id: int, producto_actual_id: int | N
     producto = leer_producto(db, producto_id, incluir_inactivos=True)
     if not producto.activo and producto.id != producto_actual_id:
         raise exceptions.ProductoInactivo()
+
+
+def _validar_abierto(db_lote: LoteProduccion) -> None:
+    if db_lote.estado == EstadoLote.CERRADO:
+        raise exceptions.LoteCerrado()
 
 
 def _generar_codigo(db: Session, fecha: date) -> str:
@@ -105,6 +110,7 @@ def leer_lote(db: Session, lote_id: int) -> LoteProduccion:
 
 def modificar_lote(db: Session, lote_id: int, lote: schemas.LoteProduccionUpdate) -> LoteProduccion:
     db_lote = leer_lote(db, lote_id)
+    _validar_abierto(db_lote)
     datos = lote.model_dump(exclude_unset=True)
     if datos.get("producto_id") is not None:
         _validar_producto(db, datos["producto_id"], producto_actual_id=db_lote.producto_id)
@@ -120,6 +126,18 @@ def modificar_lote(db: Session, lote_id: int, lote: schemas.LoteProduccionUpdate
 def eliminar_lote(db: Session, lote_id: int) -> LoteProduccion:
     db_lote = leer_lote(db, lote_id)
     db_lote.activo = False
+    db.commit()
+    db.refresh(db_lote)
+    return db_lote
+
+
+
+def cerrar_lote(db: Session, lote_id: int, cerrado_por_id: int) -> LoteProduccion:
+    db_lote = leer_lote(db, lote_id)
+    _validar_abierto(db_lote)
+    db_lote.estado = EstadoLote.CERRADO
+    db_lote.fecha_cierre = datetime.now()
+    db_lote.cerrado_por_id = cerrado_por_id
     db.commit()
     db.refresh(db_lote)
     return db_lote

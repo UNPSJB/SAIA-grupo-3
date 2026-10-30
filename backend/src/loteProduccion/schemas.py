@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.checklist.schemas import PersonalResumen
 from src.producto.schemas import Producto
+from src.loteProduccion.constants import EstadoLote
 
 
 def _texto_opcional(valor: object) -> Optional[str]:
@@ -51,5 +52,10 @@ class LoteProduccion(BaseModel):
     registrado_por: PersonalResumen
     fecha_registro: datetime
     activo: bool
+
+    estado: EstadoLote
+    fecha_cierre: Optional[datetime] = None
+    cerrado_por_id: Optional[int] = None
+    cerrado_por: Optional[PersonalResumen] = None
 
     model_config = ConfigDict(from_attributes=True)

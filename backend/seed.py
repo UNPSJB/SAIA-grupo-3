@@ -8,6 +8,8 @@ import shutil
 from pathlib import Path
 from datetime import date, datetime, time, timedelta
 
+from src.loteProduccion.constants import EstadoLote
+
 from sqlalchemy import func, inspect, select
 
 # Importar la app registra todos los modelos en la metadata SQLAlchemy.
@@ -40,6 +42,7 @@ from src.consumoQuimico.models import ConsumoQuimico
 from src.notificaciones.models import Notificacion, TipoNotificacion
 from src.producto.models import Producto
 from src.loteProduccion.models import LoteProduccion
+
 
 from src.documentoTecnico.models import (DocumentoTecnico, VersionDocumentoTecnico, CambioVigenciaDocumentoTecnico, TipoDocumentoTecnico, EstadoDocumento)
 
@@ -438,12 +441,17 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                 productos.append(producto)
             for i in range(CANTIDAD):
                 fecha_lote = hoy - timedelta(days=[0, 1, 2, 3, 5, 7, 9, 12, 14, 17, 20, 23, 25, 28, 30][i])
+                cerrado = i >= 8
                 crear(LoteProduccion, {"codigo": f"L-SEED-{i + 1:03d}"},
                     producto_id=productos[i % len(productos)].id, fecha_produccion=fecha_lote,
                     cantidad=float([24, 15, 60, 30, 20, 8, 40, 12, 6, 36, 10, 5, 48, 9, 7][i]),
                     observaciones=None if i % 3 else "Lote de demostración del seed.",
                     registrado_por_id=operadores[i % len(operadores)].id,
-                    fecha_registro=datetime.combine(fecha_lote, time(7 + i % 8, 30)), activo=True)
+                    fecha_registro=datetime.combine(fecha_lote, time(7 + i % 8, 30)), activo=True,
+                    estado=EstadoLote.CERRADO if cerrado else EstadoLote.ABIERTO,
+                    fecha_cierre=datetime.combine(fecha_lote + timedelta(days=1), time(18, 0)) if cerrado else None,
+                    cerrado_por_id=admin.id if cerrado else None)
+
 
             db.flush()
             # Descubrir los modelos registrados evita olvidar entidades nuevas silenciosamente.

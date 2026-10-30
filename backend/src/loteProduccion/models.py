@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models import ModeloBase
 from src.personal.models import Personal
 from src.producto.models import Producto
+from src.loteProduccion.constants import EstadoLote
 
 
 class LoteProduccion(ModeloBase):
@@ -22,5 +23,10 @@ class LoteProduccion(ModeloBase):
     fecha_registro: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
     activo: Mapped[bool] = mapped_column(default=True, nullable=False)
 
+    estado: Mapped[str] = mapped_column(String(20), default=EstadoLote.ABIERTO, nullable=False, index=True)
+    fecha_cierre: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    cerrado_por_id: Mapped[Optional[int]] = mapped_column(ForeignKey("personal.id"), nullable=True)
+
     producto: Mapped[Producto] = relationship("Producto")
-    registrado_por: Mapped[Personal] = relationship("Personal")
+    registrado_por: Mapped[Personal] = relationship("Personal", foreign_keys=[registrado_por_id])
+    cerrado_por: Mapped[Optional[Personal]] = relationship("Personal", foreign_keys=[cerrado_por_id])
