@@ -67,6 +67,7 @@ app = FastAPI(root_path=ROOT_PATH, lifespan=db_creation_lifespan)
 
 origins = [
     "http://localhost:5173", # para recibir requests desde app React (puerto: 5173)
+    "http://192.X.X.X:5173" # Poner IPv4 de su computadora para poder escanear el QR y acceder a la vista publica
 ]
 
 app.add_middleware(

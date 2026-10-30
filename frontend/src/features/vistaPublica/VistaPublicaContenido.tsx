@@ -262,16 +262,15 @@ export function VistaPublicaContenido({ datos }: Props) {
           <div>
             <p className="vp-antetitulo">Del establecimiento a vos</p>
 
-            <h2>Qué hay detrás de estos números</h2>
+            <h2>¡Contactanos!</h2>
 
             <p>
-              La elaboración de alimentos requiere organizar las tareas de limpieza, llevar
-              registros y mantener controles sobre los procesos y los equipos.
+             Correo Electronico:
+             
             </p>
 
             <p>
-              Esta página reúne los indicadores que el establecimiento decidió compartir. No muestra
-              datos del personal, documentos internos ni detalles de incidentes.
+             saia.industria.alimentaria@saia.com
             </p>
           </div>
 
