@@ -39,6 +39,7 @@ import { TableroPage } from '../features/tablero';
 import { HistorialLotesPage } from '../features/lotesProduccion';
 import { ConfiguracionVistaPublicaPage } from '../features/vistaPublica/ConfiguracionVistaPublicaPage';
 import { VistaPublicaPage } from '../features/vistaPublica/VistaPublicaPage';
+import { PerfilPage } from '../features/perfil';
 
 
 function HomeRedirect() {
@@ -63,6 +64,7 @@ export function AppRouter() {
             }
           >
             <Route index element={<HomeRedirect />} />
+            <Route path="perfil" element={<PerfilPage />} />
             <Route
               path="sin-permisos"
               element={

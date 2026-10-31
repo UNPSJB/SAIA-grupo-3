@@ -4,7 +4,7 @@ import { Button, Dropdown } from 'react-bootstrap';
 import { useAuth } from '../hooks/useAuth';
 import { NotificacionesBell } from '../../features/notificaciones';
 import { aplicarTema, leerTema, type Tema } from '../libreria/tema';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 interface TopHeaderProps {
   onToggleSidebar: () => void;
@@ -95,6 +95,16 @@ export function TopHeader({ onToggleSidebar }: TopHeaderProps) {
               <i className="bi bi-person-fill" aria-hidden="true" />
             </Dropdown.Toggle>
             <Dropdown.Menu>
+              <Dropdown.Header className="text-body">
+                <div className="fw-semibold">
+                  {currentUser.nombre} {currentUser.apellido}
+                </div>
+              </Dropdown.Header>
+              <Dropdown.Item as={Link} to="/perfil" active={pathname === '/perfil'}>
+                <i className="bi bi-person-circle me-2" aria-hidden="true" />
+                Mi perfil
+              </Dropdown.Item>
+              <Dropdown.Divider />
               <Dropdown.Item
                 as="button"
                 className="text-danger"

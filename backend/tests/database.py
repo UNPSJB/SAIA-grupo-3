@@ -5,7 +5,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from src.auth.utils import create_access_token
+from datetime import date, timedelta
+
+from src.auth.utils import create_access_token, get_password_hash
+from src.documentacion.models import Documentacion
+from src.perfil.router import router as perfil_router
+from src.tipoDocumento.models import TipoDocumento
 from src.database import get_db
 from src.insumos.models import Insumo
 from src.loteProduccion.router import router as lote_router
@@ -29,6 +34,7 @@ app = FastAPI()
 app.include_router(producto_router)
 app.include_router(lote_router)
 app.include_router(unidad_router)
+app.include_router(perfil_router)
 
 
 @pytest.fixture(scope="function")
@@ -168,3 +174,48 @@ def headers_operadora(persona_operadora):
 @pytest.fixture
 def headers_sin_permisos(persona_sin_permisos):
     return {"Authorization": f"Bearer {create_access_token(persona_sin_permisos)}"}
+
+
+PASSWORD_ACTUAL = "clave-actual-123"
+
+
+@pytest.fixture
+def persona_con_password(db_session):
+    persona = Personal(
+        nombre="Lucía",
+        apellido="Pérez",
+        dni="300",
+        nroLegajo="L-300",
+        email="lucia@example.com",
+        username="lucia",
+        hashed_password=get_password_hash(PASSWORD_ACTUAL),
+        operar=True,
+        administrar=False,
+        activo=True,
+    )
+    db_session.add(persona)
+    db_session.commit()
+    db_session.refresh(persona)
+    return persona
+
+
+@pytest.fixture
+def headers_con_password(persona_con_password):
+    return {"Authorization": f"Bearer {create_access_token(persona_con_password)}"}
+
+
+@pytest.fixture
+def documentos_de_persona(db_session, persona_con_password, persona_operadora):
+    hoy = date.today()
+    tipos = [TipoDocumento(nombre=nombre, activo=True) for nombre in ("Libreta sanitaria", "Carnet de manipulador", "Apto físico", "Curso BPM")]
+    db_session.add_all(tipos)
+    db_session.flush()
+    documentos = [
+        Documentacion(personal_id=persona_con_password.id, tipo_documento_id=tipos[0].id, fecha_vencimiento=hoy + timedelta(days=90)),
+        Documentacion(personal_id=persona_con_password.id, tipo_documento_id=tipos[1].id, fecha_vencimiento=hoy + timedelta(days=5)),
+        Documentacion(personal_id=persona_con_password.id, tipo_documento_id=tipos[2].id, fecha_vencimiento=hoy - timedelta(days=3)),
+        Documentacion(personal_id=persona_operadora.id, tipo_documento_id=tipos[3].id, fecha_vencimiento=hoy + timedelta(days=30)),
+    ]
+    db_session.add_all(documentos)
+    db_session.commit()
+    return documentos

@@ -42,6 +42,7 @@ from src.accionCorrectiva.router import router as accion_correctiva_router
 from src.archivos.router import router as archivos_router
 from src.tablero.router import router as tablero_router
 from src.documentoTecnico.consulta_router import router as documentos_vigentes_router
+from src.perfil.router import router as perfil_router
 from src.vistaPublica import models as vista_publica_models
 from src.vistaPublica.router import (
     router as vista_publica_router,
@@ -111,3 +112,4 @@ app.include_router(archivos_router)
 app.include_router(tablero_router)
 app.include_router(vista_publica_router)
 app.include_router(vista_publica_publico_router)
+app.include_router(perfil_router)
