@@ -32,7 +32,10 @@ class Equipo(ModeloBase):
 
     fecha_ultima_calibracion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     periodicidad_dias: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    
+
+    controla_temperatura: Mapped[bool] = mapped_column(default=False, nullable=False)
+    temperatura_minima: Mapped[float | None] = mapped_column(nullable=True)
+    temperatura_maxima: Mapped[float | None] = mapped_column(nullable=True)
     # =========================================================================
     # EXTENSIONES FUTURAS (Sprint 1 y Sprint 2):
     # - E2 (POES / Limpieza): Tareas de limpieza asignadas al equipo.

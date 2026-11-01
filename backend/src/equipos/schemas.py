@@ -1,6 +1,6 @@
 from datetime import date
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from src.equipos.models import TipoEquipo
 from src.equipos import exceptions
 
@@ -17,6 +17,10 @@ class EquipoBase(BaseModel):
 
     fecha_ultima_calibracion: Optional[date] = None
     periodicidad_dias: Optional[int] = None
+
+    controla_temperatura: bool = False
+    temperatura_minima: Optional[float] = None
+    temperatura_maxima: Optional[float] = None
 
     @field_validator("tipo", mode="before")
     @classmethod
@@ -39,6 +43,10 @@ class EquipoUpdate(BaseModel):
     fecha_ultima_calibracion: Optional[date] = None
     periodicidad_dias: Optional[int] = None
 
+    controla_temperatura: Optional[bool] = None
+    temperatura_minima: Optional[float] = None
+    temperatura_maxima: Optional[float] = None
+
     @field_validator("tipo", mode="before")
     @classmethod
     def is_valid_tipo_equipo(cls, v: Optional[str]) -> Optional[str]:
@@ -47,6 +55,15 @@ class EquipoUpdate(BaseModel):
                 raise exceptions.TipoEquipoInvalido(list(TipoEquipo))
             return v.lower()
         return v
+
+    @model_validator(mode="after")
+    def validar_rangos_temperatura_update(self) -> "EquipoUpdate":
+        if self.controla_temperatura:
+            if self.temperatura_minima is None or self.temperatura_maxima is None:
+                 raise ValueError("Si activás el control de temperatura, debé indicar la mínima y la máxima.")
+            if self.temperatura_minima >= self.temperatura_maxima:
+                 raise ValueError("La temperatura mínima debe ser estrictamente menor que la máxima.")
+        return self
 
 
 class Equipo(EquipoBase):

@@ -39,7 +39,7 @@ import { TableroPage } from '../features/tablero';
 import { HistorialLotesPage } from '../features/lotesProduccion';
 import { ConfiguracionVistaPublicaPage } from '../features/vistaPublica/ConfiguracionVistaPublicaPage';
 import { VistaPublicaPage } from '../features/vistaPublica/VistaPublicaPage';
-
+import { RegistroTemperaturaOperario } from '../features/registroTemperatura/RegistroTemperaturaOperario';
 
 function HomeRedirect() {
   const { currentUser } = useAuth();
@@ -165,6 +165,7 @@ export function AppRouter() {
               <Route path="documentos-tecnicos/nuevo" element={<DocumentoTecnicoPage />} />
               <Route path="documentos-tecnicos/:id" element={<DocumentoTecnicoPage />} />
               <Route path="documentos-tecnicos/:id/:action" element={<DocumentoTecnicoPage />} />
+              <Route path="/registro-temperatura"element={<RegistroTemperaturaOperario />} />
             </Route>
           </Route>
         </Routes>

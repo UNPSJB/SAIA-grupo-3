@@ -18,6 +18,7 @@ from src.documentacion.router import (
     router as documentacion_router,
     vencimientos_router as vencimientos_consolidados_router,
 )
+from src.registroTemperatura.router import router as temperatura_router
 from src.tipoDocumento.router import router as tipo_documento_router
 from src.tipoIncidente.router import router as tipo_incidente_router
 from src.insumos.router import router as insumos_router
@@ -111,3 +112,4 @@ app.include_router(archivos_router)
 app.include_router(tablero_router)
 app.include_router(vista_publica_router)
 app.include_router(vista_publica_publico_router)
+app.include_router(temperatura_router)

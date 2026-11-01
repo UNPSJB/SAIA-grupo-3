@@ -5,6 +5,7 @@ Ejecutar desde backend/:  .venv/bin/python seed.py
 from __future__ import annotations
 
 import shutil
+import random
 from pathlib import Path
 from datetime import date, datetime, time, timedelta
 
@@ -42,7 +43,7 @@ from src.consumoQuimico.models import ConsumoQuimico
 from src.notificaciones.models import Notificacion, TipoNotificacion
 from src.producto.models import Producto
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
-
+from src.registroTemperatura.models import RegistroTemperatura
 
 from src.documentoTecnico.models import (DocumentoTecnico, VersionDocumentoTecnico, CambioVigenciaDocumentoTecnico, TipoDocumentoTecnico, EstadoDocumento)
 
@@ -239,7 +240,53 @@ def _pdf_certificado(titulo: str, lineas: list[str]) -> bytes:
     ).encode()
     return bytes(salida)
 
+def seed_temperaturas(db):
+    print("Generando historial de temperaturas...")
+    
+    # Agarramos un equipo cualquiera y lo convertimos en cámara de frío por las dudas
+    equipo = db.scalars(select(Equipo).where(Equipo.activo == True)).first()
+    if equipo:
+        equipo.controla_temperatura = True
+        equipo.temperatura_minima = -18.0
+        equipo.temperatura_maxima = -12.0
+        db.flush()
 
+    # Buscamos un operario para asignarle los registros
+    operario = db.scalars(select(Personal).where(Personal.operar == True)).first()
+    
+    if not equipo or not operario:
+        return
+
+    # Generamos 20 días de historial
+    hoy = date.today()
+    for dias_atras in range(20):
+        fecha_registro = datetime.combine(hoy - timedelta(days=dias_atras), time(9, 30))
+        
+        # 80% de chances de estar en rango normal, 20% de que falle
+        if random.random() < 0.8:
+            temp = random.uniform(-17.5, -12.5)
+            fuera_rango = False
+            accion = None
+        else:
+            temp = random.uniform(-11.0, -5.0)  # Se pasó de calor
+            fuera_rango = True
+            accion = random.choice([
+                "Se cerró la puerta que quedó mal trabada.",
+                "Se ajustó el termostato y se llamó a mantenimiento.",
+                "Descongelamiento programado, volvió a la normalidad."
+            ])
+            
+        registro = RegistroTemperatura(
+            equipo_id=equipo.id,
+            operario_id=operario.id,
+            temperatura_registrada=round(temp, 1),
+            fecha_hora_registro=fecha_registro,
+            fuera_de_rango=fuera_rango,
+            accion_tomada=accion
+        )
+        db.add(registro)
+    
+    db.flush()
 
 def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
     """Carga ejemplos por entidad, conserva datos y descuenta una vez por asociación nueva.
@@ -502,6 +549,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                     cerrado_por_id=admin.id if cerrado else None)
                 asociar_ingredientes_demo(db, lote_demo, ingredientes_por_nombre)
 
+            seed_temperaturas(db)
 
             db.flush()
             # Descubrir los modelos registrados evita olvidar entidades nuevas silenciosamente.
