@@ -79,6 +79,7 @@ export function AppRouter() {
               <Route path="documentos-vigentes" element={<DocumentosVigentesPage />} />
               <Route path="incidentes/nuevo" element={<IncidentePage />} />
               <Route path="lotes-produccion/nuevo" element={<LoteProduccionPage />} />
+              <Route path="registro-temperatura"element={<RegistroTemperaturaOperario />} />
             </Route>
 
             {/* Consulta compartida (Operador o Administrador) */}
@@ -165,7 +166,7 @@ export function AppRouter() {
               <Route path="documentos-tecnicos/nuevo" element={<DocumentoTecnicoPage />} />
               <Route path="documentos-tecnicos/:id" element={<DocumentoTecnicoPage />} />
               <Route path="documentos-tecnicos/:id/:action" element={<DocumentoTecnicoPage />} />
-              <Route path="/registro-temperatura"element={<RegistroTemperaturaOperario />} />
+              
             </Route>
           </Route>
         </Routes>

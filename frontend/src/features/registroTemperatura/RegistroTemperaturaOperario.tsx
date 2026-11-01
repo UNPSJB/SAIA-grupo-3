@@ -84,10 +84,16 @@ export function RegistroTemperaturaOperario() {
 
   if (cargando) return <div className="p-4 text-center"><Spinner animation="border" /></div>;
 
-  if (equipos.length === 0 && !exito) {
+ if (equipos.length === 0) {
     return (
       <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '600px' }}>
         <Card.Body className="p-5 text-center text-success">
+          {exito && (
+            <div className="bg-success-subtle text-success border border-success border-opacity-25 rounded p-3 mb-4 d-flex align-items-center justify-content-center gap-2 text-start">
+              <i className="bi bi-check-circle-fill"></i>
+              <span className="fw-medium">{exito}</span>
+            </div>
+          )}
           <h4 className="fw-bold mb-3">¡Todo al día!</h4>
           <p className="mb-0">Ya se controló la temperatura de todos los equipos de frío en este turno.</p>
         </Card.Body>
