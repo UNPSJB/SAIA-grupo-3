@@ -51,19 +51,37 @@ def leer_insumo(db: Session, insumo_id: int, incluir_inactivos: bool = False) ->
     return db_insumo
 
 def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) -> Insumo:
-    db_insumo = leer_insumo(db, insumo_id, incluir_inactivos=True)
-    datos_actualizar = insumo.model_dump(exclude_unset=True)
+    from fastapi import HTTPException
+    from src.abastecimiento.models import LoteRecepcionInsumo
+    from src.abastecimiento.services import bloquear_insumo
 
-    if "nombre" in datos_actualizar and datos_actualizar["nombre"] is not None:
-        _validar_duplicados(db, datos_actualizar["nombre"], excluir_id=insumo_id)
-    
-    if "unidad_medida_id" in datos_actualizar and datos_actualizar["unidad_medida_id"] is not None:
-        leer_unidad_medida(db, datos_actualizar["unidad_medida_id"])
-
-    db.execute(update(Insumo).where(Insumo.id == insumo_id).values(**datos_actualizar))
-    db.commit()
-    db.refresh(db_insumo)
-    return db_insumo
+    try:
+        db_insumo = bloquear_insumo(db, insumo_id, permitir_inactivo=True)
+        datos_actualizar = {
+            campo: valor for campo, valor in insumo.model_dump(exclude_unset=True).items()
+            if valor is not None
+        }
+        tiene_recepciones = db.scalar(
+            select(LoteRecepcionInsumo.id)
+            .where(LoteRecepcionInsumo.insumo_id == insumo_id).limit(1)
+        ) is not None
+        if tiene_recepciones:
+            if "cantidad" in datos_actualizar and datos_actualizar["cantidad"] != db_insumo.cantidad:
+                raise HTTPException(409, "Este insumo tiene recepciones. Modificá el stock mediante recepciones y consumos.")
+            if "unidad_medida_id" in datos_actualizar and datos_actualizar["unidad_medida_id"] != db_insumo.unidad_medida_id:
+                raise HTTPException(409, "No se puede cambiar la unidad de un insumo con recepciones registradas.")
+        if "nombre" in datos_actualizar:
+            _validar_duplicados(db, datos_actualizar["nombre"], excluir_id=insumo_id)
+        if "unidad_medida_id" in datos_actualizar:
+            leer_unidad_medida(db, datos_actualizar["unidad_medida_id"])
+        for campo, valor in datos_actualizar.items():
+            setattr(db_insumo, campo, valor)
+        db.commit()
+        db.refresh(db_insumo)
+        return db_insumo
+    except Exception:
+        db.rollback()
+        raise
 
 def eliminar_insumo(db: Session, insumo_id: int) -> schemas.InsumoDelete:
     db_insumo = leer_insumo(db, insumo_id)

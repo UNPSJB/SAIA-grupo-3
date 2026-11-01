@@ -1,5 +1,6 @@
 import { Card, Button, Badge } from 'react-bootstrap';
 import type { Insumo } from './types';
+import { LotesDeInsumo } from '../abastecimiento/LotesDeInsumo';
 
 interface InsumoViewProps {
   insumo: Insumo;
@@ -44,6 +45,7 @@ export function InsumoView({ insumo, onEditar, onVolver }: InsumoViewProps) {
             </span>
           </div>
         </div>
+        <LotesDeInsumo key={insumo.id} insumoId={insumo.id} />
       </Card.Body>
       <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>Volver</Button>

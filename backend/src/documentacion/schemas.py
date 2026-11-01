@@ -80,8 +80,22 @@ class VencimientoCalibracion(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class VencimientoAbastecimiento(BaseModel):
+    id: int
+    detalle_id: int
+    origen: Literal["lote_insumo", "habilitacion_proveedor"]
+    fecha_vencimiento: date
+    estado: EstadoVencimiento
+    dias_restantes: int
+    elemento: str
+    descripcion: str
+    enlace: str
 
 VencimientoConsolidado = Annotated[
-    Union[VencimientoDocumentacion, VencimientoCalibracion],
+    Union[
+        VencimientoDocumentacion,
+        VencimientoCalibracion,
+        VencimientoAbastecimiento,
+    ],
     Field(discriminator="origen"),
 ]

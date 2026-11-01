@@ -29,9 +29,8 @@ export function useVencimientos(origen: OrigenVencimiento, enabled = true) {
 
   useEffect(() => {
     if (!enabled || buscar !== busqueda) {
-      if (!enabled) setLoading(false);
-      return;
-    }
+        return;
+      }
     let active = true;
     const cargar = async () => {
       setLoading(true);
@@ -100,7 +99,7 @@ export function useVencimientos(origen: OrigenVencimiento, enabled = true) {
     page,
     totalPages,
     total,
-    loading,
+    loading: enabled && loading,
     error,
     changePage,
     refrescar: () => setRevision((valor) => valor + 1),

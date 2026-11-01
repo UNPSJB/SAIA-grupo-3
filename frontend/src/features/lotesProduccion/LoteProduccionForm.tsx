@@ -280,6 +280,11 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
                 </div>
               </div>
               {errorInsumos && <ErrorAlert mensaje={errorInsumos} />}
+              <p className="small text-body-secondary">
+                Se asignan primero las recepciones sin vencer que vencen antes.
+                Usá físicamente esos lotes para conservar su trazabilidad.
+                El saldo anterior sin lote se registra como consumo sin trazabilidad.
+              </p>
               {insumosSeleccionados.length === 0 ? (
                 <p className="text-muted small mb-0">Todavía no agregaste insumos al lote.</p>
               ) : (

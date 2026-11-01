@@ -60,7 +60,7 @@ export function VencimientosPage() {
         <div>
           <h2 className="mb-1">Vencimientos próximos</h2>
           <p className="text-muted mb-0">
-            Vencimientos de documentación del personal y calibración de equipos.
+            Vencimientos de documentación del personal, calibraciones, lotes de insumos y habilitaciones de proveedores.
           </p>
         </div>
       </div>

@@ -133,7 +133,13 @@ def listar_vencimientos_consolidados(
     db: Session,
     page: int = 1,
     size: int = 10,
-    origen: Literal["todos", "documentacion", "calibracion"] = "todos",
+    origen: Literal[
+        "todos",
+        "documentacion",
+        "calibracion",
+        "lote_insumo",
+        "habilitacion_proveedor",
+    ] = "todos",
     estado: EstadoVencimiento | None = None,
     solo_alertas: bool = False,
     buscar: str = "",
@@ -207,6 +213,21 @@ def listar_vencimientos_consolidados(
                 }
             )
 
+    if origen in (
+        "todos",
+        "lote_insumo",
+        "habilitacion_proveedor",
+    ):
+        from src.abastecimiento.services import vencimientos_abastecimiento
+
+        nuevos = vencimientos_abastecimiento(db, hoy)
+
+        filas.extend(
+            fila
+            for fila in nuevos
+            if origen == "todos" or fila["origen"] == origen
+        )
+
     termino = buscar.strip().casefold()
     if solo_alertas:
         limite = hoy + timedelta(days=DIAS_AVISO_VENCIMIENTO)
@@ -215,6 +236,17 @@ def listar_vencimientos_consolidados(
         filas = [fila for fila in filas if fila["estado"] == estado]
     if termino:
         def coincide(fila: dict[str, Any]) -> bool:
+            if fila["origen"] in (
+                "lote_insumo",
+                "habilitacion_proveedor",
+            ):
+                return any(
+                    termino in valor.casefold()
+                    for valor in (
+                        fila["elemento"],
+                        fila["descripcion"],
+                    )
+                )
             if fila["origen"] == "documentacion":
                 valores = (
                     fila["personal"].nombre,
@@ -232,17 +264,22 @@ def listar_vencimientos_consolidados(
 
         filas = [fila for fila in filas if coincide(fila)]
 
-    orden_origen = {"documentacion": 0, "calibracion": 1}
+    orden_origen = {
+        "documentacion": 0, "calibracion": 1,
+        "lote_insumo": 2, "habilitacion_proveedor": 3,
+    }
+    def nombre_elemento(fila: dict[str, Any]) -> str:
+        if fila["origen"] == "documentacion":
+            return f'{fila["personal"].apellido} {fila["personal"].nombre}'
+        if fila["origen"] == "calibracion":
+            return fila["equipo"].nombre
+        return fila["elemento"]
     filas.sort(key=lambda fila: (orden_origen[fila["origen"]], fila["id"]))
     filas.sort(
         key=lambda fila: (
             fila["fecha_vencimiento"]
             if ordenar_por == "fecha_vencimiento"
-            else (
-                f'{fila["personal"].apellido} {fila["personal"].nombre}'
-                if fila["origen"] == "documentacion"
-                else fila["equipo"].nombre
-            ).casefold()
+            else nombre_elemento(fila).casefold()
         ),
         reverse=orden == "desc",
     )

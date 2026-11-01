@@ -10,6 +10,7 @@ from src.config import settings
 from src.logger import setup_logging
 
 # Importamos los routers desde nuestros modulos
+from src.abastecimiento.router import router as abastecimiento_router
 from src.plan.router import router as plan_router
 from src.tarea.router import router as tarea_router
 from src.personal.router import router as personal_router
@@ -113,3 +114,4 @@ app.include_router(tablero_router)
 app.include_router(vista_publica_router)
 app.include_router(vista_publica_publico_router)
 app.include_router(perfil_router)
+app.include_router(abastecimiento_router)

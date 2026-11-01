@@ -32,6 +32,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
 
   const menuItems: MenuItem[] = [
     { to: '/inicio', label: 'Inicio', icono: 'bi bi-house-door', permiso: 'administrar'},
+    { to: '/recepciones-insumos', label: 'Recepción de insumos', icono: 'bi bi-box-arrow-in-down', permiso: 'administrar' },
     { to: '/vista-publica/configuracion', label: 'Vista pública', icono: 'bi bi-globe', permiso: 'administrar'},
     { to: '/tablero', label: 'Tablero de gestión', icono: 'bi bi-graph-up' },
     { to: '/planes', label: 'Planes de Limpieza', icono: 'bi bi-clipboard2-check' },
@@ -64,6 +65,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       grupo: 'maestros',
       subItems: [
         { to: '/personal', label: 'Personal', icono: 'bi bi-people', end: true },
+        { to: '/proveedores', label: 'Proveedores', icono: 'bi bi-truck', permiso: 'administrar' },
         { to: '/sectores', label: 'Sectores', icono: 'bi bi-diagram-3' },
         { to: '/tipos-documento', label: 'Tipo Documento', icono: 'bi bi-file-earmark-text' },
         { to: '/tipos-incidente', label: 'Tipo Incidente', icono: 'bi bi-exclamation-triangle-fill' },
@@ -92,7 +94,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const instanceId = useId();
   const secciones = [
     { id: 'gestion', label: 'Gestión', icono: 'bi bi-graph-up', rutas: ['/tablero', '/vista-publica/configuracion'] },
-    { id: 'operacion', label: 'Operación', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/planes', '/lotes-produccion', '/reportes/consumos', '/consumos'] },
+    { id: 'operacion', label: 'Operación', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/planes', '/lotes-produccion', '/recepciones-insumos', '/reportes/consumos', '/consumos'] },
     { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/vencimientos', '/incidentes', '/auditoria', '/lotes'] },
     { id: 'documentacion', label: 'Documentación', icono: 'bi bi-files', rutas: ['/documentos-vigentes', '/documentos-tecnicos'] },
   ].map((seccion) => ({

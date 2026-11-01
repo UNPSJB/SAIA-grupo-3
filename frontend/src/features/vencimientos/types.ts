@@ -1,4 +1,4 @@
-export type OrigenVencimiento = 'todos' | 'documentacion' | 'calibracion';
+export type OrigenVencimiento = 'todos' | 'documentacion' | 'calibracion' | 'lote_insumo' | 'habilitacion_proveedor';
 export type EstadoVencimiento = 'vencido' | 'por_vencer' | 'vigente';
 
 export interface PersonalResumen {
@@ -49,9 +49,17 @@ export interface VencimientoCalibracion extends VencimientoBase {
   sector: SectorResumen | null;
 }
 
+export interface VencimientoAbastecimiento extends VencimientoBase {
+  origen: 'lote_insumo' | 'habilitacion_proveedor';
+  elemento: string;
+  descripcion: string;
+  enlace: string;
+}
+
 export type VencimientoConsolidado =
   | VencimientoDocumentacion
-  | VencimientoCalibracion;
+  | VencimientoCalibracion
+  | VencimientoAbastecimiento;
 
 export interface PaginatedVencimientosConsolidados {
   items: VencimientoConsolidado[];

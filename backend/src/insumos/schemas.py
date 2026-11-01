@@ -6,7 +6,7 @@ from src.unidadMedida.schemas import UnidadMedida
 
 class InsumoBase(BaseModel):
     nombre:str
-    cantidad: float = Field(ge=0.0, description="La cantidad no puede ser negativa")
+    cantidad: float = Field(ge=0.0, allow_inf_nan=False, description="La cantidad no puede ser negativa")
     unidad_medida_id: int 
 
 class InsumoCreate(InsumoBase):
@@ -14,7 +14,7 @@ class InsumoCreate(InsumoBase):
 
 class InsumoUpdate(BaseModel):
     nombre: Optional[str] = None
-    cantidad: Optional[float] = Field(default=None, ge=0.0)
+    cantidad: Optional[float] = Field(default=None, ge=0.0, allow_inf_nan=False)
     unidad_medida_id: Optional[int] = None
     activo: Optional[bool] = None
 

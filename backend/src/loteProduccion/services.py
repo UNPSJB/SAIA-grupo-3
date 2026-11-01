@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from typing import Any, Dict
+from fastapi import HTTPException
 
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
@@ -11,6 +12,8 @@ from src.insumos.models import Insumo
 from src.pagination import filtrar_ordenar
 from src.producto.models import Producto
 from src.producto.services import leer_producto
+from src.abastecimiento.models import ConsumoLoteRecepcion, LoteRecepcionInsumo
+from src.abastecimiento.services import consumir_para_produccion
 
 
 def _validar_fecha(fecha: date) -> None:
@@ -76,7 +79,13 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_i
         ],
     )
     try:
-        for item in lote.insumos:
+        db.add(db_lote)
+        db.flush()
+        for item in sorted(lote.insumos, key=lambda item: item.insumo_id):
+            consumir_para_produccion(
+                db, item.insumo_id, item.cantidad_usada,
+                db_lote.id, lote.fecha_produccion,
+            )
             resultado = db.execute(
                 update(Insumo)
                 .where(
@@ -89,7 +98,6 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_i
             )
             if resultado.rowcount != 1:
                 raise exceptions.StockInsuficiente()
-        db.add(db_lote)
         db.commit()
         db.refresh(db_lote)
     except Exception:
@@ -167,6 +175,17 @@ def modificar_lote(db: Session, lote_id: int, lote: schemas.LoteProduccionUpdate
         _validar_producto(db, datos["producto_id"], producto_actual_id=db_lote.producto_id)
     if datos.get("fecha_produccion") is not None:
         _validar_fecha(datos["fecha_produccion"])
+        recepcion_posterior = db.scalar(
+            select(LoteRecepcionInsumo.id)
+            .join(ConsumoLoteRecepcion, ConsumoLoteRecepcion.lote_recepcion_id == LoteRecepcionInsumo.id)
+            .where(
+                ConsumoLoteRecepcion.lote_produccion_id == lote_id,
+                LoteRecepcionInsumo.fecha_recepcion > datos["fecha_produccion"],
+            )
+            .limit(1)
+        )
+        if recepcion_posterior is not None:
+            raise HTTPException(409, "La producción no puede quedar antes de la recepción de los insumos que utilizó.")
     for campo, valor in datos.items():
         setattr(db_lote, campo, valor)
     db.commit()

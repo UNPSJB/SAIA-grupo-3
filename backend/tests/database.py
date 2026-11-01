@@ -62,6 +62,10 @@ def client(db_session):
     app.dependency_overrides.clear()
 
 
+# Conserva el nombre usado por las pruebas de vencimientos anteriores.
+session = db_session
+
+
 @pytest.fixture
 def unidad_medida(db_session):
     unidad = UnidadMedida(tipo=TipoUnidadMedida.PESO, sufijo="kg", activo=True)

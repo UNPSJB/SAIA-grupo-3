@@ -1,11 +1,13 @@
 import { SearchableSelect } from '../../shared/components/SearchableSelect';
 import { useForm, useController } from 'react-hook-form';
 import { FormErrors } from '../../shared/components/FormErrors';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Card, Form, Button } from 'react-bootstrap';
 import type { Insumo, InsumoCreate } from './types';
 import { useOptions } from '../../shared/hooks/useOptions';
 import type { UnidadMedida } from '../unidadMedida/types';
+import { listarLotes } from '../abastecimiento/abastecimientoApi';
+import { useConsulta } from '../abastecimiento/useConsulta';
 
 interface InsumoFormProps {
   insumoInicial?: Insumo | null;
@@ -15,6 +17,18 @@ interface InsumoFormProps {
 
 export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormProps) {
   const esEdicion = Boolean(insumoInicial);
+  const insumoId = insumoInicial?.id;
+  const cargarHistorial = useCallback(
+    (signal: AbortSignal) =>
+      insumoId
+        ? listarLotes({ insumo_id: insumoId, mostrar_inactivos: true, size: 1 }, signal)
+        : Promise.resolve(null),
+    [insumoId],
+  );
+  const historial = useConsulta(cargarHistorial);
+  const tieneRecepciones = (historial.datos?.total ?? 0) > 0;
+  const bloquearInventario =
+    esEdicion && (historial.cargando || Boolean(historial.error) || tieneRecepciones);
   const form = useForm<{ nombre: string; cantidad: number | ''; unidadMedidaId: number | '' }>({
     defaultValues: { nombre: '', cantidad: '', unidadMedidaId: '' },
   });
@@ -115,6 +129,17 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               {optionsError}
             </div>
           )}
+          {historial.error && (
+            <div role="alert" className="text-danger mb-3">
+              {historial.error}
+            </div>
+          )}
+          {tieneRecepciones && (
+            <p className="small text-body-secondary">
+              El stock se administra mediante recepciones y consumos. La unidad se conserva para no
+              alterar el historial.
+            </p>
+          )}
           <Form.Group controlId="InsumoForm-nombre" className="mb-3">
             <Form.Label>Nombre</Form.Label>
             <Form.Control
@@ -134,6 +159,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
             <Form.Label>Cantidad</Form.Label>
             <Form.Control
               type="number"
+              disabled={bloquearInventario}
               step="any"
               required
               ref={cantidadRef}
@@ -158,7 +184,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               onChange={(e) =>
                 setUnidadMedidaId(e.target.value === '' ? '' : Number(e.target.value))
               }
-              disabled={loadingUnidades}
+              disabled={loadingUnidades || bloquearInventario}
             >
               <option value="">Seleccioná una unidad...</option>
               {unidades.map((u) => (
@@ -173,7 +199,11 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
             <Button variant="secondary" onClick={onCancelar} disabled={enviando}>
               Cancelar
             </Button>
-            <Button variant="primary" type="submit" disabled={enviando}>
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={enviando || (esEdicion && (historial.cargando || Boolean(historial.error)))}
+            >
               {enviando ? 'Guardando...' : esEdicion ? 'Actualizar Cambios' : 'Guardar'}
             </Button>
           </div>

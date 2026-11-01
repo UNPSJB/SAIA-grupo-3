@@ -71,12 +71,12 @@ export function VencimientosList({
   return (
     <>
       <h4 className="text-secondary fw-normal mb-3">
-        Documentación del Personal y Calibración de Equipos e Instrumentos
+        Documentación, calibraciones, lotes de insumos y habilitaciones
       </h4>
       <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
         <Form.Control
           type="search"
-          placeholder="Buscar empleado, DNI, documento, equipo, serie o sector..."
+          placeholder="Buscar personal, equipo, insumo, lote o proveedor..."
           aria-label="Buscar vencimiento"
           value={busqueda}
           onChange={(event) => setBusqueda(event.target.value)}
@@ -153,7 +153,7 @@ export function VencimientosList({
                     orden={orden}
                     cambiarOrden={cambiarOrden}
                   >
-                    Empleado/Equipo
+                    Elemento
                   </SortableHeader>
                   <SortableHeader
                     column="fecha_vencimiento"
@@ -179,6 +179,17 @@ export function VencimientosList({
                 ) : (
                   items.map((vencimiento) => {
                     const estado = estados[vencimiento.estado];
+                    if ('elemento' in vencimiento) {
+                      return (
+                        <tr key={`${vencimiento.origen}-${vencimiento.id}`}>
+                          <td>{vencimiento.origen === 'lote_insumo' ? 'Lote de insumo' : 'Habilitación de proveedor'}</td>
+                          <td><strong>{vencimiento.elemento}</strong><small className="d-block text-body-secondary">{vencimiento.descripcion}</small></td>
+                          <td>{formatearFecha(vencimiento.fecha_vencimiento)}<small className="d-block text-body-secondary">{textoDiasRestantes(vencimiento.dias_restantes)}</small></td>
+                          <td><Badge bg={estado.variante} text={vencimiento.estado === 'por_vencer' ? 'dark' : undefined}>{estado.etiqueta}</Badge></td>
+                          <td className="text-center"><Link to={vencimiento.enlace} className="btn btn-success btn-sm text-white text-nowrap">{vencimiento.origen === 'lote_insumo' ? 'Ver recepciones' : 'Ver proveedores'}</Link></td>
+                        </tr>
+                      );
+                    }
                     const documentacion =
                       vencimiento.origen === 'documentacion';
                     const nombre = documentacion

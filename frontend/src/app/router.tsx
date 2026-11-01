@@ -40,6 +40,8 @@ import { HistorialLotesPage } from '../features/lotesProduccion';
 import { ConfiguracionVistaPublicaPage } from '../features/vistaPublica/ConfiguracionVistaPublicaPage';
 import { VistaPublicaPage } from '../features/vistaPublica/VistaPublicaPage';
 import { PerfilPage } from '../features/perfil';
+import { ProveedoresPage } from '../features/abastecimiento/ProveedoresPage';
+import { RecepcionesPage } from '../features/abastecimiento/RecepcionesPage';
 
 
 function HomeRedirect() {
@@ -93,6 +95,8 @@ export function AppRouter() {
 
             {/* Administración */}
             <Route element={<ProtectedRoute requireAdmin />}>
+              <Route path="proveedores" element={<ProveedoresPage />} />
+              <Route path="recepciones-insumos" element={<RecepcionesPage />} />
               <Route path="inicio" element={<InicioAdminPage />} />
               <Route path="vista-publica/configuracion" element={<ConfiguracionVistaPublicaPage />}/>
               <Route path="vencimientos" element={<VencimientosConsolidadosPage />} />

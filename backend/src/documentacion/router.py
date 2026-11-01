@@ -73,7 +73,7 @@ def read_vencimientos_consolidados(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
-    origen: Literal["todos", "documentacion", "calibracion"] = Query("todos"),
+    origen: Literal["todos", "documentacion", "calibracion", "lote_insumo", "habilitacion_proveedor"] = Query("todos"),
     estado: EstadoVencimiento | None = Query(None),
     solo_alertas: bool = Query(False),
     buscar: str = Query(""),
