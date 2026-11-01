@@ -3,7 +3,7 @@ from datetime import date
 from sqlalchemy import select
 
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
-import seed
+from scripts import seed_lotes_produccion as seed
 from tests.database import (
     db_session,
     insumo_activo,

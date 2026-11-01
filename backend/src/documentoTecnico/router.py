@@ -23,7 +23,7 @@ router = PermissionedRouter(prefix="/documentos-tecnicos",
                             dependencies=[Depends(tiene_permiso_administrar)] # quitar para que luego puedan ver los operarios
                             )
 
-CARPETA_DOCUMENTOS = ARCHIVOS_DIR / "documentos-tecnicos"
+CARPETA_DOCUMENTOS = ARCHIVOS_DIR
 
 
 def _guardar_archivo(archivo: UploadFile) -> dict:

@@ -323,11 +323,7 @@ psd
 thumb
 sketch
 
-#fotos de checklist
-backend/uploads/
-backend/archivos
-
-#archivos de bpm
-backend/archivos/
+# Evidencias y documentos generados o subidos por la aplicación
+backend/almacenamiento/
 
 # End of https://www.toptal.com/developers/gitignore/api/react,node,python

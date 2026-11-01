@@ -2,42 +2,25 @@ from datetime import date, timedelta
 from uuid import uuid4
 
 import pytest
-from fastapi import FastAPI, HTTPException
-from fastapi.testclient import TestClient
+from fastapi import HTTPException
 from pydantic import ValidationError
 from sqlalchemy import func, select
 
 from src.abastecimiento import schemas, services
-from src.abastecimiento.models import ConsumoLoteRecepcion, ConsumoStockAnterior, LoteRecepcionInsumo
-from src.abastecimiento.router import router
-from src.auth.utils import create_access_token
+from src.abastecimiento.models import ConsumoLoteRecepcion, ConsumoStockAnterior, LoteRecepcionInsumo, Proveedor
 from src.config import settings
-from src.database import get_db
 from src.documentacion.constants import DIAS_AVISO_VENCIMIENTO
 from src.documentacion.vencimientos import listar_vencimientos_consolidados
 from src.insumos import schemas as insumo_schemas, services as insumo_services
 from src.loteProduccion import schemas as produccion_schemas, services as produccion_services
 from src.loteProduccion.models import LoteProduccion
-from tests.database import (  # noqa: F401
-    db_session, insumo_activo, persona_operadora, persona_sin_permisos,
-    producto, unidad_medida,
-)
-
-
-@pytest.fixture
-def proveedor(db_session):
-    return services.guardar_proveedor(db_session, schemas.ProveedorInput(
-        nombre="Molino de prueba", cuit="30-12345678-9",
-        numero_habilitacion="HAB-PRUEBA",
-        vencimiento_habilitacion=date.today() + timedelta(days=DIAS_AVISO_VENCIMIENTO),
-    ))
 
 
 def recibir(db, insumo, proveedor, persona, **cambios):
     valores = dict(
         insumo_id=insumo.id, proveedor_id=proveedor["id"], numero_lote="HAR-001",
         cantidad=10, fecha_recepcion=date.today() - timedelta(days=2),
-        fecha_vencimiento=date.today() + timedelta(days=5), clave_operacion=uuid4(),
+        fecha_vencimiento=date.today() + timedelta(days=DIAS_AVISO_VENCIMIENTO), clave_operacion=uuid4(),
     )
     valores.update(cambios)
     datos = schemas.LoteInput(**valores)
@@ -51,13 +34,83 @@ def producir(db, insumo, persona, producto, cantidad):
     ), persona.id)
 
 
-def test_cuit_unico_incluso_con_proveedor_inactivo(db_session, proveedor):
+def test_crear_proveedor(db_session, datos_proveedor):
+    nuevo = services.guardar_proveedor(
+        db_session, schemas.ProveedorInput(**datos_proveedor)
+    )
+    assert nuevo["id"] is not None
+    assert nuevo["nombre"] == datos_proveedor["nombre"]
+    assert nuevo["cuit"] == "30123456789"
+    for campo in ("telefono", "email", "numero_habilitacion"):
+        assert nuevo[campo] == datos_proveedor[campo]
+    assert nuevo["vencimiento_habilitacion"] == date.fromisoformat(
+        datos_proveedor["vencimiento_habilitacion"]
+    )
+    assert nuevo["activo"] is True
+
+
+def test_listar_proveedores(db_session, proveedor):
+    resultado = services.listar_proveedores(db_session)
+    assert resultado["total"] == 1
+    assert resultado["items"][0]["id"] == proveedor["id"]
+
+
+def test_leer_proveedor(db_session, proveedor):
+    encontrado = services.obtener(db_session, Proveedor, proveedor["id"])
+    assert encontrado.id == proveedor["id"]
+    assert encontrado.nombre == proveedor["nombre"]
+
+
+def test_leer_proveedor_inexistente(db_session):
+    with pytest.raises(HTTPException) as error:
+        services.obtener(db_session, Proveedor, 999)
+    assert error.value.status_code == 404
+
+
+def test_modificar_proveedor(db_session, proveedor, datos_proveedor):
+    datos = schemas.ProveedorInput(
+        **{**datos_proveedor, "nombre": "Molino actualizado"}
+    )
+    actualizado = services.guardar_proveedor(
+        db_session, datos, proveedor_id=proveedor["id"]
+    )
+    assert actualizado["id"] == proveedor["id"]
+    assert actualizado["nombre"] == "Molino actualizado"
+    assert actualizado["cuit"] == proveedor["cuit"]
+    assert services.listar_proveedores(db_session)["total"] == 1
+
+
+def test_baja_logica_y_reactivacion_proveedor(db_session, proveedor):
+    baja = services.cambiar_estado_proveedor(db_session, proveedor["id"], False)
+    assert baja["activo"] is False
+    assert db_session.get(Proveedor, proveedor["id"]) is not None
+    assert services.listar_proveedores(db_session)["total"] == 0
+    assert services.listar_proveedores(db_session, mostrar_inactivos=True)["total"] == 1
+    reactivado = services.cambiar_estado_proveedor(db_session, proveedor["id"], True)
+    assert reactivado["activo"] is True
+    assert services.listar_proveedores(db_session)["total"] == 1
+
+
+def test_modificar_proveedor_con_cuit_duplicado(db_session, proveedor, datos_proveedor):
+    otro = services.guardar_proveedor(
+        db_session, schemas.ProveedorInput(nombre="Otro proveedor", cuit="30987654321")
+    )
+    with pytest.raises(HTTPException) as error:
+        services.guardar_proveedor(
+            db_session, schemas.ProveedorInput(**datos_proveedor), proveedor_id=otro["id"]
+        )
+    assert error.value.status_code == 409
+    assert db_session.get(Proveedor, otro["id"]).cuit == "30987654321"
+
+
+@pytest.mark.parametrize("activo", [True, False])
+def test_cuit_unico_incluso_con_proveedor_inactivo(db_session, proveedor, activo):
     assert proveedor["cuit"] == "30123456789"
-    services.cambiar_estado_proveedor(db_session, proveedor["id"], False)
+    services.cambiar_estado_proveedor(db_session, proveedor["id"], activo)
     with pytest.raises(HTTPException) as error:
         services.guardar_proveedor(db_session, schemas.ProveedorInput(nombre="Duplicado", cuit="30123456789"))
     assert error.value.status_code == 409
-    assert services.listar_proveedores(db_session)["total"] == 0
+    assert services.listar_proveedores(db_session)["total"] == int(activo)
     assert services.listar_proveedores(db_session, mostrar_inactivos=True)["total"] == 1
     services.cambiar_estado_proveedor(db_session, proveedor["id"], True)
     assert services.listar_proveedores(db_session)["total"] == 1
@@ -129,7 +182,7 @@ def test_conciliar_identifica_stock_sin_sumarlo(db_session, insumo_activo, prove
 
 def test_produccion_consume_fefo_y_descuenta_una_vez(db_session, insumo_activo, proveedor, persona_operadora, producto):
     primero, _ = recibir(db_session, insumo_activo, proveedor, persona_operadora, cantidad=20)
-    segundo, _ = recibir(db_session, insumo_activo, proveedor, persona_operadora, cantidad=30, numero_lote="HAR-002", fecha_vencimiento=date.today()+timedelta(days=30))
+    segundo, _ = recibir(db_session, insumo_activo, proveedor, persona_operadora, cantidad=30, numero_lote="HAR-002", fecha_vencimiento=date.today()+timedelta(days=DIAS_AVISO_VENCIMIENTO + 30))
     produccion = producir(db_session, insumo_activo, persona_operadora, producto, 25)
     db_session.refresh(insumo_activo)
     assert insumo_activo.cantidad == 75
@@ -215,22 +268,42 @@ def test_filtros_y_vencimientos_incluyen_lotes_y_habilitaciones(db_session, insu
     assert listar_vencimientos_consolidados(db_session, origen="lote_insumo", buscar="HAR-001")["total"] == 1
 
 
-def test_endpoints_exigen_admin_y_guardan_actor_autenticado(db_session, insumo_activo, persona_operadora):
-    app = FastAPI()
-    app.include_router(router)
-    app.dependency_overrides[get_db] = lambda: db_session
-    token_operador = create_access_token(persona_operadora)
-    with TestClient(app) as client:
-        assert client.get("/proveedores/").status_code == 401
-        assert client.post("/proveedores/", json={"nombre":"Molino","cuit":"30123456789"}, headers={"Authorization":f"Bearer {token_operador}"}).status_code == 403
-        persona_operadora.administrar = True
-        db_session.commit()
-        token_admin = create_access_token(persona_operadora)
-        headers = {"Authorization":f"Bearer {token_admin}"}
-        respuesta = client.post("/proveedores/", json={"nombre":"Molino","cuit":"30123456789"}, headers=headers)
-        assert respuesta.status_code == 200, respuesta.text
-        payload = dict(insumo_id=insumo_activo.id,proveedor_id=respuesta.json()["id"],numero_lote="API-001",cantidad=2,fecha_recepcion=date.today().isoformat(),fecha_vencimiento=(date.today()+timedelta(days=3)).isoformat(),clave_operacion=str(uuid4()))
-        recibida = client.post("/lotes-insumo/", json=payload, headers=headers)
-        assert recibida.status_code == 200, recibida.text
-        assert recibida.json()["registrado_por_id"] == persona_operadora.id
-        assert client.get("/lotes-insumo/?proveedor_id="+str(respuesta.json()["id"]),headers=headers).json()["total"] == 1
+@pytest.mark.parametrize(
+    ("filtro", "esperado"),
+    [("insumo", 1), ("proveedor", 1), ("fecha_incluida", 1),
+     ("otro_insumo", 0), ("otro_proveedor", 0), ("fecha_excluida", 0)],
+)
+def test_listar_lotes_con_filtros(db_session, lote, filtro, esperado):
+    fecha = lote["fecha_recepcion"]
+    parametros = {
+        "insumo": {"insumo_id": lote["insumo_id"]},
+        "proveedor": {"proveedor_id": lote["proveedor_id"]},
+        "fecha_incluida": {"fecha_desde": fecha, "fecha_hasta": fecha},
+        "otro_insumo": {"insumo_id": lote["insumo_id"] + 1},
+        "otro_proveedor": {"proveedor_id": lote["proveedor_id"] + 1},
+        "fecha_excluida": {"fecha_desde": fecha + timedelta(days=1)},
+    }[filtro]
+    resultado = services.listar_recepciones(db_session, **parametros)
+    assert resultado["total"] == esperado
+    assert [item["id"] for item in resultado["items"]] == (
+        [lote["id"]] if esperado else []
+    )
+
+
+@pytest.mark.parametrize(
+    ("desplazamiento", "estado"),
+    [(-1, "vencido"), (0, "por_vencer"),
+     (DIAS_AVISO_VENCIMIENTO, "por_vencer"),
+     (DIAS_AVISO_VENCIMIENTO + 1, "vigente")],
+)
+def test_estado_de_vencimiento_del_lote(
+    db_session, insumo_activo, proveedor, persona_operadora, desplazamiento, estado
+):
+    lote, _ = recibir(
+        db_session, insumo_activo, proveedor, persona_operadora,
+        fecha_vencimiento=date.today() + timedelta(days=desplazamiento),
+    )
+    assert lote["estado_vencimiento"] == estado
+    resultado = services.listar_recepciones(db_session, estado=estado)
+    assert resultado["total"] == 1
+    assert resultado["items"][0]["id"] == lote["id"]

@@ -1,4 +1,4 @@
-"""Migración SQLite: ejecutar desde backend con python migrate_superadmin.py."""
+"""Migración SQLite: ejecutar desde backend con python -m scripts.migrate_superadmin."""
 from sqlalchemy import inspect, text
 
 

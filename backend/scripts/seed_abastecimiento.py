@@ -1,0 +1,92 @@
+"""Proveedores, recepciones y trazabilidad de abastecimiento de demostración."""
+
+from datetime import datetime, time, timedelta
+from uuid import NAMESPACE_URL, uuid5
+
+from sqlalchemy import select
+
+from scripts.seed_common import CANTIDAD
+from scripts.seed_lotes_produccion import asociar_ingredientes_demo
+from src.abastecimiento.models import LoteRecepcionInsumo, Proveedor
+from src.insumos.models import Insumo
+from src.loteProduccion.constants import EstadoLote
+from src.loteProduccion.models import LoteProduccion
+from src.producto.models import Producto
+
+
+def cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, registrado_por_id, hoy):
+    """Escenarios identificados como DEMO; no reescribe registros ni reinicia saldos."""
+    proveedores = []
+    candidato = 99000000
+    rubros = ["Molino", "Distribuidora", "Alimentos", "Levaduras", "Aceites"]
+    for i in range(CANTIDAD):
+        # CUITs sintéticos con dígito verificador, sin representar empresas reales.
+        while True:
+            base = f"30{candidato:08d}"
+            candidato += 1
+            digito = (11 - sum(int(n) * p for n, p in zip(base, (5, 4, 3, 2, 7, 6, 5, 4, 3, 2))) % 11) % 11
+            if digito != 10:
+                break
+        proveedor, _ = crear(Proveedor, {"cuit": base + str(digito)},
+            nombre=f"DEMO - {rubros[i % len(rubros)]} del establecimiento {i + 1:02d}",
+            telefono=f"0000-0000-{i + 1:02d}", email=f"seed.proveedor{i + 1:02d}@example.com",
+            numero_habilitacion=f"DEMO-HAB-{i + 1:03d}",
+            vencimiento_habilitacion=hoy + timedelta(days=[-7, 0, 7, 60, 180][i % 5]),
+            activo=i < CANTIDAD - 2)
+        proveedores.append(proveedor)
+
+    definiciones = [
+        ("Harina de trigo", "kg", 50.0), ("Azúcar", "kg", 20.0),
+        ("Levadura", "g", 500.0), ("Aceite", "L", 10.0), ("Sal", "kg", 5.0),
+    ]
+    ingredientes = {}
+    for nombre, sufijo, _ in definiciones + [("Agua de amasado sin lote", "L", 0)]:
+        nombre_demo = f"{nombre} · DEMO abastecimiento"
+        insumo, _ = crear(Insumo, {"nombre": nombre_demo},
+            cantidad=20.0 if nombre == "Agua de amasado sin lote" else 0.0,
+            unidad_medida_id=unidades_por_sufijo[sufijo].id, activo=True)
+        if insumo.unidad_medida_id != unidades_por_sufijo[sufijo].id:
+            raise RuntimeError(f"La unidad de {nombre_demo} cambió. El seed no la sobrescribe.")
+        ingredientes[nombre] = insumo
+
+    for i in range(CANTIDAD):
+        nombre, _, cantidad = definiciones[i % len(definiciones)]
+        grupo = i // len(definiciones)
+        if grupo == 1 and nombre == "Harina de trigo":
+            cantidad = 15.0  # Queda agotado después de las 15 producciones demo.
+        clave = str(uuid5(NAMESPACE_URL, f"saia:seed:abastecimiento:recepcion:{i + 1}"))
+        existente = db.scalar(select(LoteRecepcionInsumo).where(LoteRecepcionInsumo.clave_operacion == clave))
+        if existente is not None:
+            continue
+        proveedor = proveedores[i % (CANTIDAD - 2)]
+        insumo = ingredientes[nombre]
+        if not proveedor.activo or not insumo.activo:
+            raise RuntimeError("No se puede agregar una recepción demo nueva con proveedor o insumo inactivo.")
+        activo = i != CANTIDAD - 1  # Una recepción anulada, sin consumo ni stock agregado.
+        recepcion, nueva = crear(LoteRecepcionInsumo, {"clave_operacion": clave},
+            insumo_id=insumo.id, proveedor_id=proveedor.id,
+            numero_lote=f"DEMO-REC-{i + 1:03d}", cantidad=cantidad, cantidad_disponible=cantidad,
+            fecha_recepcion=hoy - timedelta(days=45),
+            fecha_vencimiento=hoy + timedelta(days=[-10, 5, 60][grupo]),
+            registrado_por_id=registrado_por_id,
+            fecha_registro=datetime.combine(hoy - timedelta(days=45), time(9, i)),
+            activo=activo, conciliacion=False)
+        if nueva and recepcion.activo:
+            insumo.cantidad += recepcion.cantidad
+            db.flush()
+
+    producto, _ = crear(Producto, {"nombre": "Pan francés · DEMO abastecimiento"},
+        descripcion="Producción ficticia para probar recepción, vencimientos y trazabilidad.",
+        unidad_medida_id=unidades_por_sufijo["kg"].id, activo=True)
+    receta = [("Harina de trigo", 1.0), ("Agua de amasado sin lote", 0.6),
+              ("Levadura", 20.0), ("Sal", 0.02)]
+    for i in range(CANTIDAD):
+        fecha = hoy - timedelta(days=i % 7)
+        lote, _ = crear(LoteProduccion, {"codigo": f"L-ABAST-SEED-{i + 1:03d}"},
+            producto_id=producto.id, fecha_produccion=fecha, cantidad=1.5,
+            observaciones="DEMO: recepciones identificadas y agua de stock anterior sin trazabilidad.",
+            registrado_por_id=registrado_por_id, fecha_registro=datetime.combine(fecha, time(10, i)),
+            activo=True, estado=EstadoLote.CERRADO if i % 2 else EstadoLote.ABIERTO,
+            fecha_cierre=datetime.combine(fecha, time(12)) if i % 2 else None,
+            cerrado_por_id=registrado_por_id if i % 2 else None)
+        asociar_ingredientes_demo(db, lote, ingredientes, receta=receta, crear=crear)

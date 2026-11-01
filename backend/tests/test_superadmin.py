@@ -10,7 +10,7 @@ from src.personal.models import Personal
 from src.models import ModeloBase
 from src.database import get_db
 from src.auth.utils import create_access_token
-from migrate_superadmin import migrate
+from scripts.migrate_superadmin import migrate
 
 
 class RolesTest(unittest.TestCase):

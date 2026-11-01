@@ -16,7 +16,7 @@ En Windows (PowerShell), crear el entorno con `py -3 -m venv .venv`, activarlo c
 
 No sobrescribir un `.env` existente. `DB_URL` define la base; `DB_URL_TEST` es la configuración para pruebas. Ejecutar siempre desde `backend/` para que las rutas relativas y `.env` se resuelvan correctamente. Reiniciar el servidor después de cambiar la configuración o de rama.
 
-`requirements.txt` mantiene las dependencias del backend, incluyendo JWT, Argon2, formularios/archivos y scheduler. No se exige `uvloop` directamente: algunas dependencias pueden instalarlo automáticamente en plataformas compatibles; Windows usa el bucle estándar de asyncio.
+`requirements.txt` mantiene las dependencias del backend y de las pruebas, incluyendo pytest, TestClient, JWT, Argon2, formularios/archivos y scheduler. Se instalan juntas con el comando anterior. No se exige `uvloop` directamente: algunas dependencias pueden instalarlo automáticamente en plataformas compatibles; Windows usa el bucle estándar de asyncio.
 
 Comprobar la instalación con `python -m pip check`. Backend en http://localhost:8000 y documentación en http://localhost:8000/docs.
 
@@ -31,10 +31,29 @@ La configuración CORS debe permitir el origen del frontend en el ambiente donde
 Con la configuración de `.env` del backend lista, ejecutar desde `backend/`:
 
 ```bash
-.venv/bin/python seed.py
+.venv/bin/python -m scripts.seed_all
 ```
 
-El seed no borra ni actualiza registros existentes, no restablece contraseñas y no descuenta stock. Crea ejemplos faltantes mediante claves estables; al repetirlo el mismo día no duplica datos. Al cambiar de día puede agregar registros diarios de checklist e historial. En bases existentes puede conservar fechas, permisos y contraseñas anteriores.
+Los scripts están en `scripts/`. `seed_all.py` coordina la carga en orden de
+dependencias y confirma la transacción al finalizar; si falla un módulo, revierte
+los cambios de la base de esa ejecución. Cada `seed_<modulo>.py` contiene los datos
+y la función de carga de su módulo. `seed_common.py` reúne las utilidades
+compartidas. Importar estos módulos no ejecuta la carga; sus funciones reciben la
+sesión o la función de creación y los registros que necesitan.
+
+Las fotografías originales permanecen en `seed_assets/`. Los archivos generados
+no forman parte de la transacción de base de datos: si falla la carga, pueden
+quedar archivos demo que se reutilizan al reintentar.
+
+La migración histórica de superadmin se ejecuta por separado, desde `backend/`:
+
+```bash
+.venv/bin/python -m scripts.migrate_superadmin
+```
+
+`seed_all` no ejecuta migraciones automáticamente.
+
+El seed no borra ni actualiza registros existentes, no restablece contraseñas ni reinicia saldos. Los ingresos y consumos de demostración se aplican una sola vez. Crea ejemplos faltantes mediante claves estables; al repetirlo el mismo día no duplica datos. Al cambiar de día puede agregar registros diarios de checklist e historial. En bases existentes puede conservar fechas, permisos y contraseñas anteriores.
 
 | Usuario nuevo | Contraseña inicial | Caso |
 | --- | --- | --- |
@@ -44,6 +63,20 @@ El seed no borra ni actualiza registros existentes, no restablece contraseñas y
 | `sin.permisos` | `opera123` | Sin capacidades; pantalla sin permisos |
 | `inactivo.demo` | `opera123` | Usuario inactivo; login rechazado |
 
-En una base nueva carga al menos 15 registros por entidad, incidentes de todos los tipos, abiertos y cerrados, acciones correctivas e historial. Incluye documentos personales con distintas fechas de vencimiento, calibraciones, documentos técnicos con PDF de demostración, consumos, tareas realizadas y pendientes de hoy. Las fotografías necesarias están versionadas en `seed_assets/`; los archivos generados se guardan en `uploads/` y `archivos/`.
+En una base nueva carga al menos 15 registros por entidad, incidentes de todos los tipos, abiertos y cerrados, acciones correctivas e historial. Incluye documentos personales con distintas fechas de vencimiento, calibraciones, documentos técnicos con PDF de demostración, consumos, tareas realizadas y pendientes de hoy. Las fotografías necesarias están versionadas en `seed_assets/`; los archivos generados se guardan en `almacenamiento/evidencias/` y `almacenamiento/documentos_tecnicos/`.
 
 `create_all` crea tablas nuevas, pero no migra tablas existentes. Si una base de otra rama tiene columnas faltantes, conservarla y coordinar la actualización del esquema; reinstalar dependencias o repetir el seed no migra esa base.
+
+### Almacenamiento de archivos
+
+`src/config.py` centraliza las ubicaciones físicas: `UPLOADS_DIR` apunta a
+`almacenamiento/evidencias/` y `ARCHIVOS_DIR` a
+`almacenamiento/documentos_tecnicos/`. Las carpetas se crean al guardar archivos.
+Los identificadores `/uploads/...` guardados en la base y los endpoints de
+descarga se conservan; no deben reemplazarse por rutas de disco.
+
+En otras copias del proyecto con archivos existentes, detener el backend y mover
+el contenido de `uploads/` a `almacenamiento/evidencias/`, y el de
+`archivos/documentos-tecnicos/` a `almacenamiento/documentos_tecnicos/`, antes de
+reiniciarlo. Si ya existe algún archivo en destino, comprobar su contenido antes
+de moverlo para evitar sobrescribirlo.

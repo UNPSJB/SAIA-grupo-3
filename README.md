@@ -29,7 +29,7 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 cp .env.template .env
 # Opcional, después de configurar .env:
-python seed.py
+python -m scripts.seed_all
 fastapi dev src/main.py
 ```
 
@@ -42,7 +42,7 @@ py -3 -m venv .venv
 python -m pip install -r requirements.txt
 Copy-Item .env.template .env
 # Opcional, después de configurar .env:
-python seed.py
+python -m scripts.seed_all
 fastapi dev src/main.py
 ```
 

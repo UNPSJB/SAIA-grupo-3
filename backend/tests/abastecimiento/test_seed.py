@@ -4,7 +4,8 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import sessionmaker
 
-import seed
+from scripts import seed_all as seed
+from scripts import seed_personal
 from src.abastecimiento.models import (
     Proveedor, LoteRecepcionInsumo, ConsumoLoteRecepcion, ConsumoStockAnterior,
 )
@@ -21,9 +22,9 @@ from tests.database import db_session  # noqa: F401
 
 @pytest.fixture
 def ejecutar_seed(db_session, tmp_path, monkeypatch):
-    monkeypatch.setattr(seed, "UPLOADS_DIR", tmp_path / "uploads")
-    monkeypatch.setattr(seed, "ARCHIVOS_DIR", tmp_path / "archivos")
-    monkeypatch.setattr(seed, "get_password_hash", lambda password: "hash-demo-sin-autenticacion")
+    monkeypatch.setattr(seed, "UPLOADS_DIR", tmp_path / "almacenamiento" / "evidencias")
+    monkeypatch.setattr(seed, "ARCHIVOS_DIR", tmp_path / "almacenamiento" / "documentos_tecnicos")
+    monkeypatch.setattr(seed_personal, "get_password_hash", lambda password: "hash-demo-sin-autenticacion")
     motor = db_session.get_bind()
     fabrica = sessionmaker(bind=motor, autoflush=False)
 
@@ -98,6 +99,23 @@ def test_consumos_del_seed_conservan_cantidades_y_fechas_de_origen(db_session, e
         produccion = db_session.get(LoteProduccion, asociacion.lote_id)
         for _, recepcion in recibidos:
             assert recepcion.fecha_recepcion <= produccion.fecha_produccion <= recepcion.fecha_vencimiento
+
+
+def test_fallo_en_ultimo_modulo_revierte_toda_la_carga(
+    db_session, ejecutar_seed, monkeypatch
+):
+    cantidades_antes = conteos(db_session)
+
+    def fallar(*args, **kwargs):
+        raise RuntimeError("Fallo simulado en abastecimiento")
+
+    monkeypatch.setattr(seed, "cargar_abastecimiento_demo", fallar)
+
+    with pytest.raises(RuntimeError, match="Fallo simulado en abastecimiento"):
+        ejecutar_seed()
+
+    db_session.expire_all()
+    assert conteos(db_session) == cantidades_antes
 
 
 def test_repetir_seed_no_duplica_ni_reinicia_stock_o_estados(db_session, ejecutar_seed):
