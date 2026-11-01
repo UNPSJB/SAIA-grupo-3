@@ -7,6 +7,7 @@ from src.unidadMedida.schemas import UnidadMedida
 class InsumoBase(BaseModel):
     nombre:str
     cantidad: float = Field(ge=0.0, description="La cantidad no puede ser negativa")
+    stock_minimo: Optional[float] = Field(default=None, ge=0.0, description="El stock mínimo no puede ser negativo")
     unidad_medida_id: int 
 
 class InsumoCreate(InsumoBase):
@@ -15,12 +16,14 @@ class InsumoCreate(InsumoBase):
 class InsumoUpdate(BaseModel):
     nombre: Optional[str] = None
     cantidad: Optional[float] = Field(default=None, ge=0.0)
+    stock_minimo: Optional[float] = Field(default=None, ge=0.0)
     unidad_medida_id: Optional[int] = None
     activo: Optional[bool] = None
 
 class Insumo(InsumoBase):
     id: int
     activo: bool
+    stock_bajo: bool = False
     unidadMedidaObj: UnidadMedida
     model_config = ConfigDict(from_attributes=True)
 

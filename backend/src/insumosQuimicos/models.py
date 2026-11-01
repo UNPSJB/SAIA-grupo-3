@@ -17,8 +17,13 @@ class InsumoQuimico(ModeloBase):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     nombre: Mapped[str] = mapped_column(String(120), unique=True, index=True, nullable=False)
     cantidad: Mapped[float] = mapped_column(default=0.0, nullable=False)
+    stock_minimo: Mapped[float | None] = mapped_column(nullable=True, default=None)
     tipo_quimico: Mapped[TipoQuimico] = mapped_column(nullable=False)
     activo: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     unidad_medida_id: Mapped[int] = mapped_column(ForeignKey("unidad_medida.id"), nullable=False)
     unidadMedidaObj: Mapped[UnidadMedida] = relationship("UnidadMedida")
+
+    @property
+    def stock_bajo(self) -> bool:
+        return self.stock_minimo is not None and self.cantidad <= self.stock_minimo
