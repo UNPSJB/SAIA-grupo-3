@@ -18,6 +18,13 @@ export function InsumoView({ insumo, onEditar, onVolver }: InsumoViewProps) {
       <Card.Body className="p-4">
         <div className="bg-body-tertiary p-3 rounded border mb-2">
           <div className="row mb-2">
+            <span className="col-4 text-muted fw-semibold">Stock mínimo:</span>
+            <span className="col-8">
+              {insumo.stock_minimo == null ? 'Sin definir' : `${insumo.stock_minimo.toLocaleString('es-AR')} ${insumo.unidadMedidaObj?.sufijo ?? ''}`}
+              {insumo.activo && insumo.stock_bajo && <Badge bg="warning" text="dark" className="ms-2">Stock bajo</Badge>}
+            </span>
+          </div>
+          <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">ID / Código:</span>
             <span className="col-8"><Badge bg="secondary">#{insumo.id}</Badge></span>
           </div>

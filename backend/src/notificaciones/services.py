@@ -148,26 +148,20 @@ def revisar_stock_insumo(
         f"({insumo.cantidad:g}{unidad} disponibles, mínimo {insumo.stock_minimo:g}{unidad})."
     )
 
-    if aviso is None:
-        aviso = Notificacion(
-            clave=clave,
-            tipo=TipoNotificacion.STOCK_BAJO,
-            titulo=titulo,
-            mensaje=mensaje,
-            enlace=enlace,
-            leida=False,
-            resuelta=False,
-        )
-        db.add(aviso)
-    elif not aviso.resuelta:
-        return aviso
-    else:
-        aviso.titulo = titulo
-        aviso.mensaje = mensaje
-        aviso.enlace = enlace
-        aviso.fecha_creacion = datetime.now()
-        aviso.leida = False
-        aviso.resuelta = False
+    from sqlalchemy.dialects.sqlite import insert
+    db.flush()
+
+    db.execute(insert(Notificacion).values(
+        clave=clave, tipo=TipoNotificacion.STOCK_BAJO,
+        titulo=titulo, mensaje=mensaje, enlace=enlace,
+        leida=False, resuelta=False,
+    ).on_conflict_do_nothing(index_elements=[Notificacion.clave]))
+    db.execute(update(Notificacion).where(
+        Notificacion.clave == clave, Notificacion.resuelta.is_(True),
+    ).values(titulo=titulo, mensaje=mensaje, enlace=enlace,
+             fecha_creacion=datetime.now(), leida=False, resuelta=False))
+    aviso = db.scalar(select(Notificacion).where(Notificacion.clave == clave)
+                      .execution_options(populate_existing=True))
 
     if confirmar:
         db.commit()
@@ -180,12 +174,12 @@ def revisar_stock_insumo(
 def revisar_stock_todos(db: Session, *, confirmar: bool = True) -> List[Notificacion]:
     avisos: List[Notificacion] = []
 
-    for insumo in db.scalars(select(Insumo).where(Insumo.activo == True)).all():
+    for insumo in db.scalars(select(Insumo)).all():
         aviso = revisar_stock_insumo(db, insumo, confirmar=False)
         if aviso is not None:
             avisos.append(aviso)
 
-    for quimico in db.scalars(select(InsumoQuimico).where(InsumoQuimico.activo == True)).all():
+    for quimico in db.scalars(select(InsumoQuimico)).all():
         aviso = revisar_stock_insumo(db, quimico, confirmar=False)
         if aviso is not None:
             avisos.append(aviso)
@@ -195,3 +189,12 @@ def revisar_stock_todos(db: Session, *, confirmar: bool = True) -> List[Notifica
     else:
         db.flush()
     return avisos
+
+def contar_stock_bajo(db: Session) -> dict[str, int]:
+    def cantidad(modelo):
+        return db.scalar(select(func.count()).select_from(modelo).where(
+            modelo.activo.is_(True), modelo.stock_minimo.is_not(None),
+            modelo.cantidad <= modelo.stock_minimo,
+        )) or 0
+    insumos, quimicos = cantidad(Insumo), cantidad(InsumoQuimico)
+    return {"insumos": insumos, "insumos_quimicos": quimicos, "total": insumos + quimicos}

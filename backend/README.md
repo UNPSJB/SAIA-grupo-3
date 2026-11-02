@@ -140,5 +140,53 @@ faltantes de equipos (control y límites), mínimos de insumos/químicos y resol
 notificaciones; primero guarda un respaldo `.bak`. Se puede repetir sin duplicar columnas.
 No modifica cantidades ni activa controles en equipos existentes. La nueva tabla de lecturas
 se crea con el arranque habitual del backend. No es necesario borrar la BDD ni ejecutar el
-seed sobre datos reales. Esta integración conserva la implementación parcial existente de
-stock mínimo; el paquete separado de esa HDU sigue siendo una entrega independiente.
+seed sobre datos reales. Los avisos de stock mínimo se integran con el saldo calculado desde las recepciones;
+no se vuelve a introducir un contador editable en ingredientes.
+
+
+### Stock mínimo con stock calculado desde recepciones
+
+Los ingredientes conservan nombre, unidad y mínimo opcional en Datos Maestros.
+`cantidad` se calcula sumando el saldo de recepciones activas, tanto en Python como
+en los filtros y contadores SQL. Los lotes vencidos siguen formando parte del
+stock general, pero no son utilizables en nuevas producciones. Los químicos
+conservan su cantidad registrada y su circuito actual del checklist.
+
+La producción mantiene las asignaciones de recepciones elegidas o sugeridas por el
+formulario de Mauricio. Se descuentan exclusivamente esos lotes y luego se revisa
+el mínimo dentro de la misma transacción; no hay un segundo descuento general.
+La campanita conserva los avisos de temperatura, vencimientos y stock.
+
+En bases anteriores que todavía tengan `insumos.cantidad` obligatoria sin valor
+por defecto, ejecutar **con el servidor detenido**, después de la migración de
+integración si también faltan las columnas de temperatura:
+
+```bash
+.venv/bin/python -m scripts.migrate_stock_minimo --database /ruta/absoluta/a/la/base.db
+```
+
+Guarda un respaldo `.bak`, agrega las columnas faltantes y conserva todos los
+valores de `cantidad` anterior para auditoría. Prepara esa columna histórica con
+DEFAULT 0 para que los nuevos ingredientes se puedan crear sin enviar cantidad.
+No cambia saldos de lotes, proveedores, consumos ni el mínimo existente; tampoco
+inventa recepciones para stock anterior sin origen. Repetirla no vuelve a aplicar
+cambios. El contador histórico no participa del stock operativo.
+
+Los formularios de ingredientes envían `stock_minimo`, nunca `cantidad`.
+Vacío desactiva el mínimo; cero es válido. Los filtros se aplican antes de paginar
+y el endpoint de contador usa la misma suma que la pantalla. Los avisos se generan
+al consumir, se resuelven al reponer por encima del mínimo y no se repiten mientras
+el insumo continúe bajo. Una nueva caída reactiva el aviso existente.
+
+### Escenarios DEMO para probar mínimos y avisos
+
+El seed incluye siete casos de ingredientes y siete de químicos con nombres
+`DEMO stock - …`: por encima del mínimo, exactamente en él, por debajo, sin mínimo,
+mínimo cero, aviso resuelto por reposición y stock listo para consumir.
+También deja un producto y una tarea de checklist preparados para alcanzar el
+mínimo consumiendo 1 kg y 1 L, respectivamente. Las lecturas de temperatura
+fuera de rango tienen sus avisos de demostración.
+
+La guía [PRUEBAS-STOCK-DEMO.md](PRUEBAS-STOCK-DEMO.md) indica nombres, cantidades,
+responsable y pasos para verificar los recorridos. Repetir la carga conserva las
+modificaciones del usuario y no duplica ingresos, consumos ni notificaciones.

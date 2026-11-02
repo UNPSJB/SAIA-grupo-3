@@ -2,6 +2,8 @@ export interface Insumo {
   id: number;
   nombre: string;
   cantidad: number;
+  stock_minimo?: number | null;
+  stock_bajo?: boolean;
   unidad_medida_id: number;
   activo?: boolean;
   unidadMedidaObj?: {
@@ -13,11 +15,13 @@ export interface Insumo {
 
 export interface InsumoCreate {
   nombre: string;
+  stock_minimo?: number | null;
   unidad_medida_id: number;
 }
 
 export interface InsumoUpdate {
   nombre?: string;
+  stock_minimo?: number | null;
   unidad_medida_id?: number;
   activo?: boolean;
 }

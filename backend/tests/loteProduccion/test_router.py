@@ -335,7 +335,7 @@ def test_endpoint_no_registra_lote_con_insumo_inactivo(
     )
 
     # Assert
-    assert respuesta.status_code == 409
+    assert respuesta.status_code == 400
     assert respuesta.json()["detail"] == "No se pueden asociar insumos dados de baja."
 
 
@@ -361,7 +361,7 @@ def test_endpoint_no_registra_lote_con_insumo_duplicado(
     )
 
     # Assert
-    assert respuesta.status_code == 409
+    assert respuesta.status_code == 400
     assert respuesta.json()["detail"] == "No se puede asociar el mismo insumo más de una vez al lote."
 
 

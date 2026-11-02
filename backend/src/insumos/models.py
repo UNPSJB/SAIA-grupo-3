@@ -1,4 +1,5 @@
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, select, func
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import auto, StrEnum
 from src.models import ModeloBase
@@ -21,12 +22,24 @@ class Insumo(ModeloBase):
         lazy="selectin",
     )
 
-    @property
+    @hybrid_property
     def cantidad(self) -> float:
         return sum(
             lote.cantidad_disponible
             for lote in self.lotes_recepcion
             if lote.activo
+        )
+
+    @cantidad.expression
+    def cantidad(cls):
+        # El filtro y el contador SQL deben calcular el mismo saldo que la vista.
+        from src.abastecimiento.models import LoteRecepcionInsumo
+        return (
+            select(func.coalesce(func.sum(LoteRecepcionInsumo.cantidad_disponible), 0.0))
+            .where(LoteRecepcionInsumo.insumo_id == cls.id,
+                   LoteRecepcionInsumo.activo.is_(True))
+            .correlate_except(LoteRecepcionInsumo)
+            .scalar_subquery()
         )
 
     @property

@@ -18,6 +18,8 @@ export interface InsumoQuimico {
   id: number;
   nombre: string;
   cantidad: number;
+  stock_minimo?: number | null;
+  stock_bajo?: boolean;
   tipo_quimico: TipoQuimico;
   unidad_medida_id: number;
   activo: boolean;
@@ -27,6 +29,7 @@ export interface InsumoQuimico {
 export interface InsumoQuimicoCreate {
   nombre: string;
   cantidad: number;
+  stock_minimo?: number | null;
   tipo_quimico: TipoQuimico;
   unidad_medida_id: number;
 }
@@ -34,6 +37,7 @@ export interface InsumoQuimicoCreate {
 export interface InsumoQuimicoUpdate {
   nombre?: string;
   cantidad?: number;
+  stock_minimo?: number | null;
   tipo_quimico?: TipoQuimico;
   unidad_medida_id?: number;
   activo?: boolean;

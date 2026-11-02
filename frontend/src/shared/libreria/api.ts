@@ -1,3 +1,4 @@
+import { avisarCambioNotificaciones } from '../../features/notificaciones/events';
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(
   /\/$/,
   '',
@@ -137,5 +138,11 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
   }
 
   if (response.status === 403) throw new Error('No tenés permiso para realizar esta operación.');
+  if (response.ok && !['GET', 'HEAD'].includes((options.method ?? 'GET').toUpperCase())) {
+    const ruta = url.replace(API_BASE_URL, '').split('?')[0];
+    if (/^\/(insumos|insumos-quimicos|consumo-quimico|consumos-quimicos|consumos|checklist|lotes-produccion|lotes-insumo)(\/|$)/.test(ruta)) {
+      avisarCambioNotificaciones();
+    }
+  }
   return response;
 }

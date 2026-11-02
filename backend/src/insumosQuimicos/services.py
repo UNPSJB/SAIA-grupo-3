@@ -1,3 +1,4 @@
+from src.stock import revisar, revertir_si_falla
 from src.pagination import filtrar_ordenar
 from typing import Dict, Any
 from sqlalchemy import select, update, func
@@ -18,6 +19,7 @@ def _validar_duplicados(db: Session, nombre: str, excluir_id: int | None = None)
         raise exceptions.NombreDuplicado()
 
 
+@revertir_si_falla
 def crear_insumo_quimico(
     db: Session, insumo: schemas.InsumoQuimicoCreate
 ) -> InsumoQuimico:
@@ -26,6 +28,7 @@ def crear_insumo_quimico(
 
     nuevo_insumo = InsumoQuimico(**insumo.model_dump())
     db.add(nuevo_insumo)
+    revisar(db, nuevo_insumo)
     db.commit()
     db.refresh(nuevo_insumo)
     return nuevo_insumo
@@ -40,9 +43,12 @@ def listar_insumos_quimicos(
     orden: str = "asc",
     buscar: str = "",
     tipo_quimico: str | None = None,
+    solo_stock_bajo: bool = False,
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(InsumoQuimico)
+    if solo_stock_bajo:
+        query = query.where(InsumoQuimico.activo.is_(True), InsumoQuimico.stock_minimo.is_not(None), InsumoQuimico.cantidad <= InsumoQuimico.stock_minimo)
 
     if not mostrar_inactivos:
         query = query.where(InsumoQuimico.activo == True)
@@ -79,6 +85,7 @@ def leer_insumo_quimico(
     return insumo
 
 
+@revertir_si_falla
 def modificar_insumo_quimico(
     db: Session, insumo_id: int, insumo: schemas.InsumoQuimicoUpdate
 ) -> InsumoQuimico:
@@ -96,17 +103,20 @@ def modificar_insumo_quimico(
         .where(InsumoQuimico.id == insumo_id)
         .values(**datos_actualizar)
     )
+    revisar(db, db_insumo)
     db.commit()
     db.refresh(db_insumo)
     return db_insumo
 
 
+@revertir_si_falla
 def eliminar_insumo_quimico(
     db: Session, insumo_id: int
 ) -> schemas.InsumoQuimicoDelete:
     # Baja lógica
     db_insumo = leer_insumo_quimico(db, insumo_id)
     db_insumo.activo = False
+    revisar(db, db_insumo)
     db.commit()
     db.refresh(db_insumo)
     return db_insumo

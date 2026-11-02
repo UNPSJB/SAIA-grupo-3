@@ -216,20 +216,56 @@
   border: 0;
 }
 
+.header-icon-button.campanita-toggle {
+  padding: 0 !important;
+}
+
 .campanita-toggle .notification-count {
   position: absolute;
-  top: 0;
-  right: 0;
-  transform: translate(25%, -25%);
-  min-width: 18px;
-  height: 18px;
-  padding: 2px 3px;
+  top: -7px;
+  right: -8px;
+  box-sizing: border-box;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 5px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  color: var(--bs-white);
+  background-color: var(--bs-danger);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
   border: 2px solid var(--bs-body-bg);
+}
+
+.stock-cantidad-listado {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-bajo-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  width: max-content;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background-color: var(--bs-warning-bg-subtle);
+  color: var(--bs-warning-text-emphasis);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.stock-bajo-etiqueta i {
+  font-size: 13px;
 }
 
 .avatar-toggle::after {

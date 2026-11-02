@@ -1,3 +1,4 @@
+from src.stock import revisar_ids
 from datetime import date, datetime
 from typing import Any, Dict
 from fastapi import HTTPException
@@ -94,6 +95,7 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_i
                     for asignacion in item.lotes_recepcion
                 ],
             )
+        revisar_ids(db, Insumo, ids_insumos)
         db.commit()
         db.refresh(db_lote)
     except Exception:

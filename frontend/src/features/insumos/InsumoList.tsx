@@ -22,6 +22,8 @@ export function InsumoList({
 }: InsumoListProps) {
   const {
     insumos,
+    soloStockBajo,
+    setSoloStockBajo,
     loading,
     error,
     page,
@@ -43,6 +45,14 @@ export function InsumoList({
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
       <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina de Insumos">
+        <Form.Check
+          type="switch"
+          id="Insumo-solo-stock-bajo"
+          label="Solo stock bajo"
+          checked={soloStockBajo}
+          onChange={(e) => setSoloStockBajo(e.target.checked)}
+          className="text-secondary mb-0"
+        />
         <Form.Check
           type="switch"
           id="switch-inactivos"
@@ -90,6 +100,7 @@ export function InsumoList({
                 >
                   Estado
                 </SortableHeader>
+                <th>Stock mínimo</th>
                 <th className="text-center" style={{ width: '120px' }}>
                   Acciones
                 </th>
@@ -98,7 +109,7 @@ export function InsumoList({
             <tbody>
               {insumos.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-4 text-muted">
+                  <td colSpan={6} className="text-center py-4 text-muted">
                     No hay insumos registrados.
                   </td>
                 </tr>
@@ -108,7 +119,17 @@ export function InsumoList({
                     <td>
                       <strong>{item.nombre}</strong>
                     </td>
-                    <td>{item.cantidad}</td>
+                    <td>
+                      <div className="stock-cantidad-listado">
+                        <span>{item.cantidad.toLocaleString('es-AR')}</span>
+                        {item.activo && item.stock_bajo && (
+                          <span className="stock-bajo-etiqueta">
+                            <i className="bi bi-exclamation-triangle" aria-hidden="true" />
+                            Stock bajo
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td>
                       {item.unidadMedidaObj
                         ? `${item.unidadMedidaObj.sufijo}`
@@ -121,6 +142,7 @@ export function InsumoList({
                         <Badge bg="danger">Inactivo</Badge>
                       )}
                     </td>
+                    <td>{item.stock_minimo == null ? 'Sin definir' : item.stock_minimo.toLocaleString('es-AR')}</td>
                     <td className="text-center">
                       <div className="d-flex justify-content-center gap-2">
                         {item.activo ? (

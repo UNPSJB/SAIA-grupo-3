@@ -21,9 +21,10 @@ def read_insumos(
     mostrar_inactivos: bool = Query(False),
     ordenar_por: str = Query("id"),
     orden: str = Query("asc"),
-    buscar: str = Query("")
+    buscar: str = Query(""),
+    solo_stock_bajo: bool = Query(False)
 ):
-    return services.listar_insumos(db, page, size, mostrar_inactivos, ordenar_por, orden, buscar)
+    return services.listar_insumos(db, page, size, mostrar_inactivos, ordenar_por, orden, buscar, solo_stock_bajo)
 
 @router.get("/{insumo_id}", response_model=schemas.Insumo)
 def read_insumo_id(insumo_id: int, db: Session = Depends(get_db)):

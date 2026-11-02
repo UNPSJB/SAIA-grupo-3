@@ -1,3 +1,4 @@
+from src.stock import revisar, revisar_ids, revertir_si_falla
 from src.pagination import filtrar_ordenar
 from typing import Dict, Any
 from sqlalchemy import select, update, func
@@ -9,6 +10,7 @@ from src.insumosQuimicos.models import InsumoQuimico
 from src.unidadMedida.models import UnidadMedida
 from datetime import date
 
+@revertir_si_falla
 def crear_consumo(db: Session, consumo: schemas.ConsumoQuimicoCreate) -> ConsumoQuimico:
     insumo_db = leer_insumo_quimico(db, consumo.insumo_quimico_id)
     if insumo_db.cantidad < consumo.cantidad_utilizada:
@@ -19,7 +21,8 @@ def crear_consumo(db: Session, consumo: schemas.ConsumoQuimicoCreate) -> Consumo
     
     insumo_db.cantidad -= consumo.cantidad_utilizada
     db.add(insumo_db)
-    
+
+    revisar(db, insumo_db)
     db.commit()
     db.refresh(_consumo)
     return _consumo
@@ -51,44 +54,35 @@ def leer_consumo(db: Session, consumo_id: int, incluir_inactivos: bool = False) 
         raise exceptions.ConsumoNoEncontrado()
     return db_consumo
 
+@revertir_si_falla
 def modificar_consumo(db: Session, consumo_id: int, consumo_in: schemas.ConsumoQuimicoUpdate) -> ConsumoQuimico:
     db_consumo = leer_consumo(db, consumo_id, incluir_inactivos=True)
+    anterior_id = db_consumo.insumo_quimico_id
     datos_actualizar = consumo_in.model_dump(exclude_unset=True)
 
-    # 1. Lógica exclusiva de reactivación (Si pasa de inactivo a activo)
-    if datos_actualizar.get("activo") is True and not db_consumo.activo:
-        insumo = leer_insumo_quimico(db, db_consumo.insumo_quimico_id)
-        if insumo.cantidad < db_consumo.cantidad_utilizada:
+    nuevo_id = datos_actualizar.get("insumo_quimico_id", anterior_id)
+    nueva_cantidad = datos_actualizar.get("cantidad_utilizada", db_consumo.cantidad_utilizada)
+    nuevo_activo = datos_actualizar.get("activo", db_consumo.activo)
+    if nuevo_id is None or nueva_cantidad is None or nuevo_activo is None:
+        from fastapi import HTTPException
+        raise HTTPException(422, "Insumo, cantidad y estado no pueden ser nulos.")
+    original = leer_insumo_quimico(db, anterior_id, incluir_inactivos=True)
+    if db_consumo.activo:
+        original.cantidad += db_consumo.cantidad_utilizada
+    if nuevo_activo:
+        nuevo = leer_insumo_quimico(db, nuevo_id)
+        if nuevo.cantidad < nueva_cantidad:
             raise exceptions.StockInsuficiente()
-        insumo.cantidad -= db_consumo.cantidad_utilizada
-        db.add(insumo)
+        nuevo.cantidad -= nueva_cantidad
+    for campo, valor in datos_actualizar.items():
+        setattr(db_consumo, campo, valor)
+    revisar_ids(db, InsumoQuimico, [anterior_id, nuevo_id])
 
-    # 2. Lógica si se edita el registro (cambio de cantidad o insumo)
-    elif db_consumo.activo and ("cantidad_utilizada" in datos_actualizar or "insumo_quimico_id" in datos_actualizar):
-        nueva_cantidad = datos_actualizar.get("cantidad_utilizada", db_consumo.cantidad_utilizada)
-        nuevo_insumo_id = datos_actualizar.get("insumo_quimico_id", db_consumo.insumo_quimico_id)
-        insumo_original = leer_insumo_quimico(db, db_consumo.insumo_quimico_id)
-        
-        if nuevo_insumo_id == db_consumo.insumo_quimico_id:
-            diferencia = nueva_cantidad - db_consumo.cantidad_utilizada
-            if insumo_original.cantidad < diferencia:
-                raise exceptions.StockInsuficiente()
-            insumo_original.cantidad -= diferencia
-            db.add(insumo_original)
-        else:
-            insumo_nuevo = leer_insumo_quimico(db, nuevo_insumo_id)
-            if insumo_nuevo.cantidad < nueva_cantidad:
-                raise exceptions.StockInsuficiente()
-            insumo_original.cantidad += db_consumo.cantidad_utilizada
-            insumo_nuevo.cantidad -= nueva_cantidad
-            db.add(insumo_original)
-            db.add(insumo_nuevo)
-
-    db.execute(update(ConsumoQuimico).where(ConsumoQuimico.id == consumo_id).values(**datos_actualizar))
     db.commit()
     db.refresh(db_consumo)
     return db_consumo
 
+@revertir_si_falla
 def eliminar_consumo(db: Session, consumo_id: int) -> schemas.ConsumoQuimicoDelete:
     db_consumo = leer_consumo(db, consumo_id)
     if db_consumo.activo:
@@ -97,6 +91,7 @@ def eliminar_consumo(db: Session, consumo_id: int) -> schemas.ConsumoQuimicoDele
         insumo_db = leer_insumo_quimico(db, db_consumo.insumo_quimico_id)
         insumo_db.cantidad += db_consumo.cantidad_utilizada
         db.add(insumo_db)
+        revisar(db, insumo_db)
         db.commit()
         db.refresh(db_consumo)
     return db_consumo

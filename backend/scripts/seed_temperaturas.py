@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 
 from src.equipos.models import Equipo, TipoEquipo
 from src.registroTemperatura.models import RegistroTemperatura
+from src.notificaciones.models import Notificacion, TipoNotificacion
 
 
 def cargar_temperaturas(db, crear, sectores, operadores, hoy):
@@ -28,10 +29,17 @@ def cargar_temperaturas(db, crear, sectores, operadores, hoy):
             fuera = (dia + indice) % 5 == 0
             temperatura = (equipo.temperatura_maxima + 2 if fuera else
                            (equipo.temperatura_minima + equipo.temperatura_maxima) / 2)
-            crear(
+            registro, _ = crear(
                 RegistroTemperatura,
                 {"equipo_id": equipo.id, "fecha_hora_registro": fecha},
                 operario_id=operadores[indice % len(operadores)].id,
                 temperatura_registrada=temperatura, fuera_de_rango=fuera,
                 accion_tomada="DEMO: se ajustó el termostato y se avisó a mantenimiento." if fuera else None,
             )
+            if registro.fuera_de_rango:
+                crear(Notificacion, {"clave": f"seed-saia-temperatura-{registro.id}"},
+                    tipo=TipoNotificacion.TEMPERATURA_FUERA_RANGO,
+                    titulo="DEMO: alerta de cadena de frío",
+                    mensaje=f"{equipo.nombre}: {registro.temperatura_registrada:g} °C. {registro.accion_tomada or ''}"[:250],
+                    enlace=f"/equipos/{equipo.id}", fecha_creacion=registro.fecha_hora_registro,
+                    leida=False, resuelta=False)

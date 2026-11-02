@@ -1,3 +1,4 @@
+from src.stock import revisar, revertir_si_falla
 from datetime import date, timedelta
 from typing import List
 from sqlalchemy import select
@@ -184,6 +185,7 @@ def armar_checklist(db: Session,personal_id: int,hoy: date) -> schemas.Checklist
         pendientes=len(items) - realizadas,
     )
 
+@revertir_si_falla
 def finalizar_item_checklist(
     db: Session,
     item_id: int,
@@ -375,6 +377,8 @@ def finalizar_item_checklist(
             )
         )
 
+    for insumo_db, _ in insumos_a_descontar:
+        revisar(db, insumo_db)
     db.commit()
     db.refresh(item)
     return item

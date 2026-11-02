@@ -1,3 +1,4 @@
+from src.stock import revisar_ids
 from datetime import date
 from functools import wraps
 import math
@@ -396,6 +397,7 @@ def guardar_recepcion(
     db.add(lote)
     db.flush()
 
+    revisar_ids(db, Insumo, [datos.insumo_id])
     return lote_salida(lote)
 
 
@@ -416,6 +418,7 @@ def anular_recepcion(db: Session, lote_id: int):
 
     lote.activo = False
     db.flush()
+    revisar_ids(db, Insumo, [lote.insumo_id])
 
     return lote_salida(lote)
 

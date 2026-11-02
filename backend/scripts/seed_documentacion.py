@@ -22,4 +22,4 @@ def cargar_documentacion(crear, operadores, hoy):
             tipo=TipoNotificacion.VENCIMIENTO_DOCUMENTACION,
             titulo=f"Control documental: {nombre}"[:100],
             mensaje=f"Revisar la vigencia de {nombre.lower()} del personal asignado.",
-            enlace="/personal/vencimientos", fecha_creacion=datetime.combine(hoy, time(8, i)), leida=i >= 5)
+            enlace="/personal/vencimientos", fecha_creacion=datetime.combine(hoy - timedelta(days=1), time(8, i)), leida=i >= 5)

@@ -17,3 +17,8 @@ class Notificacion(BaseModel):
 
 class Cantidad(BaseModel):
     cantidad: int
+
+class CantidadStockBajo(BaseModel):
+    insumos: int
+    insumos_quimicos: int
+    total: int

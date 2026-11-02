@@ -29,6 +29,7 @@ from scripts.seed_planes import cargar_planes
 from scripts.seed_productos import cargar_productos
 from scripts.seed_sectores import cargar_sectores
 from scripts.seed_tareas import cargar_tareas
+from scripts.seed_stock_minimo import cargar_stock_minimo
 from scripts.seed_unidades_medida import cargar_unidades_medida
 from src.config import ARCHIVOS_DIR, UPLOADS_DIR
 from src.database import SessionLocal, engine
@@ -60,12 +61,8 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             unidades, unidades_por_sufijo = cargar_unidades_medida(crear)
             sectores = cargar_sectores(crear)
             equipos = cargar_equipos(crear, sectores)
-<<<<<<< HEAD
             cargar_temperaturas(db, crear, sectores, operadores, hoy)
-            _, ingredientes = cargar_insumos(crear, unidades, unidades_por_sufijo)
-=======
             insumos_maestros, ingredientes = cargar_insumos(crear, unidades, unidades_por_sufijo)
->>>>>>> origin/feature/trazabilidad-insumos-productos
             quimicos = cargar_insumos_quimicos(crear, unidades_por_sufijo)
             elementos = cargar_elementos(crear, hoy)
             tareas = cargar_tareas(crear, equipos, elementos, quimicos)
@@ -86,6 +83,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                 db, crear, productos, ingredientes, operadores, admin, hoy, proveedores,
                 autores_demo={p.id for p in personas},
             )
+            cargar_stock_minimo(db, crear, unidades_por_sufijo, proveedores, admin, hoy)
 
             db.flush()
             conteos = {
@@ -111,6 +109,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
     for nombre in sorted(conteos):
         print(f"  {nombre}: {conteos[nombre]} totales; {resumen.get(nombre, 0)} nuevos")
     print("Fotografías de contexto reales; perfiles ficticios y documentos de demostración.")
+    print("Probá los casos 'DEMO stock': normal, mínimo, bajo, vacío, cero y repuesto. Los preparados consumen 1 kg / 1 L.")
     print(f"admin: {PASSWORD_ADMIN}; opera y nuevos perfiles: {PASSWORD_OPERARIO} (se conservan contraseñas existentes).")
 
 

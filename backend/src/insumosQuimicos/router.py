@@ -27,11 +27,12 @@ def read_insumos_quimicos(
     ordenar_por: str = Query("id", description="Columna para ordenar"),
     orden: str = Query("asc", description="asc o desc"),
     buscar: str = Query("", description="Búsqueda por nombre"),
+    solo_stock_bajo: bool = Query(False),
     tipo_quimico: str | None = Query(None, description="Filtrar por tipo de químico"),
 ):
     logger.info(f"Listando insumos químicos (página {page}, tamaño {size})")
     return services.listar_insumos_quimicos(
-        db, page, size, mostrar_inactivos, ordenar_por, orden, buscar, tipo_quimico)
+        db, page, size, mostrar_inactivos, ordenar_por, orden, buscar, tipo_quimico, solo_stock_bajo)
 
 
 @router.get("/{insumo_id}", response_model=schemas.InsumoQuimico)

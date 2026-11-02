@@ -1,3 +1,5 @@
+from src.stock import revisar, revertir_si_falla
+from fastapi import HTTPException
 from src.pagination import filtrar_ordenar
 from typing import List, Dict, Any
 from sqlalchemy import select, update, func
@@ -13,21 +15,25 @@ def _validar_duplicados(db: Session, nombre: str, excluir_id: int | None = None)
     if db.scalar(query_nombre) is not None:
         raise exceptions.NombreDuplicado()
 
+@revertir_si_falla
 def crear_insumo(db: Session, insumo: schemas.InsumoCreate) -> Insumo:
     _validar_duplicados(db, insumo.nombre)
     leer_unidad_medida(db, insumo.unidad_medida_id)
     
     _insumo = Insumo(**insumo.model_dump())
     db.add(_insumo)
+    revisar(db, _insumo)
     db.commit()
     db.refresh(_insumo)
     return _insumo
 
 def listar_insumos(
-    db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False, ordenar_por: str = "id", orden: str = "asc", buscar: str = ""
+    db: Session, page: int = 1, size: int = 10, mostrar_inactivos: bool = False, ordenar_por: str = "id", orden: str = "asc", buscar: str = "", solo_stock_bajo: bool = False
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(Insumo)
+    if solo_stock_bajo:
+        query = query.where(Insumo.activo.is_(True), Insumo.stock_minimo.is_not(None), Insumo.cantidad <= Insumo.stock_minimo)
 
     if not mostrar_inactivos:
         query = query.where(Insumo.activo == True)
@@ -50,6 +56,7 @@ def leer_insumo(db: Session, insumo_id: int, incluir_inactivos: bool = False) ->
         raise exceptions.InsumoNoEncontrado()
     return db_insumo
 
+@revertir_si_falla
 def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) -> Insumo:
     from src.abastecimiento.models import LoteRecepcionInsumo
     from src.abastecimiento.services import bloquear_insumo
@@ -58,7 +65,7 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
         db_insumo = bloquear_insumo(db, insumo_id, permitir_inactivo=True)
         datos_actualizar = {
             campo: valor for campo, valor in insumo.model_dump(exclude_unset=True).items()
-            if valor is not None
+            if valor is not None or campo == "stock_minimo"
         }
         tiene_recepciones = db.scalar(
             select(LoteRecepcionInsumo.id)
@@ -73,6 +80,7 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
             leer_unidad_medida(db, datos_actualizar["unidad_medida_id"])
         for campo, valor in datos_actualizar.items():
             setattr(db_insumo, campo, valor)
+        revisar(db, db_insumo)
         db.commit()
         db.refresh(db_insumo)
         return db_insumo
@@ -80,9 +88,11 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
         db.rollback()
         raise
 
+@revertir_si_falla
 def eliminar_insumo(db: Session, insumo_id: int) -> schemas.InsumoDelete:
     db_insumo = leer_insumo(db, insumo_id)
     db_insumo.activo = False
+    revisar(db, db_insumo)
     db.commit()
     db.refresh(db_insumo)
     return db_insumo

@@ -1,4 +1,4 @@
-import { Dropdown, Badge, Button } from 'react-bootstrap';
+import { Dropdown, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useNotificaciones } from './useNotificaciones';
 import type { Notificacion } from './types';
@@ -35,9 +35,9 @@ export function NotificacionesBell() {
           aria-hidden="true"
         ></i>
         {cantidadNoLeidas > 0 && (
-          <Badge bg="danger" pill className="notification-count">
-            {cantidadNoLeidas > 9 ? '9+' : cantidadNoLeidas}
-          </Badge>
+          <span className="notification-count" aria-hidden="true">
+            {cantidadNoLeidas > 99 ? '99+' : cantidadNoLeidas}
+          </span>
         )}
       </Dropdown.Toggle>
 
@@ -86,7 +86,7 @@ export function NotificacionesBell() {
                   </div>
                   <div className="text-body-secondary mb-2">{n.mensaje}</div>
                   <small className="text-body-secondary">
-                    {n.leida ? 'Leída' : 'Sin leer'}
+                    {n.resuelta ? 'Resuelta' : n.leida ? 'Leída' : 'Sin leer'}
                     {' · '}{formatearFechaHora(n.fecha_creacion)}
                   </small>
                 </div>
