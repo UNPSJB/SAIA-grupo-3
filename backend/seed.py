@@ -243,48 +243,58 @@ def _pdf_certificado(titulo: str, lineas: list[str]) -> bytes:
 def seed_temperaturas(db):
     print("Generando historial de temperaturas...")
     
-    # Agarramos un equipo cualquiera y lo convertimos en cámara de frío por las dudas
-    equipo = db.scalars(select(Equipo).where(Equipo.activo == True)).first()
-    if equipo:
+    # Buscamos todos los equipos activos
+    equipos_activos = db.scalars(select(Equipo).where(Equipo.activo == True)).all()
+    
+    if not equipos_activos:
+        return
+
+    # Elegimos hasta 4 equipos al azar (o los que haya si son menos de 4)
+    cantidad_a_elegir = min(4, len(equipos_activos))
+    equipos_frio = random.sample(equipos_activos, cantidad_a_elegir)
+
+    # Convertimos los elegidos en equipos de cadena de frío
+    for equipo in equipos_frio:
         equipo.controla_temperatura = True
         equipo.temperatura_minima = -18.0
         equipo.temperatura_maxima = -12.0
-        db.flush()
+    db.flush()
 
     # Buscamos un operario para asignarle los registros
     operario = db.scalars(select(Personal).where(Personal.operar == True)).first()
     
-    if not equipo or not operario:
+    if not operario:
         return
 
-    # Generamos 20 días de historial
+    # Generamos historial para CADA uno de los equipos elegidos
     hoy = date.today()
-    for dias_atras in range(20):
-        fecha_registro = datetime.combine(hoy - timedelta(days=dias_atras), time(9, 30))
-        
-        # 80% de chances de estar en rango normal, 20% de que falle
-        if random.random() < 0.8:
-            temp = random.uniform(-17.5, -12.5)
-            fuera_rango = False
-            accion = None
-        else:
-            temp = random.uniform(-11.0, -5.0)  # Se pasó de calor
-            fuera_rango = True
-            accion = random.choice([
-                "Se cerró la puerta que quedó mal trabada.",
-                "Se ajustó el termostato y se llamó a mantenimiento.",
-                "Descongelamiento programado, volvió a la normalidad."
-            ])
+    for equipo in equipos_frio:
+        for dias_atras in range(40):
+            fecha_registro = datetime.combine(hoy - timedelta(days=dias_atras), time(9, 30))
             
-        registro = RegistroTemperatura(
-            equipo_id=equipo.id,
-            operario_id=operario.id,
-            temperatura_registrada=round(temp, 1),
-            fecha_hora_registro=fecha_registro,
-            fuera_de_rango=fuera_rango,
-            accion_tomada=accion
-        )
-        db.add(registro)
+            # 80% de chances de estar en rango normal, 20% de que falle
+            if random.random() < 0.8:
+                temp = random.uniform(-17.5, -12.5)
+                fuera_rango = False
+                accion = None
+            else:
+                temp = random.uniform(-11.0, -5.0)  # Se pasó de calor
+                fuera_rango = True
+                accion = random.choice([
+                    "Se cerró la puerta que quedó mal trabada.",
+                    "Se ajustó el termostato y se llamó a mantenimiento.",
+                    "Descongelamiento programado, volvió a la normalidad."
+                ])
+                
+            registro = RegistroTemperatura(
+                equipo_id=equipo.id,
+                operario_id=operario.id,
+                temperatura_registrada=round(temp, 1),
+                fecha_hora_registro=fecha_registro,
+                fuera_de_rango=fuera_rango,
+                accion_tomada=accion
+            )
+            db.add(registro)
     
     db.flush()
 
