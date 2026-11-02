@@ -205,7 +205,7 @@ def test_recepcion_y_conciliacion_exigen_origen_completo(
     respuesta = client.post(ruta, json=payload, headers=auth_headers)
     assert respuesta.status_code == 422, respuesta.text
     db_session.refresh(insumo_activo)
-    assert insumo_activo.cantidad == 50
+    assert insumo_activo.cantidad == 0
     assert db_session.scalar(select(func.count()).select_from(LoteRecepcionInsumo)) == 0
 
 

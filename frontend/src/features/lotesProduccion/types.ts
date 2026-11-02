@@ -18,6 +18,21 @@ export interface InsumoSeleccionable extends InsumoResumen {
 export interface LoteInsumoCreate {
   insumo_id: number;
   cantidad_usada: number;
+  lotes_recepcion: ConsumoRecepcionCreate[];
+}
+
+export interface ConsumoRecepcionCreate {
+  lote_recepcion_id: number;
+  cantidad: number;
+}
+
+export interface LoteRecepcionDisponible {
+  id: number;
+  numero_lote: string;
+  proveedor_nombre: string;
+  fecha_vencimiento: string;
+  cantidad_disponible: number;
+  es_vencimiento_proximo: boolean;
 }
 
 export interface LoteInsumo {

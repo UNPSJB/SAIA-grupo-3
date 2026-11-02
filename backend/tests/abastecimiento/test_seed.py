@@ -12,7 +12,11 @@ from src.abastecimiento.models import (
 from src.documentacion.vencimientos import calcular_estado
 from src.insumos.models import Insumo
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
-from src.loteProduccion.schemas import LoteInsumoCreate, LoteProduccionCreate
+from src.loteProduccion.schemas import (
+    ConsumoRecepcionCreate,
+    LoteInsumoCreate,
+    LoteProduccionCreate,
+)
 from src.loteProduccion.services import crear_lote
 from src.models import ModeloBase
 from src.personal.models import Personal
@@ -184,10 +188,32 @@ def test_repetir_seed_no_duplica_ni_reinicia_stock_o_estados(db_session, ejecuta
     ejecutar_seed()
     insumo = db_session.scalar(select(Insumo).where(Insumo.nombre == "Harina de trigo · DEMO abastecimiento"))
     producto = db_session.scalar(select(Producto).where(Producto.nombre == "Pan francés · DEMO abastecimiento"))
+    lote_recepcion = db_session.scalar(
+        select(LoteRecepcionInsumo)
+        .where(
+            LoteRecepcionInsumo.insumo_id == insumo.id,
+            LoteRecepcionInsumo.activo.is_(True),
+            LoteRecepcionInsumo.cantidad_disponible > 0,
+            LoteRecepcionInsumo.fecha_vencimiento >= date.today(),
+            LoteRecepcionInsumo.fecha_recepcion <= date.today(),
+        )
+        .order_by(LoteRecepcionInsumo.fecha_vencimiento, LoteRecepcionInsumo.id)
+    )
     admin = db_session.scalar(select(Personal).where(Personal.username == "admin"))
     crear_lote(db_session, LoteProduccionCreate(
         producto_id=producto.id, fecha_produccion=date.today(), cantidad=1,
-        insumos=[LoteInsumoCreate(insumo_id=insumo.id, cantidad_usada=1)],
+        insumos=[
+            LoteInsumoCreate(
+                insumo_id=insumo.id,
+                cantidad_usada=1,
+                lotes_recepcion=[
+                    ConsumoRecepcionCreate(
+                        lote_recepcion_id=lote_recepcion.id,
+                        cantidad=1,
+                    )
+                ],
+            )
+        ],
     ), admin.id)
     proveedor = db_session.scalar(select(Proveedor).order_by(Proveedor.id))
     proveedor.activo = False
@@ -308,7 +334,6 @@ def test_seed_completa_receta_ausente_de_ejemplo_antiguo(db_session, ejecutar_se
     for fuente in fuentes:
         recepcion = db_session.get(LoteRecepcionInsumo, fuente.lote_recepcion_id)
         recepcion.cantidad_disponible += fuente.cantidad
-        db_session.get(Insumo, recepcion.insumo_id).cantidad += fuente.cantidad
         db_session.delete(fuente)
     for asociacion in list(lote.insumos_asociados):
         db_session.delete(asociacion)

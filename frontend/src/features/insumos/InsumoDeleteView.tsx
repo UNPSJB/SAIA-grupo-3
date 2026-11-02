@@ -46,10 +46,6 @@ export function InsumoDeleteView({ insumo, onConfirmarEliminar, onCancelar }: In
             <span className="col-4 text-muted fw-semibold">Nombre:</span>
             <span className="col-8 fw-bold">{insumo.nombre}</span>
           </div>
-          <div className="row">
-            <span className="col-4 text-muted fw-semibold">Cantidad:</span>
-            <span className="col-8">{insumo.cantidad}</span>
-          </div>
         </div>
       </Card.Body>
       <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">

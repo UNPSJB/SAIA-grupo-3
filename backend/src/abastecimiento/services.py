@@ -225,12 +225,12 @@ def bloquear_insumo(
     insumo_id: int,
     permitir_inactivo=False,
 ):
-    # Bloquea las modificaciones concurrentes del saldo del mismo insumo.
+    # Serializa cambios concurrentes de stock del mismo insumo.
     # Funciona también con SQLite, donde SELECT FOR UPDATE no bloquea filas.
     resultado = db.execute(
         update(Insumo)
         .where(Insumo.id == insumo_id)
-        .values(cantidad=Insumo.cantidad)
+        .values(nombre=Insumo.nombre)
         .execution_options(synchronize_session=False)
     )
 
@@ -288,46 +288,14 @@ def resumen_stock(db: Session, insumo_id: int):
         )
     ).one()
 
-    sin_lote = insumo.cantidad - identificado
-
-    if sin_lote < -EPS:
-        raise HTTPException(
-            409,
-            "El saldo de los lotes supera el stock del insumo. Revisá el inventario.",
-        )
-
     return {
         "insumo_id": insumo_id,
-        "stock_total": insumo.cantidad,
+        "stock_total": identificado,
         "stock_identificado": identificado,
-        "stock_sin_lote": max(0, sin_lote),
+        "stock_sin_lote": 0.0,
         "stock_utilizable": utilizable,
         "stock_vencido": vencido,
     }
-
-
-def modificar_stock(db: Session, insumo_id: int, diferencia: float):
-    nuevo = Insumo.cantidad + diferencia
-
-    resultado = db.execute(
-        update(Insumo)
-        .where(
-            Insumo.id == insumo_id,
-            nuevo >= -EPS,
-        )
-        .values(
-            cantidad=case(
-                (nuevo < 0, 0),
-                else_=nuevo,
-            )
-        )
-        .execution_options(synchronize_session=False)
-    )
-
-    if resultado.rowcount != 1:
-        raise HTTPException(409, "La operación dejaría stock negativo.")
-
-    db.expire_all()
 
 
 def tiene_consumos(db: Session, lote_id: int):
@@ -385,8 +353,6 @@ def guardar_recepcion(
         )
 
     if lote_id is None:
-        anterior = 0.0
-
         lote = LoteRecepcionInsumo(
             insumo_id=datos.insumo_id,
             proveedor_id=datos.proveedor_id,
@@ -419,21 +385,7 @@ def guardar_recepcion(
                 "No se puede cambiar el insumo, proveedor o clave de la recepción.",
             )
 
-        anterior = lote.cantidad
         conciliacion = lote.conciliacion
-
-    diferencia = datos.cantidad - anterior
-
-    if conciliacion:
-        saldo = resumen_stock(db, datos.insumo_id)
-
-        if diferencia > saldo["stock_sin_lote"] + EPS:
-            raise HTTPException(
-                409,
-                "La cantidad supera el stock anterior que falta identificar.",
-            )
-    else:
-        modificar_stock(db, datos.insumo_id, diferencia)
 
     lote.numero_lote = datos.numero_lote
     lote.cantidad = datos.cantidad
@@ -461,9 +413,6 @@ def anular_recepcion(db: Session, lote_id: int):
             409,
             "La recepción tiene consumos y no puede darse de baja.",
         )
-
-    if not lote.conciliacion:
-        modificar_stock(db, lote.insumo_id, -lote.cantidad_disponible)
 
     lote.activo = False
     db.flush()
@@ -555,76 +504,79 @@ def consumir_para_produccion(
     cantidad: float,
     lote_produccion_id: int,
     fecha_produccion: date,
+    asignaciones: list[tuple[int, float]],
 ):
-    # Distribuye el consumo; producción conserva el descuento general y el commit.
     if not math.isfinite(cantidad) or cantidad <= 0:
         raise HTTPException(422, "La cantidad consumida debe ser positiva.")
+    if not asignaciones:
+        raise HTTPException(
+            409,
+            "Seleccioná al menos una recepción para cada insumo utilizado.",
+        )
+    ids_asignaciones = [lote_id for lote_id, _ in asignaciones]
+    if len(ids_asignaciones) != len(set(ids_asignaciones)):
+        raise HTTPException(422, "No repitas la misma recepción en una asignación.")
+    if any(
+        not math.isfinite(cantidad_asignada) or cantidad_asignada <= 0
+        for _, cantidad_asignada in asignaciones
+    ):
+        raise HTTPException(422, "Cada cantidad asignada debe ser positiva y finita.")
+    if not math.isclose(
+        sum(cantidad_asignada for _, cantidad_asignada in asignaciones),
+        cantidad,
+        rel_tol=1e-9,
+        abs_tol=1e-9,
+    ):
+        raise HTTPException(
+            422,
+            "La suma asignada a las recepciones debe coincidir con la cantidad usada.",
+        )
 
     insumo = bloquear_insumo(db, insumo_id)
-
+    ids_lotes = [lote_id for lote_id, _ in asignaciones]
     lotes = db.scalars(
         select(LoteRecepcionInsumo)
         .where(
-            LoteRecepcionInsumo.insumo_id == insumo_id,
-            LoteRecepcionInsumo.activo.is_(True),
-            LoteRecepcionInsumo.cantidad_disponible > 0,
+            LoteRecepcionInsumo.id.in_(ids_lotes),
         )
-        .order_by(
-            LoteRecepcionInsumo.fecha_vencimiento,
-            LoteRecepcionInsumo.fecha_recepcion,
-            LoteRecepcionInsumo.id,
-        )
+        .with_for_update()
         .execution_options(populate_existing=True)
     ).all()
+    lotes_por_id = {lote.id: lote for lote in lotes}
 
-    identificado = sum(lote.cantidad_disponible for lote in lotes)
-    stock_anterior = insumo.cantidad - identificado
-    if stock_anterior < -EPS:
-        raise HTTPException(409, "El saldo de los lotes supera el stock general. Revisá el inventario.")
-    stock_anterior = max(0.0, stock_anterior)
+    for lote_id, cantidad_asignada in asignaciones:
+        lote = lotes_por_id.get(lote_id)
+        if (
+            lote is None
+            or lote.insumo_id != insumo_id
+            or not lote.activo
+            or lote.fecha_vencimiento < date.today()
+            or lote.fecha_recepcion > fecha_produccion
+            or lote.cantidad_disponible <= 0
+        ):
+            raise HTTPException(
+                409,
+                f"La recepción seleccionada para {insumo.nombre} ya no es utilizable. "
+                "Actualizá las opciones y elegí una recepción vigente.",
+            )
+        if cantidad_asignada > lote.cantidad_disponible + EPS:
+            raise HTTPException(
+                409,
+                f"El saldo disponible de la recepción {lote.numero_lote} "
+                f"no alcanza para {insumo.nombre}.",
+            )
 
-    utilizables = [
-        lote for lote in lotes
-        if lote.fecha_vencimiento >= date.today()
-        and lote.fecha_recepcion <= fecha_produccion
-    ]
-    saldo = sum(lote.cantidad_disponible for lote in utilizables)
-    faltante = max(0.0, cantidad - saldo)
-    if faltante > EPS:
-        raise HTTPException(
-            409,
-            f"No hay saldo suficiente en lotes vigentes identificados para {insumo.nombre}. "
-            "Registrá una recepción o identificá el stock anterior con sus datos reales. "
-            "No se pueden usar lotes vencidos o recibidos después de la producción.",
-        )
-
-    if cantidad > insumo.cantidad + EPS:
-        raise HTTPException(
-            409,
-            "El stock general es insuficiente.",
-        )
-
-    pendiente = cantidad
-
-    for lote in utilizables:
-        if pendiente <= 0:
-            break
-
-        tomado = min(pendiente, lote.cantidad_disponible)
         lote.cantidad_disponible = max(
             0,
-            lote.cantidad_disponible - tomado,
+            lote.cantidad_disponible - cantidad_asignada,
         )
-
         db.add(
             ConsumoLoteRecepcion(
                 lote_produccion_id=lote_produccion_id,
                 lote_recepcion_id=lote.id,
-                cantidad=tomado,
+                cantidad=cantidad_asignada,
             )
         )
-
-        pendiente = max(0.0, pendiente - tomado)
 
     db.flush()
 

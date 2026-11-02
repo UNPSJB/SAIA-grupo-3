@@ -32,7 +32,6 @@ def recibir_demo(db, crear, insumo, proveedor, cantidad, clave, numero, actor, f
         fecha_vencimiento=vence, registrado_por_id=actor,
         fecha_registro=datetime.combine(fecha, time(9)), activo=True, conciliacion=False)
     if nueva:
-        insumo.cantidad += cantidad
         db.flush()
 
 
@@ -45,7 +44,14 @@ def cargar_recepciones_ingredientes(db, crear, ingredientes, proveedores, actor,
             actor, hoy - timedelta(days=45), hoy + timedelta(days=90))
 
 
-def cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, registrado_por_id, hoy):
+def cargar_abastecimiento_demo(
+    db,
+    crear,
+    unidades_por_sufijo,
+    registrado_por_id,
+    hoy,
+    insumos_maestros,
+):
     """Escenarios identificados como DEMO; no reescribe registros ni reinicia saldos."""
     proveedores = []
     candidato = 99000000
@@ -66,6 +72,20 @@ def cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, registrado_por_id
             activo=i < CANTIDAD - 2)
         proveedores.append(proveedor)
 
+    for i, insumo in enumerate(insumos_maestros):
+        recibir_demo(
+            db,
+            crear,
+            insumo,
+            proveedores[i % (CANTIDAD - 2)],
+            150.0 + i * 10,
+            f"saia:seed:insumos:recepcion:{insumo.nombre}",
+            f"DEMO-INS-{i + 1:03d}",
+            registrado_por_id,
+            hoy - timedelta(days=45),
+            hoy + timedelta(days=90),
+        )
+
     definiciones = [
         ("Harina de trigo", "kg", 50.0), ("Azúcar", "kg", 20.0),
         ("Levadura", "g", 500.0), ("Aceite", "L", 10.0), ("Sal", "kg", 5.0),
@@ -74,7 +94,6 @@ def cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, registrado_por_id
     for nombre, sufijo, _ in definiciones + [("Agua de amasado", "L", 20)]:
         nombre_demo = f"{nombre} · DEMO abastecimiento"
         insumo, _ = crear(Insumo, {"nombre": nombre_demo},
-            cantidad=0.0,
             unidad_medida_id=unidades_por_sufijo[sufijo].id, activo=True)
         if insumo.unidad_medida_id != unidades_por_sufijo[sufijo].id:
             raise RuntimeError(f"La unidad de {nombre_demo} cambió. El seed no la sobrescribe.")
@@ -102,10 +121,6 @@ def cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, registrado_por_id
             registrado_por_id=registrado_por_id,
             fecha_registro=datetime.combine(hoy - timedelta(days=45), time(9, i)),
             activo=activo, conciliacion=False)
-        if nueva and recepcion.activo:
-            insumo.cantidad += recepcion.cantidad
-            db.flush()
-
     recibir_demo(db, crear, ingredientes["Agua de amasado"], proveedores[0], 20.0,
         "saia:seed:abastecimiento:agua-identificada", "DEMO-AGUA-001",
         registrado_por_id, hoy - timedelta(days=45), hoy + timedelta(days=60))

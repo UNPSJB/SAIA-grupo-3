@@ -1,10 +1,19 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { Button, Card, Form, InputGroup, Modal, Table } from 'react-bootstrap';
+import {
+  Button,
+  Card,
+  Form,
+  InputGroup,
+  Modal,
+  Table,
+  ToggleButton,
+  ToggleButtonGroup,
+} from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { FormErrors } from '../../shared/components/FormErrors';
 import { SearchableSelect } from '../../shared/components/SearchableSelect';
-import { fechaHoyIso } from '../../shared/libreria/fechas';
+import { fechaHoyIso, formatearFecha } from '../../shared/libreria/fechas';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { InsumoForm } from '../insumos/InsumoForm';
 import { createInsumo } from '../insumos/InsumoApi';
@@ -12,8 +21,13 @@ import type { InsumoCreate } from '../insumos/types';
 import { ProductoForm } from '../productos/ProductoForm';
 import { createProducto, getProductosActivos } from '../productos/productoApi';
 import type { Producto, ProductoCreate } from '../productos/types';
-import { getInsumosDisponibles } from './loteProduccionApi';
-import type { InsumoSeleccionable, LoteProduccionCreate } from './types';
+import { getInsumosDisponibles, getLotesDisponibles } from './loteProduccionApi';
+import './LoteProduccionForm.css';
+import type {
+  InsumoSeleccionable,
+  LoteProduccionCreate,
+  LoteRecepcionDisponible,
+} from './types';
 
 interface LoteProduccionFormProps {
   onGuardar: (datos: LoteProduccionCreate) => Promise<void>;
@@ -30,6 +44,27 @@ interface ValoresLote {
 interface InsumoSeleccionado {
   insumo: InsumoSeleccionable;
   cantidadUsada: string;
+  lotesRecepcion: { loteId: string; cantidad: string }[];
+}
+
+function calcularAsignacionAutomatica(
+  cantidadUsada: string,
+  opciones: LoteRecepcionDisponible[],
+): { loteId: string; cantidad: string }[] {
+  let restante = Number(cantidadUsada);
+  if (!Number.isFinite(restante) || restante <= 0) return [];
+
+  const asignaciones: { loteId: string; cantidad: string }[] = [];
+  for (const lote of opciones) {
+    if (restante <= 0) break;
+    const disponible = lote.cantidad_disponible;
+    if (!Number.isFinite(disponible) || disponible <= 0) continue;
+
+    const cantidadAsignada = Math.min(restante, disponible);
+    asignaciones.push({ loteId: String(lote.id), cantidad: String(cantidadAsignada) });
+    restante = Math.max(0, restante - cantidadAsignada);
+  }
+  return asignaciones;
 }
 
 export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionFormProps) {
@@ -46,11 +81,17 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
   const [mostrarNuevoProducto, setMostrarNuevoProducto] = useState(false);
   const [insumos, setInsumos] = useState<InsumoSeleccionable[]>([]);
   const [insumosSeleccionados, setInsumosSeleccionados] = useState<InsumoSeleccionado[]>([]);
+  const [modoAsignacion, setModoAsignacion] = useState<'automatico' | 'manual'>('automatico');
   const [cargandoInsumos, setCargandoInsumos] = useState(true);
   const [errorInsumos, setErrorInsumos] = useState<string | null>(null);
   const [mostrarInsumos, setMostrarInsumos] = useState(false);
   const [mostrarNuevoInsumo, setMostrarNuevoInsumo] = useState(false);
   const [busquedaInsumo, setBusquedaInsumo] = useState('');
+  const [resultadoLotesDisponibles, setResultadoLotesDisponibles] = useState<{
+    clave: string;
+    lotes: Record<number, LoteRecepcionDisponible[]>;
+    error: string | null;
+  } | null>(null);
 
   useEffect(() => {
     let activo = true;
@@ -93,7 +134,80 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
   }, []);
 
   const productoId = useWatch({ control: form.control, name: 'productoId' });
+  const fechaProduccion = useWatch({ control: form.control, name: 'fechaProduccion' });
   const productoElegido = productos.find((producto) => String(producto.id) === productoId);
+  const idsInsumosSeleccionados = insumosSeleccionados
+    .map(({ insumo }) => insumo.id)
+    .join(',');
+  const claveLotesDisponibles = `${fechaProduccion || hoy}:${idsInsumosSeleccionados}`;
+  const lotesDisponiblesPorInsumo =
+    resultadoLotesDisponibles?.clave === claveLotesDisponibles
+      ? resultadoLotesDisponibles.lotes
+      : {};
+  const cargandoLotesDisponibles =
+    idsInsumosSeleccionados !== '' &&
+    resultadoLotesDisponibles?.clave !== claveLotesDisponibles;
+  const errorLotesDisponibles =
+    resultadoLotesDisponibles?.clave === claveLotesDisponibles
+      ? resultadoLotesDisponibles.error
+      : null;
+
+  useEffect(() => {
+    const ids = idsInsumosSeleccionados
+      ? idsInsumosSeleccionados.split(',').map(Number)
+      : [];
+    if (ids.length === 0) return;
+
+    let activo = true;
+    Promise.all(
+      ids.map(async (id) => ({
+        id,
+        lotes: await getLotesDisponibles(id, fechaProduccion || hoy),
+      })),
+    )
+      .then((resultados) => {
+        if (!activo) return;
+        const lotesPorInsumo = Object.fromEntries(
+          resultados.map(({ id, lotes }) => [id, lotes]),
+        );
+        setResultadoLotesDisponibles({
+          clave: claveLotesDisponibles,
+          lotes: lotesPorInsumo,
+          error: null,
+        });
+        setInsumosSeleccionados((actuales) =>
+          actuales.map((seleccionado) => {
+            const opciones = lotesPorInsumo[seleccionado.insumo.id] ?? [];
+            const opcionesIds = new Set(opciones.map((lote) => String(lote.id)));
+            const asignacionesValidas = seleccionado.lotesRecepcion.filter(
+              ({ loteId }) => opcionesIds.has(loteId),
+            );
+            return {
+              ...seleccionado,
+              lotesRecepcion:
+                asignacionesValidas.length > 0
+                  ? asignacionesValidas
+                  : [{ loteId: '', cantidad: '' }],
+            };
+          }),
+        );
+      })
+      .catch((err: unknown) => {
+        if (activo)
+          setResultadoLotesDisponibles({
+            clave: claveLotesDisponibles,
+            lotes: {},
+            error:
+              err instanceof Error
+                ? err.message
+                : 'No se pudieron cargar las recepciones disponibles.',
+          });
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [fechaProduccion, hoy, idsInsumosSeleccionados, claveLotesDisponibles]);
 
   const crearProducto = async (datos: ProductoCreate) => {
     const nuevo = await createProducto(datos);
@@ -109,7 +223,14 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
     setInsumosSeleccionados((actuales) =>
       actuales.some((seleccionado) => seleccionado.insumo.id === insumo.id)
         ? actuales
-        : [...actuales, { insumo, cantidadUsada: '' }],
+        : [
+            ...actuales,
+            {
+              insumo,
+              cantidadUsada: '',
+              lotesRecepcion: [{ loteId: '', cantidad: '' }],
+            },
+          ],
     );
   };
 
@@ -117,7 +238,14 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
     setInsumosSeleccionados((actuales) =>
       actuales.some((seleccionado) => seleccionado.insumo.id === insumo.id)
         ? actuales.filter((seleccionado) => seleccionado.insumo.id !== insumo.id)
-        : [...actuales, { insumo, cantidadUsada: '' }],
+        : [
+            ...actuales,
+            {
+              insumo,
+              cantidadUsada: '',
+              lotesRecepcion: [{ loteId: '', cantidad: '' }],
+            },
+          ],
     );
   };
 
@@ -138,6 +266,42 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
     setMostrarNuevoInsumo(false);
   };
 
+  const agregarLoteRecepcion = (insumoId: number) => {
+    const opciones = lotesDisponiblesPorInsumo[insumoId] ?? [];
+    setInsumosSeleccionados((actuales) =>
+      actuales.map((seleccionado) => {
+        if (seleccionado.insumo.id !== insumoId) return seleccionado;
+        if (seleccionado.lotesRecepcion.length >= opciones.length) return seleccionado;
+        return {
+          ...seleccionado,
+          lotesRecepcion: [
+            ...seleccionado.lotesRecepcion,
+            { loteId: '', cantidad: '' },
+          ],
+        };
+      }),
+    );
+  };
+
+  const actualizarAsignacion = (
+    insumoId: number,
+    indice: number,
+    cambios: Partial<{ loteId: string; cantidad: string }>,
+  ) => {
+    setInsumosSeleccionados((actuales) =>
+      actuales.map((seleccionado) =>
+        seleccionado.insumo.id === insumoId
+          ? {
+              ...seleccionado,
+              lotesRecepcion: seleccionado.lotesRecepcion.map((asignacion, indiceActual) =>
+                indiceActual === indice ? { ...asignacion, ...cambios } : asignacion,
+              ),
+            }
+          : seleccionado,
+      ),
+    );
+  };
+
   const enviar = form.handleSubmit(async (valores) => {
     const hayCantidadInvalida = insumosSeleccionados.some(
       ({ cantidadUsada }) => !Number.isFinite(Number(cantidadUsada)) || Number(cantidadUsada) <= 0,
@@ -146,12 +310,48 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
       form.setError('root', { message: 'Indicá una cantidad mayor a cero para cada insumo.' });
       return;
     }
-    const insumoSinStock = insumosSeleccionados.find(
-      ({ insumo, cantidadUsada }) => Number(cantidadUsada) > insumo.cantidad,
-    );
-    if (insumoSinStock) {
+    const insumosConAsignaciones = insumosSeleccionados.map((seleccionado) => ({
+      ...seleccionado,
+      asignaciones:
+        modoAsignacion === 'automatico'
+          ? calcularAsignacionAutomatica(
+              seleccionado.cantidadUsada,
+              lotesDisponiblesPorInsumo[seleccionado.insumo.id] ?? [],
+            )
+          : seleccionado.lotesRecepcion,
+    }));
+    const asignacionInvalida = insumosConAsignaciones.find((seleccionado) => {
+      const { cantidadUsada } = seleccionado;
+      const cantidadEsperada = Number(cantidadUsada);
+      const { asignaciones } = seleccionado;
+      const cantidadAsignada = asignaciones.reduce(
+        (total, asignacion) => total + Number(asignacion.cantidad || 0),
+        0,
+      );
+      return (
+        cargandoLotesDisponibles ||
+        asignaciones.length === 0 ||
+        asignaciones.some((asignacion) => {
+          const lote = lotesDisponiblesPorInsumo[seleccionado.insumo.id]?.find(
+            (opcion) => String(opcion.id) === asignacion.loteId,
+          );
+          const cantidad = Number(asignacion.cantidad);
+          return (
+            !lote ||
+            !Number.isFinite(cantidad) ||
+            cantidad <= 0 ||
+            cantidad > lote.cantidad_disponible
+          );
+        }) ||
+        Math.abs(cantidadAsignada - cantidadEsperada) > 1e-9
+      );
+    });
+    if (asignacionInvalida) {
       form.setError('root', {
-        message: `La cantidad de ${insumoSinStock.insumo.nombre} supera el stock disponible (${insumoSinStock.insumo.cantidad} ${insumoSinStock.insumo.unidadMedidaObj.sufijo}).`,
+        message:
+          modoAsignacion === 'automatico'
+            ? 'El stock de las recepciones utilizables no alcanza para cubrir la cantidad indicada. Reducí la cantidad o ingresá una recepción válida.'
+            : 'Revisá la distribución por recepciones: las cantidades deben coincidir con lo usado y no superar el saldo de cada lote.',
       });
       return;
     }
@@ -162,9 +362,13 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
         fecha_produccion: valores.fechaProduccion,
         cantidad: Number(valores.cantidad),
         observaciones: valores.observaciones.trim() || null,
-        insumos: insumosSeleccionados.map(({ insumo, cantidadUsada }) => ({
+        insumos: insumosConAsignaciones.map(({ insumo, cantidadUsada, asignaciones }) => ({
           insumo_id: insumo.id,
           cantidad_usada: Number(cantidadUsada),
+          lotes_recepcion: asignaciones.map((asignacion) => ({
+            lote_recepcion_id: Number(asignacion.loteId),
+            cantidad: Number(asignacion.cantidad),
+          })),
         })),
       });
     } catch (err: unknown) {
@@ -180,7 +384,10 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
 
   return (
     <>
-      <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
+      <Card
+        className="shadow-sm border-0 mx-auto"
+        style={{ width: 'min(90vw, 100%)', maxWidth: '1400px' }}
+      >
         <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
           Registrar Lote de Producción
         </Card.Header>
@@ -257,8 +464,36 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
               </Form.Group>
             </div>
             <Form.Group className="mb-4">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <Form.Label className="mb-0">Insumos utilizados</Form.Label>
+              <div className="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-2 mb-2 mt-5">
+                <div className="d-flex flex-column flex-md-row align-items-md-center gap-2">
+                  <Form.Label className="mb-0 pe-3 fw-bold">Insumos utilizados</Form.Label>
+                  <ToggleButtonGroup
+                    type="radio"
+                    name="modo-asignacion-insumos"
+                    value={modoAsignacion}
+                    size="sm"
+                    aria-label="Modo de asignación de recepciones"
+                    onChange={(modo: 'automatico' | 'manual') => {
+                      setModoAsignacion(modo);
+                      form.clearErrors('root');
+                    }}
+                  >
+                    <ToggleButton
+                      id="modo-asignacion-automatico"
+                      value="automatico"
+                      variant="outline-primary"
+                    >
+                      Automático por vencimiento
+                    </ToggleButton>
+                    <ToggleButton
+                      id="modo-asignacion-manual"
+                      value="manual"
+                      variant="outline-primary"
+                    >
+                      Manual por lotes
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </div>
                 <div className="d-flex gap-2">
                   <Button
                     variant="outline-primary"
@@ -280,71 +515,342 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
                 </div>
               </div>
               {errorInsumos && <ErrorAlert mensaje={errorInsumos} />}
-              <p className="small text-body-secondary">
-                Se asignan primero las recepciones sin vencer que vencen antes.
-                Usá físicamente esos lotes para conservar su trazabilidad.
-                Solo se permite consumir stock de lotes identificados y disponibles.
-                El stock anterior sin identificar queda bloqueado hasta registrar su origen real.
+              {errorLotesDisponibles && <ErrorAlert mensaje={errorLotesDisponibles} />}
+              <p className="small text-body-secondary my-4">
+                {modoAsignacion === 'automatico'
+                  ? 'Las cantidades se asignan automáticamente a los lotes de insumos con vencimiento más próximo. Revisá qué lotes se utilizarán; si el saldo no alcanza, reducí la cantidad o ingresá un lote válido.'
+                  : 'Elegí los lotes de insumos que vas a utilizar. Se ordenan por vencimiento; podés elegir otro lote vigente. Si uno no alcanza, agregá otro y distribuí manualmente la cantidad.'}
               </p>
               {insumosSeleccionados.length === 0 ? (
                 <p className="text-muted small mb-0">Todavía no agregaste insumos al lote.</p>
               ) : (
                 <div className="border rounded bg-body">
-                  <Table size="sm" striped hover className="mb-0 align-middle">
+                  <Table
+                    responsive
+                    size="sm"
+                    striped
+                    hover
+                    className="mb-0 align-middle lotes-produccion-insumos-table"
+                  >
+                    <thead className="table-theme">
+                      <tr>
+                        <th className='text-start p-3'>Insumo</th>
+                        <th className="text-center lotes-produccion-col-cantidad-total">
+                          Cantidad usada
+                          <br />
+                          total
+                        </th>
+                        <th className="text-center">
+                          {modoAsignacion === 'automatico'
+                            ? 'Lotes de insumos'
+                            : 'Proveedor, lote y vencimiento'}
+                        </th>
+                        {modoAsignacion === 'manual' && (
+                          <th className="text-end pe-4 lotes-produccion-col-cantidad-proveedor">
+                            Cantidad por
+                            <br />
+                            proveedor
+                          </th>
+                        )}
+                        <th className="text-center">Acción</th>
+                      </tr>
+                    </thead>
                     <tbody>
-                      {insumosSeleccionados.map(({ insumo, cantidadUsada }) => (
-                        <tr key={insumo.id}>
-                          <td className="ps-3 py-2">
-                            <div>{insumo.nombre}</div>
-                            <small className="text-muted">
-                              Disponible: {insumo.cantidad.toLocaleString('es-AR')}{' '}
-                              {insumo.unidadMedidaObj.sufijo}
-                            </small>
-                          </td>
-                          <td className="py-2" style={{ width: '220px' }}>
-                            <InputGroup size="sm" hasValidation>
-                              <Form.Control
-                                type="number"
-                                min="0"
-                                step="any"
-                                value={cantidadUsada}
-                                isInvalid={Number(cantidadUsada) > insumo.cantidad}
-                                aria-label={`Cantidad utilizada de ${insumo.nombre}`}
-                                onChange={(evento) => {
-                                  const valor = evento.target.value;
-                                  setInsumosSeleccionados((actuales) =>
-                                    actuales.map((seleccionado) =>
-                                      seleccionado.insumo.id === insumo.id
-                                        ? { ...seleccionado, cantidadUsada: valor }
-                                        : seleccionado,
-                                    ),
-                                  );
-                                }}
-                              />
-                              <InputGroup.Text>{insumo.unidadMedidaObj.sufijo}</InputGroup.Text>
-                              <Form.Control.Feedback type="invalid">
-                                Supera el stock disponible.
-                              </Form.Control.Feedback>
-                            </InputGroup>
-                          </td>
-                          <td className="text-end pe-3 py-2" style={{ width: '80px' }}>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              aria-label={`Quitar ${insumo.nombre}`}
-                              onClick={() =>
-                                setInsumosSeleccionados((actuales) =>
-                                  actuales.filter(
-                                    (seleccionado) => seleccionado.insumo.id !== insumo.id,
-                                  ),
+                      {insumosSeleccionados.map((seleccionado) => {
+                        const { insumo, cantidadUsada, lotesRecepcion } = seleccionado;
+                        const opciones = lotesDisponiblesPorInsumo[insumo.id] ?? [];
+                        const asignacionesEfectivas =
+                          modoAsignacion === 'automatico'
+                            ? calcularAsignacionAutomatica(cantidadUsada, opciones)
+                            : lotesRecepcion;
+                        const cantidadObjetivo = Number(cantidadUsada);
+                        const cantidadAsignada = asignacionesEfectivas.reduce(
+                          (total, asignacion) => total + Number(asignacion.cantidad || 0),
+                          0,
+                        );
+                        const superaSaldoSeleccionado = asignacionesEfectivas.some((asignacion) => {
+                          const lote = opciones.find(
+                            (opcion) => String(opcion.id) === asignacion.loteId,
+                          );
+                          return lote && Number(asignacion.cantidad) > lote.cantidad_disponible;
+                        });
+                        const puedeAgregarRecepcion =
+                          modoAsignacion === 'manual' &&
+                          Number.isFinite(cantidadObjetivo) &&
+                          (cantidadObjetivo > cantidadAsignada + 1e-9 ||
+                            superaSaldoSeleccionado) &&
+                          opciones.length > asignacionesEfectivas.length;
+                        const filasRecepcion = asignacionesEfectivas.map((asignacion, indice) => {
+                          const loteElegido = opciones.find(
+                            (lote) => String(lote.id) === asignacion.loteId,
+                          );
+                          const idsDeOtrasFilas = new Set(
+                            asignacionesEfectivas
+                              .filter((_, indiceActual) => indiceActual !== indice)
+                              .map(({ loteId }) => loteId),
+                          );
+                          const opcionesFila = opciones.filter(
+                            (lote) =>
+                              !idsDeOtrasFilas.has(String(lote.id)) ||
+                              String(lote.id) === asignacion.loteId,
+                          );
+                          const cantidadAsignadaAlLote = Number(asignacion.cantidad);
+                          const cantidadInvalida =
+                            !Number.isFinite(cantidadAsignadaAlLote) ||
+                            cantidadAsignadaAlLote <= 0 ||
+                            (!!loteElegido &&
+                              cantidadAsignadaAlLote > loteElegido.cantidad_disponible);
+                          return { asignacion, indice, loteElegido, opcionesFila, cantidadInvalida };
+                        });
+
+                        return (
+                          <Fragment key={insumo.id}>
+                          <tr>
+                            <td className="ps-3">
+                              <div>{insumo.nombre}</div>
+                              <small className="text-muted">
+                                Stock total: {insumo.cantidad.toLocaleString('es-AR')}{' '}
+                                {insumo.unidadMedidaObj.sufijo}
+                              </small>
+                            </td>
+                            <td className="lotes-produccion-col-cantidad-total">
+                              <InputGroup size="sm" className="mx-auto" style={{ maxWidth: '135px' }}>
+                                <Form.Control
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  value={cantidadUsada}
+                                  aria-label={`Cantidad utilizada total de ${insumo.nombre}`}
+                                  onChange={(evento) => {
+                                    const valor = evento.target.value;
+                                    setInsumosSeleccionados((actuales) =>
+                                      actuales.map((actual) =>
+                                        actual.insumo.id === insumo.id
+                                          ? { ...actual, cantidadUsada: valor }
+                                          : actual,
+                                      ),
+                                    );
+                                  }}
+                                />
+                                <InputGroup.Text>{insumo.unidadMedidaObj.sufijo}</InputGroup.Text>
+                              </InputGroup>
+                            </td>
+                            <td className="lotes-produccion-col-recepciones">
+                              {cargandoLotesDisponibles ? (
+                                <small className="text-muted">Cargando recepciones...</small>
+                              ) : modoAsignacion === 'automatico' ? (
+                                filasRecepcion.length > 0 ? (
+                                  <div className="d-flex flex-column gap-1">
+                                    {filasRecepcion.map(({ asignacion, indice, loteElegido }) => (
+                                      <div
+                                        key={`${insumo.id}-auto-${indice}`}
+                                        className="d-flex flex-column flex-md-row justify-content-between gap-1"
+                                      >
+                                        <span>
+                                          {loteElegido
+                                            ? `${loteElegido.proveedor_nombre} · ${loteElegido.numero_lote} · vence ${formatearFecha(loteElegido.fecha_vencimiento)}${loteElegido.es_vencimiento_proximo ? ' · Vencimiento próximo' : ''}`
+                                            : 'Recepción no disponible'}
+                                        </span>
+                                        <span className="text-nowrap fw-semibold">
+                                          {Number(asignacion.cantidad).toLocaleString('es-AR')}{' '}
+                                          {insumo.unidadMedidaObj.sufijo}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <small className="text-muted">
+                                    {Number.isFinite(cantidadObjetivo) && cantidadObjetivo > 0
+                                      ? 'No hay recepciones utilizables para esta fecha de producción.'
+                                      : 'Ingresá la cantidad usada para calcular las recepciones.'}
+                                  </small>
                                 )
-                              }
-                            >
-                              <i className="bi bi-x-circle"></i>
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
+                              ) : opciones.length === 0 ? (
+                                <small className="text-danger">
+                                  No hay recepciones utilizables para esta fecha de producción.
+                                </small>
+                              ) : (
+                                <>
+                                  <div className="d-flex flex-column gap-2">
+                                    {filasRecepcion.map(
+                                      ({ asignacion, indice, loteElegido, opcionesFila }) => (
+                                        <div
+                                          key={`${insumo.id}-${indice}`}
+                                          className="flex-grow-1 lotes-produccion-col-recepcion"
+                                        >
+                                          <Form.Select
+                                            size="sm"
+                                            value={asignacion.loteId}
+                                            isInvalid={submitCount > 0 && !loteElegido}
+                                            aria-label={`Recepción de ${insumo.nombre}, opción ${indice + 1}`}
+                                            onChange={(evento) =>
+                                              actualizarAsignacion(insumo.id, indice, {
+                                                loteId: evento.target.value,
+                                                cantidad: '',
+                                              })
+                                            }
+                                          >
+                                            <option value="">Seleccioná proveedor y lote...</option>
+                                            {opcionesFila.map((lote) => (
+                                              <option key={lote.id} value={lote.id}>
+                                                {lote.proveedor_nombre} · {lote.numero_lote} ·
+                                                vence {formatearFecha(lote.fecha_vencimiento)} ·
+                                                disponible{' '}
+                                                {lote.cantidad_disponible.toLocaleString('es-AR')}
+                                                {lote.es_vencimiento_proximo ? ' · Vencimiento próximo' : ''}
+                                              </option>
+                                            ))}
+                                          </Form.Select>
+                                        </div>
+                                      ),
+                                    )}
+                                  </div>
+                                </>
+                              )}
+                            </td>
+                            {modoAsignacion === 'manual' && (
+                              <td className="lotes-produccion-col-cantidad-proveedor">
+                                {!cargandoLotesDisponibles && opciones.length > 0 && (
+                                  <div className="d-flex flex-column gap-2">
+                                    {filasRecepcion.map(
+                                      ({ asignacion, indice, cantidadInvalida }) => (
+                                        <div
+                                          key={`${insumo.id}-cantidad-${indice}`}
+                                          className="d-flex align-items-center justify-content-end gap-2"
+                                        >
+                                          <InputGroup
+                                            size="sm"
+                                            style={{ maxWidth: '125px', minWidth: '0' }}
+                                          >
+                                            <Form.Control
+                                              type="number"
+                                              min="0"
+                                              step="any"
+                                              value={asignacion.cantidad}
+                                              isInvalid={submitCount > 0 && cantidadInvalida}
+                                              aria-label={`Cantidad de ${insumo.nombre} desde la recepción ${indice + 1}`}
+                                              onChange={(evento) =>
+                                                actualizarAsignacion(insumo.id, indice, {
+                                                  cantidad: evento.target.value,
+                                                })
+                                              }
+                                            />
+                                            <InputGroup.Text>
+                                              {insumo.unidadMedidaObj.sufijo}
+                                            </InputGroup.Text>
+                                          </InputGroup>
+                                          {lotesRecepcion.length > 1 && (
+                                            <Button
+                                              variant="outline-danger"
+                                              size="sm"
+                                              aria-label={`Quitar recepción ${indice + 1} de ${insumo.nombre}`}
+                                              onClick={() =>
+                                                setInsumosSeleccionados((actuales) =>
+                                                  actuales.map((actual) =>
+                                                    actual.insumo.id === insumo.id
+                                                      ? {
+                                                          ...actual,
+                                                          lotesRecepcion:
+                                                            actual.lotesRecepcion.filter(
+                                                              (_, indiceActual) =>
+                                                                indiceActual !== indice,
+                                                            ),
+                                                        }
+                                                      : actual,
+                                                  ),
+                                                )
+                                              }
+                                            >
+                                              <i className="bi bi-x-circle"></i>
+                                            </Button>
+                                          )}
+                                        </div>
+                                      ),
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                            )}
+                            <td className="text-center" style={{ width: '80px' }}>
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                aria-label={`Quitar ${insumo.nombre}`}
+                                onClick={() =>
+                                  setInsumosSeleccionados((actuales) =>
+                                    actuales.filter(
+                                      (actual) => actual.insumo.id !== insumo.id,
+                                    ),
+                                  )
+                                }
+                              >
+                                <i className="bi bi-x-circle"></i>
+                              </Button>
+                            </td>
+                          </tr>
+                          {!cargandoLotesDisponibles &&
+                            (modoAsignacion === 'manual'
+                              ? opciones.length > 0
+                              : Number.isFinite(cantidadObjetivo) && cantidadObjetivo > 0) && (
+                            <tr className="lotes-produccion-insumos-detalle">
+                              <td colSpan={modoAsignacion === 'manual' ? 5 : 4}>
+                                <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                                  {modoAsignacion === 'manual' && (
+                                    <div className="d-flex flex-column">
+                                      {filasRecepcion.map(({ indice, loteElegido }) =>
+                                        loteElegido ? (
+                                          <small
+                                            key={`${insumo.id}-disponible-${indice}`}
+                                            className="text-body-secondary"
+                                          >
+                                            Recepción {indice + 1}: disponible{' '}
+                                            {loteElegido.cantidad_disponible.toLocaleString(
+                                              'es-AR',
+                                            )}{' '}
+                                            {insumo.unidadMedidaObj.sufijo}
+                                            {loteElegido.es_vencimiento_proximo ? ' · Vencimiento próximo' : ''}
+                                          </small>
+                                        ) : null,
+                                      )}
+                                    </div>
+                                  )}
+                                  <div className="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+                                    {puedeAgregarRecepcion && (
+                                      <Button
+                                        variant="outline-primary"
+                                        size="sm"
+                                        onClick={() => agregarLoteRecepcion(insumo.id)}
+                                      >
+                                        <i className="bi bi-plus-lg"></i> Agregar otra recepción
+                                      </Button>
+                                    )}
+                                    <small
+                                      className={
+                                        Math.abs(cantidadAsignada - cantidadObjetivo) <= 1e-9
+                                          ? 'text-success'
+                                          : 'text-danger'
+                                      }
+                                    >
+                                      {modoAsignacion === 'automatico'
+                                        ? 'Asignado automáticamente: '
+                                        : 'Asignado: '}
+                                      {cantidadAsignada.toLocaleString('es-AR')} de{' '}
+                                      {Number.isFinite(cantidadObjetivo)
+                                        ? cantidadObjetivo.toLocaleString('es-AR')
+                                        : '0'}{' '}
+                                      {insumo.unidadMedidaObj.sufijo}
+                                      {modoAsignacion === 'automatico' &&
+                                        cantidadAsignada + 1e-9 < cantidadObjetivo &&
+                                        ` · Falta ${Math.max(0, cantidadObjetivo - cantidadAsignada).toLocaleString('es-AR')} ${insumo.unidadMedidaObj.sufijo}`}
+                                    </small>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                            )}
+                          </Fragment>
+                        );
+                      })}
                     </tbody>
                   </Table>
                 </div>
@@ -392,7 +898,11 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
         </Modal.Body>
       </Modal>
 
-      <Modal show={mostrarInsumos} onHide={() => setMostrarInsumos(false)} size="lg">
+      <Modal
+        show={mostrarInsumos}
+        onHide={() => setMostrarInsumos(false)}
+        dialogClassName="lotes-produccion-insumos-modal"
+      >
         <Modal.Header closeButton className="bg-body-tertiary">
           <Modal.Title className="text-secondary fs-5">Seleccionar insumos existentes</Modal.Title>
         </Modal.Header>

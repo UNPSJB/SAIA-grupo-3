@@ -29,8 +29,8 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
   const tieneRecepciones = (historial.datos?.total ?? 0) > 0;
   const bloquearInventario =
     esEdicion && (historial.cargando || Boolean(historial.error) || tieneRecepciones);
-  const form = useForm<{ nombre: string; cantidad: number | ''; unidadMedidaId: number | '' }>({
-    defaultValues: { nombre: '', cantidad: '', unidadMedidaId: '' },
+  const form = useForm<{ nombre: string; unidadMedidaId: number | '' }>({
+    defaultValues: { nombre: '', unidadMedidaId: '' },
   });
   const enviando = form.formState.isSubmitting;
   const {
@@ -43,23 +43,6 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
     },
   } = useController({
     name: 'nombre',
-    control: form.control,
-    rules: {
-      validate: (value) =>
-        (typeof value === 'string' ? !!value.trim() : Number.isFinite(value)) ||
-        'Este campo es obligatorio.',
-    },
-  });
-  const {
-    field: {
-      value: cantidad,
-      onChange: setCantidad,
-      onBlur: cantidadBlur,
-      ref: cantidadRef,
-      name: cantidadName,
-    },
-  } = useController({
-    name: 'cantidad',
     control: form.control,
     rules: {
       validate: (value) =>
@@ -94,19 +77,17 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
   useEffect(() => {
     if (insumoInicial) {
       setNombre(insumoInicial.nombre);
-      setCantidad(insumoInicial.cantidad);
       setUnidadMedidaId(insumoInicial.unidad_medida_id);
     }
-  }, [insumoInicial, setNombre, setCantidad, setUnidadMedidaId]);
+  }, [insumoInicial, setNombre, setUnidadMedidaId]);
 
   const handleSubmit = form.handleSubmit(async () => {
     form.clearErrors('root');
-    if (nombre === '' || cantidad === '' || unidadMedidaId === '') return;
+    if (nombre === '' || unidadMedidaId === '') return;
 
     try {
       await onGuardar({
         nombre,
-        cantidad: Number(cantidad),
         unidad_medida_id: Number(unidadMedidaId),
       });
     } catch (err: unknown) {
@@ -152,23 +133,6 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               isInvalid={!!form.formState.errors.nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej: Manzanas"
-            />
-          </Form.Group>
-
-          <Form.Group controlId="InsumoForm-cantidad" className="mb-3">
-            <Form.Label>Cantidad</Form.Label>
-            <Form.Control
-              type="number"
-              disabled={bloquearInventario}
-              step="any"
-              required
-              ref={cantidadRef}
-              onBlur={cantidadBlur}
-              name={cantidadName}
-              value={cantidad}
-              isInvalid={!!form.formState.errors.cantidad}
-              onChange={(e) => setCantidad(e.target.value === '' ? '' : Number(e.target.value))}
-              placeholder="Ej: 10"
             />
           </Form.Group>
 

@@ -60,8 +60,12 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             unidades, unidades_por_sufijo = cargar_unidades_medida(crear)
             sectores = cargar_sectores(crear)
             equipos = cargar_equipos(crear, sectores)
+<<<<<<< HEAD
             cargar_temperaturas(db, crear, sectores, operadores, hoy)
             _, ingredientes = cargar_insumos(crear, unidades, unidades_por_sufijo)
+=======
+            insumos_maestros, ingredientes = cargar_insumos(crear, unidades, unidades_por_sufijo)
+>>>>>>> origin/feature/trazabilidad-insumos-productos
             quimicos = cargar_insumos_quimicos(crear, unidades_por_sufijo)
             elementos = cargar_elementos(crear, hoy)
             tareas = cargar_tareas(crear, equipos, elementos, quimicos)
@@ -74,7 +78,9 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                 crear, equipos, planes, tareas, quimicos, elementos, fotos, hoy, ayer
             )
             productos = cargar_productos(crear, unidades_por_sufijo)
-            proveedores = cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, admin.id, hoy)
+            proveedores = cargar_abastecimiento_demo(
+                db, crear, unidades_por_sufijo, admin.id, hoy, insumos_maestros
+            )
             cargar_recepciones_ingredientes(db, crear, ingredientes, proveedores, admin.id, hoy)
             cargar_lotes_produccion(
                 db, crear, productos, ingredientes, operadores, admin, hoy, proveedores,

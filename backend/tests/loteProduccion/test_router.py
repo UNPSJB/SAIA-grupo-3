@@ -1,5 +1,10 @@
 from datetime import date
+from datetime import timedelta
+from uuid import uuid4
+
+from src.abastecimiento.models import ConsumoLoteRecepcion, LoteRecepcionInsumo
 from tests.stock_trazable import identificar_stock
+from sqlalchemy import select
 
 from tests.database import (
     client,
@@ -29,7 +34,7 @@ def test_endpoint_registrar_lote_con_insumos(
     insumo_activo,
     otro_insumo_activo,
 ):
-    identificar_stock(db_session, persona_operadora, insumo_activo, otro_insumo_activo)
+    lotes = identificar_stock(db_session, persona_operadora, insumo_activo, otro_insumo_activo)
     # Act
     respuesta = client.post(
         "/lotes-produccion/",
@@ -39,8 +44,26 @@ def test_endpoint_registrar_lote_con_insumos(
             "fecha_produccion": date.today().isoformat(),
             "cantidad": 12.5,
             "insumos": [
-                {"insumo_id": insumo_activo.id, "cantidad_usada": 2.5},
-                {"insumo_id": otro_insumo_activo.id, "cantidad_usada": 1.25},
+                {
+                    "insumo_id": insumo_activo.id,
+                    "cantidad_usada": 2.5,
+                    "lotes_recepcion": [
+                        {
+                            "lote_recepcion_id": lotes[insumo_activo.id],
+                            "cantidad": 2.5,
+                        }
+                    ],
+                },
+                {
+                    "insumo_id": otro_insumo_activo.id,
+                    "cantidad_usada": 1.25,
+                    "lotes_recepcion": [
+                        {
+                            "lote_recepcion_id": lotes[otro_insumo_activo.id],
+                            "cantidad": 1.25,
+                        }
+                    ],
+                },
             ],
         },
     )
@@ -79,13 +102,195 @@ def test_endpoint_listar_insumos_disponibles_solo_activos(
     assert respuesta.status_code == 200
     assert [insumo["id"] for insumo in datos] == [insumo_activo.id]
     assert datos[0]["nombre"] == "Harina"
-    assert datos[0]["cantidad"] == 50
+    assert datos[0]["cantidad"] == 0
     assert datos[0]["unidadMedidaObj"]["sufijo"] == "kg"
+
+
+def test_endpoint_lista_lotes_utilizables_ordenados_por_vencimiento_proximo(
+    client,
+    headers_operadora,
+    insumo_activo,
+    lote_recepcion,
+    db_session,
+    persona_administradora,
+):
+    segundo = LoteRecepcionInsumo(
+        insumo_id=insumo_activo.id,
+        proveedor_id=lote_recepcion.proveedor_id,
+        numero_lote="HAR-TRAZA-002",
+        cantidad=10,
+        cantidad_disponible=10,
+        fecha_recepcion=date.today() - timedelta(days=2),
+        fecha_vencimiento=date.today() + timedelta(days=60),
+        registrado_por_id=persona_administradora.id,
+        activo=True,
+        conciliacion=False,
+        clave_operacion=str(uuid4()),
+    )
+    db_session.add(segundo)
+    db_session.commit()
+
+    respuesta = client.get(
+        f"/lotes-produccion/insumos/{insumo_activo.id}/lotes-disponibles",
+        params={"fecha_produccion": date.today().isoformat()},
+        headers=headers_operadora,
+    )
+
+    assert respuesta.status_code == 200
+    assert [lote["id"] for lote in respuesta.json()] == [
+        lote_recepcion.id,
+        segundo.id,
+    ]
+    assert respuesta.json()[0]["es_vencimiento_proximo"] is True
+    assert respuesta.json()[1]["es_vencimiento_proximo"] is False
+
+
+def test_endpoint_registra_consumo_distribuido_manualmente_entre_recepciones(
+    client,
+    db_session,
+    headers_operadora,
+    producto,
+    insumo_activo,
+    lote_recepcion,
+    persona_administradora,
+):
+    segundo = LoteRecepcionInsumo(
+        insumo_id=insumo_activo.id,
+        proveedor_id=lote_recepcion.proveedor_id,
+        numero_lote="HAR-TRAZA-002",
+        cantidad=10,
+        cantidad_disponible=10,
+        fecha_recepcion=date.today() - timedelta(days=2),
+        fecha_vencimiento=date.today() + timedelta(days=60),
+        registrado_por_id=persona_administradora.id,
+        activo=True,
+        conciliacion=False,
+        clave_operacion=str(uuid4()),
+    )
+    db_session.add(segundo)
+    db_session.commit()
+    lote_recepcion_id = lote_recepcion.id
+    segundo_id = segundo.id
+
+    respuesta = client.post(
+        "/lotes-produccion/",
+        headers=headers_operadora,
+        json={
+            "producto_id": producto.id,
+            "fecha_produccion": date.today().isoformat(),
+            "cantidad": 12,
+            "insumos": [
+                {
+                    "insumo_id": insumo_activo.id,
+                    "cantidad_usada": 15,
+                    "lotes_recepcion": [
+                        {"lote_recepcion_id": lote_recepcion_id, "cantidad": 8},
+                        {"lote_recepcion_id": segundo_id, "cantidad": 7},
+                    ],
+                }
+            ],
+        },
+    )
+
+    assert respuesta.status_code == 200, respuesta.text
+    assert db_session.get(LoteRecepcionInsumo, lote_recepcion_id).cantidad_disponible == 4
+    assert db_session.get(LoteRecepcionInsumo, segundo_id).cantidad_disponible == 3
+    consumos = db_session.scalars(
+        select(ConsumoLoteRecepcion).order_by(ConsumoLoteRecepcion.lote_recepcion_id)
+    ).all()
+    assert [consumo.cantidad for consumo in consumos] == [8, 7]
+
+
+def test_endpoint_rechaza_si_el_lote_elegido_no_tiene_saldo_suficiente(
+    client,
+    db_session,
+    headers_operadora,
+    producto,
+    insumo_activo,
+    lote_recepcion,
+    persona_administradora,
+):
+    segundo = LoteRecepcionInsumo(
+        insumo_id=insumo_activo.id,
+        proveedor_id=lote_recepcion.proveedor_id,
+        numero_lote="HAR-TRAZA-002",
+        cantidad=10,
+        cantidad_disponible=10,
+        fecha_recepcion=date.today() - timedelta(days=2),
+        fecha_vencimiento=date.today() + timedelta(days=60),
+        registrado_por_id=persona_administradora.id,
+        activo=True,
+        conciliacion=False,
+        clave_operacion=str(uuid4()),
+    )
+    db_session.add(segundo)
+    db_session.commit()
+    lote_recepcion_id = lote_recepcion.id
+    segundo_id = segundo.id
+
+    respuesta = client.post(
+        "/lotes-produccion/",
+        headers=headers_operadora,
+        json={
+            "producto_id": producto.id,
+            "fecha_produccion": date.today().isoformat(),
+            "cantidad": 12,
+            "insumos": [
+                {
+                    "insumo_id": insumo_activo.id,
+                    "cantidad_usada": 13,
+                    "lotes_recepcion": [
+                        {"lote_recepcion_id": lote_recepcion_id, "cantidad": 13},
+                    ],
+                }
+            ],
+        },
+    )
+
+    assert respuesta.status_code == 409
+    assert "saldo disponible" in respuesta.json()["detail"]
+    assert db_session.get(LoteRecepcionInsumo, lote_recepcion_id).cantidad_disponible == 12
+    assert db_session.get(LoteRecepcionInsumo, segundo_id).cantidad_disponible == 10
+    assert db_session.scalars(select(ConsumoLoteRecepcion)).all() == []
+
+
+def test_endpoint_rechaza_distribucion_distinta_a_cantidad_usada(
+    client,
+    db_session,
+    headers_operadora,
+    producto,
+    insumo_activo,
+    lote_recepcion,
+):
+    lote_recepcion_id = lote_recepcion.id
+    respuesta = client.post(
+        "/lotes-produccion/",
+        headers=headers_operadora,
+        json={
+            "producto_id": producto.id,
+            "fecha_produccion": date.today().isoformat(),
+            "cantidad": 12,
+            "insumos": [
+                {
+                    "insumo_id": insumo_activo.id,
+                    "cantidad_usada": 5,
+                    "lotes_recepcion": [
+                        {"lote_recepcion_id": lote_recepcion_id, "cantidad": 4},
+                    ],
+                }
+            ],
+        },
+    )
+
+    assert respuesta.status_code == 422
+    assert db_session.scalars(select(ConsumoLoteRecepcion)).all() == []
+    assert db_session.get(LoteRecepcionInsumo, lote_recepcion_id).cantidad_disponible == 12
 
 
 def test_endpoint_insumos_disponibles_requiere_permiso(
     client,
     headers_sin_permisos,
+    insumo_activo,
 ):
     # Act
     sin_token = client.get("/lotes-produccion/insumos-disponibles")
@@ -93,10 +298,22 @@ def test_endpoint_insumos_disponibles_requiere_permiso(
         "/lotes-produccion/insumos-disponibles",
         headers=headers_sin_permisos,
     )
+    ruta_lotes = f"/lotes-produccion/insumos/{insumo_activo.id}/lotes-disponibles"
+    sin_token_lotes = client.get(
+        ruta_lotes,
+        params={"fecha_produccion": date.today().isoformat()},
+    )
+    sin_permiso_lotes = client.get(
+        ruta_lotes,
+        params={"fecha_produccion": date.today().isoformat()},
+        headers=headers_sin_permisos,
+    )
 
     # Assert
     assert sin_token.status_code == 401
     assert sin_permiso.status_code == 403
+    assert sin_token_lotes.status_code == 401
+    assert sin_permiso_lotes.status_code == 403
 
 
 def test_endpoint_no_registra_lote_con_insumo_inactivo(
@@ -118,7 +335,7 @@ def test_endpoint_no_registra_lote_con_insumo_inactivo(
     )
 
     # Assert
-    assert respuesta.status_code == 400
+    assert respuesta.status_code == 409
     assert respuesta.json()["detail"] == "No se pueden asociar insumos dados de baja."
 
 
@@ -144,7 +361,7 @@ def test_endpoint_no_registra_lote_con_insumo_duplicado(
     )
 
     # Assert
-    assert respuesta.status_code == 400
+    assert respuesta.status_code == 409
     assert respuesta.json()["detail"] == "No se puede asociar el mismo insumo más de una vez al lote."
 
 
@@ -221,7 +438,13 @@ def test_endpoint_buscar_lote_y_consultar_trazabilidad_en_ambos_sentidos(
             "fecha_produccion": fecha_produccion,
             "cantidad": 8,
             "insumos": [
-                {"insumo_id": insumo_id, "cantidad_usada": 3},
+                {
+                    "insumo_id": insumo_id,
+                    "cantidad_usada": 3,
+                    "lotes_recepcion": [
+                        {"lote_recepcion_id": lote_recepcion_id, "cantidad": 3},
+                    ],
+                },
             ],
         },
     )

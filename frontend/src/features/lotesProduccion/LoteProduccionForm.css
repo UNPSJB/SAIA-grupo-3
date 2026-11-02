@@ -1,0 +1,48 @@
+.lotes-produccion-insumos-modal {
+  width: 90vw;
+  max-width: 1400px;
+}
+
+.lotes-produccion-insumos-table.table > tbody > tr > td {
+  vertical-align: middle;
+  padding-block: 1.25rem;
+}
+
+.lotes-produccion-insumos-table .lotes-produccion-insumos-detalle > td {
+  padding-block: 0.4rem;
+}
+
+.lotes-produccion-insumos-table thead th {
+  vertical-align: middle;
+  padding-block: 0.75rem;
+}
+
+.lotes-produccion-col-cantidad-total {
+  width: 150px;
+  min-width: 150px;
+}
+
+.lotes-produccion-col-cantidad-proveedor {
+  width: 190px;
+  min-width: 190px;
+}
+
+.lotes-produccion-col-recepcion {
+  width: 100%;
+}
+
+.lotes-produccion-col-recepcion .form-select {
+  width: calc(100% + 2.5rem);
+  max-width: none;
+  margin-right: -2.5rem;
+}
+
+.lotes-produccion-col-recepciones {
+  min-width: 650px;
+}
+
+@media (max-width: 575.98px) {
+  .lotes-produccion-insumos-modal {
+    width: calc(100vw - 1rem);
+  }
+}

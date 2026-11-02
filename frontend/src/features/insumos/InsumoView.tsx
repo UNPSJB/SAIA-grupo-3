@@ -26,7 +26,7 @@ export function InsumoView({ insumo, onEditar, onVolver }: InsumoViewProps) {
             <span className="col-8 fw-bold">{insumo.nombre}</span>
           </div>
           <div className="row mb-2">
-            <span className="col-4 text-muted fw-semibold">Cantidad:</span>
+            <span className="col-4 text-muted fw-semibold">Stock actual:</span>
             <span className="col-8">{insumo.cantidad}</span>
           </div>
           <div className="row">

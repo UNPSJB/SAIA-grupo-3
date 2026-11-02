@@ -21,6 +21,7 @@ from src.perfil.router import router as perfil_router
 from src.tipoDocumento.models import TipoDocumento
 from src.database import get_db
 from src.insumos.models import Insumo
+from src.insumos.router import router as insumos_router
 from src.loteProduccion.router import router as lote_router
 from src.models import ModeloBase
 from src.personal.models import Personal
@@ -42,6 +43,7 @@ app = FastAPI()
 app.include_router(producto_router)
 app.include_router(lote_router)
 app.include_router(abastecimiento_router)
+app.include_router(insumos_router)
 app.include_router(unidad_router)
 app.include_router(perfil_router)
 
@@ -101,7 +103,6 @@ def producto(db_session, unidad_medida):
 def insumo_activo(db_session, unidad_medida):
     insumo = Insumo(
         nombre="Harina",
-        cantidad=50,
         unidad_medida_id=unidad_medida.id,
         activo=True,
     )
@@ -115,7 +116,6 @@ def insumo_activo(db_session, unidad_medida):
 def otro_insumo_activo(db_session, unidad_medida):
     insumo = Insumo(
         nombre="Azúcar",
-        cantidad=20,
         unidad_medida_id=unidad_medida.id,
         activo=True,
     )
@@ -129,7 +129,6 @@ def otro_insumo_activo(db_session, unidad_medida):
 def insumo_inactivo(db_session, unidad_medida):
     insumo = Insumo(
         nombre="Levadura",
-        cantidad=10,
         unidad_medida_id=unidad_medida.id,
         activo=False,
     )
