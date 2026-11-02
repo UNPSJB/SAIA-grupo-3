@@ -1,4 +1,4 @@
-export type TipoNotificacion = 'vencimiento_documentacion';
+export type TipoNotificacion = 'vencimiento_documentacion' | 'stock_bajo';
 
 export interface Notificacion {
   id: number;
@@ -8,4 +8,5 @@ export interface Notificacion {
   enlace?: string | null;
   fecha_creacion: string;
   leida: boolean;
+  resuelta: boolean;
 }

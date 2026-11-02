@@ -15,6 +15,10 @@ def read_notificaciones(
 ):
     return services.listar_notificaciones(db, solo_no_leidas, limite)
 
+@router.get("/stock-bajo/cantidad", response_model=schemas.CantidadStockBajo)
+def cantidad_stock_bajo(db: Session = Depends(get_db)):
+    return services.contar_stock_bajo(db)
+
 @router.get("/no-leidas/cantidad", response_model=schemas.Cantidad)
 def read_cantidad_no_leidas(db: Session = Depends(get_db)):
     return {"cantidad": services.contar_no_leidas(db)}

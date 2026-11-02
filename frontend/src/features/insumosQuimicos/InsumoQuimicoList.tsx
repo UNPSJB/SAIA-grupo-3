@@ -24,6 +24,8 @@ export function InsumoQuimicoList({
 }: InsumoQuimicoListProps) {
   const {
     insumosQuimicos,
+    soloStockBajo,
+    setSoloStockBajo,
     loading,
     error,
     page,
@@ -49,6 +51,14 @@ export function InsumoQuimicoList({
         setBusqueda={setBusqueda}
         title="Nómina de Insumos Químicos"
       >
+        <Form.Check
+          type="switch"
+          id="InsumoQuimico-solo-stock-bajo"
+          label="Solo stock bajo"
+          checked={soloStockBajo}
+          onChange={(e) => setSoloStockBajo(e.target.checked)}
+          className="text-secondary mb-0"
+        />
         <Form.Check
           type="switch"
           id="switch-inactivos-quimicos"
@@ -111,6 +121,7 @@ export function InsumoQuimicoList({
                 >
                   Estado
                 </SortableHeader>
+                <th>Stock mínimo</th>
                 <th className="text-center" style={{ width: '120px' }}>
                   Acciones
                 </th>
@@ -119,7 +130,7 @@ export function InsumoQuimicoList({
             <tbody>
               {insumosQuimicos.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-4 text-muted">
+                  <td colSpan={7} className="text-center py-4 text-muted">
                     No hay insumos químicos registrados para los filtros actuales.
                   </td>
                 </tr>
@@ -137,7 +148,10 @@ export function InsumoQuimicoList({
                         {etiquetaDe(TIPOS_QUIMICOS, item.tipo_quimico)}
                       </Badge>
                     </td>
-                    <td>{item.cantidad}</td>
+                    <td>
+                      {item.cantidad.toLocaleString('es-AR')}
+                      {item.activo && item.stock_bajo && <Badge bg="warning" text="dark" className="d-block mt-1">Stock bajo</Badge>}
+                    </td>
                     <td>{item.unidadMedidaObj?.sufijo ?? 'No disponible'}</td>
                     <td>
                       {item.activo ? (
@@ -146,6 +160,7 @@ export function InsumoQuimicoList({
                         <Badge bg="danger">Inactivo</Badge>
                       )}
                     </td>
+                    <td>{item.stock_minimo == null ? 'Sin definir' : item.stock_minimo.toLocaleString('es-AR')}</td>
                     <td className="text-center">
                       <div className="d-flex justify-content-center gap-2">
                         {item.activo ? (

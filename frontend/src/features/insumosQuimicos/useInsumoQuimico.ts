@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import type { InsumoQuimicoCreate, InsumoQuimicoUpdate } from './types';
 import { createInsumoQuimico, updateInsumoQuimico, deleteInsumoQuimico } from './insumoQuimicoApi';
 
@@ -5,7 +6,9 @@ import type { InsumoQuimico as ListItem } from './types';
 import { usePagedList } from '../../shared/hooks/usePagedList';
 
 export function useInsumoQuimico(enabled = true) {
-  const list = usePagedList<ListItem>('insumos-quimicos', enabled, '');
+  const [params] = useSearchParams();
+  const soloStockBajo = params.get('solo_stock_bajo') === 'true';
+  const list = usePagedList<ListItem>('insumos-quimicos', enabled, `&solo_stock_bajo=${soloStockBajo}`);
   const eliminar = async (id: number) => {
     await deleteInsumoQuimico(id);
     list.refetch(true);
@@ -21,5 +24,5 @@ export function useInsumoQuimico(enabled = true) {
     }
     list.refetch();
   };
-  return { ...list, insumosQuimicos: list.items, eliminar, guardar };
+  return { ...list, soloStockBajo, setSoloStockBajo: (valor: boolean) => list.update({ solo_stock_bajo: valor ? 'true' : '' }), insumosQuimicos: list.items, eliminar, guardar };
 }

@@ -23,12 +23,23 @@ export function InsumoQuimicoForm({
   const form = useForm<{
     nombre: string;
     cantidad: number | '';
+    stockMinimo: number | '';
     tipoQuimico: TipoQuimico;
     unidadMedidaId: number | '';
   }>({
-    defaultValues: { nombre: '', cantidad: '', tipoQuimico: 'detergente', unidadMedidaId: '' },
+    defaultValues: { nombre: '', cantidad: '', stockMinimo: '', tipoQuimico: 'detergente', unidadMedidaId: '' },
   });
   const enviando = form.formState.isSubmitting;
+  const { field: minimo } = useController({
+    name: 'stockMinimo',
+    control: form.control,
+    rules: { validate: (v) => v === '' || (Number.isFinite(v) && v >= 0) || 'Ingresá un mínimo válido, igual o mayor que cero.' },
+  });
+  const { setValue } = form;
+  useEffect(() => {
+    setValue('stockMinimo', insumoInicial?.stock_minimo ?? '');
+  }, [insumoInicial, setValue]);
+
   const {
     field: {
       value: nombre,
@@ -122,6 +133,7 @@ export function InsumoQuimicoForm({
       await onGuardar({
         nombre: nombre.trim(),
         cantidad: Number(cantidad),
+        stock_minimo: minimo.value === '' ? null : Number(minimo.value),
         tipo_quimico: tipoQuimico,
         unidad_medida_id: Number(unidadMedidaId),
       });
@@ -221,6 +233,23 @@ export function InsumoQuimicoForm({
                 </option>
               ))}
             </SearchableSelect>
+          </Form.Group>
+
+          <Form.Group controlId="InsumoQuimicoForm-stockMinimo" className="mb-4">
+            <Form.Label>Stock mínimo — opcional</Form.Label>
+            <Form.Control
+              {...minimo}
+              type="number"
+              min="0"
+              step="any"
+              placeholder="Sin mínimo definido"
+              isInvalid={!!form.formState.errors.stockMinimo}
+              onChange={(e) => minimo.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+            />
+            <Form.Text>
+              En {unidades.find((u) => u.id === Number(unidadMedidaId))?.sufijo ?? 'la unidad seleccionada'}.
+              Avisamos al llegar a este valor o quedar por debajo. Dejalo vacío para desactivar el aviso.
+            </Form.Text>
           </Form.Group>
 
           <div className="d-flex justify-content-end gap-2">

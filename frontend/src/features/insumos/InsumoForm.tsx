@@ -29,10 +29,20 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
   const tieneRecepciones = (historial.datos?.total ?? 0) > 0;
   const bloquearInventario =
     esEdicion && (historial.cargando || Boolean(historial.error) || tieneRecepciones);
-  const form = useForm<{ nombre: string; cantidad: number | ''; unidadMedidaId: number | '' }>({
-    defaultValues: { nombre: '', cantidad: '', unidadMedidaId: '' },
+  const form = useForm<{ nombre: string; cantidad: number | ''; stockMinimo: number | ''; unidadMedidaId: number | '' }>({
+    defaultValues: { nombre: '', cantidad: '', stockMinimo: '', unidadMedidaId: '' },
   });
   const enviando = form.formState.isSubmitting;
+  const { field: minimo } = useController({
+    name: 'stockMinimo',
+    control: form.control,
+    rules: { validate: (v) => v === '' || (Number.isFinite(v) && v >= 0) || 'Ingresá un mínimo válido, igual o mayor que cero.' },
+  });
+  const { setValue } = form;
+  useEffect(() => {
+    setValue('stockMinimo', insumoInicial?.stock_minimo ?? '');
+  }, [insumoInicial, setValue]);
+
   const {
     field: {
       value: nombre,
@@ -107,6 +117,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
       await onGuardar({
         nombre,
         cantidad: Number(cantidad),
+        stock_minimo: minimo.value === '' ? null : Number(minimo.value),
         unidad_medida_id: Number(unidadMedidaId),
       });
     } catch (err: unknown) {
@@ -193,6 +204,23 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
                 </option>
               ))}
             </SearchableSelect>
+          </Form.Group>
+
+          <Form.Group controlId="InsumoForm-stockMinimo" className="mb-4">
+            <Form.Label>Stock mínimo — opcional</Form.Label>
+            <Form.Control
+              {...minimo}
+              type="number"
+              min="0"
+              step="any"
+              placeholder="Sin mínimo definido"
+              isInvalid={!!form.formState.errors.stockMinimo}
+              onChange={(e) => minimo.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+            />
+            <Form.Text>
+              En {unidades.find((u) => u.id === Number(unidadMedidaId))?.sufijo ?? 'la unidad seleccionada'}.
+              Avisamos al llegar a este valor o quedar por debajo. Dejalo vacío para desactivar el aviso.
+            </Form.Text>
           </Form.Group>
 
           <div className="d-flex justify-content-end gap-2">
