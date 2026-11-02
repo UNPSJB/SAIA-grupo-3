@@ -492,3 +492,68 @@ def test_busqueda_se_aplica_antes_de_paginar_y_combina_filtros(
     services.anular_recepcion(db_session, segundo["id"])
     assert services.listar_recepciones(db_session, **filtros)["total"] == 0
     assert services.listar_recepciones(db_session, **filtros, mostrar_inactivos=True)["total"] == 1
+
+
+"""Aceptación de stock mínimo; toda la persistencia se hace en SQLite aislado."""
+from datetime import date
+import sqlite3
+from pathlib import Path
+import pytest
+from pydantic import ValidationError
+from sqlalchemy import select, func
+from tests.database import db_session, unidad_medida, insumo_activo, producto, persona_operadora
+from src.insumos.models import Insumo
+from src.insumos.schemas import InsumoCreate, InsumoUpdate
+from src.insumos import services as ingredientes
+from src.insumosQuimicos.models import InsumoQuimico, TipoQuimico
+from src.insumosQuimicos.schemas import InsumoQuimicoCreate, InsumoQuimicoUpdate
+from src.insumosQuimicos import services as quimicos
+from src.notificaciones.models import Notificacion
+from src.notificaciones import services as avisos
+from src.consumoQuimico import services as consumos
+from src.consumoQuimico.schemas import ConsumoQuimicoCreate, ConsumoQuimicoUpdate
+from src.consumoQuimico.models import ConsumoQuimico
+from scripts.migrate_stock_minimo import migrar
+
+def crear_quimico(db, unidad, nombre='Detergente', cantidad=10, minimo=5):
+    return quimicos.crear_insumo_quimico(db, InsumoQuimicoCreate(nombre=nombre, cantidad=cantidad, stock_minimo=minimo, tipo_quimico=TipoQuimico.DETERGENTE, unidad_medida_id=unidad.id))
+
+def recibir_prueba(db, insumo, actor, cantidad):
+    if not cantidad:
+        return
+    from datetime import timedelta
+    from uuid import uuid4
+    from src.abastecimiento.models import Proveedor, LoteRecepcionInsumo
+    proveedor = Proveedor(nombre='Proveedor ficticio', cuit=str(uuid4()), activo=True)
+    db.add(proveedor)
+    db.flush()
+    db.add(LoteRecepcionInsumo(insumo_id=insumo.id, proveedor_id=proveedor.id, numero_lote='TEST', cantidad=cantidad, cantidad_disponible=cantidad, fecha_recepcion=date.today(), fecha_vencimiento=date.today() + timedelta(days=30), registrado_por_id=actor.id, clave_operacion=str(uuid4()), activo=True, conciliacion=False))
+    db.commit()
+    db.refresh(insumo)
+
+def usar(db, q, cantidad=5):
+    return consumos.crear_consumo(db, ConsumoQuimicoCreate(insumo_quimico_id=q.id, cantidad_utilizada=cantidad, fecha=date.today(), tarea_limpieza='Limpieza demo'))
+
+def cantidad_avisos(db):
+    return db.scalar(select(func.count()).select_from(Notificacion))
+
+def test_recepcion_resuelve_y_anulacion_reabre(db_session, insumo_activo, persona_operadora):
+    from datetime import timedelta
+    from uuid import uuid4
+    from src.abastecimiento.models import Proveedor
+    from src.abastecimiento.schemas import LoteInput
+    from src.abastecimiento.services import guardar_recepcion, anular_recepcion
+    from tests.abastecimiento.stock_trazable import identificar_stock
+    identificar_stock(db_session, persona_operadora, insumo_activo)
+    ingredientes.modificar_insumo(db_session, insumo_activo.id, InsumoUpdate(stock_minimo=50))
+    aviso = db_session.scalar(select(Notificacion))
+    proveedor = Proveedor(nombre='Proveedor', cuit='30123456780', activo=True)
+    db_session.add(proveedor)
+    db_session.commit()
+    datos = LoteInput(insumo_id=insumo_activo.id, proveedor_id=proveedor.id, numero_lote='RECEPCION', cantidad=10, fecha_recepcion=date.today(), fecha_vencimiento=date.today() + timedelta(days=30), clave_operacion=uuid4())
+    recibido = guardar_recepcion(db_session, datos, persona_operadora.id)
+    assert insumo_activo.cantidad == 60 and aviso.resuelta
+    guardar_recepcion(db_session, datos, persona_operadora.id)
+    assert insumo_activo.cantidad == 60
+    anular_recepcion(db_session, recibido['id'])
+    assert insumo_activo.cantidad == 50 and (not aviso.resuelta)

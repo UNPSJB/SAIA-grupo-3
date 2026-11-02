@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
 from scripts import seed_lotes_produccion as seed
-from tests.stock_trazable import identificar_stock
+from tests.abastecimiento.stock_trazable import identificar_stock
 from tests.database import (
     db_session,
     insumo_activo,
