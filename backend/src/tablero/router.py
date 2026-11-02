@@ -8,6 +8,7 @@ from src.auth.router_base import PermissionedRouter
 from src.database import get_db
 from src.tablero import schemas, services
 from src.tablero.constants import Agrupacion
+from src.tablero.produccion import EstadisticaProduccion, calcular_produccion
 
 
 router = PermissionedRouter(prefix="/tablero", tags=["tablero"])
@@ -25,3 +26,17 @@ def read_cumplimiento_checklist(
     agrupacion: Agrupacion = Query(Agrupacion.DIA),
 ):
     return services.calcular_cumplimiento(db, fecha_desde, fecha_hasta, agrupacion)
+
+
+@router.get(
+    "/produccion",
+    response_model=EstadisticaProduccion,
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_produccion(
+    db: Session = Depends(get_db),
+    fecha_desde: date | None = Query(None),
+    fecha_hasta: date | None = Query(None),
+    producto_id: int | None = Query(None, gt=0),
+):
+    return calcular_produccion(db, fecha_desde, fecha_hasta, producto_id)

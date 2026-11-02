@@ -16,6 +16,7 @@ import {
 } from '../../shared/libreria/graficos';
 import type { AgrupacionCumplimiento, PuntoCumplimiento } from './types';
 import { useCumplimientoChecklist } from './useCumplimientoChecklist';
+import { ProduccionPanel } from './ProduccionPanel';
 
 
 const OPCIONES_AGRUPACION: { valor: AgrupacionCumplimiento; texto: string }[] = [
@@ -76,7 +77,8 @@ export function TableroPage() {
         />
         </div>
       </div>
-      <Row xs={2} lg={4} className="g-3 mb-3">
+      <ProduccionPanel />
+      <Row xs={2} lg={4} className="g-3 my-3">
         <Col>
           <IndicadorNumerico
             titulo="Cumplimiento del período"
