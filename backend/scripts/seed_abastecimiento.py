@@ -6,12 +6,41 @@ from uuid import NAMESPACE_URL, uuid5
 from sqlalchemy import select
 
 from scripts.seed_common import CANTIDAD
+from scripts.seed_insumos import INGREDIENTES
 from scripts.seed_lotes_produccion import asociar_ingredientes_demo
 from src.abastecimiento.models import LoteRecepcionInsumo, Proveedor
 from src.insumos.models import Insumo
 from src.loteProduccion.constants import EstadoLote
 from src.loteProduccion.models import LoteProduccion
 from src.producto.models import Producto
+
+
+def recibir_demo(db, crear, insumo, proveedor, cantidad, clave, numero, actor, fecha, vence):
+    """Un ingreso ficticio explícito, estable e independiente del stock anterior."""
+    clave = str(uuid5(NAMESPACE_URL, clave))
+    existente = db.scalar(select(LoteRecepcionInsumo).where(
+        LoteRecepcionInsumo.clave_operacion == clave))
+    if existente is not None:
+        return
+    if not proveedor.activo or not insumo.activo:
+        raise RuntimeError("No se puede agregar una recepción demo nueva con proveedor o insumo inactivo.")
+    _, nueva = crear(LoteRecepcionInsumo, {"clave_operacion": clave},
+        insumo_id=insumo.id, proveedor_id=proveedor.id, numero_lote=numero,
+        cantidad=cantidad, cantidad_disponible=cantidad, fecha_recepcion=fecha,
+        fecha_vencimiento=vence, registrado_por_id=actor,
+        fecha_registro=datetime.combine(fecha, time(9)), activo=True, conciliacion=False)
+    if nueva:
+        insumo.cantidad += cantidad
+        db.flush()
+
+
+def cargar_recepciones_ingredientes(db, crear, ingredientes, proveedores, actor, hoy):
+    # En bases existentes no identifica ni reemplaza saldos anteriores: son nuevos
+    # ingresos de demostración, registrados una sola vez y con origen ficticio explícito.
+    for i, (nombre, _, cantidad) in enumerate(INGREDIENTES):
+        recibir_demo(db, crear, ingredientes[nombre], proveedores[i], cantidad,
+            f"saia:seed:ingredientes:recepcion:{nombre}", f"DEMO-BASE-{i + 1:03d}",
+            actor, hoy - timedelta(days=45), hoy + timedelta(days=90))
 
 
 def cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, registrado_por_id, hoy):
@@ -40,10 +69,10 @@ def cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, registrado_por_id
         ("Levadura", "g", 500.0), ("Aceite", "L", 10.0), ("Sal", "kg", 5.0),
     ]
     ingredientes = {}
-    for nombre, sufijo, _ in definiciones + [("Agua de amasado sin lote", "L", 0)]:
+    for nombre, sufijo, _ in definiciones + [("Agua de amasado", "L", 20)]:
         nombre_demo = f"{nombre} · DEMO abastecimiento"
         insumo, _ = crear(Insumo, {"nombre": nombre_demo},
-            cantidad=20.0 if nombre == "Agua de amasado sin lote" else 0.0,
+            cantidad=0.0,
             unidad_medida_id=unidades_por_sufijo[sufijo].id, activo=True)
         if insumo.unidad_medida_id != unidades_por_sufijo[sufijo].id:
             raise RuntimeError(f"La unidad de {nombre_demo} cambió. El seed no la sobrescribe.")
@@ -75,63 +104,25 @@ def cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, registrado_por_id
             insumo.cantidad += recepcion.cantidad
             db.flush()
 
+    recibir_demo(db, crear, ingredientes["Agua de amasado"], proveedores[0], 20.0,
+        "saia:seed:abastecimiento:agua-identificada", "DEMO-AGUA-001",
+        registrado_por_id, hoy - timedelta(days=45), hoy + timedelta(days=60))
+
     producto, _ = crear(Producto, {"nombre": "Pan francés · DEMO abastecimiento"},
         descripcion="Producción ficticia para probar recepción, vencimientos y trazabilidad.",
         unidad_medida_id=unidades_por_sufijo["kg"].id, activo=True)
-    receta = [("Harina de trigo", 1.0), ("Agua de amasado sin lote", 0.6),
+    receta = [("Harina de trigo", 1.0), ("Agua de amasado", 0.6),
               ("Levadura", 20.0), ("Sal", 0.02)]
     for i in range(CANTIDAD):
         fecha = hoy - timedelta(days=i % 7)
-        lote, _ = crear(LoteProduccion, {"codigo": f"L-ABAST-SEED-{i + 1:03d}"},
+        lote, nuevo = crear(LoteProduccion, {"codigo": f"L-ABAST-SEED-{i + 1:03d}"},
             producto_id=producto.id, fecha_produccion=fecha, cantidad=1.5,
-            observaciones="DEMO: recepciones identificadas y agua de stock anterior sin trazabilidad.",
+            observaciones="DEMO: todos los ingredientes provienen de recepciones identificadas ficticias.",
             registrado_por_id=registrado_por_id, fecha_registro=datetime.combine(fecha, time(10, i)),
             activo=True, estado=EstadoLote.CERRADO if i % 2 else EstadoLote.ABIERTO,
             fecha_cierre=datetime.combine(fecha, time(12)) if i % 2 else None,
             cerrado_por_id=registrado_por_id if i % 2 else None)
-        asociar_ingredientes_demo(db, lote, ingredientes, receta=receta, crear=crear)
+        if nuevo:
+            asociar_ingredientes_demo(db, lote, ingredientes, receta=receta, crear=crear)
 
     return proveedores
-
-
-def cargar_recepciones_ingredientes_demo(
-    db,
-    crear,
-    ingredientes_por_nombre,
-    proveedores,
-    registrado_por_id,
-    hoy,
-):
-    """Identifica con recepciones demo el stock inicial de ingredientes."""
-    proveedores_activos = [proveedor for proveedor in proveedores if proveedor.activo]
-    if not proveedores_activos:
-        raise RuntimeError("Se necesita al menos un proveedor activo para seed de producción.")
-
-    for indice, (nombre, insumo) in enumerate(ingredientes_por_nombre.items()):
-        clave = str(uuid5(NAMESPACE_URL, f"saia:seed:produccion:recepcion:{nombre}"))
-        existente = db.scalar(
-            select(LoteRecepcionInsumo).where(
-                LoteRecepcionInsumo.clave_operacion == clave
-            )
-        )
-        if existente is not None:
-            continue
-        if insumo.cantidad <= 0:
-            raise RuntimeError(f"El stock inicial de {nombre} debe ser positivo.")
-
-        proveedor = proveedores_activos[indice % len(proveedores_activos)]
-        crear(
-            LoteRecepcionInsumo,
-            {"clave_operacion": clave},
-            insumo_id=insumo.id,
-            proveedor_id=proveedor.id,
-            numero_lote=f"DEMO-PROD-{indice + 1:03d}",
-            cantidad=insumo.cantidad,
-            cantidad_disponible=insumo.cantidad,
-            fecha_recepcion=hoy - timedelta(days=45),
-            fecha_vencimiento=hoy + timedelta(days=180),
-            registrado_por_id=registrado_por_id,
-            fecha_registro=datetime.combine(hoy - timedelta(days=45), time(8, indice)),
-            activo=True,
-            conciliacion=True,
-        )

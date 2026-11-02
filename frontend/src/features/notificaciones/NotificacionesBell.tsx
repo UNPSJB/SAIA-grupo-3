@@ -26,12 +26,12 @@ export function NotificacionesBell() {
     >
       <Dropdown.Toggle
         variant="outline-secondary"
-        className="header-icon-button campanita-toggle position-relative d-flex align-items-center justify-content-center rounded-circle p-0 shadow-none"
+        className="header-icon-button campanita-toggle position-relative d-flex align-items-center justify-content-center rounded-2 p-0 shadow-none"
         aria-label={`Notificaciones: ${cantidadNoLeidas} sin leer`}
         title="Notificaciones"
       >
         <i
-          className={`bi ${cantidadNoLeidas > 0 ? 'bi-bell-fill' : 'bi-bell'}`}
+          className="bi bi-bell"
           aria-hidden="true"
         ></i>
         {cantidadNoLeidas > 0 && (
@@ -41,14 +41,18 @@ export function NotificacionesBell() {
         )}
       </Dropdown.Toggle>
 
-      <Dropdown.Menu className="shadow p-0" style={{ width: '340px' }}>
-        <div className="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-          <strong className="small">Notificaciones · {cantidadNoLeidas} sin leer</strong>
+      <Dropdown.Menu className="notificaciones-menu shadow-sm p-0">
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 px-3 py-3 border-bottom">
+          <div className="d-flex align-items-center gap-2">
+            <i className="bi bi-bell text-body-secondary" aria-hidden="true" />
+            <strong className="small fw-medium">Notificaciones</strong>
+            <span className="notificaciones-contador">{cantidadNoLeidas} sin leer</span>
+          </div>
           {cantidadNoLeidas > 0 && (
             <Button
               variant="link"
               size="sm"
-              className="p-0 text-decoration-none"
+              className="notificaciones-marcar p-0 text-decoration-none"
               onClick={marcarTodas}
             >
               Marcar todas como leídas
@@ -56,12 +60,12 @@ export function NotificacionesBell() {
           )}
         </div>
 
-        <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+        <div className="notificaciones-lista p-2">
           {error ? (
-            <div className="text-danger small p-3">{error}</div>
+            <div className="text-danger small p-3" role="alert">{error}</div>
           ) : notificaciones.length === 0 ? (
             <div className="text-muted small text-center p-4">
-              <i className="bi bi-bell-slash d-block fs-4 mb-1"></i>
+              <i className="bi bi-bell-slash d-block fs-4 mb-2" aria-hidden="true"></i>
               No hay notificaciones
             </div>
           ) : (
@@ -70,20 +74,23 @@ export function NotificacionesBell() {
                 key={n.id}
                 as="button"
                 onClick={() => abrirNotificacion(n)}
-                className={`d-flex gap-2 px-3 py-2 border-bottom text-wrap ${n.leida ? '' : 'bg-primary-subtle'}`}
+                className={`notificacion-item d-flex gap-3 p-3 text-wrap rounded-3 ${n.leida ? '' : 'notificacion-sin-leer'}`}
               >
-                <i className="bi bi-exclamation-triangle-fill text-warning mt-1"></i>
-                <div className="flex-grow-1 small">
-                  <div className="fw-semibold">{n.titulo}</div>
-                  <small className={n.leida ? 'text-muted' : 'text-primary'}>
-                    {n.leida ? 'Leída' : 'Sin leer'}
-                  </small>
-                  <div className="text-body-secondary">{n.mensaje}</div>
-                  <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                    {formatearFechaHora(n.fecha_creacion)}
+                <span className="notificacion-icono flex-shrink-0" aria-hidden="true">
+                  <i className="bi bi-calendar2-event" />
+                </span>
+                <div className="flex-grow-1 small" style={{ minWidth: 0 }}>
+                  <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <span className="fw-medium">{n.titulo}</span>
+                    {!n.leida && <span className="notificacion-punto" aria-hidden="true" />}
                   </div>
+                  <div className="text-body-secondary mb-2">{n.mensaje}</div>
+                  <small className="text-body-secondary">
+                    {n.leida ? 'Leída' : 'Sin leer'}
+                    {' · '}{formatearFechaHora(n.fecha_creacion)}
+                  </small>
                 </div>
-                {n.enlace && <i className="bi bi-chevron-right text-muted align-self-center"></i>}
+                {n.enlace && <i className="bi bi-chevron-right small text-body-secondary align-self-center flex-shrink-0" aria-hidden="true" />}
               </Dropdown.Item>
             ))
           )}

@@ -6,6 +6,69 @@
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
+/* Pie lateral con separador interior; pie del contenido más compacto. */
+.saia-sidebar-footer,
+.saia-content-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--bs-border-color);
+  display: flex;
+  align-items: center;
+}
+
+.saia-sidebar-footer {
+  position: relative;
+  min-height: 84px;
+  padding: 16px 12px 16px 24px;
+  gap: 12px;
+  border-top: 0;
+}
+
+.saia-sidebar-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.saia-footer-icon {
+  width: 18px;
+  flex-shrink: 0;
+  font-size: 16px;
+  text-align: center;
+}
+
+.saia-footer-identity {
+  min-width: 0;
+}
+
+.saia-footer-role {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-bottom: 2px;
+}
+
+.saia-footer-description {
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.saia-content-footer {
+  min-height: 60px;
+  padding: 12px 32px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  column-gap: 24px;
+  row-gap: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .main-content {
   margin-left: 0;
   transition: margin-left 0.3s ease-in-out;
@@ -63,15 +126,86 @@
   display: none;
 }
 
+.campanita-toggle {
+  --bs-btn-active-bg: var(--bs-tertiary-bg);
+  --bs-btn-active-color: var(--bs-body-color);
+  --bs-btn-active-border-color: transparent;
+}
+
+.notificaciones-menu {
+  --bs-dropdown-bg: var(--bs-body-bg);
+  --bs-dropdown-color: var(--bs-body-color);
+  --bs-dropdown-border-color: var(--bs-border-color);
+  --bs-dropdown-border-radius: 12px;
+  width: 370px;
+  max-width: calc(100vw - 24px);
+  margin-top: 12px !important;
+}
+
+.notificaciones-menu .notificaciones-contador {
+  padding: 3px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--bs-secondary-color);
+  background-color: var(--bs-tertiary-bg);
+}
+
+.notificaciones-menu .notificaciones-marcar {
+  color: var(--bs-secondary-color);
+  font-size: 12px !important;
+}
+
+.notificaciones-menu .notificaciones-marcar:hover {
+  color: var(--bs-body-color);
+  text-decoration: underline !important;
+}
+
+.notificaciones-lista {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.notificaciones-menu .notificacion-item {
+  color: var(--bs-body-color);
+  margin-bottom: 4px;
+}
+
+.notificaciones-menu .notificacion-item:last-child {
+  margin-bottom: 0;
+}
+
+.notificaciones-menu .notificacion-sin-leer {
+  background-color: color-mix(in srgb, var(--bs-primary) 7%, var(--bs-body-bg));
+}
+
+.notificaciones-menu .notificacion-item:hover,
+.notificaciones-menu .notificacion-item:focus-visible,
+.notificaciones-menu .notificacion-item:active {
+  color: var(--bs-body-color);
+  background-color: var(--bs-tertiary-bg);
+}
+
+.notificacion-icono {
+  color: color-mix(in srgb, var(--bs-primary) 25%, var(--bs-body-color));
+  font-size: 18px;
+}
+
+.notificacion-punto {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--bs-primary) 35%, var(--bs-body-color));
+}
+
 .header-icon-button {
   width: 36px;
   height: 36px;
   flex-shrink: 0;
   font-size: 18px;
   line-height: 1;
-  color: var(--bs-body-color);
-  background-color: var(--bs-body-bg);
-  border-color: var(--bs-border-color);
+  color: var(--bs-secondary-color);
+  background-color: transparent;
+  border: 0;
 }
 
 .header-icon-button:hover,
@@ -79,7 +213,7 @@
 .header-icon-button.show {
   color: var(--bs-body-color);
   background-color: var(--bs-tertiary-bg);
-  border-color: var(--bs-secondary-color);
+  border: 0;
 }
 
 .campanita-toggle .notification-count {
@@ -100,6 +234,107 @@
 
 .avatar-toggle::after {
   display: none;
+}
+
+.cuenta-menu {
+  --bs-dropdown-bg: var(--bs-body-bg);
+  --bs-dropdown-border-color: var(--bs-border-color);
+  --bs-dropdown-border-radius: 12px;
+  --bs-dropdown-link-color: var(--bs-body-color);
+  --bs-dropdown-link-hover-color: var(--bs-body-color);
+  --bs-dropdown-link-hover-bg: var(--bs-tertiary-bg);
+  --bs-dropdown-link-active-color: var(--bs-body-color);
+  --bs-dropdown-link-active-bg: color-mix(in srgb, var(--bs-primary) 12%, var(--bs-body-bg));
+  width: 260px;
+  max-width: calc(100vw - 24px);
+  margin-top: 12px !important;
+}
+
+.cuenta-menu .cuenta-menu-identidad {
+  padding: 12px 10px 18px;
+  white-space: normal;
+  font-size: 14px;
+}
+
+.cuenta-menu-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.cuenta-menu .cuenta-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.cuenta-menu-item .bi {
+  width: 18px;
+  font-size: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.cuenta-menu .cuenta-menu-salir {
+  color: var(--bs-secondary-color);
+}
+
+.cuenta-menu .cuenta-menu-salir:hover,
+.cuenta-menu .cuenta-menu-salir:focus-visible {
+  color: var(--bs-danger-text-emphasis);
+  background-color: color-mix(in srgb, var(--bs-danger) 7%, var(--bs-body-bg));
+}
+
+/* Una misma escala para accesos, grupos y enlaces del sidebar. */
+.navigation-brand-accent,
+.navigation-account-accent {
+  color: color-mix(in srgb, var(--bs-primary) 35%, var(--bs-body-color));
+  background-color: color-mix(in srgb, var(--bs-primary) 18%, var(--bs-body-bg));
+}
+
+.navigation-account-accent {
+  border-color: color-mix(in srgb, var(--bs-primary) 25%, var(--bs-border-color)) !important;
+}
+
+.sidebar-navigation .nav-link.sidebar-nav-selected {
+  color: var(--bs-body-color);
+  background-color: color-mix(in srgb, var(--bs-primary) 12%, var(--bs-body-bg));
+}
+
+.sidebar-navigation .sidebar-nav-item {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.sidebar-navigation .sidebar-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.sidebar-navigation .sidebar-nav-chevron {
+  width: 12px;
+  font-size: 11px;
+  text-align: center;
+}
+
+.sidebar-navigation .sidebar-nav-heading {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 /* Texto uniforme y legible en ambos temas, sin alterar colores de botones o estados. */

@@ -7,7 +7,6 @@ from sqlalchemy import select
 from scripts.seed_common import CANTIDAD, obtener_o_crear
 from src.abastecimiento.models import (
     ConsumoLoteRecepcion,
-    ConsumoStockAnterior,
     LoteRecepcionInsumo,
 )
 from src.loteProduccion.constants import EstadoLote
@@ -67,7 +66,7 @@ def asociar_ingredientes_demo(db, lote, ingredientes_por_nombre, *, receta=None,
             utilizables = [r for r in recepciones if r.fecha_recepcion <= lote.fecha_produccion <= r.fecha_vencimiento]
             saldo = sum(r.cantidad_disponible for r in utilizables)
             if (sin_lote < -1e-9 or ingrediente.cantidad < cantidad_usada
-                    or cantidad_usada > saldo + max(0, sin_lote) + 1e-9):
+                    or cantidad_usada > saldo + 1e-9):
                 raise RuntimeError(
                     f"Stock utilizable insuficiente o inconsistente para {nombre} "
                     f"en el lote demo {lote.codigo}. El seed no modifica saldos existentes para ocultarlo."
@@ -82,10 +81,6 @@ def asociar_ingredientes_demo(db, lote, ingredientes_por_nombre, *, receta=None,
                     "lote_produccion_id": lote.id, "lote_recepcion_id": recepcion.id,
                 }, cantidad=utilizado)
                 pendiente = max(0, pendiente - utilizado)
-            if pendiente > 1e-9:
-                guardar(ConsumoStockAnterior, {
-                    "lote_produccion_id": lote.id, "insumo_id": ingrediente.id,
-                }, cantidad=pendiente)
             ingrediente.cantidad -= asociacion.cantidad_usada
             db.flush()
 
@@ -93,7 +88,7 @@ def cargar_lotes_produccion(db, crear, productos, ingredientes_por_nombre, opera
     for i in range(CANTIDAD):
         fecha_lote = hoy - timedelta(days=[0, 1, 2, 3, 5, 7, 9, 12, 14, 17, 20, 23, 25, 28, 30][i])
         cerrado = i >= 8
-        lote_demo, _ = crear(LoteProduccion, {"codigo": f"L-SEED-{i + 1:03d}"},
+        lote_demo, nuevo = crear(LoteProduccion, {"codigo": f"L-SEED-{i + 1:03d}"},
             producto_id=productos[i % len(productos)].id, fecha_produccion=fecha_lote,
             cantidad=float([24, 15, 60, 30, 20, 8, 40, 12, 6, 36, 10, 5, 48, 9, 7][i]),
             observaciones=None if i % 3 else "Lote de demostración del seed.",
@@ -102,4 +97,5 @@ def cargar_lotes_produccion(db, crear, productos, ingredientes_por_nombre, opera
             estado=EstadoLote.CERRADO if cerrado else EstadoLote.ABIERTO,
             fecha_cierre=datetime.combine(fecha_lote + timedelta(days=1), time(18, 0)) if cerrado else None,
             cerrado_por_id=admin.id if cerrado else None)
-        asociar_ingredientes_demo(db, lote_demo, ingredientes_por_nombre, crear=crear)
+        if nuevo:
+            asociar_ingredientes_demo(db, lote_demo, ingredientes_por_nombre, crear=crear)

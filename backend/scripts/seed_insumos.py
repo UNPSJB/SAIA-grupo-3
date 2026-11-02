@@ -34,11 +34,11 @@ def cargar_insumos(crear, unidades, unidades_por_sufijo):
             unidad_medida_id=unidad.id, activo=True)
         insumos.append(insumo)
     ingredientes_por_nombre = {}
-    for nombre, sufijo, stock_inicial in INGREDIENTES:
+    for nombre, sufijo, _ in INGREDIENTES:
         ingrediente, _ = crear(
             Insumo,
             {"nombre": nombre},
-            cantidad=stock_inicial,
+            cantidad=0.0,
             unidad_medida_id=unidades_por_sufijo[sufijo].id,
             activo=True,
         )

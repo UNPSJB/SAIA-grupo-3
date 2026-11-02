@@ -8,12 +8,11 @@ from sqlalchemy import func, select
 
 from src.abastecimiento import schemas, services
 from src.abastecimiento.models import ConsumoLoteRecepcion, ConsumoStockAnterior, LoteRecepcionInsumo, Proveedor
-from src.config import settings
 from src.documentacion.constants import DIAS_AVISO_VENCIMIENTO
 from src.documentacion.vencimientos import listar_vencimientos_consolidados
 from src.insumos import schemas as insumo_schemas, services as insumo_services
 from src.loteProduccion import schemas as produccion_schemas, services as produccion_services
-from src.loteProduccion.models import LoteProduccion
+from src.loteProduccion.models import LoteInsumo, LoteProduccion
 
 
 def recibir(db, insumo, proveedor, persona, **cambios):
@@ -194,23 +193,130 @@ def test_produccion_consume_fefo_y_descuenta_una_vez(db_session, insumo_activo, 
     assert resumen["stock_total"] == resumen["stock_identificado"] + resumen["stock_sin_lote"]
 
 
-def test_stock_anterior_se_registra_sin_inventar_proveedor(db_session, insumo_activo, persona_operadora, producto, monkeypatch):
-    monkeypatch.setattr(settings, "PERMITIR_STOCK_SIN_LOTE", True)
-    produccion = producir(db_session, insumo_activo, persona_operadora, producto, 3)
-    consumo = db_session.scalar(select(ConsumoStockAnterior))
-    assert consumo.cantidad == 3
-    assert consumo.lote_produccion_id == produccion.id
+def test_stock_anterior_bloqueado_aunque_variable_antigua_este_activa(
+    db_session, insumo_activo, persona_operadora, producto, monkeypatch
+):
+    monkeypatch.setenv("PERMITIR_STOCK_SIN_LOTE", "true")
+    with pytest.raises(HTTPException) as error:
+        producir(db_session, insumo_activo, persona_operadora, producto, 3)
+    assert error.value.status_code == 409
+    assert insumo_activo.nombre in error.value.detail
+    assert db_session.scalar(select(ConsumoStockAnterior)) is None
     db_session.refresh(insumo_activo)
-    assert insumo_activo.cantidad == 47
+    assert insumo_activo.cantidad == 50
 
 
-def test_politica_estricta_rechaza_stock_sin_lote(db_session, insumo_activo, persona_operadora, producto, monkeypatch):
-    monkeypatch.setattr(settings, "PERMITIR_STOCK_SIN_LOTE", False)
+def test_politica_estricta_rechaza_stock_sin_lote(db_session, insumo_activo, persona_operadora, producto):
     with pytest.raises(HTTPException):
         producir(db_session, insumo_activo, persona_operadora, producto, 1)
     assert db_session.scalar(select(func.count()).select_from(LoteProduccion)) == 0
     db_session.refresh(insumo_activo)
     assert insumo_activo.cantidad == 50
+
+
+def test_saldo_identificado_insuficiente_no_recurre_al_stock_anterior(
+    db_session, insumo_activo, proveedor, persona_operadora, producto
+):
+    lote, _ = recibir(db_session, insumo_activo, proveedor, persona_operadora, cantidad=2)
+    with pytest.raises(HTTPException) as error:
+        producir(db_session, insumo_activo, persona_operadora, producto, 3)
+    assert error.value.status_code == 409
+    assert db_session.get(LoteRecepcionInsumo, lote["id"]).cantidad_disponible == 2
+    assert db_session.scalar(select(ConsumoLoteRecepcion)) is None
+    assert db_session.scalar(select(ConsumoStockAnterior)) is None
+    assert db_session.scalar(select(LoteProduccion)) is None
+    db_session.refresh(insumo_activo)
+    assert insumo_activo.cantidad == 52
+
+
+def test_identificar_stock_es_idempotente_y_habilita_consumo_trazado(
+    db_session, insumo_activo, proveedor, persona_operadora, producto
+):
+    datos = schemas.LoteInput(
+        insumo_id=insumo_activo.id, proveedor_id=proveedor["id"],
+        numero_lote="ORIGEN-VERIFICADO", cantidad=10, clave_operacion=uuid4(),
+        fecha_recepcion=date.today() - timedelta(days=5),
+        fecha_vencimiento=date.today() + timedelta(days=30),
+    )
+    lote = services.guardar_recepcion(db_session, datos, persona_operadora.id, conciliacion=True)
+    repetido = services.guardar_recepcion(db_session, datos, persona_operadora.id, conciliacion=True)
+    assert lote["id"] == repetido["id"]
+    assert services.resumen_stock(db_session, insumo_activo.id)["stock_total"] == 50
+    producir(db_session, insumo_activo, persona_operadora, producto, 4)
+    resumen = services.resumen_stock(db_session, insumo_activo.id)
+    assert resumen["stock_total"] == 46
+    assert resumen["stock_sin_lote"] == 40
+    assert resumen["stock_utilizable"] == 6
+    assert db_session.scalar(select(ConsumoLoteRecepcion)).lote_recepcion_id == lote["id"]
+    assert db_session.scalar(select(ConsumoStockAnterior)) is None
+
+
+def test_falta_trazabilidad_en_segundo_insumo_revierte_toda_produccion(
+    db_session, insumo_activo, unidad_medida, proveedor, persona_operadora, producto
+):
+    from src.insumos.models import Insumo
+
+    otro = Insumo(nombre="Sal sin identificar", cantidad=10,
+                  unidad_medida_id=unidad_medida.id, activo=True)
+    db_session.add(otro)
+    db_session.commit()
+    lote, _ = recibir(db_session, insumo_activo, proveedor, persona_operadora, cantidad=5)
+    with pytest.raises(HTTPException) as error:
+        produccion_services.crear_lote(db_session, produccion_schemas.LoteProduccionCreate(
+            producto_id=producto.id, fecha_produccion=date.today(), cantidad=1,
+            insumos=[
+                produccion_schemas.LoteInsumoCreate(insumo_id=insumo_activo.id, cantidad_usada=2),
+                produccion_schemas.LoteInsumoCreate(insumo_id=otro.id, cantidad_usada=1),
+            ],
+        ), persona_operadora.id)
+    assert error.value.status_code == 409
+    assert db_session.get(LoteRecepcionInsumo, lote["id"]).cantidad_disponible == 5
+    assert db_session.scalar(select(LoteProduccion)) is None
+    assert db_session.scalar(select(LoteInsumo)) is None
+    assert db_session.scalar(select(ConsumoLoteRecepcion)) is None
+    db_session.refresh(insumo_activo)
+    db_session.refresh(otro)
+    assert insumo_activo.cantidad == 55
+    assert otro.cantidad == 10
+
+
+@pytest.mark.parametrize("exclusion", ["vencido", "anulado", "posterior"])
+def test_lotes_no_elegibles_no_habilitan_consumos(
+    db_session, insumo_activo, proveedor, persona_operadora, producto, exclusion
+):
+    cambios = {"fecha_vencimiento": date.today()-timedelta(days=1)} if exclusion == "vencido" else {}
+    lote, _ = recibir(db_session, insumo_activo, proveedor, persona_operadora, **cambios)
+    if exclusion == "anulado":
+        services.anular_recepcion(db_session, lote["id"])
+    fecha = date.today()-timedelta(days=3) if exclusion == "posterior" else date.today()
+    with pytest.raises(HTTPException) as error:
+        produccion_services.crear_lote(db_session, produccion_schemas.LoteProduccionCreate(
+            producto_id=producto.id, fecha_produccion=fecha, cantidad=1,
+            insumos=[produccion_schemas.LoteInsumoCreate(insumo_id=insumo_activo.id, cantidad_usada=1)],
+        ), persona_operadora.id)
+    assert error.value.status_code == 409
+    assert db_session.scalar(select(ConsumoLoteRecepcion)) is None
+    assert db_session.scalar(select(ConsumoStockAnterior)) is None
+
+
+def test_historial_sin_trazabilidad_se_conserva_sin_agregar_nuevos_consumos(
+    db_session, insumo_activo, persona_operadora, producto
+):
+    historico = LoteProduccion(codigo="HISTORICO", producto_id=producto.id,
+        fecha_produccion=date.today()-timedelta(days=30), cantidad=1,
+        registrado_por_id=persona_operadora.id, activo=True)
+    db_session.add(historico)
+    db_session.flush()
+    consumo = ConsumoStockAnterior(lote_produccion_id=historico.id,
+                                   insumo_id=insumo_activo.id, cantidad=3)
+    db_session.add(consumo)
+    db_session.commit()
+    consumo_id, historico_id = consumo.id, historico.id
+    with pytest.raises(HTTPException):
+        producir(db_session, insumo_activo, persona_operadora, producto, 1)
+    assert db_session.get(ConsumoStockAnterior, consumo_id).cantidad == 3
+    assert db_session.get(LoteProduccion, historico_id) is not None
+    assert db_session.scalar(select(func.count()).select_from(ConsumoStockAnterior)) == 1
 
 
 def test_no_edita_ni_anula_recepcion_consumida(db_session, insumo_activo, proveedor, persona_operadora, producto):
@@ -307,3 +413,31 @@ def test_estado_de_vencimiento_del_lote(
     resultado = services.listar_recepciones(db_session, estado=estado)
     assert resultado["total"] == 1
     assert resultado["items"][0]["id"] == lote["id"]
+
+
+@pytest.mark.parametrize("buscar,esperado", [
+    ("HARINA", 1), ("molino", 1), ("  har-001  ", 1), ("  ", 1),
+    ("inexistente", 0), ("%", 0), ("_", 0),
+])
+def test_busqueda_recepciones_por_insumo_proveedor_o_lote(db_session, lote, buscar, esperado):
+    resultado = services.listar_recepciones(db_session, buscar=buscar)
+    assert resultado["total"] == esperado
+    assert [r["id"] for r in resultado["items"]] == ([lote["id"]] if esperado else [])
+
+
+def test_busqueda_se_aplica_antes_de_paginar_y_combina_filtros(
+    db_session, insumo_activo, proveedor, persona_operadora
+):
+    recibir(db_session, insumo_activo, proveedor, persona_operadora)
+    segundo, _ = recibir(db_session, insumo_activo, proveedor, persona_operadora, numero_lote="BUSCADO-002")
+    filtros = dict(buscar="buscado", size=1, insumo_id=insumo_activo.id,
+                   proveedor_id=proveedor["id"], estado="por_vencer",
+                   fecha_desde=date.today()-timedelta(days=2), fecha_hasta=date.today())
+    resultado = services.listar_recepciones(db_session, **filtros)
+    assert resultado["total"] == 1
+    assert resultado["pages"] == 1
+    assert resultado["items"][0]["id"] == segundo["id"]
+    assert services.listar_recepciones(db_session, **{**filtros, "estado": "vencido"})["total"] == 0
+    services.anular_recepcion(db_session, segundo["id"])
+    assert services.listar_recepciones(db_session, **filtros)["total"] == 0
+    assert services.listar_recepciones(db_session, **filtros, mostrar_inactivos=True)["total"] == 1

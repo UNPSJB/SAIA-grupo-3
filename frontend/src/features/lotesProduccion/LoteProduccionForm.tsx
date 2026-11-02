@@ -283,7 +283,8 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
               <p className="small text-body-secondary">
                 Se asignan primero las recepciones sin vencer que vencen antes.
                 Usá físicamente esos lotes para conservar su trazabilidad.
-                El saldo anterior sin lote se registra como consumo sin trazabilidad.
+                Solo se permite consumir stock de lotes identificados y disponibles.
+                El stock anterior sin identificar queda bloqueado hasta registrar su origen real.
               </p>
               {insumosSeleccionados.length === 0 ? (
                 <p className="text-muted small mb-0">Todavía no agregaste insumos al lote.</p>

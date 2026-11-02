@@ -1,11 +1,13 @@
 from datetime import date
 
 import pytest
+from fastapi import HTTPException
 from sqlalchemy import select
 
 from src.abastecimiento import services as abastecimiento_services
 from src.loteProduccion import exceptions, schemas, services
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
+from tests.stock_trazable import identificar_stock
 from tests.database import (
     db_session,
     insumo_activo,
@@ -27,6 +29,7 @@ def test_crear_lote_asocia_insumos_y_descuenta_stock(
     insumo_activo,
     otro_insumo_activo,
 ):
+    identificar_stock(db_session, persona_operadora, insumo_activo, otro_insumo_activo)
     lote_a_crear = schemas.LoteProduccionCreate(
         producto_id=producto.id,
         fecha_produccion=date.today(),
@@ -58,6 +61,7 @@ def test_crear_lote_permite_agotar_exactamente_el_stock(
     producto,
     insumo_activo,
 ):
+    identificar_stock(db_session, persona_operadora, insumo_activo)
     lote_a_crear = schemas.LoteProduccionCreate(
         producto_id=producto.id,
         fecha_produccion=date.today(),
@@ -191,6 +195,7 @@ def test_crear_lote_revierte_lote_y_asociaciones_si_falla_commit(
     producto,
     insumo_activo,
 ):
+    identificar_stock(db_session, persona_operadora, insumo_activo)
     lote_a_crear = schemas.LoteProduccionCreate(
         producto_id=producto.id,
         fecha_produccion=date.today(),
@@ -230,7 +235,7 @@ def test_listar_insumos_disponibles_devuelve_solo_activos(
     ]
 
 
-def test_trazabilidad_produccion_incluye_lote_fuente_y_consumo_stock_anterior(
+def test_crear_lote_rechaza_consumo_sin_recepcion_trazable(
     db_session,
     persona_operadora,
     producto,
@@ -248,27 +253,13 @@ def test_trazabilidad_produccion_incluye_lote_fuente_y_consumo_stock_anterior(
             )
         ],
     )
-    lote = services.crear_lote(db_session, datos_lote, persona_operadora.id)
+    with pytest.raises(HTTPException) as error:
+        services.crear_lote(db_session, datos_lote, persona_operadora.id)
 
-    # Act
-    detalle = services.trazabilidad_lote_produccion(db_session, lote.id)
-
-    # Assert
-    insumo = detalle["insumos"][0]
-    assert detalle["lote_produccion_id"] == lote.id
-    assert insumo["cantidad_usada"] == 15
-    assert insumo["lotes_recepcion"] == [
-        {
-            "lote_recepcion_id": lote_recepcion.id,
-            "numero_lote": lote_recepcion.numero_lote,
-            "proveedor_nombre": lote_recepcion.proveedor.nombre,
-            "fecha_recepcion": lote_recepcion.fecha_recepcion,
-            "fecha_vencimiento": lote_recepcion.fecha_vencimiento,
-            "cantidad_utilizada": 12,
-        }
-    ]
-    assert insumo["cantidad_stock_anterior"] == 3
-    assert insumo["cantidad_historica_sin_origen"] == 0
+    assert error.value.status_code == 409
+    assert "No hay saldo suficiente en lotes vigentes identificados" in error.value.detail
+    assert db_session.scalar(select(LoteProduccion)) is None
+    assert db_session.scalar(select(LoteInsumo)) is None
 
 
 def test_trazabilidad_hacia_adelante_por_lote_de_recepcion(

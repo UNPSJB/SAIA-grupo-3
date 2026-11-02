@@ -1,4 +1,5 @@
 from datetime import date
+from tests.stock_trazable import identificar_stock
 
 from tests.database import (
     client,
@@ -21,11 +22,14 @@ from tests.database import (
 
 def test_endpoint_registrar_lote_con_insumos(
     client,
+    db_session,
+    persona_operadora,
     headers_operadora,
     producto,
     insumo_activo,
     otro_insumo_activo,
 ):
+    identificar_stock(db_session, persona_operadora, insumo_activo, otro_insumo_activo)
     # Act
     respuesta = client.post(
         "/lotes-produccion/",

@@ -97,8 +97,14 @@ export function AppRouter() {
             {/* Administración */}
             <Route element={<ProtectedRoute requireAdmin />}>
               <Route path="proveedores" element={<ProveedoresPage />} />
+              <Route path="proveedores/nuevo" element={<ProveedoresPage />} />
+              <Route path="proveedores/:id" element={<ProveedoresPage />} />
+              <Route path="proveedores/:id/:action" element={<ProveedoresPage />} />
               <Route path="recepciones-insumos" element={<RecepcionesPage />} />
               <Route path="trazabilidad-insumos" element={<TrazabilidadInsumosPage />} />
+              <Route path="recepciones-insumos/nuevo" element={<RecepcionesPage />} />
+              <Route path="recepciones-insumos/:id" element={<RecepcionesPage />} />
+              <Route path="recepciones-insumos/:id/:action" element={<RecepcionesPage />} />
               <Route path="inicio" element={<InicioAdminPage />} />
               <Route path="vista-publica/configuracion" element={<ConfiguracionVistaPublicaPage />}/>
               <Route path="vencimientos" element={<VencimientosConsolidadosPage />} />

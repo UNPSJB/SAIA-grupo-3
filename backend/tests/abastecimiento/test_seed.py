@@ -56,8 +56,9 @@ def saldos(db):
 
 def test_seed_carga_todas_las_tablas_y_escenarios_de_abastecimiento(db_session, ejecutar_seed):
     ejecutar_seed()
-    for modelo in [Proveedor, LoteRecepcionInsumo, ConsumoLoteRecepcion, ConsumoStockAnterior]:
+    for modelo in [Proveedor, LoteRecepcionInsumo, ConsumoLoteRecepcion]:
         assert db_session.scalar(select(func.count()).select_from(modelo)) >= seed.CANTIDAD
+    assert db_session.scalar(select(func.count()).select_from(ConsumoStockAnterior)) == 0
 
     proveedores = db_session.scalars(select(Proveedor)).all()
     assert len({p.cuit for p in proveedores}) == 15
@@ -76,11 +77,7 @@ def test_seed_carga_todas_las_tablas_y_escenarios_de_abastecimiento(db_session, 
 
     for insumo in db_session.scalars(select(Insumo).where(Insumo.nombre.contains("DEMO abastecimiento"))):
         identificado = sum(r.cantidad_disponible for r in recepciones if r.insumo_id == insumo.id and r.activo)
-        if insumo.nombre.startswith("Agua de amasado sin lote"):
-            assert identificado == 0
-            assert insumo.cantidad == pytest.approx(11)
-        else:
-            assert insumo.cantidad == pytest.approx(identificado)
+        assert insumo.cantidad == pytest.approx(identificado)
 
 
 def test_consumos_del_seed_conservan_cantidades_y_fechas_de_origen(db_session, ejecutar_seed):
@@ -96,7 +93,8 @@ def test_consumos_del_seed_conservan_cantidades_y_fechas_de_origen(db_session, e
             ConsumoStockAnterior.lote_produccion_id == asociacion.lote_id,
             ConsumoStockAnterior.insumo_id == asociacion.insumo_id,
         )) or 0
-        assert sum(c.cantidad for c, _ in recibidos) + anterior == pytest.approx(asociacion.cantidad_usada)
+        assert anterior == 0
+        assert sum(c.cantidad for c, _ in recibidos) == pytest.approx(asociacion.cantidad_usada)
         produccion = db_session.get(LoteProduccion, asociacion.lote_id)
         for _, recepcion in recibidos:
             assert recepcion.fecha_recepcion <= produccion.fecha_produccion <= recepcion.fecha_vencimiento
@@ -181,3 +179,34 @@ def test_repetir_seed_no_duplica_ni_reinicia_stock_o_estados(db_session, ejecuta
     assert conteos(db_session) == cantidades_antes
     assert saldos(db_session) == saldos_antes
     assert db_session.get(Proveedor, proveedor_id).activo is False
+
+
+def test_seed_conserva_produccion_anterior_sin_reconstruir_su_origen(
+    db_session, ejecutar_seed
+):
+    # Una producción con el código del seed viejo debe conservar sus asociaciones,
+    # incluso si la receta nueva reemplazó el agua sin lote por agua identificada.
+    ejecutar_seed()
+    historico = db_session.scalar(select(LoteProduccion).where(
+        LoteProduccion.codigo == "L-ABAST-SEED-001"))
+    asociaciones = db_session.scalars(select(LoteInsumo).where(
+        LoteInsumo.lote_id == historico.id)).all()
+    agua = next(a for a in asociaciones if "Agua" in a.insumo.nombre)
+    origen = db_session.scalar(select(ConsumoLoteRecepcion).join(
+        LoteRecepcionInsumo,
+        LoteRecepcionInsumo.id == ConsumoLoteRecepcion.lote_recepcion_id,
+    ).where(ConsumoLoteRecepcion.lote_produccion_id == historico.id,
+            LoteRecepcionInsumo.insumo_id == agua.insumo_id))
+    db_session.delete(origen)
+    consumo = ConsumoStockAnterior(lote_produccion_id=historico.id,
+                                  insumo_id=agua.insumo_id, cantidad=agua.cantidad_usada)
+    db_session.add(consumo)
+    db_session.commit()
+    consumo_id = consumo.id
+    antes, saldos_antes = conteos(db_session), saldos(db_session)
+
+    ejecutar_seed()
+
+    assert conteos(db_session) == antes
+    assert saldos(db_session) == saldos_antes
+    assert db_session.get(ConsumoStockAnterior, consumo_id).cantidad == agua.cantidad_usada
