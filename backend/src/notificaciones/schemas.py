@@ -11,6 +11,7 @@ class Notificacion(BaseModel):
     enlace: Optional[str] = None
     fecha_creacion: datetime
     leida: bool
+    resuelta: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

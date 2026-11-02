@@ -1,12 +1,17 @@
 from datetime import date, datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 from sqlalchemy import select, func, update, delete
 from sqlalchemy.orm import Session
 from src.notificaciones.models import Notificacion, TipoNotificacion
-from src.notificaciones.constants import ENLACE_VENCIMIENTOS
+from src.notificaciones.constants import (
+    ENLACE_VENCIMIENTOS,
+    ENLACE_INSUMOS_STOCK_BAJO, 
+    ENLACE_QUIMICOS_STOCK_BAJO,
+)
 from src.notificaciones import exceptions
 from src.documentacion.vencimientos import buscar_vencimientos, DIAS_AVISO_VENCIMIENTO
-
+from src.insumos.models import Insumo
+from src.insumosQuimicos.models import InsumoQuimico
 
 # ---------- Consultas para la campanita ----------
 
@@ -98,3 +103,95 @@ def generar_aviso_vencimientos(db: Session, hoy: date | None = None, *, confirma
         db.flush()
     db.refresh(aviso)
     return aviso
+
+# ---------- Avisos de stock bajo ----------
+
+def _datos_aviso_stock(insumo: Union[Insumo, InsumoQuimico]) -> tuple[str, str, str]:
+    if isinstance(insumo, InsumoQuimico):
+        return (
+            f"stock-bajo-quimico-{insumo.id}",
+            ENLACE_QUIMICOS_STOCK_BAJO,
+            "insumo químico",
+        )
+    return (
+        f"stock-bajo-insumo-{insumo.id}",
+        ENLACE_INSUMOS_STOCK_BAJO,
+        "insumo",
+    )
+
+
+def revisar_stock_insumo(
+    db: Session,
+    insumo: Union[Insumo, InsumoQuimico],
+    *,
+    confirmar: bool = True,
+) -> Optional[Notificacion]:
+    clave, enlace, etiqueta = _datos_aviso_stock(insumo)
+    aviso = db.scalar(select(Notificacion).where(Notificacion.clave == clave))
+
+    if not insumo.activo or insumo.stock_minimo is None or insumo.cantidad > insumo.stock_minimo:
+        if aviso is not None and not aviso.resuelta:
+            aviso.resuelta = True
+            aviso.leida = True
+            if confirmar:
+                db.commit()
+                db.refresh(aviso)
+            else:
+                db.flush()
+        return None
+
+    sufijo = insumo.unidadMedidaObj.sufijo if getattr(insumo, "unidadMedidaObj", None) else ""
+    unidad = f" {sufijo}" if sufijo else ""
+    titulo = f"Stock bajo: {insumo.nombre}"
+    mensaje = (
+        f"El {etiqueta} {insumo.nombre} alcanzó el stock mínimo "
+        f"({insumo.cantidad:g}{unidad} disponibles, mínimo {insumo.stock_minimo:g}{unidad})."
+    )
+
+    if aviso is None:
+        aviso = Notificacion(
+            clave=clave,
+            tipo=TipoNotificacion.STOCK_BAJO,
+            titulo=titulo,
+            mensaje=mensaje,
+            enlace=enlace,
+            leida=False,
+            resuelta=False,
+        )
+        db.add(aviso)
+    elif not aviso.resuelta:
+        return aviso
+    else:
+        aviso.titulo = titulo
+        aviso.mensaje = mensaje
+        aviso.enlace = enlace
+        aviso.fecha_creacion = datetime.now()
+        aviso.leida = False
+        aviso.resuelta = False
+
+    if confirmar:
+        db.commit()
+        db.refresh(aviso)
+    else:
+        db.flush()
+    return aviso
+
+
+def revisar_stock_todos(db: Session, *, confirmar: bool = True) -> List[Notificacion]:
+    avisos: List[Notificacion] = []
+
+    for insumo in db.scalars(select(Insumo).where(Insumo.activo == True)).all():
+        aviso = revisar_stock_insumo(db, insumo, confirmar=False)
+        if aviso is not None:
+            avisos.append(aviso)
+
+    for quimico in db.scalars(select(InsumoQuimico).where(InsumoQuimico.activo == True)).all():
+        aviso = revisar_stock_insumo(db, quimico, confirmar=False)
+        if aviso is not None:
+            avisos.append(aviso)
+
+    if confirmar:
+        db.commit()
+    else:
+        db.flush()
+    return avisos

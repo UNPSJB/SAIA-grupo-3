@@ -1,12 +1,13 @@
 from datetime import datetime
 from enum import auto, StrEnum
 from typing import Optional
-from sqlalchemy import String, DateTime
+from sqlalchemy import String, DateTime, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 from src.models import ModeloBase
 
 class TipoNotificacion(StrEnum):
     VENCIMIENTO_DOCUMENTACION = auto()
+    STOCK_BAJO = auto()
 
 class Notificacion(ModeloBase):
     __tablename__ = "notificaciones"
@@ -20,3 +21,12 @@ class Notificacion(ModeloBase):
     enlace: Mapped[Optional[str]] = mapped_column(String(200), nullable=True) # es para que lo redirija a la lista ya filtrada
     fecha_creacion: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
     leida: Mapped[bool] = mapped_column(default=False, nullable=False)
+    resuelta: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    @property
+    def resuelto(self) -> bool:
+        return self.resuelta
+
+    @resuelto.setter
+    def resuelto(self, valor: bool) -> None:
+        self.resuelta = valor
