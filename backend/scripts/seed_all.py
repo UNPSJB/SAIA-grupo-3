@@ -38,7 +38,8 @@ from src.models import ModeloBase
 def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
     """Coordina las dependencias y confirma la carga completa en una transacción.
 
-    Repetir la carga conserva registros, contraseñas y saldos existentes.
+    Repetir la carga conserva contraseñas y saldos existentes.
+    Completa el origen ficticio de consumos demo antiguos, sin volver a descontarlos.
     Las producciones nuevas registran su consumo una sola vez.
     """
     hoy = hoy or date.today()
@@ -74,7 +75,8 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             proveedores = cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, admin.id, hoy)
             cargar_recepciones_ingredientes(db, crear, ingredientes, proveedores, admin.id, hoy)
             cargar_lotes_produccion(
-                db, crear, productos, ingredientes, operadores, admin, hoy
+                db, crear, productos, ingredientes, operadores, admin, hoy, proveedores,
+                autores_demo={p.id for p in personas},
             )
 
             db.flush()
@@ -97,6 +99,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             raise
 
     print("Seed SAIA cargado sin borrar registros ni reiniciar saldos. Ingresos y consumos demo aplicados una sola vez.")
+    print("Los consumos demo antiguos se completan con recepciones ficticias DEMO-HIST; no se modifica el origen de producciones reales.")
     for nombre in sorted(conteos):
         print(f"  {nombre}: {conteos[nombre]} totales; {resumen.get(nombre, 0)} nuevos")
     print("Fotografías de contexto reales; perfiles ficticios y documentos de demostración.")

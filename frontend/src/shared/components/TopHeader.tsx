@@ -30,6 +30,7 @@ const rutasNavegacion = [
   { ruta: '/incidentes', titulo: 'Incidentes', seccion: 'Control y seguimiento' },
   { ruta: '/auditoria', titulo: 'Historial checklist', seccion: 'Control y seguimiento' },
   { ruta: '/lotes', titulo: 'Historial de lotes', seccion: 'Control y seguimiento' },
+  { ruta: '/trazabilidad-insumos', titulo: 'Trazabilidad de insumos', seccion: 'Control y seguimiento' },
   { ruta: '/documentos-vigentes', titulo: 'Documentos vigentes', seccion: 'Documentación' },
   { ruta: '/documentos-tecnicos', titulo: 'Documentos técnicos', seccion: 'Documentación' },
   { ruta: '/personal', titulo: 'Personal', seccion: 'Datos maestros' },

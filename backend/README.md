@@ -53,7 +53,7 @@ La migración histórica de superadmin se ejecuta por separado, desde `backend/`
 
 `seed_all` no ejecuta migraciones automáticamente.
 
-El seed no borra ni actualiza registros existentes, no restablece contraseñas ni reinicia saldos. Los ingresos y consumos de demostración se aplican una sola vez. Crea ejemplos faltantes mediante claves estables; al repetirlo el mismo día no duplica datos. Al cambiar de día puede agregar registros diarios de checklist e historial. En bases existentes puede conservar fechas, permisos y contraseñas anteriores.
+El seed no restablece contraseñas ni reinicia saldos. Los ingresos y consumos de demostración se aplican una sola vez. Crea ejemplos faltantes mediante claves estables; al repetirlo el mismo día no duplica datos. Completa el origen ficticio de consumos de ejemplos antiguos del propio seed, como se detalla debajo. Al cambiar de día puede agregar registros diarios de checklist e historial. En bases existentes conserva fechas, permisos y contraseñas anteriores.
 
 | Usuario nuevo | Contraseña inicial | Caso |
 | --- | --- | --- |
@@ -73,8 +73,8 @@ vencer, recibidas como máximo en su fecha de elaboración. La asignación es FE
 utilizable: el saldo sin origen y los lotes vencidos no habilitan consumos.
 Si falta saldo trazable se devuelve HTTP 409 sin movimientos parciales.
 
-Administración puede identificar stock anterior desde el detalle del insumo o
-desde Recepción de insumos, usando `POST /lotes-insumo/conciliar-stock`. Debe
+El endpoint histórico `POST /lotes-insumo/conciliar-stock` permite identificar
+stock anterior con permiso de administración; no se ofrece en los listados. Debe
 informar proveedor activo, número de lote, fechas y cantidad verificables.
 Identificar no suma stock y no permite superar el saldo pendiente. Si no se
 conocen los datos reales, el saldo permanece bloqueado; no usar datos demo para
@@ -82,14 +82,30 @@ regularizar existencias reales.
 
 La antigua variable `PERMITIR_STOCK_SIN_LOTE` ya no tiene efecto. La tabla
 `consumos_stock_anterior` se conserva por su valor histórico, sin nuevos
-registros. No se reasigna origen a producciones pasadas automáticamente.
+registros de consumo nuevos sin trazabilidad. No se reasigna origen a producciones reales pasadas.
 
 El seed prepara recepciones con proveedor, lote y vencimiento antes de consumir
 ingredientes, incluyendo el agua de amasado. En una base nueva no genera consumos sin
-trazabilidad. En una base existente conserva los saldos y consumos anteriores;
+trazabilidad. En una base existente conserva los saldos y cantidades consumidas;
 puede añadir los nuevos ingresos ficticios `DEMO-BASE-*` y `DEMO-AGUA-001` una
 sola vez. No son una conciliación del stock anterior ni reemplazan su origen.
 Ejecutarlo sobre datos de prueba, no para regularizar inventario real.
+
+Para los ejemplos antiguos `L-SEED-001` a `L-SEED-015` y `L-ABAST-SEED-001`
+a `L-ABAST-SEED-015`, el seed completa los orígenes que falten. Comprueba que
+el código reservado, el producto y el autor correspondan a los ejemplos del seed.
+Si esos datos no coinciden, detiene la carga sin sobrescribir el registro.
+Los consumos ya registrados reciben recepciones **ficticias** `DEMO-HIST-*`,
+con proveedor demo, fecha anterior a la elaboración, vencimiento posterior y
+saldo disponible cero. Esto no vuelve a sumar ni descontar stock. Los antiguos
+consumos sin trazabilidad de esos ejemplos se sustituyen por los vínculos demo;
+no se modifica el historial de producciones reales.
+
+Si un ejemplo antiguo no tenía ingredientes, registra su receta y aplica su
+consumo trazado una sola vez. Al finalizar, valida las cantidades y los datos
+de origen de cada ejemplo. Si falta trazabilidad o saldo, revierte toda la carga.
+Repetir `python -m scripts.seed_all` completa los ejemplos existentes sin exigir
+borrar la base; repetirlo después de completarlos no duplica los movimientos.
 
 `create_all` crea tablas nuevas, pero no migra tablas existentes. Si una base de otra rama tiene columnas faltantes, conservarla y coordinar la actualización del esquema; reinstalar dependencias o repetir el seed no migra esa base.
 

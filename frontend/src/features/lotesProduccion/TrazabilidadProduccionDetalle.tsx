@@ -65,7 +65,7 @@ export function TrazabilidadProduccionDetalle({
         )}
         {!loading && trazabilidad && trazabilidad.insumos.length > 0 && (
           <Table striped hover responsive className="align-middle mb-0">
-            <thead className="table-light">
+            <thead className="table-theme">
               <tr>
                 <th>Insumo</th>
                 <th>Lote de proveedor</th>

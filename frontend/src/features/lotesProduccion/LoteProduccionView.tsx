@@ -16,7 +16,7 @@ export function LoteProduccionView({
   recienRegistrado = false,
 }: LoteProduccionViewProps) {
   return (
-    <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
+    <Card className="shadow-sm border-0 mx-auto w-100" style={{ maxWidth: '1100px' }}>
       <Card.Header className="bg-body-tertiary text-secondary d-flex flex-wrap align-items-center gap-2 py-3">
         <i className="bi bi-box2 fs-5"></i>
         <h5 className="mb-0">Lote {lote.codigo}</h5>

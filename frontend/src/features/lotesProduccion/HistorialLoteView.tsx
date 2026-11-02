@@ -53,7 +53,7 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
   }
 
   return (
-    <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '900px' }}>
+    <Card className="shadow-sm border-0 mx-auto w-100" style={{ maxWidth: '1200px' }}>
       <Card.Header className="bg-body-tertiary text-secondary d-flex align-items-center gap-2 py-3">
         <i className="bi bi-box-seam fs-5"></i>
         <h5 className="mb-0">Lote {lote.codigo}</h5>
@@ -82,7 +82,7 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
         ) : (
           <div className="table-responsive">
             <table className="table table-striped table-hover align-middle">
-              <thead className="table-light">
+              <thead className="table-theme">
                 <tr>
                   <th>Insumo</th>
                   <th className="text-end">Cantidad utilizada</th>

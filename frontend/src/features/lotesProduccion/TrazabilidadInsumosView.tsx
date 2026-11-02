@@ -4,6 +4,7 @@ import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { formatearFecha } from '../../shared/libreria/fechas';
 import type { ConsumoRecepcion, LoteRecepcion } from '../abastecimiento/types';
+import './TrazabilidadInsumosView.css';
 
 interface TrazabilidadInsumosViewProps {
   busqueda: string;
@@ -59,67 +60,61 @@ export function TrazabilidadInsumosView({
       </div>
 
       {!loteSeleccionado && (
-        <Card className="shadow-sm border-0 mb-4 d-print-none">
-          <Card.Body>
-            <Form.Label htmlFor="buscar-lote-insumo" className="fw-semibold">
-              Buscar por número de lote, insumo o proveedor
-            </Form.Label>
-            <Row className="g-2">
-              <Col xs={12} md>
-                <Form.Control
-                  id="buscar-lote-insumo"
-                  value={busqueda}
-                  onChange={(evento) => onBusquedaChange(evento.target.value)}
-                  placeholder="Escribí para filtrar las recepciones de insumos"
-                  autoComplete="off"
-                />
-              </Col>
-              <Col xs="auto">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => onBusquedaChange('')}
-                  disabled={!busqueda}
-                >
-                  Limpiar
-                </Button>
-              </Col>
-            </Row>
-          </Card.Body>
-        </Card>
+        <p className="text-muted mb-4">
+          Consultá el origen de cada lote y las producciones en las que se utilizó.
+        </p>
       )}
 
       {!loteSeleccionado && (
         <>
           {error && <ErrorAlert mensaje={error} />}
           <Card className="shadow-sm border-0 mb-4 d-print-none">
-            <Card.Header className="bg-body-tertiary text-secondary d-flex align-items-center justify-content-between gap-2 py-3">
+            <Card.Header className="bg-body-tertiary text-secondary traza-insumos-toolbar">
               <div className="d-flex align-items-center gap-2">
-              <i className="bi bi-box-seam fs-5" aria-hidden="true"></i>
-              <h5 className="mb-0">
-                Recepciones de insumos
-                {(!loading || lotes.length > 0) && ` (${total})`}
-              </h5>
+                <i className="bi bi-box-seam fs-5" aria-hidden="true"></i>
+                <h5 className="mb-0">Recepciones</h5>
+                {(!loading || lotes.length > 0) && (
+                  <span className="traza-insumos-count">{total}</span>
+                )}
+                {loading && (
+                  <Spinner animation="border" size="sm" role="status" aria-label="Actualizando recepciones" />
+                )}
               </div>
-              {loading && (
-                <Spinner
-                  animation="border"
+              <div className="traza-insumos-search">
+                <div className="traza-insumos-search-field">
+                  <i className="bi bi-search text-muted" aria-hidden="true"></i>
+                  <Form.Control
+                    id="buscar-lote-insumo"
+                    type="search"
+                    aria-label="Buscar por número de lote, insumo o proveedor"
+                    value={busqueda}
+                    onChange={(evento) => onBusquedaChange(evento.target.value)}
+                    placeholder="Buscar lote, insumo o proveedor…"
+                    autoComplete="off"
+                    size="sm"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline-success"
                   size="sm"
-                  role="status"
-                  aria-label="Actualizando recepciones"
-                />
-              )}
+                  onClick={() => onBusquedaChange('')}
+                  disabled={!busqueda}
+                >
+                  Limpiar
+                </Button>
+              </div>
             </Card.Header>
-            <Card.Body>
-              <Table striped hover responsive className="align-middle mb-0">
-                <thead className="table-light">
+            <Card.Body className="p-0">
+              <Table striped hover responsive className="align-middle mb-0 traza-insumos-table">
+                <thead className="table-theme">
                   <tr>
                     <th>Lote del proveedor</th>
                     <th>Insumo</th>
                     <th>Proveedor</th>
-                    <th>Fecha de recepción</th>
-                    <th className="text-end">Cantidad disponible</th>
-                    <th className="text-center">Acciones</th>
+                    <th>Recepción</th>
+                    <th className="text-end">Disponible</th>
+                    <th className="text-center">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -135,7 +130,14 @@ export function TrazabilidadInsumosView({
                     {lotes.map((lote) => (
                       <tr key={lote.id}>
                         <td>{lote.numero_lote}</td>
-                        <td>{lote.insumo_nombre}</td>
+                        <td>
+                          {lote.insumo_nombre.endsWith(' · DEMO abastecimiento') ? (
+                            <>
+                              {lote.insumo_nombre.slice(0, -' · DEMO abastecimiento'.length)}
+                              <small className="d-block text-muted">DEMO abastecimiento</small>
+                            </>
+                          ) : lote.insumo_nombre}
+                        </td>
                         <td>{lote.proveedor_nombre}</td>
                         <td>{formatearFecha(lote.fecha_recepcion)}</td>
                         <td className="text-end">
@@ -144,25 +146,27 @@ export function TrazabilidadInsumosView({
                         <td className="text-center">
                           <Button
                             variant="primary"
-                            className="text-white py-1 px-2 shadow-sm"
+                            size="sm"
+                            className="text-nowrap"
+                            aria-label={`Ver detalle del lote ${lote.numero_lote}`}
                             onClick={() => onVerDetalles(lote.id)}
                           >
                             <i className="bi bi-eye-fill me-1" aria-hidden="true"></i>
-                            Ver detalles
+                            Ver detalle
                           </Button>
                         </td>
                       </tr>
                     ))}
                 </tbody>
               </Table>
-              <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
+              <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 p-3 border-top">
                 {total > 0 && (
                   <small className="text-muted">
                     Página {page} de {pages} ({total} registros)
                   </small>
                 )}
                 {pages > 1 && (
-                  <Pagination className="mb-0">
+                  <Pagination className="mb-0 flex-wrap">
                     {Array.from({ length: pages }, (_, indice) => indice + 1).map((numero) => (
                       <Pagination.Item
                         key={numero}
@@ -226,7 +230,7 @@ export function TrazabilidadInsumosView({
                   </p>
                 ) : (
                   <Table striped hover responsive className="align-middle mb-0">
-                    <thead className="table-light">
+                    <thead className="table-theme">
                       <tr>
                         <th>Lote de producción</th>
                         <th>Producto</th>

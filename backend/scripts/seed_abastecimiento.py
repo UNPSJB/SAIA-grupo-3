@@ -7,7 +7,9 @@ from sqlalchemy import select
 
 from scripts.seed_common import CANTIDAD
 from scripts.seed_insumos import INGREDIENTES
-from scripts.seed_lotes_produccion import asociar_ingredientes_demo
+from scripts.seed_lotes_produccion import (
+    asociar_ingredientes_demo, completar_origen_demo, comprobar_origen_demo,
+)
 from src.abastecimiento.models import LoteRecepcionInsumo, Proveedor
 from src.insumos.models import Insumo
 from src.loteProduccion.constants import EstadoLote
@@ -113,6 +115,27 @@ def cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, registrado_por_id
         unidad_medida_id=unidades_por_sufijo["kg"].id, activo=True)
     receta = [("Harina de trigo", 1.0), ("Agua de amasado", 0.6),
               ("Levadura", 20.0), ("Sal", 0.02)]
+
+    # Una producción ficticia anterior al vencimiento permite consultar también
+    # el historial de la primera recepción, aunque hoy su saldo esté vencido.
+    primera_recepcion = db.scalar(select(LoteRecepcionInsumo).where(
+        LoteRecepcionInsumo.clave_operacion == str(uuid5(
+            NAMESPACE_URL, "saia:seed:abastecimiento:recepcion:1"))))
+    fecha_historica = primera_recepcion.fecha_vencimiento - timedelta(days=1)
+    historico, nuevo = crear(LoteProduccion, {"codigo": "L-ABAST-HIST-001"},
+        producto_id=producto.id, fecha_produccion=fecha_historica, cantidad=1.5,
+        observaciones="DEMO: producción ficticia realizada antes del vencimiento de DEMO-REC-001.",
+        registrado_por_id=registrado_por_id,
+        fecha_registro=datetime.combine(fecha_historica, time(10)),
+        activo=True, estado=EstadoLote.CERRADO,
+        fecha_cierre=datetime.combine(fecha_historica, time(12)),
+        cerrado_por_id=registrado_por_id)
+    if historico.producto_id != producto.id or historico.registrado_por_id != registrado_por_id:
+        raise RuntimeError(f"El código demo {historico.codigo} está ocupado por otro registro.")
+    if nuevo:
+        asociar_ingredientes_demo(db, historico, ingredientes, receta=receta, crear=crear)
+    comprobar_origen_demo(db, historico)
+
     for i in range(CANTIDAD):
         fecha = hoy - timedelta(days=i % 7)
         lote, nuevo = crear(LoteProduccion, {"codigo": f"L-ABAST-SEED-{i + 1:03d}"},
@@ -124,5 +147,12 @@ def cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, registrado_por_id
             cerrado_por_id=registrado_por_id if i % 2 else None)
         if nuevo:
             asociar_ingredientes_demo(db, lote, ingredientes, receta=receta, crear=crear)
+        else:
+            if lote.producto_id != producto.id or lote.registrado_por_id != registrado_por_id:
+                raise RuntimeError(f"El código demo {lote.codigo} está ocupado por otro registro.")
+            if not lote.insumos_asociados:
+                asociar_ingredientes_demo(db, lote, ingredientes, receta=receta, crear=crear)
+            completar_origen_demo(db, crear, lote, proveedores)
+        comprobar_origen_demo(db, lote)
 
     return proveedores

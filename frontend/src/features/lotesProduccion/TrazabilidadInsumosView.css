@@ -1,0 +1,92 @@
+.traza-insumos-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.traza-insumos-count {
+  padding: 0.1rem 0.5rem;
+  border-radius: 0.3rem;
+  background: var(--bs-secondary-bg);
+  color: var(--bs-secondary-color);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.traza-insumos-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 20rem;
+  max-width: 30rem;
+}
+
+.traza-insumos-search-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.traza-insumos-search-field > i {
+  position: absolute;
+  top: 50%;
+  left: 0.7rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.traza-insumos-search-field .form-control {
+  padding-left: 2rem;
+}
+
+.traza-insumos-table {
+  min-width: 720px;
+}
+
+.traza-insumos-table > :not(caption) > * > * {
+  padding: 0.8rem 1rem;
+}
+
+.traza-insumos-table thead th {
+  font-size: 0.825rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--bs-secondary-color);
+}
+
+.traza-insumos-table td:first-child,
+.traza-insumos-table td:nth-child(4),
+.traza-insumos-table td:nth-child(5),
+.traza-insumos-table td:last-child {
+  white-space: nowrap;
+}
+
+.traza-insumos-table td:nth-child(5) {
+  font-variant-numeric: tabular-nums;
+}
+
+.traza-insumos-table td:last-child {
+  width: 1%;
+}
+
+.traza-insumos-table td:nth-child(3) {
+  max-width: 22rem;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+  .traza-insumos-search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .traza-insumos-toolbar .btn,
+  .traza-insumos-table .btn {
+    min-height: 44px;
+  }
+}

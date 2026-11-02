@@ -1,12 +1,15 @@
 """Lotes de producción y consumo histórico aplicado una sola vez."""
 
 from datetime import datetime, time, timedelta
+from math import isclose
+from uuid import NAMESPACE_URL, uuid5
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from scripts.seed_common import CANTIDAD, obtener_o_crear
 from src.abastecimiento.models import (
     ConsumoLoteRecepcion,
+    ConsumoStockAnterior,
     LoteRecepcionInsumo,
 )
 from src.loteProduccion.constants import EstadoLote
@@ -30,6 +33,72 @@ RECETAS_LOTES_DEMO = {
     "Tarta de verduras": [("Harina de trigo", 3.0), ("Verduras para tarta", 4.0), ("Leche", 1.0), ("Sal", 0.1)],
     "Ñoquis de papa": [("Papa", 10.0), ("Harina de trigo", 2.0), ("Huevo", 1.0), ("Sal", 0.1)],
 }
+
+
+def completar_origen_demo(db, crear, lote, proveedores):
+    """Completa únicamente consumos de ejemplos conocidos del seed.
+
+    Son recepciones históricas FICTICIAS ya consumidas: el saldo disponible
+    es cero y el stock general no se toca porque el consumo ya estaba registrado.
+    No es una conciliación ni una reconstrucción de movimientos reales.
+    """
+    for asociacion in lote.insumos_asociados:
+        trazado = db.scalar(select(func.coalesce(func.sum(ConsumoLoteRecepcion.cantidad), 0))
+            .join(LoteRecepcionInsumo,
+                  LoteRecepcionInsumo.id == ConsumoLoteRecepcion.lote_recepcion_id)
+            .where(ConsumoLoteRecepcion.lote_produccion_id == lote.id,
+                   LoteRecepcionInsumo.insumo_id == asociacion.insumo_id))
+        anterior = db.scalar(select(ConsumoStockAnterior).where(
+            ConsumoStockAnterior.lote_produccion_id == lote.id,
+            ConsumoStockAnterior.insumo_id == asociacion.insumo_id))
+        if trazado + (anterior.cantidad if anterior else 0) > asociacion.cantidad_usada + 1e-9:
+            raise RuntimeError(f"El lote demo {lote.codigo} tiene consumos inconsistentes.")
+        faltante = asociacion.cantidad_usada - trazado
+        if faltante <= 1e-9:
+            continue
+        proveedor = next((p for p in proveedores if p.activo), None)
+        if proveedor is None:
+            raise RuntimeError("Se necesita un proveedor demo activo para completar los ejemplos antiguos.")
+        clave = str(uuid5(NAMESPACE_URL,
+                         f"saia:seed:origen-historico:{lote.codigo}:{asociacion.insumo_id}"))
+        recepcion, nueva = crear(LoteRecepcionInsumo, {"clave_operacion": clave},
+            insumo_id=asociacion.insumo_id, proveedor_id=proveedor.id,
+            numero_lote=f"DEMO-HIST-{lote.codigo}-{asociacion.insumo_id}",
+            cantidad=faltante, cantidad_disponible=0.0,
+            fecha_recepcion=lote.fecha_produccion - timedelta(days=2),
+            fecha_vencimiento=lote.fecha_produccion + timedelta(days=180),
+            registrado_por_id=lote.registrado_por_id,
+            fecha_registro=datetime.combine(lote.fecha_produccion - timedelta(days=2), time(9)),
+            activo=True, conciliacion=False)
+        if not nueva:
+            raise RuntimeError(f"El origen demo de {lote.codigo} fue alterado; no se sobrescribe.")
+        crear(ConsumoLoteRecepcion,
+            {"lote_produccion_id": lote.id, "lote_recepcion_id": recepcion.id},
+            cantidad=faltante)
+        if anterior is not None:
+            db.delete(anterior)
+        db.flush()
+
+
+def comprobar_origen_demo(db, lote):
+    """Falla la transacción si algún ejemplo queda sin origen completo."""
+    db.flush()
+    db.expire(lote, ["insumos_asociados"])
+    if not lote.insumos_asociados:
+        raise RuntimeError(f"El lote demo {lote.codigo} no tiene ingredientes registrados.")
+    for asociacion in lote.insumos_asociados:
+        fuentes = db.execute(select(ConsumoLoteRecepcion, LoteRecepcionInsumo)
+            .join(LoteRecepcionInsumo,
+                  LoteRecepcionInsumo.id == ConsumoLoteRecepcion.lote_recepcion_id)
+            .where(ConsumoLoteRecepcion.lote_produccion_id == lote.id,
+                   LoteRecepcionInsumo.insumo_id == asociacion.insumo_id)).all()
+        if (not fuentes or not isclose(sum(c.cantidad for c, _ in fuentes),
+                                       asociacion.cantidad_usada, rel_tol=0, abs_tol=1e-9)
+                or any(not r.numero_lote.strip() or not r.proveedor or not r.proveedor.nombre.strip()
+                       or not r.fecha_recepcion or not r.fecha_vencimiento
+                       or not r.fecha_recepcion <= lote.fecha_produccion <= r.fecha_vencimiento
+                       for _, r in fuentes)):
+            raise RuntimeError(f"La trazabilidad del lote demo {lote.codigo} está incompleta.")
 
 
 def asociar_ingredientes_demo(db, lote, ingredientes_por_nombre, *, receta=None, crear=None):
@@ -84,7 +153,8 @@ def asociar_ingredientes_demo(db, lote, ingredientes_por_nombre, *, receta=None,
             ingrediente.cantidad -= asociacion.cantidad_usada
             db.flush()
 
-def cargar_lotes_produccion(db, crear, productos, ingredientes_por_nombre, operadores, admin, hoy):
+def cargar_lotes_produccion(db, crear, productos, ingredientes_por_nombre, operadores, admin, hoy,
+                           proveedores, *, autores_demo):
     for i in range(CANTIDAD):
         fecha_lote = hoy - timedelta(days=[0, 1, 2, 3, 5, 7, 9, 12, 14, 17, 20, 23, 25, 28, 30][i])
         cerrado = i >= 8
@@ -99,3 +169,13 @@ def cargar_lotes_produccion(db, crear, productos, ingredientes_por_nombre, opera
             cerrado_por_id=admin.id if cerrado else None)
         if nuevo:
             asociar_ingredientes_demo(db, lote_demo, ingredientes_por_nombre, crear=crear)
+        else:
+            # El código reservado, el producto y el autor deben coincidir con
+            # los ejemplos conocidos. No completa producciones de usuarios.
+            if (lote_demo.producto_id != productos[i % len(productos)].id
+                    or lote_demo.registrado_por_id not in autores_demo):
+                raise RuntimeError(f"El código demo {lote_demo.codigo} está ocupado por otro registro.")
+            if not lote_demo.insumos_asociados:
+                asociar_ingredientes_demo(db, lote_demo, ingredientes_por_nombre, crear=crear)
+            completar_origen_demo(db, crear, lote_demo, proveedores)
+        comprobar_origen_demo(db, lote_demo)
