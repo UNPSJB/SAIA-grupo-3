@@ -68,8 +68,7 @@ En una base nueva carga ejemplos de todas las entidades operativas, incidentes d
 ### Trazabilidad obligatoria de ingredientes
 
 Las nuevas producciones solo consumen recepciones activas, identificadas y sin
-vencer, recibidas como máximo en su fecha de elaboración. La asignación es FEFO
-(vence primero, se consume primero). El stock total puede ser mayor que el
+vencer, recibidas como máximo en su fecha de elaboración. La asignación es vence primero, se consume primero. El stock total puede ser mayor que el
 utilizable: el saldo sin origen y los lotes vencidos no habilitan consumos.
 Si falta saldo trazable se devuelve HTTP 409 sin movimientos parciales.
 

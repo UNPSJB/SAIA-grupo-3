@@ -32,7 +32,7 @@ def listar_insumos(
     if not mostrar_inactivos:
         query = query.where(Insumo.activo == True)
 
-    query = filtrar_ordenar(query, Insumo, buscar, [Insumo.nombre], ordenar_por, orden, {"id": Insumo.id, "nombre": Insumo.nombre, "cantidad": Insumo.cantidad, "unidad_medida_id": Insumo.unidad_medida_id, "activo": Insumo.activo})
+    query = filtrar_ordenar(query, Insumo, buscar, [Insumo.nombre], ordenar_por, orden, {"id": Insumo.id, "nombre": Insumo.nombre, "unidad_medida_id": Insumo.unidad_medida_id, "activo": Insumo.activo})
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(query.offset(skip).limit(size)).all()
@@ -51,7 +51,6 @@ def leer_insumo(db: Session, insumo_id: int, incluir_inactivos: bool = False) ->
     return db_insumo
 
 def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) -> Insumo:
-    from fastapi import HTTPException
     from src.abastecimiento.models import LoteRecepcionInsumo
     from src.abastecimiento.services import bloquear_insumo
 
@@ -66,8 +65,6 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
             .where(LoteRecepcionInsumo.insumo_id == insumo_id).limit(1)
         ) is not None
         if tiene_recepciones:
-            if "cantidad" in datos_actualizar and datos_actualizar["cantidad"] != db_insumo.cantidad:
-                raise HTTPException(409, "Este insumo tiene recepciones. Modificá el stock mediante recepciones y consumos.")
             if "unidad_medida_id" in datos_actualizar and datos_actualizar["unidad_medida_id"] != db_insumo.unidad_medida_id:
                 raise HTTPException(409, "No se puede cambiar la unidad de un insumo con recepciones registradas.")
         if "nombre" in datos_actualizar:

@@ -28,19 +28,12 @@ export function LotesDeInsumo({ insumoId }: { insumoId: number }) {
             Stock total: <strong>{stock.datos.stock_total}</strong>
           </div>
           <div>Identificado por lote: {stock.datos.stock_identificado}</div>
-          <div>Stock bloqueado por falta de trazabilidad: {stock.datos.stock_sin_lote}</div>
           <div>Saldo de lotes sin vencer: {stock.datos.stock_utilizable}</div>
           <div>Saldo vencido: {stock.datos.stock_vencido}</div>
           <small className="text-body-secondary">
             Cantidades expresadas en la unidad del insumo.
           </small>
         </div>
-      )}
-      {stock.datos && stock.datos.stock_sin_lote > 0 && (
-        <Alert variant="warning">
-          El stock anterior sin trazabilidad permanece bloqueado y no se puede consumir.
-          Las nuevas recepciones deben informar proveedor, lote y fecha de vencimiento.
-        </Alert>
       )}
       {lotes.cargando && <p role="status">Cargando lotes...</p>}
       {lotes.datos && (

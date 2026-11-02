@@ -29,14 +29,32 @@ def test_crear_lote_asocia_insumos_y_descuenta_stock(
     insumo_activo,
     otro_insumo_activo,
 ):
-    identificar_stock(db_session, persona_operadora, insumo_activo, otro_insumo_activo)
+    lotes = identificar_stock(db_session, persona_operadora, insumo_activo, otro_insumo_activo)
     lote_a_crear = schemas.LoteProduccionCreate(
         producto_id=producto.id,
         fecha_produccion=date.today(),
         cantidad=12.5,
         insumos=[
-            schemas.LoteInsumoCreate(insumo_id=insumo_activo.id, cantidad_usada=2.5),
-            schemas.LoteInsumoCreate(insumo_id=otro_insumo_activo.id, cantidad_usada=1.25),
+            schemas.LoteInsumoCreate(
+                insumo_id=insumo_activo.id,
+                cantidad_usada=2.5,
+                lotes_recepcion=[
+                    schemas.ConsumoRecepcionCreate(
+                        lote_recepcion_id=lotes[insumo_activo.id],
+                        cantidad=2.5,
+                    )
+                ],
+            ),
+            schemas.LoteInsumoCreate(
+                insumo_id=otro_insumo_activo.id,
+                cantidad_usada=1.25,
+                lotes_recepcion=[
+                    schemas.ConsumoRecepcionCreate(
+                        lote_recepcion_id=lotes[otro_insumo_activo.id],
+                        cantidad=1.25,
+                    )
+                ],
+            ),
         ],
     )
 
@@ -52,7 +70,7 @@ def test_crear_lote_asocia_insumos_y_descuenta_stock(
     db_session.refresh(insumo_activo)
     db_session.refresh(otro_insumo_activo)
     assert insumo_activo.cantidad == 47.5
-    assert otro_insumo_activo.cantidad == 18.75
+    assert otro_insumo_activo.cantidad == 48.75
 
 
 def test_crear_lote_permite_agotar_exactamente_el_stock(
@@ -61,12 +79,23 @@ def test_crear_lote_permite_agotar_exactamente_el_stock(
     producto,
     insumo_activo,
 ):
-    identificar_stock(db_session, persona_operadora, insumo_activo)
+    lotes = identificar_stock(db_session, persona_operadora, insumo_activo)
     lote_a_crear = schemas.LoteProduccionCreate(
         producto_id=producto.id,
         fecha_produccion=date.today(),
         cantidad=12.5,
-        insumos=[schemas.LoteInsumoCreate(insumo_id=insumo_activo.id, cantidad_usada=50)],
+        insumos=[
+            schemas.LoteInsumoCreate(
+                insumo_id=insumo_activo.id,
+                cantidad_usada=50,
+                lotes_recepcion=[
+                    schemas.ConsumoRecepcionCreate(
+                        lote_recepcion_id=lotes[insumo_activo.id],
+                        cantidad=50,
+                    )
+                ],
+            )
+        ],
     )
 
     # Act
@@ -103,8 +132,8 @@ def test_crear_lote_rechaza_stock_insuficiente_sin_cambios_parciales(
     assert db_session.scalars(select(LoteInsumo)).all() == []
     db_session.refresh(insumo_activo)
     db_session.refresh(otro_insumo_activo)
-    assert insumo_activo.cantidad == 50
-    assert otro_insumo_activo.cantidad == 20
+    assert insumo_activo.cantidad == 0
+    assert otro_insumo_activo.cantidad == 0
 
 
 def test_crear_lote_sin_insumos(db_session, persona_operadora, producto):
@@ -195,12 +224,23 @@ def test_crear_lote_revierte_lote_y_asociaciones_si_falla_commit(
     producto,
     insumo_activo,
 ):
-    identificar_stock(db_session, persona_operadora, insumo_activo)
+    lotes = identificar_stock(db_session, persona_operadora, insumo_activo)
     lote_a_crear = schemas.LoteProduccionCreate(
         producto_id=producto.id,
         fecha_produccion=date.today(),
         cantidad=12.5,
-        insumos=[schemas.LoteInsumoCreate(insumo_id=insumo_activo.id, cantidad_usada=1)],
+        insumos=[
+            schemas.LoteInsumoCreate(
+                insumo_id=insumo_activo.id,
+                cantidad_usada=1,
+                lotes_recepcion=[
+                    schemas.ConsumoRecepcionCreate(
+                        lote_recepcion_id=lotes[insumo_activo.id],
+                        cantidad=1,
+                    )
+                ],
+            )
+        ],
     )
 
     def fallar_commit():
@@ -256,10 +296,40 @@ def test_crear_lote_rechaza_consumo_sin_recepcion_trazable(
     with pytest.raises(HTTPException) as error:
         services.crear_lote(db_session, datos_lote, persona_operadora.id)
 
-    assert error.value.status_code == 409
-    assert "No hay saldo suficiente en lotes vigentes identificados" in error.value.detail
+    assert error.value.status_code == 400
+    assert "no tienen stock suficiente" in error.value.detail
     assert db_session.scalar(select(LoteProduccion)) is None
     assert db_session.scalar(select(LoteInsumo)) is None
+
+
+def test_crear_lote_exige_elegir_recepcion_aunque_haya_stock(
+    db_session,
+    persona_operadora,
+    producto,
+    insumo_activo,
+    lote_recepcion,
+):
+    datos_lote = schemas.LoteProduccionCreate(
+        producto_id=producto.id,
+        fecha_produccion=date.today(),
+        cantidad=8,
+        insumos=[
+            schemas.LoteInsumoCreate(
+                insumo_id=insumo_activo.id,
+                cantidad_usada=2,
+            )
+        ],
+    )
+
+    with pytest.raises(HTTPException) as error:
+        services.crear_lote(db_session, datos_lote, persona_operadora.id)
+
+    assert error.value.status_code == 409
+    assert "Seleccioná al menos una recepción" in error.value.detail
+    assert db_session.scalar(select(LoteProduccion)) is None
+    assert db_session.scalar(select(LoteInsumo)) is None
+    db_session.refresh(lote_recepcion)
+    assert lote_recepcion.cantidad_disponible == 12
 
 
 def test_trazabilidad_hacia_adelante_por_lote_de_recepcion(
@@ -277,6 +347,12 @@ def test_trazabilidad_hacia_adelante_por_lote_de_recepcion(
             schemas.LoteInsumoCreate(
                 insumo_id=insumo_activo.id,
                 cantidad_usada=2,
+                lotes_recepcion=[
+                    schemas.ConsumoRecepcionCreate(
+                        lote_recepcion_id=lote_recepcion.id,
+                        cantidad=2,
+                    )
+                ],
             )
         ],
     )

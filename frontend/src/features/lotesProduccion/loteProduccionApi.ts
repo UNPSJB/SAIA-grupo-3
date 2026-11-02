@@ -5,6 +5,7 @@ import type {
   LoteProduccion,
   LoteProduccionCreate,
   LoteProduccionUpdate,
+  LoteRecepcionDisponible,
   PaginatedLotesProduccion,
 } from './types';
 
@@ -48,6 +49,21 @@ export async function getInsumosDisponibles(): Promise<InsumoSeleccionable[]> {
   if (!response.ok)
     throw new Error(
       await mensajeDeRespuesta(response, 'Error al obtener los insumos disponibles.'),
+    );
+  return response.json();
+}
+
+export async function getLotesDisponibles(
+  insumoId: number,
+  fechaProduccion: string,
+): Promise<LoteRecepcionDisponible[]> {
+  const params = new URLSearchParams({ fecha_produccion: fechaProduccion });
+  const response = await fetchWithAuth(
+    `${API_URL}/insumos/${insumoId}/lotes-disponibles?${params}`,
+  );
+  if (!response.ok)
+    throw new Error(
+      await mensajeDeRespuesta(response, 'Error al obtener las recepciones disponibles.'),
     );
   return response.json();
 }

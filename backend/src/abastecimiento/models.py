@@ -88,7 +88,7 @@ class LoteRecepcionInsumo(ModeloBase):
         nullable=False,
     )
 
-    insumo = relationship("Insumo")
+    insumo = relationship("Insumo", back_populates="lotes_recepcion")
     proveedor = relationship("Proveedor")
 
 

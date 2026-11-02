@@ -1,7 +1,8 @@
 from datetime import date, datetime
+import math
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from src.checklist.schemas import PersonalResumen
 from src.unidadMedida.schemas import UnidadMedida
@@ -64,9 +65,32 @@ class LoteProduccion(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ConsumoRecepcionCreate(BaseModel):
+    lote_recepcion_id: int = Field(gt=0)
+    cantidad: float = Field(gt=0, allow_inf_nan=False)
+
+
 class LoteInsumoCreate(BaseModel):
     insumo_id: int = Field(gt=0)
-    cantidad_usada: float = Field(gt=0)
+    cantidad_usada: float = Field(gt=0, allow_inf_nan=False)
+    lotes_recepcion: list[ConsumoRecepcionCreate] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validar_asignaciones(self):
+        ids = [lote.lote_recepcion_id for lote in self.lotes_recepcion]
+        if len(ids) != len(set(ids)):
+            raise ValueError("No se puede repetir una recepción en el mismo insumo.")
+
+        if self.lotes_recepcion and not math.isclose(
+            sum(lote.cantidad for lote in self.lotes_recepcion),
+            self.cantidad_usada,
+            rel_tol=1e-9,
+            abs_tol=1e-9,
+        ):
+            raise ValueError(
+                "La suma asignada a las recepciones debe coincidir con la cantidad usada."
+            )
+        return self
 
 
 class InsumoSeleccionable(BaseModel):
@@ -76,6 +100,15 @@ class InsumoSeleccionable(BaseModel):
     cantidad: float
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LoteRecepcionDisponible(BaseModel):
+    id: int
+    numero_lote: str
+    proveedor_nombre: str
+    fecha_vencimiento: date
+    cantidad_disponible: float
+    es_vencimiento_proximo: bool
 
 
 class InsumoResumen(BaseModel):

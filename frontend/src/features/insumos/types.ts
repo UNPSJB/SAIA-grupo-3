@@ -13,13 +13,11 @@ export interface Insumo {
 
 export interface InsumoCreate {
   nombre: string;
-  cantidad: number;
   unidad_medida_id: number;
 }
 
 export interface InsumoUpdate {
   nombre?: string;
-  cantidad?: number;
   unidad_medida_id?: number;
   activo?: boolean;
 }

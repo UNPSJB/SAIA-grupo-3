@@ -5,8 +5,9 @@ from src.insumos import exceptions
 from src.unidadMedida.schemas import UnidadMedida 
 
 class InsumoBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     nombre:str
-    cantidad: float = Field(ge=0.0, allow_inf_nan=False, description="La cantidad no puede ser negativa")
     stock_minimo: Optional[float] = Field(default=None, ge=0.0, allow_inf_nan=False, description="El stock mínimo no puede ser negativo")
     unidad_medida_id: int 
 
@@ -14,14 +15,16 @@ class InsumoCreate(InsumoBase):
     pass 
 
 class InsumoUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     nombre: Optional[str] = None
-    cantidad: Optional[float] = Field(default=None, ge=0.0, allow_inf_nan=False)
     stock_minimo: Optional[float] = Field(default=None, ge=0.0, allow_inf_nan=False)
     unidad_medida_id: Optional[int] = None
     activo: Optional[bool] = None
 
 class Insumo(InsumoBase):
     id: int
+    cantidad: float
     activo: bool
     stock_bajo: bool = False
     unidadMedidaObj: UnidadMedida
@@ -30,5 +33,4 @@ class Insumo(InsumoBase):
 class InsumoDelete(InsumoBase):
     id: int
     activo: bool
-    unidad_medida_id: int
     model_config = ConfigDict(from_attributes=True)

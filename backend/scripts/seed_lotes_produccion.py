@@ -130,12 +130,9 @@ def asociar_ingredientes_demo(db, lote, ingredientes_por_nombre, *, receta=None,
                 .order_by(LoteRecepcionInsumo.fecha_vencimiento,
                           LoteRecepcionInsumo.fecha_recepcion, LoteRecepcionInsumo.id)
             ).all()
-            identificado = sum(r.cantidad_disponible for r in recepciones)
-            sin_lote = ingrediente.cantidad - identificado
             utilizables = [r for r in recepciones if r.fecha_recepcion <= lote.fecha_produccion <= r.fecha_vencimiento]
             saldo = sum(r.cantidad_disponible for r in utilizables)
-            if (sin_lote < -1e-9 or ingrediente.cantidad < cantidad_usada
-                    or cantidad_usada > saldo + 1e-9):
+            if cantidad_usada > saldo + 1e-9:
                 raise RuntimeError(
                     f"Stock utilizable insuficiente o inconsistente para {nombre} "
                     f"en el lote demo {lote.codigo}. El seed no modifica saldos existentes para ocultarlo."
@@ -150,7 +147,6 @@ def asociar_ingredientes_demo(db, lote, ingredientes_por_nombre, *, receta=None,
                     "lote_produccion_id": lote.id, "lote_recepcion_id": recepcion.id,
                 }, cantidad=utilizado)
                 pendiente = max(0, pendiente - utilizado)
-            ingrediente.cantidad -= asociacion.cantidad_usada
             db.flush()
 
 def cargar_lotes_produccion(db, crear, productos, ingredientes_por_nombre, operadores, admin, hoy,

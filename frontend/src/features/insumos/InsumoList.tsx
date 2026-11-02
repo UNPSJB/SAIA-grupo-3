@@ -73,14 +73,7 @@ export function InsumoList({
                 >
                   Nombre
                 </SortableHeader>
-                <SortableHeader
-                  column="cantidad"
-                  ordenarPor={ordenarPor}
-                  orden={orden}
-                  cambiarOrden={cambiarOrden}
-                >
-                  Cantidad
-                </SortableHeader>
+                <th>Stock actual</th>
                 <SortableHeader
                   column="unidad_medida_id"
                   ordenarPor={ordenarPor}

@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Button, Card, Form } from 'react-bootstrap';
+import { Alert, Button, Card, Form, Modal } from 'react-bootstrap';
 import { fechaHoyIso } from '../../shared/libreria/fechas';
 import { cargarOpciones, guardarLote } from './abastecimientoApi';
 import type { LoteRecepcion } from './types';
 import { useConsulta } from './useConsulta';
+import { InsumoForm } from '../insumos/InsumoForm';
+import { createInsumo } from '../insumos/InsumoApi';
+import type { InsumoCreate } from '../insumos/types';
 
 export function RecepcionForm({
   inicial,
@@ -31,11 +34,18 @@ export function RecepcionForm({
   }));
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+  const [mostrarNuevoInsumo, setMostrarNuevoInsumo] = useState(false);
+  const [nuevosInsumos, setNuevosInsumos] = useState<Array<{ id: number; nombre: string; unidad: string }>>([]);
   const insumos = (opciones.datos?.insumos ?? []).map((i) => ({
     id: i.id,
     nombre: i.nombre,
     unidad: i.unidadMedidaObj?.sufijo ?? '',
   }));
+  for (const nuevo of nuevosInsumos) {
+    if (!insumos.some((i) => i.id === nuevo.id)) {
+      insumos.push(nuevo);
+    }
+  }
   const proveedores = (opciones.datos?.proveedores ?? []).map((p) => ({
     id: p.id,
     nombre: p.nombre,
@@ -77,15 +87,31 @@ export function RecepcionForm({
     }
   }
 
+  async function handleCrearInsumo(datosInsumo: InsumoCreate) {
+    const nuevo = await createInsumo(datosInsumo);
+    setNuevosInsumos((anteriores) => [
+      ...anteriores,
+      {
+        id: nuevo.id,
+        nombre: nuevo.nombre,
+        unidad: nuevo.unidadMedidaObj?.sufijo ?? '',
+      },
+    ]);
+    opciones.recargar();
+    cambiar('insumo_id', String(nuevo.id));
+    setMostrarNuevoInsumo(false);
+  }
+
   return (
-    <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
-      <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
-        {inicial
-          ? 'Editar recepción'
-          : conciliar
-            ? 'Identificar stock anterior'
-            : 'Registrar recepción'}
-      </Card.Header>
+    <>
+      <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
+        <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
+          {inicial
+            ? 'Editar recepción'
+            : conciliar
+              ? 'Identificar stock anterior'
+              : 'Registrar recepción'}
+        </Card.Header>
       <Card.Body className="p-4">
         {conciliar && (
           <Alert variant="info">
@@ -107,7 +133,20 @@ export function RecepcionForm({
           <fieldset disabled={guardando || opciones.cargando || Boolean(opciones.error)}>
             <div className="row g-3">
               <Form.Group className="col-12" controlId="recepcion-insumo">
-                <Form.Label>Insumo *</Form.Label>
+                <div className="d-flex justify-content-between align-items-end mb-2">
+                  <Form.Label className="mb-0">Insumo *</Form.Label>
+                  {!inicial && !conciliar && (
+                    <Button
+                      type="button"
+                      variant="outline-success"
+                      size="sm"
+                      onClick={() => setMostrarNuevoInsumo(true)}
+                      className="d-flex align-items-center gap-1"
+                    >
+                      <i className="bi bi-plus-lg" aria-hidden="true"></i> Nuevo Insumo
+                    </Button>
+                  )}
+                </div>
                 <Form.Select
                   required
                   disabled={Boolean(inicial)}
@@ -203,5 +242,15 @@ export function RecepcionForm({
         </Form>
       </Card.Body>
     </Card>
+
+    <Modal show={mostrarNuevoInsumo} onHide={() => setMostrarNuevoInsumo(false)} centered>
+      <Modal.Body className="p-0">
+        <InsumoForm
+          onGuardar={handleCrearInsumo}
+          onCancelar={() => setMostrarNuevoInsumo(false)}
+        />
+      </Modal.Body>
+    </Modal>
+  </>
   );
 }

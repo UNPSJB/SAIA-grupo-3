@@ -2,8 +2,8 @@ from datetime import date, datetime
 from typing import Any, Dict
 from fastapi import HTTPException
 
-from sqlalchemy import func, select, update
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, selectinload
 
 from src.loteProduccion import exceptions, schemas
 from src.loteProduccion.constants import PREFIJO_CODIGO, EstadoLote
@@ -70,7 +70,6 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_i
             for item in lote.insumos
         ):
             raise exceptions.StockInsuficiente()
-
     db_lote = LoteProduccion(
         **lote.model_dump(exclude={"insumos"}),
         codigo=_generar_codigo(db, lote.fecha_produccion),
@@ -90,19 +89,11 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_i
             consumir_para_produccion(
                 db, item.insumo_id, item.cantidad_usada,
                 db_lote.id, lote.fecha_produccion,
+                [
+                    (asignacion.lote_recepcion_id, asignacion.cantidad)
+                    for asignacion in item.lotes_recepcion
+                ],
             )
-            resultado = db.execute(
-                update(Insumo)
-                .where(
-                    Insumo.id == item.insumo_id,
-                    Insumo.activo.is_(True),
-                    Insumo.cantidad >= item.cantidad_usada,
-                )
-                .values(cantidad=Insumo.cantidad - item.cantidad_usada)
-                .execution_options(synchronize_session=False)
-            )
-            if resultado.rowcount != 1:
-                raise exceptions.StockInsuficiente()
         db.commit()
         db.refresh(db_lote)
     except Exception:
@@ -115,6 +106,47 @@ def listar_insumos_disponibles(db: Session) -> list[Insumo]:
     return db.scalars(
         select(Insumo).where(Insumo.activo.is_(True)).order_by(func.lower(Insumo.nombre))
     ).all()
+
+
+def listar_lotes_disponibles(
+    db: Session,
+    insumo_id: int,
+    fecha_produccion: date,
+) -> list[dict[str, Any]]:
+    insumo = db.get(Insumo, insumo_id)
+    if insumo is None:
+        raise exceptions.InsumoNoEncontrado()
+    if not insumo.activo:
+        raise exceptions.InsumoInactivo()
+
+    lotes = db.scalars(
+        select(LoteRecepcionInsumo)
+        .where(
+            LoteRecepcionInsumo.insumo_id == insumo_id,
+            LoteRecepcionInsumo.activo.is_(True),
+            LoteRecepcionInsumo.cantidad_disponible > 0,
+            LoteRecepcionInsumo.fecha_vencimiento >= date.today(),
+            LoteRecepcionInsumo.fecha_recepcion <= fecha_produccion,
+        )
+        .order_by(
+            LoteRecepcionInsumo.fecha_vencimiento,
+            LoteRecepcionInsumo.fecha_recepcion,
+            LoteRecepcionInsumo.id,
+        )
+        .options(selectinload(LoteRecepcionInsumo.proveedor))
+    ).all()
+
+    return [
+        {
+            "id": lote.id,
+            "numero_lote": lote.numero_lote,
+            "proveedor_nombre": lote.proveedor.nombre,
+            "fecha_vencimiento": lote.fecha_vencimiento,
+            "cantidad_disponible": lote.cantidad_disponible,
+            "es_vencimiento_proximo": indice == 0,
+        }
+        for indice, lote in enumerate(lotes)
+    ]
 
 
 def listar_lotes(

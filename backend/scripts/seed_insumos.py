@@ -30,7 +30,7 @@ def cargar_insumos(crear, unidades, unidades_por_sufijo):
     insumos = []
     unidad = unidades[0]
     for i in range(CANTIDAD):
-        insumo, _ = crear(Insumo, {"nombre": INSUMOS[i]}, cantidad=150.0 + i * 10,
+        insumo, _ = crear(Insumo, {"nombre": INSUMOS[i]},
             unidad_medida_id=unidad.id, activo=True)
         insumos.append(insumo)
     ingredientes_por_nombre = {}
@@ -38,7 +38,6 @@ def cargar_insumos(crear, unidades, unidades_por_sufijo):
         ingrediente, _ = crear(
             Insumo,
             {"nombre": nombre},
-            cantidad=0.0,
             unidad_medida_id=unidades_por_sufijo[sufijo].id,
             activo=True,
         )
