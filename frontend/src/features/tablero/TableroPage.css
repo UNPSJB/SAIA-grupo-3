@@ -1,0 +1,9 @@
+.checklist-panel-contenido {
+  padding: 22px;
+}
+
+@media (max-width: 576px) {
+  .checklist-panel-contenido {
+    padding: 16px;
+  }
+}
