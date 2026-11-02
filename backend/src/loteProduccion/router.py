@@ -77,6 +77,15 @@ def read_lote(
     return lote
 
 
+@router.get(
+    "/{lote_id}/trazabilidad",
+    response_model=schemas.LoteProduccionTrazabilidad,
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_trazabilidad_lote(lote_id: int, db: Session = Depends(get_db)):
+    return services.trazabilidad_lote_produccion(db, lote_id)
+
+
 @router.put("/{lote_id}", response_model=schemas.LoteProduccion)
 def update_lote(lote_id: int, lote: schemas.LoteProduccionUpdate, db: Session = Depends(get_db)):
     return services.modificar_lote(db, lote_id, lote)

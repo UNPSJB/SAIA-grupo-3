@@ -483,6 +483,7 @@ def listar_recepciones(
     fecha_hasta=None,
     estado=None,
     mostrar_inactivos=False,
+    buscar="",
 ):
     if fecha_desde and fecha_hasta and fecha_desde > fecha_hasta:
         raise HTTPException(422, "El rango de fechas es inválido.")
@@ -498,6 +499,19 @@ def listar_recepciones(
     if proveedor_id is not None:
         consulta = consulta.where(
             LoteRecepcionInsumo.proveedor_id == proveedor_id
+        )
+
+    if buscar.strip():
+        termino = buscar.strip().lower()
+        consulta = consulta.join(Insumo).join(Proveedor).where(
+            or_(
+                func.lower(LoteRecepcionInsumo.numero_lote).contains(
+                    termino,
+                    autoescape=True,
+                ),
+                func.lower(Insumo.nombre).contains(termino, autoescape=True),
+                func.lower(Proveedor.nombre).contains(termino, autoescape=True),
+            )
         )
 
     if fecha_desde is not None:

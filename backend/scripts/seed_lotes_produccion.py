@@ -25,6 +25,11 @@ RECETAS_LOTES_DEMO = {
     "Budín de vainilla": [("Harina de trigo", 3.0), ("Azúcar", 2.0), ("Agua", 1.5), ("Aceite", 1.2), ("Sal", 0.05)],
     "Torta de chocolate": [("Harina de trigo", 3.0), ("Azúcar", 1.5), ("Agua", 2.0), ("Aceite", 1.0)],
     "Alfajores de maicena": [("Harina de trigo", 3.5), ("Azúcar", 1.0), ("Agua", 1.0), ("Aceite", 0.6), ("Sal", 0.05)],
+    "Salsa de tomate": [("Tomate triturado", 12.0), ("Aceite", 0.3), ("Sal", 0.15)],
+    "Dulce de leche repostero": [("Leche", 8.0), ("Azúcar", 2.0)],
+    "Empanadas de carne": [("Harina de trigo", 8.0), ("Carne vacuna", 5.0), ("Cebolla", 2.0), ("Sal", 0.1)],
+    "Tarta de verduras": [("Harina de trigo", 3.0), ("Verduras para tarta", 4.0), ("Leche", 1.0), ("Sal", 0.1)],
+    "Ñoquis de papa": [("Papa", 10.0), ("Harina de trigo", 2.0), ("Huevo", 1.0), ("Sal", 0.1)],
 }
 
 

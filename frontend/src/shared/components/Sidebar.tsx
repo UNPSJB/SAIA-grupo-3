@@ -38,6 +38,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: '/planes', label: 'Planes de Limpieza', icono: 'bi bi-clipboard2-check' },
     { to: '/auditoria', label: 'Historial Checklist', icono: 'bi bi-clock-history' },
     { to: '/lotes', label: 'Historial de lotes', icono: 'bi bi-box-seam' },
+    { to: '/trazabilidad-insumos', label: 'Trazabilidad de insumos', icono: 'bi bi-upc-scan', permiso: 'administrar' },
     { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square', permiso: 'operar' },
     { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
     { to: "/consumos", label: "Registros de Consumo", icono: "bi bi-droplet" },
@@ -95,7 +96,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const secciones = [
     { id: 'gestion', label: 'Gestión', icono: 'bi bi-graph-up', rutas: ['/tablero', '/vista-publica/configuracion'] },
     { id: 'operacion', label: 'Operación', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/planes', '/lotes-produccion', '/recepciones-insumos', '/reportes/consumos', '/consumos'] },
-    { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/vencimientos', '/incidentes', '/auditoria', '/lotes'] },
+    { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/vencimientos', '/incidentes', '/auditoria', '/lotes', '/trazabilidad-insumos'] },
     { id: 'documentacion', label: 'Documentación', icono: 'bi bi-files', rutas: ['/documentos-vigentes', '/documentos-tecnicos'] },
   ].map((seccion) => ({
     ...seccion,

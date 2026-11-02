@@ -12,7 +12,12 @@ from src.insumos.models import Insumo
 from src.pagination import filtrar_ordenar
 from src.producto.models import Producto
 from src.producto.services import leer_producto
-from src.abastecimiento.models import ConsumoLoteRecepcion, LoteRecepcionInsumo
+from src.abastecimiento.models import (
+    ConsumoLoteRecepcion,
+    ConsumoStockAnterior,
+    LoteRecepcionInsumo,
+    Proveedor,
+)
 from src.abastecimiento.services import consumir_para_produccion
 
 
@@ -165,6 +170,83 @@ def leer_lote(db: Session, lote_id: int) -> LoteProduccion:
     if db_lote is None:
         raise exceptions.LoteNoEncontrado()
     return db_lote
+
+
+def trazabilidad_lote_produccion(
+    db: Session,
+    lote_id: int,
+) -> dict[str, Any]:
+    lote = leer_lote(db, lote_id)
+    insumos = []
+
+    for asociacion in lote.insumos_asociados:
+        filas = db.execute(
+            select(
+                ConsumoLoteRecepcion,
+                LoteRecepcionInsumo,
+                Proveedor.nombre,
+            )
+            .join(
+                LoteRecepcionInsumo,
+                LoteRecepcionInsumo.id
+                == ConsumoLoteRecepcion.lote_recepcion_id,
+            )
+            .join(Proveedor, Proveedor.id == LoteRecepcionInsumo.proveedor_id)
+            .where(
+                ConsumoLoteRecepcion.lote_produccion_id == lote.id,
+                LoteRecepcionInsumo.insumo_id == asociacion.insumo_id,
+            )
+            .order_by(
+                LoteRecepcionInsumo.fecha_vencimiento,
+                LoteRecepcionInsumo.id,
+            )
+        ).all()
+        lotes_recepcion = [
+            {
+                "lote_recepcion_id": recepcion.id,
+                "numero_lote": recepcion.numero_lote,
+                "proveedor_nombre": proveedor_nombre,
+                "fecha_recepcion": recepcion.fecha_recepcion,
+                "fecha_vencimiento": recepcion.fecha_vencimiento,
+                "cantidad_utilizada": consumo.cantidad,
+            }
+            for consumo, recepcion, proveedor_nombre in filas
+        ]
+        cantidad_identificada = sum(
+            consumo.cantidad for consumo, _, _ in filas
+        )
+        cantidad_stock_anterior = db.scalar(
+            select(func.coalesce(func.sum(ConsumoStockAnterior.cantidad), 0)).where(
+                ConsumoStockAnterior.lote_produccion_id == lote.id,
+                ConsumoStockAnterior.insumo_id == asociacion.insumo_id,
+            )
+        )
+        cantidad_historica_sin_origen = max(
+            0.0,
+            asociacion.cantidad_usada
+            - cantidad_identificada
+            - cantidad_stock_anterior,
+        )
+        insumo = asociacion.insumo
+        insumos.append(
+            {
+                "insumo_id": insumo.id,
+                "insumo_nombre": insumo.nombre,
+                "unidad": insumo.unidadMedidaObj.sufijo,
+                "cantidad_usada": asociacion.cantidad_usada,
+                "lotes_recepcion": lotes_recepcion,
+                "cantidad_stock_anterior": cantidad_stock_anterior,
+                "cantidad_historica_sin_origen": cantidad_historica_sin_origen,
+            }
+        )
+
+    return {
+        "lote_produccion_id": lote.id,
+        "codigo": lote.codigo,
+        "producto_nombre": lote.producto.nombre,
+        "fecha_produccion": lote.fecha_produccion,
+        "insumos": insumos,
+    }
 
 
 def modificar_lote(db: Session, lote_id: int, lote: schemas.LoteProduccionUpdate) -> LoteProduccion:

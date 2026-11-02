@@ -1,6 +1,7 @@
 import { Badge, Button, Card } from 'react-bootstrap';
 import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
 import { formatearCantidad } from './formato';
+import { TrazabilidadProduccionDetalle } from './TrazabilidadProduccionDetalle';
 import type { LoteProduccion } from './types';
 
 interface LoteProduccionViewProps {
@@ -57,6 +58,7 @@ export function LoteProduccionView({
             </span>
           </div>
         </div>
+        <TrazabilidadProduccionDetalle loteId={lote.id} />
       </Card.Body>
       <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>

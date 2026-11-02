@@ -90,3 +90,48 @@ def cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, registrado_por_id
             fecha_cierre=datetime.combine(fecha, time(12)) if i % 2 else None,
             cerrado_por_id=registrado_por_id if i % 2 else None)
         asociar_ingredientes_demo(db, lote, ingredientes, receta=receta, crear=crear)
+
+    return proveedores
+
+
+def cargar_recepciones_ingredientes_demo(
+    db,
+    crear,
+    ingredientes_por_nombre,
+    proveedores,
+    registrado_por_id,
+    hoy,
+):
+    """Identifica con recepciones demo el stock inicial de ingredientes."""
+    proveedores_activos = [proveedor for proveedor in proveedores if proveedor.activo]
+    if not proveedores_activos:
+        raise RuntimeError("Se necesita al menos un proveedor activo para seed de producción.")
+
+    for indice, (nombre, insumo) in enumerate(ingredientes_por_nombre.items()):
+        clave = str(uuid5(NAMESPACE_URL, f"saia:seed:produccion:recepcion:{nombre}"))
+        existente = db.scalar(
+            select(LoteRecepcionInsumo).where(
+                LoteRecepcionInsumo.clave_operacion == clave
+            )
+        )
+        if existente is not None:
+            continue
+        if insumo.cantidad <= 0:
+            raise RuntimeError(f"El stock inicial de {nombre} debe ser positivo.")
+
+        proveedor = proveedores_activos[indice % len(proveedores_activos)]
+        crear(
+            LoteRecepcionInsumo,
+            {"clave_operacion": clave},
+            insumo_id=insumo.id,
+            proveedor_id=proveedor.id,
+            numero_lote=f"DEMO-PROD-{indice + 1:03d}",
+            cantidad=insumo.cantidad,
+            cantidad_disponible=insumo.cantidad,
+            fecha_recepcion=hoy - timedelta(days=45),
+            fecha_vencimiento=hoy + timedelta(days=180),
+            registrado_por_id=registrado_por_id,
+            fecha_registro=datetime.combine(hoy - timedelta(days=45), time(8, indice)),
+            activo=True,
+            conciliacion=True,
+        )

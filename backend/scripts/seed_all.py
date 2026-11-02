@@ -4,7 +4,10 @@ from datetime import date, timedelta
 
 from sqlalchemy import func, inspect, select
 
-from scripts.seed_abastecimiento import cargar_abastecimiento_demo
+from scripts.seed_abastecimiento import (
+    cargar_abastecimiento_demo,
+    cargar_recepciones_ingredientes_demo,
+)
 from scripts.seed_calibraciones import cargar_calibraciones
 from scripts.seed_checklist import cargar_checklist
 from scripts.seed_common import (
@@ -71,10 +74,20 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
                 crear, equipos, planes, tareas, quimicos, elementos, fotos, hoy, ayer
             )
             productos = cargar_productos(crear, unidades_por_sufijo)
+            proveedores = cargar_abastecimiento_demo(
+                db, crear, unidades_por_sufijo, admin.id, hoy
+            )
+            cargar_recepciones_ingredientes_demo(
+                db,
+                crear,
+                ingredientes,
+                proveedores,
+                admin.id,
+                hoy,
+            )
             cargar_lotes_produccion(
                 db, crear, productos, ingredientes, operadores, admin, hoy
             )
-            cargar_abastecimiento_demo(db, crear, unidades_por_sufijo, admin.id, hoy)
 
             db.flush()
             conteos = {

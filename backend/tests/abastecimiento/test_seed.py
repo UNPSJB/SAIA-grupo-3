@@ -17,6 +17,7 @@ from src.loteProduccion.services import crear_lote
 from src.models import ModeloBase
 from src.personal.models import Personal
 from src.producto.models import Producto
+from scripts.seed_productos import PRODUCTOS
 from tests.database import db_session  # noqa: F401
 
 
@@ -99,6 +100,48 @@ def test_consumos_del_seed_conservan_cantidades_y_fechas_de_origen(db_session, e
         produccion = db_session.get(LoteProduccion, asociacion.lote_id)
         for _, recepcion in recibidos:
             assert recepcion.fecha_recepcion <= produccion.fecha_produccion <= recepcion.fecha_vencimiento
+
+
+def test_todos_los_productos_demo_tienen_lote_y_trazabilidad_con_proveedor(
+    db_session, ejecutar_seed
+):
+    ejecutar_seed()
+
+    for nombre, _, _ in PRODUCTOS:
+        producto = db_session.scalar(
+            select(Producto).where(Producto.nombre == nombre)
+        )
+        assert producto is not None
+        lote = db_session.scalar(
+            select(LoteProduccion).where(
+                LoteProduccion.codigo.like("L-SEED-%"),
+                LoteProduccion.producto_id == producto.id,
+            )
+        )
+        assert lote is not None, f"{nombre} no tiene lote de producción demo"
+
+        asociaciones = db_session.scalars(
+            select(LoteInsumo).where(LoteInsumo.lote_id == lote.id)
+        ).all()
+        assert asociaciones, f"{nombre} no tiene insumos asociados"
+
+        for asociacion in asociaciones:
+            consumos = db_session.execute(
+                select(ConsumoLoteRecepcion, LoteRecepcionInsumo, Proveedor)
+                .join(
+                    LoteRecepcionInsumo,
+                    LoteRecepcionInsumo.id == ConsumoLoteRecepcion.lote_recepcion_id,
+                )
+                .join(Proveedor, Proveedor.id == LoteRecepcionInsumo.proveedor_id)
+                .where(
+                    ConsumoLoteRecepcion.lote_produccion_id == lote.id,
+                    LoteRecepcionInsumo.insumo_id == asociacion.insumo_id,
+                )
+            ).all()
+            cantidad_trazada = sum(consumo.cantidad for consumo, _, _ in consumos)
+            assert cantidad_trazada == pytest.approx(asociacion.cantidad_usada)
+            assert consumos
+            assert all(proveedor.nombre for _, _, proveedor in consumos)
 
 
 def test_fallo_en_ultimo_modulo_revierte_toda_la_carga(

@@ -4,6 +4,7 @@ import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
 import { EstadoLoteBadge } from './EstadoLoteBadge';
 import { cerrarLoteProduccion } from './loteProduccionApi';
+import { TrazabilidadProduccionDetalle } from './TrazabilidadProduccionDetalle';
 import type { LoteProduccion } from './types';
 
 interface HistorialLoteViewProps {
@@ -100,6 +101,7 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
             </table>
           </div>
         )}
+        <TrazabilidadProduccionDetalle loteId={lote.id} />
       </Card.Body>
       <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>

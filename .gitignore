@@ -325,5 +325,7 @@ sketch
 
 # Evidencias y documentos generados o subidos por la aplicación
 backend/almacenamiento/
+backend/uploads/
+backend/archivos/
 
 # End of https://www.toptal.com/developers/gitignore/api/react,node,python

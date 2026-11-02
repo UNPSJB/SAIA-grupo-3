@@ -2,14 +2,18 @@ from datetime import date
 
 from tests.database import (
     client,
+    headers_administradora,
     headers_operadora,
     headers_sin_permisos,
     insumo_activo,
     insumo_inactivo,
+    lote_recepcion,
     otro_insumo_activo,
+    persona_administradora,
     persona_operadora,
     persona_sin_permisos,
     producto,
+    proveedor_activo,
     db_session,
     unidad_medida,
 )
@@ -185,3 +189,106 @@ def test_endpoint_no_registra_lote_si_falta_stock(
     assert respuesta.json()["detail"] == (
         "Uno o más insumos no tienen stock suficiente para las cantidades indicadas."
     )
+
+
+def test_endpoint_buscar_lote_y_consultar_trazabilidad_en_ambos_sentidos(
+    client,
+    headers_administradora,
+    headers_operadora,
+    producto,
+    insumo_activo,
+    lote_recepcion,
+):
+    producto_id = producto.id
+    nombre_producto = producto.nombre
+    insumo_id = insumo_activo.id
+    lote_recepcion_id = lote_recepcion.id
+    numero_lote = lote_recepcion.numero_lote
+    proveedor_nombre = lote_recepcion.proveedor.nombre
+    fecha_recepcion = lote_recepcion.fecha_recepcion.isoformat()
+    fecha_vencimiento = lote_recepcion.fecha_vencimiento.isoformat()
+    fecha_produccion = date.today().isoformat()
+
+    alta = client.post(
+        "/lotes-produccion/",
+        headers=headers_operadora,
+        json={
+            "producto_id": producto_id,
+            "fecha_produccion": fecha_produccion,
+            "cantidad": 8,
+            "insumos": [
+                {"insumo_id": insumo_id, "cantidad_usada": 3},
+            ],
+        },
+    )
+    assert alta.status_code == 200, alta.text
+    lote_produccion_id = alta.json()["id"]
+
+    busqueda = client.get(
+        "/lotes-insumo/",
+        params={"buscar": "TRAZA-001"},
+        headers=headers_administradora,
+    )
+    assert busqueda.status_code == 200, busqueda.text
+    assert busqueda.json()["total"] == 1
+    assert busqueda.json()["items"][0]["id"] == lote_recepcion_id
+
+    for termino in ("Harina", "Proveedor de prueba"):
+        busqueda = client.get(
+            "/lotes-insumo/",
+            params={"buscar": termino},
+            headers=headers_administradora,
+        )
+        assert busqueda.status_code == 200, busqueda.text
+        assert busqueda.json()["total"] == 1
+        assert busqueda.json()["items"][0]["id"] == lote_recepcion_id
+
+    hacia_adelante = client.get(
+        f"/lotes-insumo/{lote_recepcion_id}/trazabilidad",
+        headers=headers_administradora,
+    )
+    assert hacia_adelante.status_code == 200, hacia_adelante.text
+    assert hacia_adelante.json() == [
+        {
+            "lote_produccion_id": lote_produccion_id,
+            "codigo": alta.json()["codigo"],
+            "producto": nombre_producto,
+            "fecha_produccion": fecha_produccion,
+            "cantidad_utilizada": 3,
+            "activo": True,
+        }
+    ]
+
+    hacia_atras = client.get(
+        f"/lotes-produccion/{lote_produccion_id}/trazabilidad",
+        headers=headers_administradora,
+    )
+    assert hacia_atras.status_code == 200, hacia_atras.text
+    insumo = hacia_atras.json()["insumos"][0]
+    assert insumo["insumo_id"] == insumo_id
+    assert insumo["cantidad_usada"] == 3
+    assert insumo["lotes_recepcion"] == [
+        {
+            "lote_recepcion_id": lote_recepcion_id,
+            "numero_lote": numero_lote,
+            "proveedor_nombre": proveedor_nombre,
+            "fecha_recepcion": fecha_recepcion,
+            "fecha_vencimiento": fecha_vencimiento,
+            "cantidad_utilizada": 3,
+        }
+    ]
+    assert insumo["cantidad_stock_anterior"] == 0
+    assert insumo["cantidad_historica_sin_origen"] == 0
+
+
+def test_endpoint_trazabilidad_requiere_administracion(
+    client,
+    headers_operadora,
+    lote_recepcion,
+):
+    lote_recepcion_id = lote_recepcion.id
+    respuesta = client.get(
+        f"/lotes-insumo/{lote_recepcion_id}/trazabilidad",
+        headers=headers_operadora,
+    )
+    assert respuesta.status_code == 403

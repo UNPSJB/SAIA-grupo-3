@@ -16,6 +16,13 @@ INGREDIENTES = [
     ("Levadura", "g", 5000.0),
     ("Aceite", "L", 100.0),
     ("Sal", "kg", 100.0),
+    ("Tomate triturado", "kg", 100.0),
+    ("Leche", "L", 100.0),
+    ("Carne vacuna", "kg", 100.0),
+    ("Cebolla", "kg", 100.0),
+    ("Verduras para tarta", "kg", 100.0),
+    ("Papa", "kg", 100.0),
+    ("Huevo", "kg", 50.0),
 ]
 
 

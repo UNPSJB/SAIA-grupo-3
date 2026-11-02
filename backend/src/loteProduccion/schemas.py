@@ -94,5 +94,32 @@ class LoteInsumoDetalle(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class LoteRecepcionTrazabilidad(BaseModel):
+    lote_recepcion_id: int
+    numero_lote: str
+    proveedor_nombre: str
+    fecha_recepcion: date
+    fecha_vencimiento: date
+    cantidad_utilizada: float
+
+
+class InsumoTrazabilidad(BaseModel):
+    insumo_id: int
+    insumo_nombre: str
+    unidad: str
+    cantidad_usada: float
+    lotes_recepcion: list[LoteRecepcionTrazabilidad]
+    cantidad_stock_anterior: float
+    cantidad_historica_sin_origen: float
+
+
+class LoteProduccionTrazabilidad(BaseModel):
+    lote_produccion_id: int
+    codigo: str
+    producto_nombre: str
+    fecha_produccion: date
+    insumos: list[InsumoTrazabilidad]
+
+
 LoteProduccionCreate.model_rebuild()
 LoteProduccion.model_rebuild()
