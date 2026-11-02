@@ -4,6 +4,7 @@ from sqlalchemy import select
 
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
 from scripts import seed_lotes_produccion as seed
+from tests.stock_trazable import identificar_stock
 from tests.database import (
     db_session,
     insumo_activo,
@@ -41,6 +42,7 @@ def test_asociar_ingredientes_demo_no_descuenta_stock_al_repetir(
     db_session.commit()
     db_session.refresh(lote)
     ingredientes = {"Harina de trigo": insumo_activo}
+    identificar_stock(db_session, persona_operadora, insumo_activo)
 
     # Act
     seed.asociar_ingredientes_demo(db_session, lote, ingredientes)

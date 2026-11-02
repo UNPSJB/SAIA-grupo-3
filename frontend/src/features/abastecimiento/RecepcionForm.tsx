@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Alert, Button, Card, Form } from 'react-bootstrap';
 import { fechaHoyIso } from '../../shared/libreria/fechas';
 import { cargarOpciones, guardarLote } from './abastecimientoApi';
@@ -17,9 +18,10 @@ export function RecepcionForm({
   onGuardado: () => void;
   onCancelar: () => void;
 }) {
+  const [params] = useSearchParams();
   const opciones = useConsulta(cargarOpciones);
   const [datos, setDatos] = useState(() => ({
-    insumo_id: inicial ? String(inicial.insumo_id) : '',
+    insumo_id: inicial ? String(inicial.insumo_id) : params.get('insumo_id') ?? '',
     proveedor_id: inicial ? String(inicial.proveedor_id) : '',
     numero_lote: inicial?.numero_lote ?? '',
     cantidad: inicial ? String(inicial.cantidad) : '',
@@ -76,15 +78,15 @@ export function RecepcionForm({
   }
 
   return (
-    <Card className="mb-4">
-      <Card.Body>
-        <h4>
-          {inicial
-            ? 'Editar recepción'
-            : conciliar
-              ? 'Identificar stock anterior'
-              : 'Registrar recepción'}
-        </h4>
+    <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
+      <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
+        {inicial
+          ? 'Editar recepción'
+          : conciliar
+            ? 'Identificar stock anterior'
+            : 'Registrar recepción'}
+      </Card.Header>
+      <Card.Body className="p-4">
         {conciliar && (
           <Alert variant="info">
             Identificá solamente cantidades y datos de origen que puedas verificar. Esta operación
@@ -104,7 +106,7 @@ export function RecepcionForm({
         <Form onSubmit={enviar}>
           <fieldset disabled={guardando || opciones.cargando || Boolean(opciones.error)}>
             <div className="row g-3">
-              <Form.Group className="col-12 col-md-6" controlId="recepcion-insumo">
+              <Form.Group className="col-12" controlId="recepcion-insumo">
                 <Form.Label>Insumo *</Form.Label>
                 <Form.Select
                   required
@@ -120,7 +122,7 @@ export function RecepcionForm({
                   ))}
                 </Form.Select>
               </Form.Group>
-              <Form.Group className="col-12 col-md-6" controlId="recepcion-proveedor">
+              <Form.Group className="col-12" controlId="recepcion-proveedor">
                 <Form.Label>Proveedor *</Form.Label>
                 <Form.Select
                   required
@@ -136,7 +138,7 @@ export function RecepcionForm({
                   ))}
                 </Form.Select>
               </Form.Group>
-              <Form.Group className="col-12 col-md-6" controlId="recepcion-numero">
+              <Form.Group className="col-12" controlId="recepcion-numero">
                 <Form.Label>Número de lote del proveedor *</Form.Label>
                 <Form.Control
                   required
@@ -145,7 +147,7 @@ export function RecepcionForm({
                   onChange={(e) => cambiar('numero_lote', e.target.value)}
                 />
               </Form.Group>
-              <Form.Group className="col-12 col-md-6" controlId="recepcion-cantidad">
+              <Form.Group className="col-12" controlId="recepcion-cantidad">
                 <Form.Label>Cantidad {unidad ? `(${unidad})` : ''} *</Form.Label>
                 <Form.Control
                   required
@@ -178,21 +180,24 @@ export function RecepcionForm({
                 />
               </Form.Group>
             </div>
-            <div className="d-flex justify-content-end gap-2 mt-4">
-              <Button type="submit" disabled={!opciones.datos}>
-                {guardando
-                  ? 'Guardando...'
-                  : inicial
-                    ? 'Guardar cambios'
-                    : conciliar
-                      ? 'Identificar sin sumar stock'
-                      : 'Registrar y sumar al stock'}
-              </Button>
-            </div>
           </fieldset>
-          <div className="d-flex justify-content-end mt-2">
+          <div className="d-flex justify-content-end gap-2 mt-4">
             <Button variant="secondary" disabled={guardando} onClick={onCancelar}>
               Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={
+                guardando || opciones.cargando || Boolean(opciones.error) || !opciones.datos
+              }
+            >
+              {guardando
+                ? 'Guardando...'
+                : inicial
+                  ? 'Actualizar Cambios'
+                  : conciliar
+                    ? 'Identificar sin sumar stock'
+                    : 'Registrar y sumar al stock'}
             </Button>
           </div>
         </Form>

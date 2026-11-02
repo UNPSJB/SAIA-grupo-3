@@ -95,6 +95,7 @@ def listar_lotes(
     fecha_hasta: date | None = None,
     estado: Literal["vencido", "por_vencer", "vigente"] | None = None,
     mostrar_inactivos: bool = False,
+    buscar: str = "",
 ):
     return services.listar_recepciones(
         db,
@@ -106,6 +107,7 @@ def listar_lotes(
         fecha_hasta,
         estado,
         mostrar_inactivos,
+        buscar,
     )
 
 

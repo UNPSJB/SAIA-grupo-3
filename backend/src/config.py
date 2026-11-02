@@ -12,7 +12,6 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     SCHEDULER_ACTIVO: bool = True
     DIAS_AVISO_VENCIMIENTO: int = Field(default=15, ge=0)
-    PERMITIR_STOCK_SIN_LOTE: bool = True
 
     SECRET_KEY: str = "tu-clave-secreta-para-access-token"
     REFRESH_SECRET_KEY: str = "tu-clave-secreta-para-refresh-token"

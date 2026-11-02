@@ -117,3 +117,11 @@ export function cargarOpciones(signal: AbortSignal) {
 export function cargarOpcionesFiltros(signal: AbortSignal) {
   return opciones(signal, true);
 }
+
+export function obtenerProveedor(id: number): Promise<Proveedor> {
+  return solicitar(`/proveedores/${id}`);
+}
+
+export function obtenerLote(id: number): Promise<LoteRecepcion> {
+  return solicitar(`/lotes-insumo/${id}`);
+}

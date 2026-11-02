@@ -116,7 +116,7 @@ class ConsumoLoteRecepcion(ModeloBase):
 
 
 class ConsumoStockAnterior(ModeloBase):
-    """Consumo de existencias cuyo proveedor y lote no se conocen."""
+    """Historial previo a la trazabilidad obligatoria; no admite nuevos consumos."""
 
     __tablename__ = "consumos_stock_anterior"
     __table_args__ = (

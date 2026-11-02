@@ -9,12 +9,10 @@ from sqlalchemy.orm import Session
 
 from src.abastecimiento.models import (
     ConsumoLoteRecepcion,
-    ConsumoStockAnterior,
     LoteRecepcionInsumo,
     Proveedor,
 )
 from src.abastecimiento.schemas import LoteInput, ProveedorInput
-from src.config import settings
 from src.documentacion.vencimientos import calcular_estado
 from src.insumos.models import Insumo
 from src.loteProduccion.models import LoteProduccion
@@ -483,11 +481,22 @@ def listar_recepciones(
     fecha_hasta=None,
     estado=None,
     mostrar_inactivos=False,
+    buscar="",
 ):
     if fecha_desde and fecha_hasta and fecha_desde > fecha_hasta:
         raise HTTPException(422, "El rango de fechas es inválido.")
 
     consulta = select(LoteRecepcionInsumo)
+
+    if buscar.strip():
+        termino = buscar.strip().lower()
+        consulta = consulta.join(Insumo).join(Proveedor).where(
+            or_(
+                func.lower(Insumo.nombre).contains(termino, autoescape=True),
+                func.lower(Proveedor.nombre).contains(termino, autoescape=True),
+                func.lower(LoteRecepcionInsumo.numero_lote).contains(termino, autoescape=True),
+            )
+        )
 
     if not mostrar_inactivos:
         consulta = consulta.where(LoteRecepcionInsumo.activo.is_(True))
@@ -579,15 +588,12 @@ def consumir_para_produccion(
     saldo = sum(lote.cantidad_disponible for lote in utilizables)
     faltante = max(0.0, cantidad - saldo)
     if faltante > EPS:
-        politica = settings.PERMITIR_STOCK_SIN_LOTE
-        if politica is not True:
-            raise HTTPException(
-                409,
-                "No hay saldo suficiente en lotes vigentes identificados. "
-                "Registrá una recepción o identificá el stock anterior.",
-            )
-        if faltante > stock_anterior + EPS:
-            raise HTTPException(409, "No hay stock utilizable suficiente; no se pueden usar lotes vencidos o recibidos después de la producción.")
+        raise HTTPException(
+            409,
+            f"No hay saldo suficiente en lotes vigentes identificados para {insumo.nombre}. "
+            "Registrá una recepción o identificá el stock anterior con sus datos reales. "
+            "No se pueden usar lotes vencidos o recibidos después de la producción.",
+        )
 
     if cantidad > insumo.cantidad + EPS:
         raise HTTPException(
@@ -617,12 +623,6 @@ def consumir_para_produccion(
 
         pendiente = max(0.0, pendiente - tomado)
 
-    if pendiente > EPS:
-        db.add(ConsumoStockAnterior(
-            lote_produccion_id=lote_produccion_id,
-            insumo_id=insumo_id,
-            cantidad=pendiente,
-        ))
     db.flush()
 
 

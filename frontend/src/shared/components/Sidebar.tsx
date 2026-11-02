@@ -131,25 +131,20 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const accesos = ['/checklist', '/vencimientos', '/tablero']
     .flatMap((ruta) => menuVisible.filter((item) => item.to === ruta));
   const inicio = menuVisible.find((item) => item.to === '/inicio');
-  const rol = currentUser?.administrar
-    ? currentUser.operar ? 'Administración y operación' : 'Administración'
-    : currentUser?.operar ? 'Operación' : 'Sin permisos';
-  const iniciales = `${currentUser?.nombre?.charAt(0) ?? ''}${currentUser?.apellido?.charAt(0) ?? ''}`;
-
-  const renderEnlace = (item: MenuItem, secundario = false) => item.to && (
+  const renderEnlace = (item: MenuItem) => item.to && (
     <NavLink
       key={item.to}
       to={item.to}
       end={item.end}
       onClick={onClose}
       className={({ isActive }) =>
-        `nav-link d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-wrap ${secundario ? 'small' : 'fw-medium'} ${
-          isActive ? 'bg-primary-subtle text-primary-emphasis' : 'text-body-secondary hover-bg-body'
+        `nav-link sidebar-nav-item d-flex align-items-center gap-2 px-2 py-2 rounded-3 text-wrap ${
+          isActive ? 'sidebar-nav-selected' : 'text-body-secondary hover-bg-body'
         }`
       }
       style={{ minHeight: '44px' }}
     >
-      {!secundario && <i className={`${item.icono} flex-shrink-0 fs-5`} aria-hidden="true" />}
+      <i className={`${item.icono} sidebar-nav-icon flex-shrink-0`} aria-hidden="true" />
       <span>{item.label}</span>
     </NavLink>
   );
@@ -162,21 +157,21 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         <button
           type="button"
           onClick={() => setExpansion({ pathname: location.pathname, grupo: abierto ? null : grupo.id })}
-          className={`nav-link w-100 border-0 d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-start fw-medium hover-bg-body ${
+          className={`nav-link sidebar-nav-item w-100 border-0 d-flex align-items-center gap-2 px-2 py-2 rounded-3 text-start hover-bg-body ${
             grupoActivo === grupo.id ? 'text-body' : 'text-body-secondary'
           }`}
           style={{ minHeight: '44px' }}
           aria-controls={collapseId}
           aria-expanded={abierto}
         >
-          <i className={`${grupo.icono} flex-shrink-0 fs-5`} aria-hidden="true" />
+          <i className={`${grupo.icono} sidebar-nav-icon flex-shrink-0`} aria-hidden="true" />
           <span className="flex-grow-1">{grupo.label}</span>
-          <i className={`bi ${abierto ? 'bi-chevron-down' : 'bi-chevron-right'} small`} aria-hidden="true" />
+          <i className={`bi ${abierto ? 'bi-chevron-up' : 'bi-chevron-down'} sidebar-nav-chevron flex-shrink-0`} aria-hidden="true" />
         </button>
         <Collapse in={abierto}>
           <div id={collapseId}>
             <div className="d-flex flex-column gap-1 border-start ms-4 ps-2 my-1">
-              {grupo.items.map((item) => renderEnlace(item, true))}
+              {grupo.items.map((item) => renderEnlace(item))}
             </div>
           </div>
         </Collapse>
@@ -186,47 +181,95 @@ export function Sidebar({ show, onClose }: SidebarProps) {
 
   const renderMenu = (superficie: string) => (
     <>
-      <div className="px-4 pt-4 pb-3">
-        <span className="fs-5 fw-bold text-body tracking-tight">SAIA</span>
-      </div>
-      {currentUser && (
-        <div className="mx-3 p-3 bg-body-tertiary rounded-3 mb-3 d-flex align-items-center gap-2">
-          <span className="rounded-circle border d-flex align-items-center justify-content-center small flex-shrink-0"
-            style={{ width: '34px', height: '34px' }} aria-hidden="true">{iniciales}</span>
-          <div style={{ minWidth: 0 }}>
-            <span className="fw-semibold d-block text-break small">{currentUser.nombre} {currentUser.apellido}</span>
-            <span className="text-body-secondary small">{rol}</span>
+      <div className="flex-grow-1 overflow-auto" style={{ minHeight: 0 }}>
+        <div className="px-4 pt-4 pb-3 d-flex align-items-center gap-3">
+          <span
+            className="navigation-brand-accent rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+            style={{ width: '42px', height: '46px' }}
+            aria-hidden="true"
+          >
+            {/* Lucide wheat: https://lucide.dev/icons/wheat (ISC).
+                Copyright (c) 2026 Lucide Icons and Contributors
+                Permission to use, copy, modify, and/or distribute this software for any
+                purpose with or without fee is hereby granted, provided that the above
+                copyright notice and this permission notice appear in all copies.
+                THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+                WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+                MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+                ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+                WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+                ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+                OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              focusable="false"
+            >
+              <path d="M2 22 16 8" />
+              <path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" />
+              <path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" />
+              <path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" />
+              <path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z" />
+              <path d="M11.47 17.47 13 19l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L5 19l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" />
+              <path d="M15.47 13.47 17 15l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L9 15l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" />
+              <path d="M19.47 9.47 21 11l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L13 11l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" />
+            </svg>
+          </span>
+          <div>
+            <span className="fs-4 fw-bold text-body d-block">SAIA</span>
+            <span className="small text-body-secondary">Gestión alimentaria</span>
           </div>
         </div>
-      )}
-      <nav aria-label="Navegación principal" className="nav nav-pills flex-column px-3 gap-1 mb-auto pb-3">
-        {inicio && renderEnlace(inicio)}
-        {accesos.length > 0 && (
-          <>
-            <div className="text-uppercase text-body-secondary small fw-semibold px-3 mt-3 mb-1">Accesos frecuentes</div>
-            {accesos.map((item) => renderEnlace(item))}
-          </>
+        {currentUser && (
+          <div className="mx-3 px-2 py-3 border rounded-3 mb-3 d-flex align-items-start gap-2">
+            <i className="bi bi-shop text-body-secondary flex-shrink-0" aria-hidden="true" />
+            <div style={{ minWidth: 0 }}>
+              <span className="d-block text-break small">Nuestro establecimiento</span>
+              <span className="text-body-secondary small">
+                {currentUser.administrar ? 'Panel de administración' : currentUser.operar ? 'Panel de operación' : 'Acceso al sistema'}
+              </span>
+            </div>
+          </div>
         )}
-        {secciones.length > 0 && (
-          <>
-            <div className="text-uppercase text-body-secondary small fw-semibold px-3 mt-3 mb-1">Todas las secciones</div>
-            {secciones.map((grupo) => renderGrupo(grupo, superficie))}
-          </>
-        )}
-        {maestros && (
-          <>
-            <div className="text-uppercase text-body-secondary small fw-semibold px-3 mt-3 mb-1">Administración</div>
-            {grupos.filter((grupo) => grupo.id === 'maestros').map((grupo) => renderGrupo(grupo, superficie))}
-          </>
-        )}
-      </nav>
+        <nav aria-label="Navegación principal" className="sidebar-navigation nav nav-pills flex-column px-3 gap-1 mb-auto pb-3">
+          {inicio && renderEnlace(inicio)}
+          {accesos.length > 0 && (
+            <>
+              <div className="sidebar-nav-heading text-uppercase text-body-secondary px-2 mt-3 mb-1">Accesos frecuentes</div>
+              {accesos.map((item) => renderEnlace(item))}
+            </>
+          )}
+          {grupos.length > 0 && (
+            <>
+              <div className="sidebar-nav-heading text-uppercase text-body-secondary px-2 mt-3 mb-1">Todas las secciones</div>
+              {grupos.map((grupo) => renderGrupo(grupo, superficie))}
+            </>
+          )}
+        </nav>
+      </div>
+      <div className="saia-sidebar-footer text-body-secondary">
+        <i className="bi bi-shield-check saia-footer-icon" aria-hidden="true" />
+        <div className="saia-footer-identity">
+          <span className="saia-footer-role">
+            {currentUser?.administrar ? 'Administración' : currentUser?.operar ? 'Operación' : 'Sin permisos'}
+          </span>
+          <span className="saia-footer-description">Acceso interno del establecimiento</span>
+        </div>
+      </div>
     </>
   );
 
   return (
     <>
       <aside
-        className="position-fixed top-0 start-0 bottom-0 bg-body border-end d-none d-md-flex flex-column z-3 shadow-sm overflow-auto"
+        className="position-fixed top-0 start-0 bottom-0 bg-body border-end d-none d-md-flex flex-column z-3 shadow-sm overflow-hidden"
         style={{ width: '260px' }}
       >
         {renderMenu('desktop')}
@@ -237,7 +280,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
           <Offcanvas.Title className="fw-bold">Menú</Offcanvas.Title>
         </Offcanvas.Header>
 
-        <Offcanvas.Body className="d-flex flex-column p-0">{renderMenu('mobile')}</Offcanvas.Body>
+        <Offcanvas.Body className="d-flex flex-column p-0 overflow-hidden">{renderMenu('mobile')}</Offcanvas.Body>
       </Offcanvas>
     </>
   );

@@ -189,3 +189,30 @@ def test_endpoint_rechazar_cantidad_invalida(
     db_session.refresh(insumo_activo)
     assert insumo_activo.cantidad == stock_anterior
     assert db_session.scalar(select(func.count()).select_from(LoteRecepcionInsumo)) == 0
+
+
+@pytest.mark.parametrize('campo', ['proveedor_id', 'numero_lote', 'fecha_vencimiento'])
+@pytest.mark.parametrize('valor', ['ausente', None, '', '   '])
+@pytest.mark.parametrize('ruta', ['/lotes-insumo/', '/lotes-insumo/conciliar-stock'])
+def test_recepcion_y_conciliacion_exigen_origen_completo(
+    client, db_session, auth_headers, datos_lote, insumo_activo, campo, valor, ruta
+):
+    payload = {**datos_lote}
+    if valor == 'ausente':
+        payload.pop(campo)
+    else:
+        payload[campo] = valor
+    respuesta = client.post(ruta, json=payload, headers=auth_headers)
+    assert respuesta.status_code == 422, respuesta.text
+    db_session.refresh(insumo_activo)
+    assert insumo_activo.cantidad == 50
+    assert db_session.scalar(select(func.count()).select_from(LoteRecepcionInsumo)) == 0
+
+
+@pytest.mark.parametrize('buscar,total', [('HARINA', 1), ('molino', 1), ('har-001', 1), ('otro lote', 0)])
+def test_endpoint_buscar_recepciones(client, auth_headers, lote, buscar, total):
+    respuesta = client.get('/lotes-insumo/', headers=auth_headers,
+                           params={'buscar': buscar, 'size': 1, 'proveedor_id': lote['proveedor_id']})
+    assert respuesta.status_code == 200, respuesta.text
+    assert respuesta.json()['total'] == total
+    assert [r['id'] for r in respuesta.json()['items']] == ([lote['id']] if total else [])

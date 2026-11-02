@@ -1,135 +1,43 @@
 import { useCallback, useState } from 'react';
-import type { FormEvent } from 'react';
-import { Alert, Badge, Button, Card, Form, Table } from 'react-bootstrap';
-import { Link, useSearchParams } from 'react-router-dom';
+import './ProveedoresPage.css';
+import { Alert, Badge, Button, Card, Container, Form, Table } from 'react-bootstrap';
+import { useSearchParams } from 'react-router-dom';
+import { ListControls } from '../../shared/components/ListControls';
 import { ListPagination } from '../../shared/components/ListPagination';
+import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { ErrorAlert } from '../../shared/components/ErrorAlert';
+import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
 import { formatearFecha } from '../../shared/libreria/fechas';
-import { cambiarEstadoProveedor, guardarProveedor, listarProveedores } from './abastecimientoApi';
+import {
+  cambiarEstadoProveedor,
+  guardarProveedor,
+  listarProveedores,
+  obtenerProveedor,
+} from './abastecimientoApi';
+import { ConfirmacionAbastecimiento } from './ConfirmacionAbastecimiento';
 import { EstadoLote } from './EstadoLote';
+import { ProveedorForm } from './ProveedorForm';
+import { ProveedorLotes } from './ProveedorLotes';
 import type { Proveedor, ProveedorInput } from './types';
 import { useConsulta } from './useConsulta';
 
-const campos = [
-  { nombre: 'nombre', etiqueta: 'Nombre', tipo: 'text', obligatorio: true, max: 150 },
-  { nombre: 'cuit', etiqueta: 'CUIT', tipo: 'text', obligatorio: true, max: 20 },
-  { nombre: 'telefono', etiqueta: 'Teléfono', tipo: 'tel', obligatorio: false, max: 40 },
-  { nombre: 'email', etiqueta: 'Email', tipo: 'email', obligatorio: false, max: 254 },
-  {
-    nombre: 'numero_habilitacion',
-    etiqueta: 'Número de habilitación',
-    tipo: 'text',
-    obligatorio: false,
-    max: 100,
-  },
-  {
-    nombre: 'vencimiento_habilitacion',
-    etiqueta: 'Vencimiento de habilitación',
-    tipo: 'date',
-    obligatorio: false,
-    max: undefined,
-  },
-] as const;
-
-function FormularioProveedor({
-  inicial,
-  onGuardar,
-  onCancelar,
-}: {
-  inicial: Proveedor | null;
-  onGuardar: (datos: ProveedorInput) => Promise<void>;
-  onCancelar: () => void;
-}) {
-  const [datos, setDatos] = useState<ProveedorInput>(() => ({
-    nombre: inicial?.nombre ?? '',
-    cuit: inicial?.cuit ?? '',
-    telefono: inicial?.telefono ?? '',
-    email: inicial?.email ?? '',
-    numero_habilitacion: inicial?.numero_habilitacion ?? '',
-    vencimiento_habilitacion: inicial?.vencimiento_habilitacion ?? '',
-  }));
-  const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState('');
-
-  async function enviar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setGuardando(true);
-    setError('');
-    try {
-      await onGuardar({
-        ...datos,
-        nombre: datos.nombre.trim(),
-        cuit: datos.cuit.trim(),
-        telefono: datos.telefono?.trim() || null,
-        email: datos.email?.trim() || null,
-        numero_habilitacion: datos.numero_habilitacion?.trim() || null,
-        vencimiento_habilitacion: datos.vencimiento_habilitacion || null,
-      });
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'No se pudo guardar.');
-    } finally {
-      setGuardando(false);
-    }
-  }
-
-  return (
-    <Card className="mb-4">
-      <Card.Body>
-        <h4>{inicial ? 'Editar proveedor' : 'Nuevo proveedor'}</h4>
-        {error && <Alert variant="danger">{error}</Alert>}
-        <Form onSubmit={enviar}>
-          <fieldset disabled={guardando}>
-            <div className="row g-3">
-              {campos.map((campo) => (
-                <Form.Group
-                  className="col-12 col-md-6"
-                  controlId={`proveedor-${campo.nombre}`}
-                  key={campo.nombre}
-                >
-                  <Form.Label>
-                    {campo.etiqueta}
-                    {campo.obligatorio ? ' *' : ''}
-                  </Form.Label>
-                  <Form.Control
-                    type={campo.tipo}
-                    required={campo.obligatorio}
-                    maxLength={campo.max}
-                    value={datos[campo.nombre] ?? ''}
-                    onChange={(event) =>
-                      setDatos((anterior) => ({ ...anterior, [campo.nombre]: event.target.value }))
-                    }
-                  />
-                </Form.Group>
-              ))}
-            </div>
-            <div className="d-flex justify-content-end gap-2 mt-4">
-              <Button variant="secondary" onClick={onCancelar}>
-                Cancelar
-              </Button>
-              <Button type="submit">{guardando ? 'Guardando...' : 'Guardar proveedor'}</Button>
-            </div>
-          </fieldset>
-        </Form>
-      </Card.Body>
-    </Card>
-  );
+interface ListadoProps {
+  onNuevo: () => void;
+  onVer: (proveedor: Proveedor) => void;
+  onEditar: (proveedor: Proveedor) => void;
+  onEstado: (proveedor: Proveedor) => void;
 }
 
-export function ProveedoresPage() {
+function ProveedoresListado({ onNuevo, onVer, onEditar, onEstado }: ListadoProps) {
   const [params, setParams] = useSearchParams();
   const consulta = params.toString();
   const page = Math.max(1, Number(params.get('page')) || 1);
-  const [formulario, setFormulario] = useState<{ proveedor: Proveedor | null } | null>(null);
-  const [confirmacion, setConfirmacion] = useState<Proveedor | null>(null);
-  const [ocupado, setOcupado] = useState(false);
-  const [errorAccion, setErrorAccion] = useState('');
-  const [mensaje, setMensaje] = useState('');
   const cargar = useCallback(
     (signal: AbortSignal) =>
       listarProveedores(Object.fromEntries(new URLSearchParams(consulta)), signal),
     [consulta],
   );
   const listado = useConsulta(cargar);
-
   function filtrar(clave: string, valor: string) {
     setParams(
       (anteriores) => {
@@ -142,191 +50,301 @@ export function ProveedoresPage() {
       { replace: true },
     );
   }
-
-  async function guardar(datos: ProveedorInput) {
-    await guardarProveedor(datos, formulario?.proveedor?.id);
-    setFormulario(null);
-    setMensaje('El proveedor se guardó correctamente.');
-    filtrar('page', '1');
-    listado.recargar();
-  }
-
-  async function confirmarEstado() {
-    if (!confirmacion) return;
-    setOcupado(true);
-    setErrorAccion('');
-    try {
-      await cambiarEstadoProveedor(confirmacion.id, !confirmacion.activo);
-      setConfirmacion(null);
-      setMensaje('El estado del proveedor se actualizó.');
-      filtrar('page', '1');
-      listado.recargar();
-    } catch (error) {
-      setErrorAccion(error instanceof Error ? error.message : 'No se pudo actualizar.');
-    } finally {
-      setOcupado(false);
-    }
-  }
-
   return (
-    <div className="py-3">
-      <div className="d-flex flex-wrap justify-content-between gap-2 mb-4">
-        <div>
-          <h2>Proveedores</h2>
-          <p className="text-body-secondary mb-0">
-            Origen y habilitaciones de quienes suministran tus insumos.
-          </p>
-        </div>
-        <Button
-          className="align-self-start"
-          onClick={() => {
-            setFormulario({ proveedor: null });
-            setMensaje('');
-          }}
-        >
-          Nuevo proveedor
-        </Button>
-      </div>
-      {mensaje && (
-        <Alert variant="success" role="status">
-          {mensaje}
-        </Alert>
-      )}
-      {(listado.error || errorAccion) && (
-        <Alert variant="danger">{errorAccion || listado.error}</Alert>
-      )}
-      {formulario && (
-        <FormularioProveedor
-          key={formulario.proveedor?.id ?? 'nuevo'}
-          inicial={formulario.proveedor}
-          onGuardar={guardar}
-          onCancelar={() => setFormulario(null)}
-        />
-      )}
-      {confirmacion && (
-        <Alert variant={confirmacion.activo ? 'warning' : 'info'}>
-          <p>
-            ¿Querés {confirmacion.activo ? 'dar de baja' : 'reactivar'} a{' '}
-            <strong>{confirmacion.nombre}</strong>? Sus recepciones anteriores se conservan.
-          </p>
-          <div className="d-flex gap-2">
-            <Button disabled={ocupado} onClick={() => void confirmarEstado()}>
-              Confirmar
-            </Button>
-            <Button variant="secondary" disabled={ocupado} onClick={() => setConfirmacion(null)}>
-              Cancelar
-            </Button>
-          </div>
-        </Alert>
-      )}
-      <div className="d-flex flex-wrap gap-3 align-items-center mb-3">
-        <Form.Control
-          type="search"
-          aria-label="Buscar proveedor por nombre o CUIT"
-          placeholder="Buscar por nombre o CUIT..."
-          value={params.get('buscar') ?? ''}
-          onChange={(event) => filtrar('buscar', event.target.value)}
-          style={{ flex: '1 1 240px', width: 'auto' }}
-        />
+    <>
+      <ListControls
+        title="Nómina de Proveedores"
+        busqueda={params.get('buscar') ?? ''}
+        setBusqueda={(valor) => filtrar('buscar', valor)}
+      >
         <Form.Check
-          id="proveedores-inactivos"
           type="switch"
-          label="Incluir dados de baja"
+          id="proveedores-inactivos"
+          label="Ver dados de baja"
           checked={params.get('mostrar_inactivos') === 'true'}
-          onChange={(event) => filtrar('mostrar_inactivos', String(event.target.checked))}
+          onChange={(e) => filtrar('mostrar_inactivos', String(e.target.checked))}
         />
-        <Button variant="outline-secondary" onClick={listado.recargar} disabled={listado.cargando}>
-          Actualizar
+        <Button
+          variant="success"
+          onClick={onNuevo}
+          className="d-flex align-items-center gap-1 shadow-sm"
+        >
+          <i className="bi bi-plus-lg" aria-hidden="true" />
+          Nuevo Proveedor
         </Button>
-      </div>
-      {listado.cargando ? (
-        <p role="status">Cargando proveedores...</p>
-      ) : (
-        <>
-          <Table responsive striped hover className="align-middle">
+      </ListControls>
+      {listado.error && <ErrorAlert mensaje={listado.error} />}
+      {listado.cargando && <LoadingSpinner mensaje="Cargando listado..." />}
+      <Card className="shadow-sm border-0">
+        <Card.Body className="p-0">
+          <Table responsive striped hover className="mb-0 align-middle proveedores-table">
             <thead className="table-theme">
               <tr>
                 <th>Proveedor</th>
-                <th>CUIT</th>
+                <th className="text-center">CUIT</th>
                 <th>Contacto</th>
                 <th>Habilitación</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th className="text-center">Estado</th>
+                <th className="text-center" style={{ width: '160px' }}>
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody>
-              {listado.datos?.items.map((proveedor) => (
-                <tr key={proveedor.id}>
-                  <td>{proveedor.nombre}</td>
-                  <td className="text-nowrap">{proveedor.cuit}</td>
+              {listado.datos?.items.map((p) => (
+                <tr key={p.id}>
                   <td>
-                    <div>{proveedor.telefono || 'Sin teléfono'}</div>
-                    <small>{proveedor.email || 'Sin email'}</small>
+                    <span className="proveedor-nombre">{p.nombre}</span>
+                  </td>
+                  <td className="text-nowrap text-center">{p.cuit}</td>
+                  <td>
+                    <div>{p.telefono || 'Sin teléfono'}</div>
+                    <small
+                      className="proveedor-email text-body-secondary"
+                      title={p.email || undefined}
+                    >
+                      {p.email || 'Sin email'}
+                    </small>
                   </td>
                   <td>
-                    <div>{proveedor.numero_habilitacion || 'Sin registrar'}</div>
-                    {proveedor.vencimiento_habilitacion && (
-                      <>
-                        <small>{formatearFecha(proveedor.vencimiento_habilitacion)}</small>
-                        {proveedor.habilitacion_estado && (
-                          <div>
-                            <EstadoLote estado={proveedor.habilitacion_estado} />
-                          </div>
-                        )}
-                      </>
-                    )}
+                    <div>{p.numero_habilitacion || 'Sin registrar'}</div>
+                    <div className="proveedor-habilitacion">
+                      {p.vencimiento_habilitacion && (
+                        <small className="text-body-secondary">
+                          {formatearFecha(p.vencimiento_habilitacion)}
+                        </small>
+                      )}
+                      {p.habilitacion_estado && <EstadoLote estado={p.habilitacion_estado} />}
+                    </div>
                   </td>
-                  <td>
-                    <Badge bg={proveedor.activo ? 'success' : 'secondary'}>
-                      {proveedor.activo ? 'Activo' : 'Dado de baja'}
+                  <td className="text-center">
+                    <Badge bg={p.activo ? 'success' : 'danger'}>
+                      {p.activo ? 'Activo' : 'Inactivo'}
                     </Badge>
                   </td>
                   <td>
-                    <div className="d-flex flex-wrap gap-2">
+                    <div className="d-flex justify-content-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        className="py-1 px-2 shadow-sm"
+                        title="Ver detalle"
+                        aria-label={`Ver detalle de ${p.nombre}`}
+                        onClick={() => onVer(p)}
+                      >
+                        <i className="bi bi-eye-fill" aria-hidden="true" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="warning"
-                        onClick={() => setFormulario({ proveedor })}
+                        className="text-white py-1 px-2 shadow-sm"
+                        title="Editar"
+                        aria-label={`Editar ${p.nombre}`}
+                        onClick={() => onEditar(p)}
                       >
-                        Editar
+                        <i className="bi bi-pencil-fill" aria-hidden="true" />
                       </Button>
-                      <Link
-                        className="btn btn-sm btn-outline-primary"
-                        to={`/recepciones-insumos?proveedor_id=${proveedor.id}`}
-                      >
-                        Ver lotes
-                      </Link>
                       <Button
                         size="sm"
-                        variant={proveedor.activo ? 'outline-danger' : 'outline-success'}
-                        onClick={() => {
-                          setConfirmacion(proveedor);
-                          setErrorAccion('');
-                        }}
+                        variant={p.activo ? 'danger' : 'success'}
+                        className="py-1 px-2 shadow-sm"
+                        title={p.activo ? 'Dar de baja' : 'Reactivar'}
+                        aria-label={`${p.activo ? 'Dar de baja' : 'Reactivar'} ${p.nombre}`}
+                        onClick={() => onEstado(p)}
                       >
-                        {proveedor.activo ? 'Dar de baja' : 'Reactivar'}
+                        <i
+                          className={`bi ${p.activo ? 'bi-trash-fill' : 'bi-arrow-counterclockwise'}`}
+                          aria-hidden="true"
+                        />
                       </Button>
                     </div>
                   </td>
                 </tr>
               ))}
-              {!listado.datos?.items.length && (
+              {!listado.cargando && !listado.datos?.items.length && (
                 <tr>
-                  <td colSpan={6} className="text-center py-4">
-                    No hay proveedores para mostrar.
+                  <td colSpan={6} className="text-center py-4 text-muted">
+                    No hay proveedores para estos filtros.
                   </td>
                 </tr>
               )}
             </tbody>
           </Table>
-          <ListPagination
-            page={page}
-            totalPages={listado.datos?.pages ?? 0}
-            total={listado.datos?.total ?? 0}
-            changePage={(valor) => filtrar('page', String(valor))}
-          />
+        </Card.Body>
+        {(listado.datos?.pages ?? 0) > 0 && (
+          <Card.Footer className="bg-body border-top">
+            <ListPagination
+              page={page}
+              totalPages={listado.datos?.pages ?? 0}
+              total={listado.datos?.total ?? 0}
+              changePage={(valor) => filtrar('page', String(valor))}
+            />
+          </Card.Footer>
+        )}
+      </Card>
+    </>
+  );
+}
+
+export function ProveedoresPage() {
+  const { mode, item, open, back, error, loading } = useCrudRoute<Proveedor>(
+    '/proveedores',
+    obtenerProveedor,
+  );
+  const [mensaje, setMensaje] = useState('');
+  function abrir(proveedor?: Proveedor, accion?: 'editar' | 'eliminar') {
+    setMensaje('');
+    open(proveedor, accion);
+  }
+  async function guardar(datos: ProveedorInput) {
+    await guardarProveedor(datos, mode === 'editar' ? item?.id : undefined);
+    setMensaje('El proveedor se guardó correctamente.');
+    back();
+  }
+  async function confirmarEstado() {
+    if (!item) return;
+    await cambiarEstadoProveedor(item.id, !item.activo);
+    setMensaje('El estado del proveedor se actualizó.');
+    back();
+  }
+  return (
+    <Container className="py-2">
+      <h2 className="mb-4 border-bottom pb-2 text-secondary">Gestión de Proveedores</h2>
+      {mensaje && mode === 'listado' && (
+        <Alert variant="success" role="status">
+          {mensaje}
+        </Alert>
+      )}
+      {loading && <LoadingSpinner mensaje="Cargando detalle..." />}
+      {error && (
+        <>
+          <ErrorAlert mensaje={error} />
+          <Button onClick={back}>Volver al listado</Button>
         </>
       )}
-    </div>
+      {mode === 'listado' && (
+        <ProveedoresListado
+          onNuevo={() => abrir()}
+          onVer={(p) => abrir(p)}
+          onEditar={(p) => abrir(p, 'editar')}
+          onEstado={(p) => abrir(p, 'eliminar')}
+        />
+      )}
+      {(mode === 'crear' || (mode === 'editar' && item)) && (
+        <ProveedorForm
+          key={item?.id ?? 'nuevo'}
+          inicial={mode === 'crear' ? null : item}
+          onGuardar={guardar}
+          onCancelar={back}
+        />
+      )}
+      {mode === 'ver' && item && (
+        <>
+          <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
+            <Card.Header as="h5" className="bg-body-tertiary text-secondary py-3">
+              <i className="bi bi-truck me-2" aria-hidden="true" />
+              Detalle del Proveedor
+            </Card.Header>
+            <Card.Body className="p-4">
+              <div className="bg-body-tertiary p-3 rounded border">
+                {[
+                  ['Nombre', item.nombre],
+                  ['CUIT', item.cuit],
+                  ['Teléfono', item.telefono || 'Sin teléfono'],
+                  ['Email', item.email || 'Sin email'],
+                ].map(([label, value]) => (
+                  <div className="row mb-2" key={label}>
+                    <span className="col-4 text-muted fw-semibold">{label}:</span>
+                    <span className="col-8 text-break">{value}</span>
+                  </div>
+                ))}
+                <div className="row align-items-center">
+                  <span className="col-4 text-muted fw-semibold">Estado:</span>
+                  <span className="col-8">
+                    <Badge bg={item.activo ? 'success' : 'danger'}>
+                      {item.activo ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </span>
+                </div>
+              </div>
+              <div
+                className={`p-3 rounded border mt-3 border-${item.habilitacion_estado === 'vencido' ? 'danger' : item.habilitacion_estado === 'por_vencer' ? 'warning' : item.habilitacion_estado === 'vigente' ? 'success' : 'secondary'}`}
+              >
+                <h6 className="fw-semibold border-bottom pb-2 mb-3">Habilitación del Proveedor</h6>
+                <div className="row mb-3">
+                  <span className="col-sm-5 text-body-secondary fw-semibold">
+                    Número de habilitación:
+                  </span>
+                  <span className="col-sm-7 text-break">
+                    {item.numero_habilitacion || 'Sin registrar'}
+                  </span>
+                </div>
+                <div className="row border-top pt-2 align-items-center">
+                  <span className="col-sm-5 text-body-secondary fw-semibold">Vencimiento:</span>
+                  <span className="col-sm-7">
+                    {item.vencimiento_habilitacion ? (
+                      <Badge
+                        bg={
+                          item.habilitacion_estado === 'vencido'
+                            ? 'danger'
+                            : item.habilitacion_estado === 'por_vencer'
+                              ? 'warning'
+                              : item.habilitacion_estado === 'vigente'
+                                ? 'success'
+                                : 'secondary'
+                        }
+                        text={item.habilitacion_estado === 'por_vencer' ? 'dark' : undefined}
+                        className="fw-normal"
+                      >
+                        {formatearFecha(item.vencimiento_habilitacion)}
+                        {item.habilitacion_estado &&
+                          ` (${item.habilitacion_estado === 'vencido' ? 'Vencida' : item.habilitacion_estado === 'por_vencer' ? 'Próxima a vencer' : 'Vigente'})`}
+                      </Badge>
+                    ) : (
+                      <span className="text-body-secondary">Sin registrar</span>
+                    )}
+                  </span>
+                </div>
+              </div>
+            </Card.Body>
+            <Card.Footer className="bg-body border-top-0 d-flex flex-wrap justify-content-end gap-2 pb-4 px-4">
+              <Button variant="secondary" onClick={back}>
+                Volver
+              </Button>
+              <Button
+                variant="warning"
+                className="text-white"
+                onClick={() => abrir(item, 'editar')}
+              >
+                Editar
+              </Button>
+            </Card.Footer>
+          </Card>
+          <ProveedorLotes key={item.id} proveedorId={item.id} />
+        </>
+      )}
+      {mode === 'eliminar' && item && (
+        <ConfirmacionAbastecimiento
+          key={item.id}
+          titulo={item.activo ? 'Dar de Baja Proveedor' : 'Reactivar Proveedor'}
+          descripcion={
+            item.activo
+              ? 'No se podrán registrar nuevas recepciones de este proveedor. Sus recepciones anteriores se conservan.'
+              : 'El proveedor volverá a estar disponible para registrar recepciones. Sus datos e historial se conservan.'
+          }
+          confirmar={item.activo ? 'Confirmar Baja' : 'Confirmar Reactivación'}
+          reactivar={!item.activo}
+          onConfirmar={confirmarEstado}
+          onCancelar={back}
+        >
+          <div>
+            <strong>Nombre:</strong> {item.nombre}
+          </div>
+          <div>
+            <strong>CUIT:</strong> {item.cuit}
+          </div>
+        </ConfirmacionAbastecimiento>
+      )}
+    </Container>
   );
 }

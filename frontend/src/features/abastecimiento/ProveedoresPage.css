@@ -1,0 +1,56 @@
+.proveedores-table {
+  font-size: 0.875rem;
+  min-width: 1100px;
+}
+.proveedores-table > :not(caption) > * > * {
+  padding: 0.5rem;
+}
+.proveedores-table thead th {
+  white-space: nowrap;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
+.proveedores-table .proveedor-nombre {
+  font-weight: 600;
+  display: block;
+  min-width: 15rem;
+}
+.proveedores-table .proveedor-email {
+  display: block;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.proveedores-table .proveedor-habilitacion {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  line-height: 1.25;
+}
+.proveedores-table .badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.proveedores-table .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+/* Fecha y estado comparten escala y altura dentro de la habilitación. */
+.proveedores-table .proveedor-habilitacion small,
+.proveedores-table .proveedor-habilitacion .badge {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.25;
+}
+.proveedores-table .proveedor-habilitacion .badge {
+  padding: 0.2rem 0.4rem;
+}

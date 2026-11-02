@@ -63,7 +63,33 @@ El seed no borra ni actualiza registros existentes, no restablece contraseñas n
 | `sin.permisos` | `opera123` | Sin capacidades; pantalla sin permisos |
 | `inactivo.demo` | `opera123` | Usuario inactivo; login rechazado |
 
-En una base nueva carga al menos 15 registros por entidad, incidentes de todos los tipos, abiertos y cerrados, acciones correctivas e historial. Incluye documentos personales con distintas fechas de vencimiento, calibraciones, documentos técnicos con PDF de demostración, consumos, tareas realizadas y pendientes de hoy. Las fotografías necesarias están versionadas en `seed_assets/`; los archivos generados se guardan en `almacenamiento/evidencias/` y `almacenamiento/documentos_tecnicos/`.
+En una base nueva carga ejemplos de todas las entidades operativas, incidentes de todos los tipos, abiertos y cerrados, acciones correctivas e historial. Incluye documentos personales con distintas fechas de vencimiento, calibraciones, documentos técnicos con PDF de demostración, consumos, tareas realizadas y pendientes de hoy. Las fotografías necesarias están versionadas en `seed_assets/`; los archivos generados se guardan en `almacenamiento/evidencias/` y `almacenamiento/documentos_tecnicos/`.
+
+### Trazabilidad obligatoria de ingredientes
+
+Las nuevas producciones solo consumen recepciones activas, identificadas y sin
+vencer, recibidas como máximo en su fecha de elaboración. La asignación es FEFO
+(vence primero, se consume primero). El stock total puede ser mayor que el
+utilizable: el saldo sin origen y los lotes vencidos no habilitan consumos.
+Si falta saldo trazable se devuelve HTTP 409 sin movimientos parciales.
+
+Administración puede identificar stock anterior desde el detalle del insumo o
+desde Recepción de insumos, usando `POST /lotes-insumo/conciliar-stock`. Debe
+informar proveedor activo, número de lote, fechas y cantidad verificables.
+Identificar no suma stock y no permite superar el saldo pendiente. Si no se
+conocen los datos reales, el saldo permanece bloqueado; no usar datos demo para
+regularizar existencias reales.
+
+La antigua variable `PERMITIR_STOCK_SIN_LOTE` ya no tiene efecto. La tabla
+`consumos_stock_anterior` se conserva por su valor histórico, sin nuevos
+registros. No se reasigna origen a producciones pasadas automáticamente.
+
+El seed prepara recepciones con proveedor, lote y vencimiento antes de consumir
+ingredientes, incluyendo el agua de amasado. En una base nueva no genera consumos sin
+trazabilidad. En una base existente conserva los saldos y consumos anteriores;
+puede añadir los nuevos ingresos ficticios `DEMO-BASE-*` y `DEMO-AGUA-001` una
+sola vez. No son una conciliación del stock anterior ni reemplazan su origen.
+Ejecutarlo sobre datos de prueba, no para regularizar inventario real.
 
 `create_all` crea tablas nuevas, pero no migra tablas existentes. Si una base de otra rama tiene columnas faltantes, conservarla y coordinar la actualización del esquema; reinstalar dependencias o repetir el seed no migra esa base.
 

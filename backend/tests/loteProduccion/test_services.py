@@ -5,6 +5,7 @@ from sqlalchemy import select
 
 from src.loteProduccion import exceptions, schemas, services
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
+from tests.stock_trazable import identificar_stock
 from tests.database import (
     db_session,
     insumo_activo,
@@ -23,6 +24,7 @@ def test_crear_lote_asocia_insumos_y_descuenta_stock(
     insumo_activo,
     otro_insumo_activo,
 ):
+    identificar_stock(db_session, persona_operadora, insumo_activo, otro_insumo_activo)
     lote_a_crear = schemas.LoteProduccionCreate(
         producto_id=producto.id,
         fecha_produccion=date.today(),
@@ -54,6 +56,7 @@ def test_crear_lote_permite_agotar_exactamente_el_stock(
     producto,
     insumo_activo,
 ):
+    identificar_stock(db_session, persona_operadora, insumo_activo)
     lote_a_crear = schemas.LoteProduccionCreate(
         producto_id=producto.id,
         fecha_produccion=date.today(),
@@ -187,6 +190,7 @@ def test_crear_lote_revierte_lote_y_asociaciones_si_falla_commit(
     producto,
     insumo_activo,
 ):
+    identificar_stock(db_session, persona_operadora, insumo_activo)
     lote_a_crear = schemas.LoteProduccionCreate(
         producto_id=producto.id,
         fecha_produccion=date.today(),
