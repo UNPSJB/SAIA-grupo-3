@@ -77,7 +77,7 @@ export function NotificacionesBell() {
                 className={`notificacion-item d-flex gap-3 p-3 text-wrap rounded-3 ${n.leida ? '' : 'notificacion-sin-leer'}`}
               >
                 <span className="notificacion-icono flex-shrink-0" aria-hidden="true">
-                  <i className="bi bi-calendar2-event" />
+                  <i className={`bi ${n.tipo === 'temperatura_fuera_rango' ? 'bi-thermometer-half' : n.tipo === 'stock_bajo' ? 'bi-box-seam' : 'bi-calendar2-event'}`} />
                 </span>
                 <div className="flex-grow-1 small" style={{ minWidth: 0 }}>
                   <div className="d-flex flex-wrap align-items-center gap-2 mb-1">

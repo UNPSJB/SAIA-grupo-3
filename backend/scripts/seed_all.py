@@ -19,6 +19,7 @@ from scripts.seed_documentacion import cargar_documentacion
 from scripts.seed_documentos_tecnicos import cargar_documentos_tecnicos
 from scripts.seed_elementos import cargar_elementos
 from scripts.seed_equipos import cargar_equipos
+from scripts.seed_temperaturas import cargar_temperaturas
 from scripts.seed_incidentes import cargar_incidentes
 from scripts.seed_insumos import cargar_insumos
 from scripts.seed_insumos_quimicos import cargar_insumos_quimicos
@@ -59,6 +60,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             unidades, unidades_por_sufijo = cargar_unidades_medida(crear)
             sectores = cargar_sectores(crear)
             equipos = cargar_equipos(crear, sectores)
+            cargar_temperaturas(db, crear, sectores, operadores, hoy)
             _, ingredientes = cargar_insumos(crear, unidades, unidades_por_sufijo)
             quimicos = cargar_insumos_quimicos(crear, unidades_por_sufijo)
             elementos = cargar_elementos(crear, hoy)

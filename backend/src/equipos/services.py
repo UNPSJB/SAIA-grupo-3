@@ -17,10 +17,10 @@ def _verificar_sector_activo(db: Session, sector_id: int) -> None:
 
 def _verificar_numero_serie(db: Session, numero_serie: str, excluir_id: int | None = None) -> None:
     query = select(Equipo).where(func.lower(Equipo.numero_serie) == numero_serie.lower())
-    
+
     if excluir_id is not None:
         query = query.where(Equipo.id != excluir_id)
-        
+
     if db.scalar(query) is not None:
         raise exceptions.NumeroSerieDuplicado()
 
@@ -36,16 +36,16 @@ def crear_equipo(db: Session, equipo: schemas.EquipoCreate) -> schemas.Equipo:
     return _equipo
 
 def listar_equipos(
-    db: Session, 
-    page: int = 1, 
-    size: int = 10, 
+    db: Session,
+    page: int = 1,
+    size: int = 10,
     mostrar_inactivos: bool = False,
     ordenar_por: str = "id",
     orden: str = "asc", buscar: str = ""
 ) -> Dict[str, Any]:
     skip = (page - 1) * size
     query = select(Equipo)
-    
+
     if not mostrar_inactivos:
         query = query.where(Equipo.activo == True)
 
@@ -83,6 +83,14 @@ def modificar_equipo(
     # Pasamos incluir_inactivos=True para poder recuperar y reactivar el equipo
     db_equipo = leer_equipo(db, equipo_id, incluir_inactivos=True)
     datos_actualizar = equipo.model_dump(exclude_unset=True)
+    # Una actualización parcial debe validar el rango final, no solo lo enviado.
+    from fastapi import HTTPException
+    from pydantic import ValidationError
+    finales = {campo: getattr(db_equipo, campo) for campo in schemas.EquipoBase.model_fields}
+    try:
+        schemas.EquipoCreate.model_validate(finales | datos_actualizar)
+    except ValidationError as error:
+        raise HTTPException(422, error.errors(include_context=False)[0]["msg"]) from None
 
     if "sector_id" in datos_actualizar:
         _verificar_sector_activo(db, datos_actualizar["sector_id"])
@@ -101,9 +109,9 @@ def modificar_equipo(
 
 def eliminar_equipo(db: Session, equipo_id: int) -> schemas.EquipoDelete:
     db_equipo = leer_equipo(db, equipo_id)
-    
+
     db_equipo.activo = False
     db.commit()
     db.refresh(db_equipo)
-    
+
     return db_equipo

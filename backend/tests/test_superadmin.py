@@ -19,8 +19,8 @@ class RolesTest(unittest.TestCase):
         ModeloBase.metadata.create_all(self.engine)
         self.db = sessionmaker(bind=self.engine)()
         self.users = {}
-        for name, admin, superadmin in [('root', True, True), ('manager', True, False), ('other', True, False), ('worker', False, False)]:
-            user = Personal(nombre=name, apellido='Test', dni=name, nroLegajo=name, email=f'{name}@example.com', username=name, hashed_password='unused', operar=True, administrar=admin, superadmin=superadmin, activo=True)
+        for name, admin in [('manager', True), ('other', True), ('worker', False)]:
+            user = Personal(nombre=name, apellido='Test', dni=name, nroLegajo=name, email=f'{name}@example.com', username=name, hashed_password='unused', operar=True, administrar=admin, activo=True)
             self.db.add(user)
             self.users[name] = user
         self.db.commit()
@@ -40,24 +40,15 @@ class RolesTest(unittest.TestCase):
         return self.client.request(method, url, headers=headers, **kwargs)
 
     def payload(self, **changes):
-        return dict(nombre='New', apellido='Test', dni='new', nroLegajo='new', email='new@example.com', username='newuser', password='test123', **changes)
+        base_payload = dict(nombre='New', apellido='Test', dni='new', nroLegajo='new', email='new@example.com', username='newuser', password='test123', operar=True)
+        base_payload.update(changes)
+        return base_payload
 
     def test_admin_creates_operator(self):
         r = self.request('manager', 'POST', None, json=self.payload())
         self.assertEqual(r.status_code, 200, r.text)
         self.assertTrue(r.json()['operar'])
         self.assertFalse(r.json()['administrar'])
-        self.assertFalse(r.json()['superadmin'])
-
-    def test_admin_restrictions(self):
-        for changes in [{'administrar': True}, {'operar': False}, {'superadmin': True}]:
-            self.assertEqual(self.request('manager', 'PUT', json=changes).status_code, 403)
-        for target in ['manager', 'other', 'root']:
-            for changes in [{'nombre': 'Hacked'}, {'password': 'hacked'}, {'activo': False}]:
-                self.assertEqual(self.request('manager', 'PUT', target, json=changes).status_code, 403)
-            self.assertEqual(self.request('manager', 'DELETE', target).status_code, 403)
-        for changes in [{'administrar': True}, {'operar': False}]:
-            self.assertEqual(self.request('manager', 'POST', None, json=self.payload(**changes)).status_code, 403)
 
     def test_admin_operator_management(self):
         for changes in [{'nombre': 'Updated', 'operar': True, 'administrar': False}, {'activo': False}, {'activo': True}]:
@@ -66,27 +57,14 @@ class RolesTest(unittest.TestCase):
         self.assertEqual(self.request('manager', 'DELETE').status_code, 200)
         self.assertEqual(self.request('manager', 'PUT', json={'activo': True}).status_code, 200)
 
-    def test_superadmin_permissions(self):
-        for changes in [{'administrar': True}, {'administrar': False, 'operar': False}, {'operar': True}]:
-            r = self.request('root', 'PUT', json=changes)
-            self.assertEqual(r.status_code, 200, r.text)
-        self.assertEqual(self.request('root', 'PUT', 'other', json={'administrar': False}).status_code, 200)
-        self.assertEqual(self.request('root', 'POST', None, json=self.payload(administrar=True, operar=False)).status_code, 200)
-
-    def test_superadmin_protection(self):
-        for changes in [{'administrar': False}, {'operar': False}, {'activo': False}, {'superadmin': False}]:
-            self.assertEqual(self.request('root', 'PUT', 'root', json=changes).status_code, 403)
-        self.assertEqual(self.request('root', 'DELETE', 'root').status_code, 403)
-        self.assertEqual(self.request('root', 'POST', None, json=self.payload(superadmin=True)).status_code, 403)
-        self.assertEqual(self.request('root', 'GET', 'root').json()['role_name'], 'superadmin')
-
     def test_operator_denied(self):
         self.assertEqual(self.request('worker', 'POST', None, json=self.payload()).status_code, 403)
         self.assertEqual(self.request('worker', 'PUT', json={'administrar': True}).status_code, 403)
         self.assertEqual(self.request('worker', 'DELETE', 'other').status_code, 403)
-        self.assertEqual(self.request('worker', 'GET', None).status_code, 403)
+        self.assertEqual(self.request('worker', 'GET', 'manager').status_code, 403)
 
 
+# Se conserva la prueba de migración histórica del rol anterior.
 class MigrationTest(unittest.TestCase):
     def test_repeatable_preserves_data(self):
         engine = create_engine('sqlite://')

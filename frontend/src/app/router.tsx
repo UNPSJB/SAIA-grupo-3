@@ -44,6 +44,7 @@ import { ProveedoresPage } from '../features/abastecimiento/ProveedoresPage';
 import { RecepcionesPage } from '../features/abastecimiento/RecepcionesPage';
 import { TrazabilidadInsumosPage } from '../features/lotesProduccion/TrazabilidadInsumosPage';
 
+import { RegistroTemperaturaOperario } from '../features/registroTemperatura/RegistroTemperaturaOperario';
 
 function HomeRedirect() {
   const { currentUser } = useAuth();
@@ -84,6 +85,7 @@ export function AppRouter() {
               <Route path="documentos-vigentes" element={<DocumentosVigentesPage />} />
               <Route path="incidentes/nuevo" element={<IncidentePage />} />
               <Route path="lotes-produccion/nuevo" element={<LoteProduccionPage />} />
+              <Route path="registro-temperatura"element={<RegistroTemperaturaOperario />} />
             </Route>
 
             {/* Consulta compartida (Operador o Administrador) */}
@@ -116,11 +118,11 @@ export function AppRouter() {
               <Route path="personal/:id" element={<PersonalPage />} />
               <Route path="personal/:id/:action" element={<PersonalPage />} />
               <Route path="personal/vencimientos" element={<VencimientosPage />} />
-           
+
               <Route path="vencimientos/calibracion" element={<VencimientosCalibracionPage />} />
               <Route path="vencimientos/calibracion/:id" element={<VencimientosCalibracionPage />} />
               <Route path="vencimientos/calibracion/:id/:action" element={<VencimientosCalibracionPage />} />
-           
+
               <Route path="tipos-documento" element={<TipoDocumentoPage />} />
               <Route path="tipos-documento/nuevo" element={<TipoDocumentoPage />} />
               <Route path="tipos-documento/:id" element={<TipoDocumentoPage />} />
@@ -179,6 +181,7 @@ export function AppRouter() {
               <Route path="documentos-tecnicos/nuevo" element={<DocumentoTecnicoPage />} />
               <Route path="documentos-tecnicos/:id" element={<DocumentoTecnicoPage />} />
               <Route path="documentos-tecnicos/:id/:action" element={<DocumentoTecnicoPage />} />
+
             </Route>
           </Route>
         </Routes>

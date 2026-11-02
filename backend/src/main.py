@@ -14,11 +14,12 @@ from src.abastecimiento.router import router as abastecimiento_router
 from src.plan.router import router as plan_router
 from src.tarea.router import router as tarea_router
 from src.personal.router import router as personal_router
-from src.equipos.router import router as equipos_router 
+from src.equipos.router import router as equipos_router
 from src.documentacion.router import (
     router as documentacion_router,
     vencimientos_router as vencimientos_consolidados_router,
 )
+from src.registroTemperatura.router import router as temperatura_router
 from src.tipoDocumento.router import router as tipo_documento_router
 from src.tipoIncidente.router import router as tipo_incidente_router
 from src.insumos.router import router as insumos_router
@@ -115,3 +116,4 @@ app.include_router(vista_publica_router)
 app.include_router(vista_publica_publico_router)
 app.include_router(perfil_router)
 app.include_router(abastecimiento_router)
+app.include_router(temperatura_router)

@@ -14,7 +14,7 @@ from src.documentacion.constants import DIAS_AVISO_VENCIMIENTO
 from src.registroCalibracion.vencimientos import listar_vencimientos_calibracion
 from src.sector.models import Sector
 from src.tipoDocumento.models import TipoDocumento
-from tests.database import session  # noqa: F401 — fixture de pytest
+from tests.database import db_session as session
 
 
 def crear_personal(session, *, dni: str, activo: bool = True, administrar: bool = False):

@@ -40,6 +40,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: '/lotes', label: 'Historial de lotes', icono: 'bi bi-box-seam' },
     { to: '/trazabilidad-insumos', label: 'Trazabilidad de insumos', icono: 'bi bi-upc-scan', permiso: 'administrar' },
     { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square', permiso: 'operar' },
+    { to: '/registro-temperatura', label: 'Control de Frío', icono: 'bi bi-thermometer-half', permiso: 'operar' },
     { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
     { to: "/consumos", label: "Registros de Consumo", icono: "bi bi-droplet" },
     { to: '/lotes-produccion', label: 'Lotes de Producción', icono: 'bi bi-box2', permiso: 'consultarOperacion' },
@@ -95,7 +96,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const instanceId = useId();
   const secciones = [
     { id: 'gestion', label: 'Gestión', icono: 'bi bi-graph-up', rutas: ['/tablero', '/vista-publica/configuracion'] },
-    { id: 'operacion', label: 'Operación', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/planes', '/lotes-produccion', '/recepciones-insumos', '/reportes/consumos', '/consumos'] },
+    { id: 'operacion', label: 'Operación', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/registro-temperatura', '/planes', '/lotes-produccion', '/recepciones-insumos', '/reportes/consumos', '/consumos'] },
     { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/vencimientos', '/incidentes', '/auditoria', '/lotes', '/trazabilidad-insumos'] },
     { id: 'documentacion', label: 'Documentación', icono: 'bi bi-files', rutas: ['/documentos-vigentes', '/documentos-tecnicos'] },
   ].map((seccion) => ({

@@ -21,7 +21,10 @@ export interface Equipo {
   activo?: boolean;
   fecha_ultima_calibracion?: string | null;
   periodicidad_dias?: number | null;
-  sector?: {           
+  controla_temperatura: boolean;
+  temperatura_minima?: number | null;
+  temperatura_maxima?: number | null;
+  sector?: {
     id: number;
     nombre: string;
   };
@@ -50,7 +53,6 @@ export function esCertificadoPdf(path: string): boolean {
   return path.toLowerCase().endsWith('.pdf');
 }
 
-// ---------- Vencimientos de calibración ----------
 
 export type EstadoVencimientoCalibracion = 'vencido' | 'por_vencer' | 'vigente';
 

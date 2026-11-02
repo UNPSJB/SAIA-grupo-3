@@ -122,3 +122,24 @@ el contenido de `uploads/` a `almacenamiento/evidencias/`, y el de
 `archivos/documentos-tecnicos/` a `almacenamiento/documentos_tecnicos/`, antes de
 reiniciarlo. Si ya existe algún archivo en destino, comprobar su contenido antes
 de moverlo para evitar sobrescribirlo.
+
+### Integración de control de temperatura y stock
+
+El seed vigente es `python -m scripts.seed_all`; el antiguo `seed.py` permanece eliminado.
+El historial de temperatura vive en `scripts/seed_temperaturas.py`: cuatro congeladores
+DEMO propios y 40 lecturas históricas por equipo. No convierte equipos reales al azar,
+no reconfigura los existentes y no duplica historia al repetir la carga.
+
+En una base existente que venga de otra rama, detener el servidor y ejecutar desde backend:
+
+```bash
+.venv/bin/python -m scripts.migrate_integracion_temperatura --database /ruta/absoluta/a/la/base.db
+```
+
+Comprobar la ruta del archivo en `DB_URL`. La migración agrega solamente las columnas
+faltantes de equipos (control y límites), mínimos de insumos/químicos y resolución de
+notificaciones; primero guarda un respaldo `.bak`. Se puede repetir sin duplicar columnas.
+No modifica cantidades ni activa controles en equipos existentes. La nueva tabla de lecturas
+se crea con el arranque habitual del backend. No es necesario borrar la BDD ni ejecutar el
+seed sobre datos reales. Esta integración conserva la implementación parcial existente de
+stock mínimo; el paquete separado de esa HDU sigue siendo una entrega independiente.

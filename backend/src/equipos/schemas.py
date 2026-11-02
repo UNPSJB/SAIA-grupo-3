@@ -1,6 +1,6 @@
 from datetime import date
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from src.equipos.models import TipoEquipo
 from src.equipos import exceptions
 
@@ -13,10 +13,14 @@ class EquipoBase(BaseModel):
     numero_serie: str
     nombre: str
     tipo: TipoEquipo
-    sector_id: int  
+    sector_id: int
 
     fecha_ultima_calibracion: Optional[date] = None
     periodicidad_dias: Optional[int] = None
+
+    controla_temperatura: bool = False
+    temperatura_minima: Optional[float] = Field(default=None, allow_inf_nan=False)
+    temperatura_maxima: Optional[float] = Field(default=None, allow_inf_nan=False)
 
     @field_validator("tipo", mode="before")
     @classmethod
@@ -26,7 +30,14 @@ class EquipoBase(BaseModel):
         return v.lower() if isinstance(v, str) else v
 
 class EquipoCreate(EquipoBase):
-    pass
+    @model_validator(mode="after")
+    def validar_rango(self):
+        if self.controla_temperatura:
+            if self.temperatura_minima is None or self.temperatura_maxima is None:
+                raise ValueError("Indicá la temperatura mínima y máxima para activar el control.")
+            if self.temperatura_minima >= self.temperatura_maxima:
+                raise ValueError("La temperatura mínima debe ser menor que la máxima.")
+        return self
 
 
 class EquipoUpdate(BaseModel):
@@ -39,6 +50,10 @@ class EquipoUpdate(BaseModel):
     fecha_ultima_calibracion: Optional[date] = None
     periodicidad_dias: Optional[int] = None
 
+    controla_temperatura: Optional[bool] = None
+    temperatura_minima: Optional[float] = Field(default=None, allow_inf_nan=False)
+    temperatura_maxima: Optional[float] = Field(default=None, allow_inf_nan=False)
+
     @field_validator("tipo", mode="before")
     @classmethod
     def is_valid_tipo_equipo(cls, v: Optional[str]) -> Optional[str]:
@@ -47,6 +62,13 @@ class EquipoUpdate(BaseModel):
                 raise exceptions.TipoEquipoInvalido(list(TipoEquipo))
             return v.lower()
         return v
+
+    @model_validator(mode="after")
+    def validar_rangos_temperatura_update(self) -> "EquipoUpdate":
+        if self.temperatura_minima is not None and self.temperatura_maxima is not None:
+            if self.temperatura_minima >= self.temperatura_maxima:
+                 raise ValueError("La temperatura mínima debe ser estrictamente menor que la máxima.")
+        return self
 
 
 class Equipo(EquipoBase):

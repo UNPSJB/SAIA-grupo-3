@@ -8,6 +8,7 @@ from src.models import ModeloBase
 class TipoNotificacion(StrEnum):
     VENCIMIENTO_DOCUMENTACION = auto()
     STOCK_BAJO = auto()
+    TEMPERATURA_FUERA_RANGO = auto()
 
 class Notificacion(ModeloBase):
     __tablename__ = "notificaciones"
@@ -17,8 +18,8 @@ class Notificacion(ModeloBase):
     titulo: Mapped[str] = mapped_column(String(100), nullable=False)
     mensaje: Mapped[str] = mapped_column(String(250), nullable=False)
 
-    clave: Mapped[str] = mapped_column(String(100), unique=True, nullable=False) # formato "vencimientos-2026-10-05"
-    enlace: Mapped[Optional[str]] = mapped_column(String(200), nullable=True) # es para que lo redirija a la lista ya filtrada
+    clave: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    enlace: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     fecha_creacion: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
     leida: Mapped[bool] = mapped_column(default=False, nullable=False)
     resuelta: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

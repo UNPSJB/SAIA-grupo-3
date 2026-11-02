@@ -97,6 +97,7 @@ export function EquipoList({
                   orden={orden}
                   cambiarOrden={cambiarOrden}
                 >
+
                   Sector
                 </SortableHeader>
                 <th>Estado</th>
@@ -120,6 +121,7 @@ export function EquipoList({
                         {e.numero_serie}
                       </Badge>
                     </td>
+
                     <td>
                       <strong>{e.nombre}</strong>
                     </td>
@@ -141,6 +143,15 @@ export function EquipoList({
                       ) : (
                         <Badge bg="danger">Inactivo</Badge>
                       )}
+
+                      {e.activo && e.controla_temperatura && (
+                         <i
+                         className="bi bi-snow text-info ms-5"
+                         title="Control de Frío"
+                         style={{ fontSize: '1.5rem' }}
+                         />
+                        )}
+
                     </td>
 
                     <td className="text-center">
