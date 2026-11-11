@@ -1,4 +1,7 @@
 class ErrorCode:
     TAREA_NO_ENCONTRADA = "La tarea no fue encontrada."
     EQUIPO_NO_EXISTE = "El equipo indicado no existe."
-    INSUMOS_QUIMICOS_NO_ENCONTRADOS = "Uno o más insumos químicos indicados no existen."
+    INSUMOS_QUIMICOS_NO_ENCONTRADOS = (
+        "Uno o más insumos químicos indicados no existen. "
+        "Las tareas de limpieza solo aceptan insumos químicos: los ingredientes pertenecen al área de Producción."
+    )

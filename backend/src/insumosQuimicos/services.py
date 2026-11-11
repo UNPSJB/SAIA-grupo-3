@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from src.insumosQuimicos.models import InsumoQuimico
 from src.insumosQuimicos import schemas, exceptions
 from src.unidadMedida.services import leer_unidad_medida
+from src.areas.services import validar_nombre_de_insumo_quimico
 
 
 def _validar_duplicados(db: Session, nombre: str, excluir_id: int | None = None) -> None:
@@ -17,6 +18,7 @@ def _validar_duplicados(db: Session, nombre: str, excluir_id: int | None = None)
 
     if db.scalar(query) is not None:
         raise exceptions.NombreDuplicado()
+    validar_nombre_de_insumo_quimico(db, nombre)
 
 
 @revertir_si_falla

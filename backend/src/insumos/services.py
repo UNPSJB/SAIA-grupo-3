@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from src.insumos.models import Insumo
 from src.insumos import schemas, exceptions
 from src.unidadMedida.services import leer_unidad_medida
+from src.areas.services import validar_nombre_de_ingrediente
 
 def _validar_duplicados(db: Session, nombre: str, excluir_id: int | None = None) -> None:
     query_nombre = select(Insumo).where(func.lower(Insumo.nombre) == nombre.strip().lower())
@@ -14,6 +15,7 @@ def _validar_duplicados(db: Session, nombre: str, excluir_id: int | None = None)
         query_nombre = query_nombre.where(Insumo.id != excluir_id)
     if db.scalar(query_nombre) is not None:
         raise exceptions.NombreDuplicado()
+    validar_nombre_de_ingrediente(db, nombre)
 
 @revertir_si_falla
 def crear_insumo(db: Session, insumo: schemas.InsumoCreate) -> Insumo:

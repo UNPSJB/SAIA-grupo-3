@@ -1,0 +1,1 @@
+export { RecetasPage } from './RecetasPage';

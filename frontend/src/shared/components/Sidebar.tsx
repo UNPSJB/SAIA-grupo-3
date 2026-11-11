@@ -10,13 +10,15 @@ interface SidebarProps {
 
 type Permiso = 'operar' | 'administrar' | 'consultarOperacion';
 
+type GrupoMaestro = 'maestrosProduccion' | 'maestrosLimpieza' | 'maestrosGenerales';
+
 interface MenuItem {
   to?: string;
   end?: boolean;
   label: string;
   icono: string;
   permiso?: Permiso;
-  grupo?: 'incidentes' | 'maestros';
+  grupo?: 'incidentes' | GrupoMaestro;
   subItems?: {
     to: string;
     label: string;
@@ -43,6 +45,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: '/registro-temperatura', label: 'Control de Frío', icono: 'bi bi-thermometer-half', permiso: 'operar' },
     { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
     { to: "/consumos", label: "Registros de Consumo", icono: "bi bi-droplet" },
+    { to: '/recetas', label: 'Recetas', icono: 'bi bi-journal-bookmark', permiso: 'consultarOperacion' },
     { to: '/lotes-produccion', label: 'Lotes de Producción', icono: 'bi bi-box2', permiso: 'consultarOperacion' },
     { to: "/documentos-vigentes", label: "Documentos vigentes", icono: "bi bi-journal-check", permiso: "operar" },
     { to: "/documentos-tecnicos", label: "Documentos Técnicos", icono: "bi bi-journal-text" },
@@ -62,22 +65,36 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       permiso: 'operar',
     } satisfies MenuItem]),
     {
-      label: 'Datos Maestros',
+      label: 'Maestros de producción',
+      icono: 'bi bi-basket',
+      grupo: 'maestrosProduccion',
+      subItems: [
+        { to: '/productos', label: 'Productos', icono: 'bi bi-basket' },
+        { to: '/insumos', label: 'Insumos / Ingredientes', icono: 'bi bi-box-seam', end: true },
+        { to: '/proveedores', label: 'Proveedores', icono: 'bi bi-truck', permiso: 'administrar' },
+      ],
+    },
+    {
+      label: 'Maestros de limpieza',
+      icono: 'bi bi-bucket',
+      grupo: 'maestrosLimpieza',
+      subItems: [
+        { to: '/tarea', label: 'Tareas', icono: 'bi bi-list-task' },
+        { to: '/elementos', label: 'Elementos de Limpieza', icono: 'bi bi-bucket-fill' },
+        { to: '/insumos-quimicos', label: 'Insumos Químicos', icono: 'bi bi-droplet-half' },
+      ],
+    },
+    {
+      label: 'Maestros generales',
       icono: 'bi bi-database',
-      grupo: 'maestros',
+      grupo: 'maestrosGenerales',
       subItems: [
         { to: '/personal', label: 'Personal', icono: 'bi bi-people', end: true },
-        { to: '/proveedores', label: 'Proveedores', icono: 'bi bi-truck', permiso: 'administrar' },
         { to: '/sectores', label: 'Sectores', icono: 'bi bi-diagram-3' },
+        { to: '/equipos', label: 'Equipos e Instrumentos', icono: 'bi bi-tools' },
+        { to: '/unidades-medida', label: 'Unidad de Medida', icono: 'bi bi-rulers' },
         { to: '/tipos-documento', label: 'Tipo Documento', icono: 'bi bi-file-earmark-text' },
         { to: '/tipos-incidente', label: 'Tipo Incidente', icono: 'bi bi-exclamation-triangle-fill' },
-        { to: '/equipos', label: 'Equipos e Instrumentos', icono: 'bi bi-tools' },
-        { to: '/insumos', label: 'Insumos / Ingredientes', icono: 'bi bi-box-seam', end: true },
-        { to: '/insumos-quimicos', label: 'Insumos Químicos', icono: 'bi bi-droplet-half' },
-        { to: '/productos', label: 'Productos', icono: 'bi bi-basket' },
-        { to: '/unidades-medida', label: 'Unidad de Medida', icono: 'bi bi-rulers' },
-        { to: '/elementos', label: 'Elementos de Limpieza', icono: 'bi bi-bucket-fill' },
-        { to: '/tarea', label: 'Tareas', icono: 'bi bi-list-task' },
       ],
     },
   ];
@@ -96,8 +113,9 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const instanceId = useId();
   const secciones = [
     { id: 'gestion', label: 'Gestión', icono: 'bi bi-graph-up', rutas: ['/tablero', '/vista-publica/configuracion'] },
-    { id: 'operacion', label: 'Operación', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/registro-temperatura', '/planes', '/lotes-produccion', '/recepciones-insumos', '/reportes/consumos', '/consumos'] },
-    { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/vencimientos', '/incidentes', '/auditoria', '/lotes', '/trazabilidad-insumos'] },
+    { id: 'produccion', label: 'Producción', icono: 'bi bi-basket2', rutas: ['/recetas', '/lotes-produccion', '/recepciones-insumos', '/lotes', '/trazabilidad-insumos'] },
+    { id: 'limpieza', label: 'Limpieza', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/planes', '/auditoria', '/consumos', '/reportes/consumos'] },
+    { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/registro-temperatura', '/vencimientos', '/incidentes'] },
     { id: 'documentacion', label: 'Documentación', icono: 'bi bi-files', rutas: ['/documentos-vigentes', '/documentos-tecnicos'] },
   ].map((seccion) => ({
     ...seccion,
@@ -115,13 +133,14 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     }),
   })).filter((seccion) => seccion.items.length > 0);
 
-  const maestros = menuVisible.find((item) => item.grupo === 'maestros');
-  const grupos = [
-    ...secciones,
-    ...(maestros?.subItems?.length ? [{
-      id: 'maestros', label: 'Datos maestros', icono: maestros.icono, items: maestros.subItems,
-    }] : []),
-  ];
+  const gruposMaestros: GrupoMaestro[] = ['maestrosProduccion', 'maestrosLimpieza', 'maestrosGenerales'];
+  const maestros = gruposMaestros.flatMap((grupo) => {
+    const item = menuVisible.find((menu) => menu.grupo === grupo);
+    return item?.subItems?.length
+      ? [{ id: grupo, label: item.label, icono: item.icono, items: item.subItems as MenuItem[] }]
+      : [];
+  });
+  const grupos = [...secciones, ...maestros];
   const esRutaActiva = (item: MenuItem) => Boolean(item.to && (
     location.pathname === item.to || (!item.end && location.pathname.startsWith(`${item.to}/`))
   ));

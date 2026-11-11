@@ -1,0 +1,1 @@
+PREFIJO_RUTA = "/recetas"

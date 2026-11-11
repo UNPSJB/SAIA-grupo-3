@@ -40,6 +40,7 @@ import { HistorialLotesPage } from '../features/lotesProduccion';
 import { ConfiguracionVistaPublicaPage } from '../features/vistaPublica/ConfiguracionVistaPublicaPage';
 import { VistaPublicaPage } from '../features/vistaPublica/VistaPublicaPage';
 import { PerfilPage } from '../features/perfil';
+import { RecetasPage } from '../features/recetas';
 import { ProveedoresPage } from '../features/abastecimiento/ProveedoresPage';
 import { RecepcionesPage } from '../features/abastecimiento/RecepcionesPage';
 import { TrazabilidadInsumosPage } from '../features/lotesProduccion/TrazabilidadInsumosPage';
@@ -94,6 +95,7 @@ export function AppRouter() {
               <Route path="incidentes/:id" element={<IncidentePage />} />
               <Route path="lotes-produccion" element={<LoteProduccionPage />} />
               <Route path="lotes-produccion/:id" element={<LoteProduccionPage />} />
+              <Route path="recetas" element={<RecetasPage />} />
             </Route>
 
             {/* Administración */}
