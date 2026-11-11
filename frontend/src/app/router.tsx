@@ -40,7 +40,8 @@ import { HistorialLotesPage } from '../features/lotesProduccion';
 import { ConfiguracionVistaPublicaPage } from '../features/vistaPublica/ConfiguracionVistaPublicaPage';
 import { VistaPublicaPage } from '../features/vistaPublica/VistaPublicaPage';
 import { PerfilPage } from '../features/perfil';
-import { RecetasPage } from '../features/recetas';
+import { RecetaDetallePage, RecetaFormPage, RecetasPage } from '../features/recetas';
+import { AditivosReferenciaPage, ClasesFuncionalesPage } from '../features/aditivos';
 import { ProveedoresPage } from '../features/abastecimiento/ProveedoresPage';
 import { RecepcionesPage } from '../features/abastecimiento/RecepcionesPage';
 import { TrazabilidadInsumosPage } from '../features/lotesProduccion/TrazabilidadInsumosPage';
@@ -96,6 +97,8 @@ export function AppRouter() {
               <Route path="lotes-produccion" element={<LoteProduccionPage />} />
               <Route path="lotes-produccion/:id" element={<LoteProduccionPage />} />
               <Route path="recetas" element={<RecetasPage />} />
+              <Route path="recetas/:id" element={<RecetaDetallePage />} />
+              <Route path="recetas/:id/versiones/:versionId" element={<RecetaDetallePage />} />
             </Route>
 
             {/* Administración */}
@@ -105,6 +108,16 @@ export function AppRouter() {
               <Route path="proveedores/:id" element={<ProveedoresPage />} />
               <Route path="proveedores/:id/:action" element={<ProveedoresPage />} />
               <Route path="recepciones-insumos" element={<RecepcionesPage />} />
+              <Route path="recetas/nueva" element={<RecetaFormPage />} />
+              <Route path="recetas/:id/nueva-version" element={<RecetaFormPage />} />
+              <Route path="clases-funcionales" element={<ClasesFuncionalesPage />} />
+              <Route path="clases-funcionales/nuevo" element={<ClasesFuncionalesPage />} />
+              <Route path="clases-funcionales/:id" element={<ClasesFuncionalesPage />} />
+              <Route path="clases-funcionales/:id/:action" element={<ClasesFuncionalesPage />} />
+              <Route path="aditivos-referencia" element={<AditivosReferenciaPage />} />
+              <Route path="aditivos-referencia/nuevo" element={<AditivosReferenciaPage />} />
+              <Route path="aditivos-referencia/:id" element={<AditivosReferenciaPage />} />
+              <Route path="aditivos-referencia/:id/:action" element={<AditivosReferenciaPage />} />
               <Route path="trazabilidad-insumos" element={<TrazabilidadInsumosPage />} />
               <Route path="recepciones-insumos/nuevo" element={<RecepcionesPage />} />
               <Route path="recepciones-insumos/:id" element={<RecepcionesPage />} />

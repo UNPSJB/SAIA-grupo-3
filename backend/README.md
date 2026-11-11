@@ -190,3 +190,20 @@ fuera de rango tienen sus avisos de demostración.
 La guía [PRUEBAS-STOCK-DEMO.md](PRUEBAS-STOCK-DEMO.md) indica nombres, cantidades,
 responsable y pasos para verificar los recorridos. Repetir la carga conserva las
 modificaciones del usuario y no duplica ingresos, consumos ni notificaciones.
+
+### Recetas versionadas (E9-01)
+
+Módulos nuevos del área de Producción:
+
+- `claseFuncional` (`/clases-funcionales`): lista administrable de clases funcionales. La marca `ins_opcional` indica las clases que no exigen número INS (por ejemplo, aromatizantes).
+- `aditivoReferencia` (`/aditivos-referencia`): aditivos con su clase funcional, nombre completo y número INS.
+- `receta` (`/recetas`): una receta por producto, con versiones numeradas. Cada cambio crea una versión nueva copiando renglones y pasos; la anterior queda archivada en solo lectura. Para guardar cambios hay que enviar `version_base_id` con la versión vigente: si se manda una archivada, se rechaza.
+- Los insumos ahora tienen `tipo` (`ingrediente` o `aditivo`). Un aditivo debe indicar su `aditivo_referencia_id`.
+
+En bases creadas antes de E9-01, ejecutar **con el servidor detenido**:
+
+```bash
+.venv/bin/python -m scripts.migrate_recetas --database /ruta/absoluta/a/la/base.db
+```
+
+Guarda un respaldo `.bak`, crea las tablas nuevas y agrega `tipo` y `aditivo_referencia_id` a `insumos`; los insumos existentes quedan como ingredientes. Repetirla no vuelve a aplicar cambios. Después se puede correr el seed para cargar clases, aditivos y recetas de prueba.

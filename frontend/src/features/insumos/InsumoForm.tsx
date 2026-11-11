@@ -1,5 +1,5 @@
 import { SearchableSelect } from '../../shared/components/SearchableSelect';
-import { useForm, useController } from 'react-hook-form';
+import { useForm, useController, useWatch } from 'react-hook-form';
 import { FormErrors } from '../../shared/components/FormErrors';
 import { useCallback, useEffect } from 'react';
 import { Card, Form, Button } from 'react-bootstrap';
@@ -8,6 +8,9 @@ import { useOptions } from '../../shared/hooks/useOptions';
 import type { UnidadMedida } from '../unidadMedida/types';
 import { listarLotes } from '../abastecimiento/abastecimientoApi';
 import { useConsulta } from '../abastecimiento/useConsulta';
+import { useConsulta as useConsultaCompartida } from '../../shared/hooks/useConsulta';
+import { getAditivosActivos, textoAditivo } from '../aditivos';
+import type { TipoInsumo } from './types';
 
 interface InsumoFormProps {
   insumoInicial?: Insumo | null;
@@ -29,9 +32,30 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
   const tieneRecepciones = (historial.datos?.total ?? 0) > 0;
   const bloquearInventario =
     esEdicion && (historial.cargando || Boolean(historial.error) || tieneRecepciones);
-  const form = useForm<{ nombre: string; stockMinimo: number | ''; unidadMedidaId: number | '' }>({
-    defaultValues: { nombre: '', stockMinimo: '', unidadMedidaId: '' },
+  const form = useForm<{
+    nombre: string;
+    stockMinimo: number | '';
+    unidadMedidaId: number | '';
+    tipo: TipoInsumo;
+    aditivoReferenciaId: string;
+  }>({
+    defaultValues: {
+      nombre: '',
+      stockMinimo: '',
+      unidadMedidaId: '',
+      tipo: 'ingrediente',
+      aditivoReferenciaId: '',
+    },
   });
+  const tipo = useWatch({ control: form.control, name: 'tipo' });
+  const aditivos = useConsultaCompartida(getAditivosActivos, []);
+  const referenciaActual = insumoInicial?.aditivo_referencia;
+  const opcionesAditivo = [
+    ...(aditivos.datos ?? []),
+    ...(referenciaActual && !aditivos.datos?.some((aditivo) => aditivo.id === referenciaActual.id)
+      ? [referenciaActual]
+      : []),
+  ];
   const enviando = form.formState.isSubmitting;
   const { field: minimo } = useController({
     name: 'stockMinimo',
@@ -88,10 +112,15 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
     if (insumoInicial) {
       setNombre(insumoInicial.nombre);
       setUnidadMedidaId(insumoInicial.unidad_medida_id);
+      setValue('tipo', insumoInicial.tipo ?? 'ingrediente');
+      setValue(
+        'aditivoReferenciaId',
+        insumoInicial.aditivo_referencia_id ? String(insumoInicial.aditivo_referencia_id) : '',
+      );
     }
-  }, [insumoInicial, setNombre, setUnidadMedidaId]);
+  }, [insumoInicial, setNombre, setUnidadMedidaId, setValue]);
 
-  const handleSubmit = form.handleSubmit(async () => {
+  const handleSubmit = form.handleSubmit(async (valores) => {
     form.clearErrors('root');
     if (nombre === '' || unidadMedidaId === '') return;
 
@@ -100,6 +129,9 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
         nombre,
         stock_minimo: minimo.value === '' ? null : Number(minimo.value),
         unidad_medida_id: Number(unidadMedidaId),
+        tipo: valores.tipo,
+        aditivo_referencia_id:
+          valores.tipo === 'aditivo' ? Number(valores.aditivoReferenciaId) : null,
       });
     } catch (err: unknown) {
       form.setError('root', {
@@ -146,6 +178,55 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               placeholder="Ej: Manzanas"
             />
           </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label as="div">Uso en recetas</Form.Label>
+            <div className="d-flex flex-wrap gap-3">
+              <Form.Check
+                id="InsumoForm-tipo-ingrediente"
+                type="radio"
+                value="ingrediente"
+                label="Ingrediente"
+                {...form.register('tipo')}
+              />
+              <Form.Check
+                id="InsumoForm-tipo-aditivo"
+                type="radio"
+                value="aditivo"
+                label="Aditivo"
+                {...form.register('tipo')}
+              />
+            </div>
+          </Form.Group>
+
+          {tipo === 'aditivo' && (
+            <Form.Group controlId="InsumoForm-aditivoReferencia" className="mb-3">
+              <Form.Label>Aditivo de referencia</Form.Label>
+              {aditivos.error && (
+                <div role="alert" className="text-danger small mb-1">
+                  {aditivos.error}
+                </div>
+              )}
+              <SearchableSelect
+                disabled={aditivos.cargando && !aditivos.datos}
+                isInvalid={!!form.formState.errors.aditivoReferenciaId}
+                {...form.register('aditivoReferenciaId', {
+                  validate: (valor, valores) =>
+                    valores.tipo !== 'aditivo' ||
+                    !!valor ||
+                    'Elegí a qué aditivo de referencia corresponde.',
+                })}
+              >
+                <option value="">Buscá por nombre, INS o clase...</option>
+                {opcionesAditivo.map((aditivo) => (
+                  <option key={aditivo.id} value={aditivo.id}>
+                    {`${aditivo.clase_funcional.nombre} — ${textoAditivo(aditivo)}`}
+                  </option>
+                ))}
+              </SearchableSelect>
+              <Form.Text>Define su clase funcional y su número INS en las recetas.</Form.Text>
+            </Form.Group>
+          )}
 
           <Form.Group controlId="InsumoForm-unidadMedidaId" className="mb-4">
             <Form.Label>Unidad de Medida</Form.Label>

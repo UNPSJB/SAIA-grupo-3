@@ -118,6 +118,11 @@ export function InsumoList({
                   <tr key={item.id}>
                     <td>
                       <strong>{item.nombre}</strong>
+                      {item.tipo === 'aditivo' && (
+                        <Badge bg="info" text="dark" className="ms-2">
+                          Aditivo
+                        </Badge>
+                      )}
                     </td>
                     <td>
                       <div className="stock-cantidad-listado">

@@ -8,5 +8,11 @@ class InsumoNoEncontrado(NotFound):
 class NombreDuplicado(BadRequest):
     DETAIL = ErrorCode.NOMBRE_DUPLICADO
 
+class AditivoSinReferencia(BadRequest):
+    DETAIL = ErrorCode.ADITIVO_SIN_REFERENCIA
+
+class AditivoReferenciaInvalido(BadRequest):
+    DETAIL = ErrorCode.ADITIVO_REFERENCIA_INVALIDO
+
 class NombreVacio(BadRequest):
     DETAIL = ErrorCode.NOMBRE_VACIO

@@ -72,6 +72,8 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         { to: '/productos', label: 'Productos', icono: 'bi bi-basket' },
         { to: '/insumos', label: 'Insumos / Ingredientes', icono: 'bi bi-box-seam', end: true },
         { to: '/proveedores', label: 'Proveedores', icono: 'bi bi-truck', permiso: 'administrar' },
+        { to: '/clases-funcionales', label: 'Clases funcionales', icono: 'bi bi-tags' },
+        { to: '/aditivos-referencia', label: 'Aditivos de referencia', icono: 'bi bi-capsule' },
       ],
     },
     {

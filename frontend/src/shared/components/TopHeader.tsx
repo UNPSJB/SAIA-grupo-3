@@ -38,6 +38,8 @@ const rutasNavegacion = [
   { ruta: '/productos', titulo: 'Productos', seccion: 'Maestros de producción' },
   { ruta: '/insumos', titulo: 'Insumos / ingredientes', seccion: 'Maestros de producción' },
   { ruta: '/proveedores', titulo: 'Proveedores', seccion: 'Maestros de producción' },
+  { ruta: '/clases-funcionales', titulo: 'Clases funcionales', seccion: 'Maestros de producción' },
+  { ruta: '/aditivos-referencia', titulo: 'Aditivos de referencia', seccion: 'Maestros de producción' },
   { ruta: '/tarea', titulo: 'Tareas', seccion: 'Maestros de limpieza' },
   { ruta: '/elementos', titulo: 'Elementos de limpieza', seccion: 'Maestros de limpieza' },
   { ruta: '/insumos-quimicos', titulo: 'Insumos químicos', seccion: 'Maestros de limpieza' },
@@ -53,6 +55,7 @@ const etiquetasAccion: Record<string, string> = {
   nuevo: 'Nuevo', editar: 'Editar', edit: 'Editar', modificar: 'Modificar',
   eliminar: 'Dar de baja', delete: 'Dar de baja', baja: 'Dar de baja',
   reactivar: 'Reactivar', ver: 'Detalle', view: 'Detalle',
+  nueva: 'Nueva', 'nueva-version': 'Nueva versión',
 };
 
 export function TopHeader({ onToggleSidebar }: TopHeaderProps) {
