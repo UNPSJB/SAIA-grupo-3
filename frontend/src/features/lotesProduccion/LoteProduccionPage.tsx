@@ -8,7 +8,7 @@ import { LoteProduccionForm } from './LoteProduccionForm';
 import { LoteProduccionList } from './LoteProduccionList';
 import { LoteProduccionView } from './LoteProduccionView';
 import { getLoteProduccionById } from './loteProduccionApi';
-import type { LoteProduccion, LoteProduccionCreate } from './types';
+import type { LoteProduccion, LoteProduccionCreate, PrecargaLote } from './types';
 import { useLotesProduccion } from './useLotesProduccion';
 
 export function LoteProduccionPage() {
@@ -18,8 +18,9 @@ export function LoteProduccionPage() {
   const route = useCrudRoute<LoteProduccion>('/lotes-produccion', getLoteProduccionById);
   const { mode, item, open, back, error, loading } = route;
   const { registrar } = useLotesProduccion(false);
-  const recienRegistrado =
-    (location.state as { recienRegistrado?: boolean } | null)?.recienRegistrado === true;
+  const estado = location.state as { recienRegistrado?: boolean; precarga?: PrecargaLote } | null;
+  const recienRegistrado = estado?.recienRegistrado === true;
+  const precarga = mode === 'crear' ? estado?.precarga : undefined;
 
   const handleRegistrar = async (datos: LoteProduccionCreate) => {
     const lote = await registrar(datos);
@@ -40,7 +41,13 @@ export function LoteProduccionPage() {
         <LoteProduccionList onNuevoClick={() => open()} onViewClick={(lote) => open(lote)} />
       )}
       {mode === 'crear' && currentUser?.operar && (
-        <LoteProduccionForm onGuardar={handleRegistrar} onCancelar={back} />
+        <LoteProduccionForm
+          onGuardar={handleRegistrar}
+          onCancelar={() =>
+            precarga ? navigate(`/recetas/${precarga.recetaId}`) : back()
+          }
+          precarga={precarga}
+        />
       )}
       {mode === 'ver' && item && (
         <LoteProduccionView lote={item} onVolver={back} recienRegistrado={recienRegistrado} />

@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import {
+  Alert,
   Button,
   Card,
   Form,
@@ -27,11 +28,26 @@ import type {
   InsumoSeleccionable,
   LoteProduccionCreate,
   LoteRecepcionDisponible,
+  PrecargaLote,
 } from './types';
 
 interface LoteProduccionFormProps {
   onGuardar: (datos: LoteProduccionCreate) => Promise<void>;
   onCancelar: () => void;
+  precarga?: PrecargaLote;
+}
+
+function seleccionDesdePrecarga(
+  precarga: PrecargaLote | undefined,
+  disponibles: InsumoSeleccionable[],
+): InsumoSeleccionado[] {
+  if (!precarga) return [];
+  return precarga.insumos.flatMap(({ insumoId, cantidad }) => {
+    const insumo = disponibles.find((opcion) => opcion.id === insumoId);
+    return insumo
+      ? [{ insumo, cantidadUsada: String(cantidad), lotesRecepcion: [{ loteId: '', cantidad: '' }] }]
+      : [];
+  });
 }
 
 interface ValoresLote {
@@ -67,12 +83,17 @@ function calcularAsignacionAutomatica(
   return asignaciones;
 }
 
-export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionFormProps) {
+export function LoteProduccionForm({ onGuardar, onCancelar, precarga }: LoteProduccionFormProps) {
   const { currentUser } = useAuth();
   const esAdministrador = currentUser?.administrar === true;
   const hoy = fechaHoyIso();
   const form = useForm<ValoresLote>({
-    defaultValues: { productoId: '', fechaProduccion: hoy, cantidad: '', observaciones: '' },
+    defaultValues: {
+      productoId: precarga ? String(precarga.productoId) : '',
+      fechaProduccion: hoy,
+      cantidad: precarga?.cantidad ? String(precarga.cantidad) : '',
+      observaciones: '',
+    },
   });
   const { errors, isSubmitting, submitCount } = form.formState;
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -117,7 +138,9 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
     let activo = true;
     getInsumosDisponibles()
       .then((datos) => {
-        if (activo) setInsumos(datos);
+        if (!activo) return;
+        setInsumos(datos);
+        if (precarga) setInsumosSeleccionados(seleccionDesdePrecarga(precarga, datos));
       })
       .catch((err: unknown) => {
         if (activo)
@@ -131,9 +154,23 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
     return () => {
       activo = false;
     };
-  }, []);
+  }, [precarga]);
 
   const productoId = useWatch({ control: form.control, name: 'productoId' });
+  const cantidadProducida = useWatch({ control: form.control, name: 'cantidad' });
+  const vinculadoAReceta = !!precarga && productoId === String(precarga.productoId);
+  const cantidadDeReceta = new Map(
+    (precarga?.insumos ?? []).map(({ insumoId, cantidad }) => [insumoId, cantidad]),
+  );
+  const insumosQuitados = precarga
+    ? precarga.insumos.filter(
+        ({ insumoId }) => !insumosSeleccionados.some(({ insumo }) => insumo.id === insumoId),
+      ).length
+    : 0;
+  const cantidadDifiere =
+    vinculadoAReceta &&
+    precarga.cantidad !== null &&
+    Number(cantidadProducida) !== precarga.cantidad;
   const fechaProduccion = useWatch({ control: form.control, name: 'fechaProduccion' });
   const productoElegido = productos.find((producto) => String(producto.id) === productoId);
   const idsInsumosSeleccionados = insumosSeleccionados
@@ -362,6 +399,8 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
         fecha_produccion: valores.fechaProduccion,
         cantidad: Number(valores.cantidad),
         observaciones: valores.observaciones.trim() || null,
+        version_receta_id: vinculadoAReceta ? precarga.versionId : null,
+        factor_receta: vinculadoAReceta ? precarga.factor : null,
         insumos: insumosConAsignaciones.map(({ insumo, cantidadUsada, asignaciones }) => ({
           insumo_id: insumo.id,
           cantidad_usada: Number(cantidadUsada),
@@ -394,6 +433,35 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
         <Card.Body className="p-4">
           <Form noValidate onSubmit={enviar}>
             <FormErrors key={submitCount} errors={errors} />
+            {precarga && (
+              <Alert variant={vinculadoAReceta ? 'info' : 'warning'} className="py-2">
+                {vinculadoAReceta ? (
+                  <>
+                    <i className="bi bi-journal-bookmark me-2" aria-hidden="true" />
+                    Lote iniciado desde la receta de <strong>{precarga.productoNombre}</strong>,
+                    versión {precarga.versionNumero} (factor ×
+                    {precarga.factor.toLocaleString('es-AR', { maximumFractionDigits: 3 })}). Las
+                    cantidades son editables; se marcan las que difieren de la receta.
+                  </>
+                ) : (
+                  <>
+                    Cambiaste el producto: este lote ya no quedará vinculado a la receta de{' '}
+                    {precarga.productoNombre}.
+                  </>
+                )}
+                {precarga.sinPrecargar.length > 0 && (
+                  <div className="small mt-1">
+                    No se precargaron: {precarga.sinPrecargar.join(', ')}. Agregalos a mano si los
+                    usás.
+                  </div>
+                )}
+                {insumosQuitados > 0 && (
+                  <div className="small mt-1">
+                    Quitaste {insumosQuitados} insumo{insumosQuitados > 1 ? 's' : ''} de la receta.
+                  </div>
+                )}
+              </Alert>
+            )}
             {errorProductos && <ErrorAlert mensaje={errorProductos} />}
             <Form.Group controlId="LoteForm-producto" className="mb-3">
               <div className="d-flex justify-content-between align-items-end mb-2">
@@ -461,6 +529,12 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
                     <InputGroup.Text>{productoElegido.unidad_medida.sufijo}</InputGroup.Text>
                   )}
                 </InputGroup>
+                {cantidadDifiere && (
+                  <Form.Text className="text-warning-emphasis">
+                    <i className="bi bi-exclamation-triangle me-1" aria-hidden="true" />
+                    Difiere de la receta escalada ({precarga.cantidad?.toLocaleString('es-AR')}).
+                  </Form.Text>
+                )}
               </Form.Group>
             </div>
             <Form.Group className="mb-4">
@@ -634,6 +708,19 @@ export function LoteProduccionForm({ onGuardar, onCancelar }: LoteProduccionForm
                                 />
                                 <InputGroup.Text>{insumo.unidadMedidaObj.sufijo}</InputGroup.Text>
                               </InputGroup>
+                              {vinculadoAReceta && !cantidadDeReceta.has(insumo.id) && (
+                                <small className="d-block text-center text-warning-emphasis mt-1">
+                                  No está en la receta
+                                </small>
+                              )}
+                              {vinculadoAReceta &&
+                                cantidadDeReceta.has(insumo.id) &&
+                                Number(cantidadUsada) !== cantidadDeReceta.get(insumo.id) && (
+                                  <small className="d-block text-center text-warning-emphasis mt-1">
+                                    Difiere de la receta (
+                                    {cantidadDeReceta.get(insumo.id)?.toLocaleString('es-AR')})
+                                  </small>
+                                )}
                             </td>
                             <td className="lotes-produccion-col-recepciones">
                               {cargandoLotesDisponibles ? (

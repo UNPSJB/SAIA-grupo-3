@@ -7,6 +7,7 @@ import { useConsulta } from '../../shared/hooks/useConsulta';
 import { formatearFechaHora } from '../../shared/libreria/fechas';
 import { getReceta, getVersion } from './recetaApi';
 import type { Receta, Version } from './types';
+import { EscaladoReceta } from './EscaladoReceta';
 import { VersionDetalle } from './VersionDetalle';
 
 async function cargar(
@@ -100,6 +101,9 @@ export function RecetaDetallePage() {
 
       <Row className="g-4">
         <Col xl={9}>
+          {esVigente && receta.producto.activo && (
+            <EscaladoReceta recetaId={receta.id} version={version} />
+          )}
           <VersionDetalle version={version} />
         </Col>
         <Col xl={3}>

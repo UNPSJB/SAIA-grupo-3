@@ -1,4 +1,5 @@
 import { Badge, Button, Card } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
 import { formatearCantidad } from './formato';
 import { TrazabilidadProduccionDetalle } from './TrazabilidadProduccionDetalle';
@@ -44,6 +45,24 @@ export function LoteProduccionView({
               {formatearCantidad(lote.cantidad)} {lote.producto.unidad_medida.sufijo}
             </span>
           </div>
+          {lote.version_receta && (
+            <div className="row mb-2">
+              <span className="col-5 text-muted fw-semibold">Receta utilizada:</span>
+              <span className="col-7">
+                <Link
+                  to={`/recetas/${lote.version_receta.receta_id}/versiones/${lote.version_receta.id}`}
+                >
+                  Versión {lote.version_receta.numero}
+                </Link>
+                {lote.factor_receta !== null && (
+                  <span className="text-muted">
+                    {' '}
+                    · factor ×{formatearCantidad(lote.factor_receta)}
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
           <div className="row mb-2">
             <span className="col-5 text-muted fw-semibold">Observaciones:</span>
             <span className="col-7 text-break">{lote.observaciones ?? 'Sin observaciones'}</span>

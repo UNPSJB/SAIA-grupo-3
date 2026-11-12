@@ -65,6 +65,20 @@ export interface LoteProduccion {
   cerrado_por_id: number | null;
   cerrado_por: PersonalResumen | null;
   insumos_asociados: LoteInsumo[];
+  version_receta: { id: number; receta_id: number; numero: number } | null;
+  factor_receta: number | null;
+}
+
+export interface PrecargaLote {
+  recetaId: number;
+  versionId: number;
+  versionNumero: number;
+  factor: number;
+  productoId: number;
+  productoNombre: string;
+  cantidad: number | null;
+  insumos: { insumoId: number; cantidad: number }[];
+  sinPrecargar: string[];
 }
 
 export interface LoteProduccionCreate {
@@ -73,6 +87,8 @@ export interface LoteProduccionCreate {
   cantidad: number;
   observaciones?: string | null;
   insumos: LoteInsumoCreate[];
+  version_receta_id?: number | null;
+  factor_receta?: number | null;
 }
 
 export interface LoteProduccionUpdate {

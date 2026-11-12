@@ -1,6 +1,8 @@
 import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type {
+  Escalado,
   InsumoDisponible,
+  ModoEscalado,
   NuevaVersion,
   Receta,
   RecetaCreate,
@@ -39,3 +41,12 @@ export const guardarNuevaVersion = (recetaId: number, datos: NuevaVersion) =>
     method: 'POST',
     body: JSON.stringify(datos),
   });
+
+export function escalarReceta(
+  recetaId: number,
+  modo: ModoEscalado,
+  valor: number,
+): Promise<Escalado> {
+  const params = new URLSearchParams({ [modo]: String(valor) });
+  return pedir(`/recetas/${recetaId}/escalado?${params}`, 'No se pudo escalar la receta.');
+}

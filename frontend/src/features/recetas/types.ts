@@ -122,3 +122,32 @@ export const ETIQUETA_TIPO: Record<TipoInsumo, string> = {
   ingrediente: 'Ingrediente',
   aditivo: 'Aditivo',
 };
+
+export interface RenglonEscalado {
+  insumo: { id: number; nombre: string; activo: boolean };
+  tipo: TipoInsumo;
+  aditivo_referencia: AditivoReferencia | null;
+  unidad_medida: UnidadMedida;
+  cantidad_receta: number;
+  cantidad_escalada: number;
+  unidad_stock: UnidadMedida;
+  cantidad_en_unidad_stock: number | null;
+  stock_disponible: number;
+  stock_suficiente: boolean | null;
+}
+
+export interface Escalado {
+  receta_id: number;
+  version_id: number;
+  version_numero: number;
+  producto: ProductoResumen;
+  factor: number;
+  rendimiento_receta: number;
+  rendimiento_escalado: number;
+  rendimiento_unidad: UnidadMedida;
+  cantidad_lote: number | null;
+  renglones: RenglonEscalado[];
+  hay_faltantes: boolean;
+}
+
+export type ModoEscalado = 'factor' | 'cantidad_objetivo';
