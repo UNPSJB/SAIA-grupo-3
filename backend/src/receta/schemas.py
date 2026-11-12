@@ -188,9 +188,17 @@ class Receta(BaseModel):
     fecha_creacion: datetime
     producto: ProductoResumen
     version_vigente: Version
-    versiones: list[VersionResumen]
+    cantidad_versiones: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RecetaVigente(BaseModel):
+    receta_id: int
+    producto: ProductoResumen
+    version_vigente: VersionResumen
+    cantidad_ingredientes: int
+    cantidad_pasos: int
 
 
 class RenglonEscalado(BaseModel):

@@ -22,6 +22,10 @@ class Receta(ModeloBase):
     )
 
     @property
+    def cantidad_versiones(self) -> int:
+        return len(self.versiones)
+
+    @property
     def version_vigente(self) -> Optional["VersionReceta"]:
         return next((version for version in self.versiones if version.estado == EstadoVersionReceta.VIGENTE), None)
 

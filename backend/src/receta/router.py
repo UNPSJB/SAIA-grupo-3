@@ -26,6 +26,15 @@ def read_recetas(
 
 
 @router.get(
+    "/vigentes",
+    response_model=list[schemas.RecetaVigente],
+    dependencies=[Depends(puede_consultar_operacion)],
+)
+def read_recetas_vigentes(db: Session = Depends(get_db), buscar: str = Query("", max_length=100)):
+    return services.listar_recetas_vigentes(db, buscar)
+
+
+@router.get(
     "/insumos-disponibles",
     response_model=list[schemas.InsumoDisponible],
     dependencies=[Depends(tiene_permiso_administrar)],
@@ -64,6 +73,15 @@ def read_version(version_id: int, db: Session = Depends(get_db)):
 @router.get("/{receta_id}", response_model=schemas.Receta, dependencies=[Depends(puede_consultar_operacion)])
 def read_receta(receta_id: int, db: Session = Depends(get_db)):
     return services.leer_receta(db, receta_id)
+
+
+@router.get(
+    "/{receta_id}/versiones",
+    response_model=list[schemas.VersionResumen],
+    dependencies=[Depends(puede_consultar_operacion)],
+)
+def read_versiones(receta_id: int, db: Session = Depends(get_db)):
+    return services.listar_versiones(db, receta_id)
 
 
 @router.get(

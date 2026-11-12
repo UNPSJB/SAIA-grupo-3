@@ -165,6 +165,36 @@ def listar_recetas(db: Session, buscar: str = "", mostrar_inactivos: bool = Fals
     ]
 
 
+def listar_recetas_vigentes(db: Session, buscar: str = "") -> list[schemas.RecetaVigente]:
+    query = (
+        select(Receta)
+        .join(Producto, Receta.producto_id == Producto.id)
+        .where(Producto.activo.is_(True))
+        .order_by(Producto.nombre)
+    )
+    if buscar.strip():
+        query = query.where(func.lower(Producto.nombre).contains(buscar.strip().lower()))
+    vigentes = []
+    for receta in db.scalars(query):
+        version = receta.version_vigente
+        if version is None:
+            continue
+        vigentes.append(
+            schemas.RecetaVigente(
+                receta_id=receta.id,
+                producto=receta.producto,
+                version_vigente=version,
+                cantidad_ingredientes=sum(1 for renglon in version.renglones if renglon.tipo == TipoInsumo.INGREDIENTE),
+                cantidad_pasos=len(version.pasos),
+            )
+        )
+    return vigentes
+
+
+def listar_versiones(db: Session, receta_id: int) -> list[VersionReceta]:
+    return leer_receta(db, receta_id).versiones
+
+
 def listar_insumos_disponibles(db: Session) -> list[Insumo]:
     return list(db.scalars(select(Insumo).where(Insumo.activo.is_(True)).order_by(Insumo.nombre)))
 

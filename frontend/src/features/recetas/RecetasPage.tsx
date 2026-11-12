@@ -9,11 +9,15 @@ import { useDebouncedValue } from '../../shared/hooks/useListState';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { formatearFecha } from '../../shared/libreria/fechas';
 import { listarRecetas } from './recetaApi';
+import { RecetasVigentes } from './RecetasVigentes';
 
 export function RecetasPage() {
-  const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const puedeAdministrar = currentUser?.administrar === true;
+  return currentUser?.administrar ? <RecetasAdministracion /> : <RecetasVigentes />;
+}
+
+function RecetasAdministracion() {
+  const navigate = useNavigate();
   const [busqueda, setBusqueda] = useState('');
   const [mostrarInactivos, setMostrarInactivos] = useState(false);
   const buscar = useDebouncedValue(busqueda);
@@ -26,20 +30,14 @@ export function RecetasPage() {
   return (
     <Container className="py-2">
       <h2 className="mb-4 border-bottom pb-2 text-secondary">Recetas</h2>
-      <ListControls
-        busqueda={busqueda}
-        setBusqueda={setBusqueda}
-        title={puedeAdministrar ? 'Recetas por producto' : 'Recetas vigentes'}
-      >
-        {puedeAdministrar && (
-          <Form.Check
-            id="recetas-productos-inactivos"
-            type="switch"
-            label="Ver productos dados de baja"
-            checked={mostrarInactivos}
-            onChange={(e) => setMostrarInactivos(e.target.checked)}
-          />
-        )}
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Recetas por producto">
+        <Form.Check
+          id="recetas-productos-inactivos"
+          type="switch"
+          label="Ver productos dados de baja"
+          checked={mostrarInactivos}
+          onChange={(e) => setMostrarInactivos(e.target.checked)}
+        />
       </ListControls>
       {recetas.error && <ErrorAlert mensaje={recetas.error} />}
       {recetas.cargando && !recetas.datos && <LoadingSpinner mensaje="Cargando recetas..." />}
@@ -93,7 +91,7 @@ export function RecetasPage() {
                           Ver
                         </Button>
                       )}
-                      {puedeAdministrar && receta_id && producto.activo && (
+                      {receta_id && producto.activo && (
                         <Button
                           size="sm"
                           variant="warning"
@@ -104,7 +102,7 @@ export function RecetasPage() {
                           Modificar
                         </Button>
                       )}
-                      {puedeAdministrar && !receta_id && producto.activo && (
+                      {!receta_id && producto.activo && (
                         <Button
                           size="sm"
                           variant="success"

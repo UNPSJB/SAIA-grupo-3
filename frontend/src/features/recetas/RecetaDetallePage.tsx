@@ -1,4 +1,5 @@
-import { Alert, Badge, Button, Card, Col, Container, Row, Table } from 'react-bootstrap';
+import { useState } from 'react';
+import { Alert, Badge, Button, Container } from 'react-bootstrap';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -8,6 +9,7 @@ import { formatearFechaHora } from '../../shared/libreria/fechas';
 import { getReceta, getVersion } from './recetaApi';
 import type { Receta, Version } from './types';
 import { EscaladoReceta } from './EscaladoReceta';
+import { HistorialVersiones } from './HistorialVersiones';
 import { VersionDetalle } from './VersionDetalle';
 
 async function cargar(
@@ -32,6 +34,8 @@ export function RecetaDetallePage() {
   const versionElegida = versionId ? Number(versionId) : null;
   const consulta = useConsulta(() => cargar(recetaId, versionElegida), [recetaId, versionElegida]);
   const mensaje = (location.state as { mensaje?: string } | null)?.mensaje;
+  const [verHistorial, setVerHistorial] = useState(false);
+  const [verEscalado, setVerEscalado] = useState(false);
 
   if (consulta.error) {
     return (
@@ -48,6 +52,8 @@ export function RecetaDetallePage() {
   const { receta, version } = consulta.datos;
   const esVigente = version.estado === 'vigente';
   const puedeModificar = currentUser?.administrar === true && esVigente && receta.producto.activo;
+  const mostrarHistorial = verHistorial || !esVigente;
+  const puedeEscalar = esVigente && receta.producto.activo;
 
   return (
     <Container className="py-2">
@@ -64,10 +70,32 @@ export function RecetaDetallePage() {
             </span>
           </div>
         </div>
-        <div className="d-flex gap-2">
+        <div className="d-flex flex-wrap gap-2">
           <Button variant="outline-secondary" onClick={() => navigate('/recetas')}>
             Volver
           </Button>
+          {puedeEscalar && (
+            <Button
+              variant={verEscalado ? 'primary' : 'outline-primary'}
+              aria-expanded={verEscalado}
+              onClick={() => setVerEscalado(!verEscalado)}
+            >
+              <i className="bi bi-calculator me-1" aria-hidden="true" />
+              Escalar a mi lote
+            </Button>
+          )}
+          {receta.cantidad_versiones > 1 && (
+            <Button
+              variant="outline-primary"
+              aria-expanded={mostrarHistorial}
+              onClick={() => setVerHistorial(!mostrarHistorial)}
+            >
+              <i className="bi bi-clock-history me-1" aria-hidden="true" />
+              {mostrarHistorial
+                ? 'Ocultar historial'
+                : `Ver historial (${receta.cantidad_versiones})`}
+            </Button>
+          )}
           {puedeModificar && (
             <Button
               variant="warning"
@@ -99,48 +127,9 @@ export function RecetaDetallePage() {
         </Alert>
       )}
 
-      <Row className="g-4">
-        <Col xl={9}>
-          {esVigente && receta.producto.activo && (
-            <EscaladoReceta recetaId={receta.id} version={version} />
-          )}
-          <VersionDetalle version={version} />
-        </Col>
-        <Col xl={3}>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-body fw-semibold">
-              <i className="bi bi-clock-history me-2" aria-hidden="true" />
-              Historial de versiones
-            </Card.Header>
-            <Table size="sm" hover className="mb-0 align-middle">
-              <tbody>
-                {receta.versiones.map((item) => (
-                  <tr key={item.id} className={item.id === version.id ? 'table-active' : undefined}>
-                    <td>
-                      <Link
-                        to={
-                          item.estado === 'vigente'
-                            ? `/recetas/${receta.id}`
-                            : `/recetas/${receta.id}/versiones/${item.id}`
-                        }
-                        className="fw-semibold"
-                      >
-                        Versión {item.numero}
-                      </Link>
-                      <div className="small text-body-secondary">{item.motivo}</div>
-                    </td>
-                    <td className="text-end">
-                      <Badge bg={item.estado === 'vigente' ? 'success' : 'secondary'}>
-                        {item.estado === 'vigente' ? 'Vigente' : 'Archivada'}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </Card>
-        </Col>
-      </Row>
+      {mostrarHistorial && <HistorialVersiones recetaId={receta.id} versionActualId={version.id} />}
+      {puedeEscalar && verEscalado && <EscaladoReceta recetaId={receta.id} version={version} />}
+      <VersionDetalle version={version} />
     </Container>
   );
 }

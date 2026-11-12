@@ -73,7 +73,15 @@ export interface Receta {
   fecha_creacion: string;
   producto: ProductoResumen;
   version_vigente: Version;
-  versiones: VersionResumen[];
+  cantidad_versiones: number;
+}
+
+export interface RecetaVigente {
+  receta_id: number;
+  producto: ProductoResumen;
+  version_vigente: VersionResumen;
+  cantidad_ingredientes: number;
+  cantidad_pasos: number;
 }
 
 export interface RecetaDeProducto {

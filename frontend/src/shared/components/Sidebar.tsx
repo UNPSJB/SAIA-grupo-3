@@ -151,7 +151,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const grupoAbierto = expansion?.pathname === location.pathname
     ? expansion.grupo
     : grupoActivo ?? null;
-  const accesos = ['/checklist', '/vencimientos', '/tablero']
+  const accesos = ['/checklist', '/recetas', '/vencimientos', '/tablero']
     .flatMap((ruta) => menuVisible.filter((item) => item.to === ruta));
   const inicio = menuVisible.find((item) => item.to === '/inicio');
   const renderEnlace = (item: MenuItem) => item.to && (

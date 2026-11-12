@@ -7,7 +7,9 @@ import type {
   Receta,
   RecetaCreate,
   RecetaDeProducto,
+  RecetaVigente,
   Version,
+  VersionResumen,
 } from './types';
 
 async function pedir<T>(ruta: string, porDefecto: string, opciones: RequestInit = {}): Promise<T> {
@@ -20,6 +22,14 @@ export function listarRecetas(buscar = '', mostrarInactivos = false): Promise<Re
   const params = new URLSearchParams({ buscar, mostrar_inactivos: String(mostrarInactivos) });
   return pedir(`/recetas/?${params}`, 'No se pudieron cargar las recetas.');
 }
+
+export function listarRecetasVigentes(buscar = ''): Promise<RecetaVigente[]> {
+  const params = new URLSearchParams({ buscar });
+  return pedir(`/recetas/vigentes?${params}`, 'No se pudieron cargar las recetas vigentes.');
+}
+
+export const getVersiones = (recetaId: number) =>
+  pedir<VersionResumen[]>(`/recetas/${recetaId}/versiones`, 'No se pudo cargar el historial.');
 
 export const getReceta = (id: number) =>
   pedir<Receta>(`/recetas/${id}`, 'No se encontró la receta.');

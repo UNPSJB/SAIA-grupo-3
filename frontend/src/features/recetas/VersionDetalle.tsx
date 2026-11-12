@@ -109,7 +109,7 @@ export function VersionDetalle({ version }: { version: Version }) {
                       )}
                     </div>
                     <div className="small">{paso.procedimiento}</div>
-                    <div className="small text-body-secondary d-flex flex-wrap gap-3 mt-1">
+                    <div className="small text-body-secondary d-flex flex-wrap column-gap-3 mt-1">
                       {paso.equipo && <span>Equipo: {paso.equipo.nombre}</span>}
                       {paso.tiempo_minutos && <span>Tiempo: {paso.tiempo_minutos} min</span>}
                       {paso.temperatura_celsius !== null && (
