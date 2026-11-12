@@ -193,6 +193,33 @@ class Receta(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class RenglonEscalado(BaseModel):
+    insumo: InsumoResumen
+    tipo: TipoInsumo
+    aditivo_referencia: Optional[AditivoReferencia] = None
+    unidad_medida: UnidadMedida
+    cantidad_receta: float
+    cantidad_escalada: float
+    unidad_stock: UnidadMedida
+    cantidad_en_unidad_stock: Optional[float] = None
+    stock_disponible: float
+    stock_suficiente: Optional[bool] = None
+
+
+class Escalado(BaseModel):
+    receta_id: int
+    version_id: int
+    version_numero: int
+    producto: ProductoResumen
+    factor: float
+    rendimiento_receta: float
+    rendimiento_escalado: float
+    rendimiento_unidad: UnidadMedida
+    cantidad_lote: Optional[float] = None
+    renglones: list[RenglonEscalado]
+    hay_faltantes: bool
+
+
 class RecetaDeProducto(BaseModel):
     producto: ProductoResumen
     receta_id: Optional[int] = None

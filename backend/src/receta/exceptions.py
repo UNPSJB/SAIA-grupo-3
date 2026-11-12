@@ -51,6 +51,10 @@ class AditivoSinClase(BadRequest):
         super().__init__(ErrorCode.ADITIVO_SIN_CLASE.format(nombre=nombre))
 
 
+class EscaladoSinParametro(BadRequest):
+    DETAIL = ErrorCode.ESCALADO_SIN_PARAMETRO
+
+
 class UnidadInvalida(BadRequest):
     DETAIL = ErrorCode.UNIDAD_INVALIDA
 

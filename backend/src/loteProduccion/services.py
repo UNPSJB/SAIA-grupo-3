@@ -13,6 +13,8 @@ from src.insumos.models import Insumo
 from src.pagination import filtrar_ordenar
 from src.producto.models import Producto
 from src.producto.services import leer_producto
+from src.receta.constants import EstadoVersionReceta
+from src.receta.models import VersionReceta
 from src.abastecimiento.models import (
     ConsumoLoteRecepcion,
     ConsumoStockAnterior,
@@ -49,8 +51,21 @@ def _generar_codigo(db: Session, fecha: date) -> str:
     return f"{prefijo}{numero:03d}"
 
 
+def _validar_version_receta(db: Session, lote: schemas.LoteProduccionCreate) -> None:
+    if lote.version_receta_id is None:
+        return
+    version = db.get(VersionReceta, lote.version_receta_id)
+    if version is None:
+        raise exceptions.VersionRecetaNoEncontrada()
+    if version.receta.producto_id != lote.producto_id:
+        raise exceptions.RecetaDeOtroProducto()
+    if version.estado != EstadoVersionReceta.VIGENTE:
+        raise exceptions.RecetaDesactualizada()
+
+
 def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_id: int) -> LoteProduccion:
     _validar_producto(db, lote.producto_id)
+    _validar_version_receta(db, lote)
     _validar_fecha(lote.fecha_produccion)
     ids_insumos = [item.insumo_id for item in lote.insumos]
     if len(ids_insumos) != len(set(ids_insumos)):

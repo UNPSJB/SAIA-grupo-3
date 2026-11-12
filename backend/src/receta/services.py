@@ -10,7 +10,9 @@ from src.producto.models import Producto
 from src.receta import exceptions, schemas
 from src.receta.constants import EstadoVersionReceta
 from src.receta.models import PasoReceta, Receta, RenglonReceta, VersionReceta
+from src.unidadMedida.conversion import convertir
 from src.unidadMedida.models import UnidadMedida
+from src.receta.constants import DECIMALES_ESCALADO
 
 ETIQUETA_TIPO = {TipoInsumo.INGREDIENTE: "ingrediente", TipoInsumo.ADITIVO: "aditivo"}
 
@@ -165,3 +167,56 @@ def listar_recetas(db: Session, buscar: str = "", mostrar_inactivos: bool = Fals
 
 def listar_insumos_disponibles(db: Session) -> list[Insumo]:
     return list(db.scalars(select(Insumo).where(Insumo.activo.is_(True)).order_by(Insumo.nombre)))
+
+
+def _redondear(valor: float) -> float:
+    return round(valor, DECIMALES_ESCALADO)
+
+
+def escalar_receta(
+    db: Session, receta_id: int, factor: float | None = None, cantidad_objetivo: float | None = None
+) -> schemas.Escalado:
+    if (factor is None) == (cantidad_objetivo is None):
+        raise exceptions.EscaladoSinParametro()
+    receta = leer_receta(db, receta_id)
+    version = receta.version_vigente
+    if version is None:
+        raise exceptions.VersionNoEncontrada()
+    factor_aplicado = factor if factor is not None else cantidad_objetivo / version.rendimiento_cantidad
+    renglones = []
+    for renglon in version.renglones:
+        insumo = renglon.insumo
+        escalada = renglon.cantidad * factor_aplicado
+        en_unidad_stock = convertir(escalada, renglon.unidad_medida, insumo.unidadMedidaObj)
+        disponible = insumo.cantidad if insumo.activo else 0.0
+        renglones.append(
+            schemas.RenglonEscalado(
+                insumo=insumo,
+                tipo=renglon.tipo,
+                aditivo_referencia=renglon.aditivo_referencia,
+                unidad_medida=renglon.unidad_medida,
+                cantidad_receta=renglon.cantidad,
+                cantidad_escalada=_redondear(escalada),
+                unidad_stock=insumo.unidadMedidaObj,
+                cantidad_en_unidad_stock=_redondear(en_unidad_stock) if en_unidad_stock is not None else None,
+                stock_disponible=_redondear(disponible),
+                stock_suficiente=(
+                    None if en_unidad_stock is None or not insumo.activo else disponible + 1e-9 >= en_unidad_stock
+                ),
+            )
+        )
+    rendimiento = version.rendimiento_cantidad * factor_aplicado
+    cantidad_lote = convertir(rendimiento, version.rendimiento_unidad, receta.producto.unidad_medida)
+    return schemas.Escalado(
+        receta_id=receta.id,
+        version_id=version.id,
+        version_numero=version.numero,
+        producto=receta.producto,
+        factor=_redondear(factor_aplicado) if factor is None else factor,
+        rendimiento_receta=version.rendimiento_cantidad,
+        rendimiento_escalado=_redondear(rendimiento),
+        rendimiento_unidad=version.rendimiento_unidad,
+        cantidad_lote=_redondear(cantidad_lote) if cantidad_lote is not None else None,
+        renglones=renglones,
+        hay_faltantes=any(not r.insumo.activo or r.stock_suficiente is False for r in renglones),
+    )

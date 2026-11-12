@@ -2,6 +2,7 @@ from enum import StrEnum, auto
 
 PREFIJO_RUTA = "/recetas"
 MOTIVO_VERSION_INICIAL = "Versión inicial"
+DECIMALES_ESCALADO = 3
 
 
 class EstadoVersionReceta(StrEnum):
@@ -31,3 +32,4 @@ class ErrorCode:
     UNIDAD_INVALIDA = "La unidad de medida indicada no existe o está dada de baja."
     EQUIPO_INVALIDO = "El equipo indicado en el paso '{nombre}' no existe o está dado de baja."
     PORCION_INCOMPLETA = "Para indicar la porción cargá la cantidad y la unidad."
+    ESCALADO_SIN_PARAMETRO = "Indicá la cantidad objetivo o el factor multiplicador, pero no los dos."

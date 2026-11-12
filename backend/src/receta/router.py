@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -62,6 +64,20 @@ def read_version(version_id: int, db: Session = Depends(get_db)):
 @router.get("/{receta_id}", response_model=schemas.Receta, dependencies=[Depends(puede_consultar_operacion)])
 def read_receta(receta_id: int, db: Session = Depends(get_db)):
     return services.leer_receta(db, receta_id)
+
+
+@router.get(
+    "/{receta_id}/escalado",
+    response_model=schemas.Escalado,
+    dependencies=[Depends(puede_consultar_operacion)],
+)
+def read_escalado(
+    receta_id: int,
+    db: Session = Depends(get_db),
+    factor: Optional[float] = Query(None, gt=0, le=1000, allow_inf_nan=False),
+    cantidad_objetivo: Optional[float] = Query(None, gt=0, allow_inf_nan=False),
+):
+    return services.escalar_receta(db, receta_id, factor, cantidad_objetivo)
 
 
 @router.post(

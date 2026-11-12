@@ -17,4 +17,10 @@ class ErrorCode:
     INSUMO_NO_ENCONTRADO = "Uno o más insumos seleccionados no existen."
     INSUMO_INACTIVO = "No se pueden asociar insumos dados de baja."
     INSUMO_DUPLICADO = "No se puede asociar el mismo insumo más de una vez al lote."
+    VERSION_RECETA_NO_ENCONTRADA = "La versión de receta indicada no existe."
+    RECETA_DE_OTRO_PRODUCTO = "La receta indicada es de otro producto."
+    RECETA_DESACTUALIZADA = (
+        "La receta cambió desde que la escalaste. Volvé a calcular las cantidades con la versión vigente."
+    )
+    FACTOR_RECETA_INCOMPLETO = "Para vincular el lote a una receta indicá la versión y el factor aplicado."
     STOCK_INSUFICIENTE = "Uno o más insumos no tienen stock suficiente para las cantidades indicadas."

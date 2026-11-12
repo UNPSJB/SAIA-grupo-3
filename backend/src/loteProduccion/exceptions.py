@@ -36,3 +36,15 @@ class InsumoDuplicado(BadRequest):
 
 class StockInsuficiente(BadRequest):
     DETAIL = ErrorCode.STOCK_INSUFICIENTE
+
+
+class VersionRecetaNoEncontrada(NotFound):
+    DETAIL = ErrorCode.VERSION_RECETA_NO_ENCONTRADA
+
+
+class RecetaDeOtroProducto(BadRequest):
+    DETAIL = ErrorCode.RECETA_DE_OTRO_PRODUCTO
+
+
+class RecetaDesactualizada(BadRequest):
+    DETAIL = ErrorCode.RECETA_DESACTUALIZADA

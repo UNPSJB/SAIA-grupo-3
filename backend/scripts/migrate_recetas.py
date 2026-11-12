@@ -1,4 +1,3 @@
-"""Migración SQLite repetible para E9-01 (recetas). Detener el backend antes de ejecutarla."""
 import argparse
 import sqlite3
 from datetime import datetime
@@ -10,9 +9,15 @@ from sqlalchemy import create_engine
 import src.main
 from src.models import ModeloBase
 
-COLUMNAS_INSUMOS = {
-    "tipo": "VARCHAR(11) NOT NULL DEFAULT 'INGREDIENTE'",
-    "aditivo_referencia_id": "INTEGER REFERENCES aditivos_referencia(id)",
+COLUMNAS = {
+    "insumos": {
+        "tipo": "VARCHAR(11) NOT NULL DEFAULT 'INGREDIENTE'",
+        "aditivo_referencia_id": "INTEGER REFERENCES aditivos_referencia(id)",
+    },
+    "lotes_produccion": {
+        "version_receta_id": "INTEGER REFERENCES versiones_receta(id)",
+        "factor_receta": "FLOAT",
+    },
 }
 
 
@@ -21,11 +26,13 @@ def migrar(ruta: Path) -> Path | None:
     if not ruta.is_file():
         raise ValueError(f"No existe la BDD: {ruta}")
     with sqlite3.connect(f"{ruta.as_uri()}?mode=rw", uri=True) as db:
-        columnas = {fila[1] for fila in db.execute('PRAGMA table_info("insumos")')}
-        if not columnas:
-            raise ValueError("Falta la tabla insumos; verificá que elegiste la BDD del proyecto.")
+        pendientes = []
+        for tabla, columnas_nuevas in COLUMNAS.items():
+            columnas = {fila[1] for fila in db.execute(f'PRAGMA table_info("{tabla}")')}
+            if not columnas:
+                raise ValueError(f"Falta la tabla {tabla}; verificá que elegiste la BDD del proyecto.")
+            pendientes += [(tabla, columna, tipo) for columna, tipo in columnas_nuevas.items() if columna not in columnas]
         tablas = {fila[0] for fila in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-        pendientes = [(columna, tipo) for columna, tipo in COLUMNAS_INSUMOS.items() if columna not in columnas]
         if not pendientes and "recetas" in tablas:
             return None
         respaldo = ruta.with_name(ruta.name + f".recetas-{datetime.now():%Y%m%d-%H%M%S}-{uuid4().hex[:6]}.bak")
@@ -37,8 +44,8 @@ def migrar(ruta: Path) -> Path | None:
     with sqlite3.connect(f"{ruta.as_uri()}?mode=rw", uri=True) as db:
         db.execute("BEGIN IMMEDIATE")
         try:
-            for columna, tipo in pendientes:
-                db.execute(f'ALTER TABLE "insumos" ADD COLUMN "{columna}" {tipo}')
+            for tabla, columna, tipo in pendientes:
+                db.execute(f'ALTER TABLE "{tabla}" ADD COLUMN "{columna}" {tipo}')
             db.commit()
         except Exception:
             db.rollback()

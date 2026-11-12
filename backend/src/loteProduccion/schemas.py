@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from src.checklist.schemas import PersonalResumen
 from src.unidadMedida.schemas import UnidadMedida
 from src.producto.schemas import Producto
-from src.loteProduccion.constants import EstadoLote
+from src.loteProduccion.constants import ErrorCode, EstadoLote
 
 
 def _texto_opcional(valor: object) -> Optional[str]:
@@ -23,11 +23,19 @@ class LoteProduccionCreate(BaseModel):
     cantidad: float = Field(gt=0)
     observaciones: Optional[str] = Field(default=None, max_length=500)
     insumos: list["LoteInsumoCreate"] = Field(default_factory=list)
+    version_receta_id: Optional[int] = Field(default=None, gt=0)
+    factor_receta: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
 
     @field_validator("observaciones", mode="before")
     @classmethod
     def validar_observaciones(cls, valor: object) -> Optional[str]:
         return _texto_opcional(valor)
+
+    @model_validator(mode="after")
+    def validar_receta(self):
+        if (self.version_receta_id is None) != (self.factor_receta is None):
+            raise ValueError(ErrorCode.FACTOR_RECETA_INCOMPLETO)
+        return self
 
 
 class LoteProduccionUpdate(BaseModel):
@@ -61,6 +69,16 @@ class LoteProduccion(BaseModel):
     cerrado_por_id: Optional[int] = None
     cerrado_por: Optional[PersonalResumen] = None
     insumos_asociados: list["LoteInsumoDetalle"] = Field(default_factory=list)
+    version_receta: Optional["VersionRecetaResumen"] = None
+    factor_receta: Optional[float] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class VersionRecetaResumen(BaseModel):
+    id: int
+    receta_id: int
+    numero: int
 
     model_config = ConfigDict(from_attributes=True)
 

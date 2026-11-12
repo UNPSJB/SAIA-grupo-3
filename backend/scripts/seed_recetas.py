@@ -1,5 +1,9 @@
 """Clases funcionales, aditivos de referencia y recetas versionadas de demostración."""
 
+from datetime import timedelta
+
+from scripts.seed_abastecimiento import recibir_demo
+
 from src.aditivoReferencia.models import AditivoReferencia
 from src.claseFuncional.models import ClaseFuncional
 from src.insumos.constants import TipoInsumo
@@ -38,12 +42,12 @@ ADITIVOS = [
 ]
 
 ADITIVOS_INSUMO = [
-    ("Sorbato de potasio en polvo", "Sorbato de potasio", "g"),
-    ("Propionato de calcio en polvo", "Propionato de calcio", "g"),
-    ("Lecitina de soja líquida", "Lecitina de soja", "g"),
-    ("Polvo de hornear (bicarbonato)", "Bicarbonato de sodio", "g"),
-    ("Esencia de vainilla", "Aroma de vainilla", "ml"),
-    ("Mejorador panificador (ácido ascórbico)", "Ácido ascórbico", "g"),
+    ("Sorbato de potasio en polvo", "Sorbato de potasio", "g", 2000.0),
+    ("Propionato de calcio en polvo", "Propionato de calcio", "g", 2000.0),
+    ("Lecitina de soja líquida", "Lecitina de soja", "g", 1000.0),
+    ("Polvo de hornear (bicarbonato)", "Bicarbonato de sodio", "g", 5000.0),
+    ("Esencia de vainilla", "Aroma de vainilla", "ml", 1000.0),
+    ("Mejorador panificador (ácido ascórbico)", "Ácido ascórbico", "g", 1000.0),
 ]
 
 PASOS_PANIFICADOS = [
@@ -99,7 +103,7 @@ def _cargar_aditivos(crear, unidades_por_sufijo):
         aditivo, _ = crear(AditivoReferencia, {"nombre": nombre}, ins=ins, clase_funcional_id=clases[clase].id, activo=True)
         aditivos[nombre] = aditivo
     insumos = {}
-    for nombre, referencia, sufijo in ADITIVOS_INSUMO:
+    for nombre, referencia, sufijo, _ in ADITIVOS_INSUMO:
         insumo, _ = crear(
             Insumo,
             {"nombre": nombre},
@@ -151,6 +155,13 @@ def _cargar_version(crear, receta, numero, estado, motivo, datos, ingredientes, 
         )
 
 
+def cargar_recepciones_aditivos(db, crear, aditivos, proveedores, actor, hoy):
+    for i, (nombre, _, _, cantidad) in enumerate(ADITIVOS_INSUMO):
+        recibir_demo(db, crear, aditivos[nombre], proveedores[i], cantidad,
+            f"saia:seed:aditivos:recepcion:{nombre}", f"DEMO-ADT-{i + 1:03d}",
+            actor, hoy - timedelta(days=30), hoy + timedelta(days=180))
+
+
 def cargar_recetas(crear, productos, ingredientes, unidades_por_sufijo, equipos, admin):
     aditivos = _cargar_aditivos(crear, unidades_por_sufijo)
     recetas = []
@@ -170,4 +181,4 @@ def cargar_recetas(crear, productos, ingredientes, unidades_por_sufijo, equipos,
                 ingredientes, aditivos, unidades_por_sufijo, equipos, admin, dict(cambios),
             )
         recetas.append(receta)
-    return recetas
+    return recetas, aditivos
