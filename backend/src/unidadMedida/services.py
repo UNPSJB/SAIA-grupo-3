@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from src.pagination import filtrar_ordenar
 from src.unidadMedida.models import UnidadMedida
 from src.unidadMedida import models, schemas, exceptions
+from src.receta.composicion import recalcular_por_unidad
 
 #def _validar_duplicados_unidad(db: Session, unidad: schemas.UnidadMedidaBase, excluir_id: int | None = None) -> None:
 #    query = select(models.UnidadMedida).where(
@@ -74,6 +75,10 @@ def modificar_unidad_medida(db: Session, unidad_id: int, unidad_in: schemas.Unid
         datos_actualizar["sufijo"] = datos_actualizar["sufijo"].strip()
 
     db.execute(update(UnidadMedida).where(UnidadMedida.id == unidad_id).values(**datos_actualizar))
+    if "factor_base" in datos_actualizar:
+        db.flush()
+        db.refresh(db_unidad)
+        recalcular_por_unidad(db, unidad_id)
     db.commit()
     db.refresh(db_unidad)
     return db_unidad

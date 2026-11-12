@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from src.unidadMedida.models import TipoUnidadMedida
 from src.unidadMedida import exceptions
 from typing import Optional
@@ -6,6 +6,7 @@ from typing import Optional
 class UnidadMedidaBase(BaseModel):
     tipo: TipoUnidadMedida
     sufijo: str 
+    factor_base: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
 
     @field_validator("tipo", mode="before")
     @classmethod
@@ -21,6 +22,7 @@ class UnidadMedidaUpdate(BaseModel):
     tipo: Optional[TipoUnidadMedida] = None
     sufijo: Optional[str] = None
     activo: Optional[bool] = None
+    factor_base: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
 
 class UnidadMedida(UnidadMedidaBase):
     id: int

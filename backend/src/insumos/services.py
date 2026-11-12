@@ -7,6 +7,10 @@ from sqlalchemy.orm import Session
 from src.insumos.models import Insumo
 from src.insumos import schemas, exceptions
 from src.unidadMedida.services import leer_unidad_medida
+from src.areas.services import validar_nombre_de_ingrediente
+from src.insumos.constants import TipoInsumo
+from src.aditivoReferencia.models import AditivoReferencia
+from src.receta.composicion import recalcular_por_insumo
 
 def _validar_duplicados(db: Session, nombre: str, excluir_id: int | None = None) -> None:
     query_nombre = select(Insumo).where(func.lower(Insumo.nombre) == nombre.strip().lower())
@@ -14,13 +18,25 @@ def _validar_duplicados(db: Session, nombre: str, excluir_id: int | None = None)
         query_nombre = query_nombre.where(Insumo.id != excluir_id)
     if db.scalar(query_nombre) is not None:
         raise exceptions.NombreDuplicado()
+    validar_nombre_de_ingrediente(db, nombre)
+
+def _resolver_aditivo_referencia(db: Session, tipo: TipoInsumo, aditivo_referencia_id: int | None) -> int | None:
+    if tipo == TipoInsumo.INGREDIENTE:
+        return None
+    if aditivo_referencia_id is None:
+        raise exceptions.AditivoSinReferencia()
+    aditivo = db.get(AditivoReferencia, aditivo_referencia_id)
+    if aditivo is None or not aditivo.activo or not aditivo.clase_funcional.activo:
+        raise exceptions.AditivoReferenciaInvalido()
+    return aditivo.id
 
 @revertir_si_falla
 def crear_insumo(db: Session, insumo: schemas.InsumoCreate) -> Insumo:
     _validar_duplicados(db, insumo.nombre)
     leer_unidad_medida(db, insumo.unidad_medida_id)
-    
-    _insumo = Insumo(**insumo.model_dump())
+    datos = insumo.model_dump()
+    datos["aditivo_referencia_id"] = _resolver_aditivo_referencia(db, insumo.tipo, insumo.aditivo_referencia_id)
+    _insumo = Insumo(**datos)
     db.add(_insumo)
     revisar(db, _insumo)
     db.commit()
@@ -65,7 +81,7 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
         db_insumo = bloquear_insumo(db, insumo_id, permitir_inactivo=True)
         datos_actualizar = {
             campo: valor for campo, valor in insumo.model_dump(exclude_unset=True).items()
-            if valor is not None or campo == "stock_minimo"
+            if valor is not None or campo in {"stock_minimo", "densidad_g_ml", "peso_unidad_g"}
         }
         tiene_recepciones = db.scalar(
             select(LoteRecepcionInsumo.id)
@@ -78,8 +94,20 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
             _validar_duplicados(db, datos_actualizar["nombre"], excluir_id=insumo_id)
         if "unidad_medida_id" in datos_actualizar:
             leer_unidad_medida(db, datos_actualizar["unidad_medida_id"])
+        if {"tipo", "aditivo_referencia_id"} & insumo.model_fields_set:
+            tipo_final = datos_actualizar.get("tipo", db_insumo.tipo)
+            referencia = (
+                insumo.aditivo_referencia_id
+                if "aditivo_referencia_id" in insumo.model_fields_set
+                else db_insumo.aditivo_referencia_id
+            )
+            datos_actualizar["tipo"] = tipo_final
+            datos_actualizar["aditivo_referencia_id"] = _resolver_aditivo_referencia(db, tipo_final, referencia)
         for campo, valor in datos_actualizar.items():
             setattr(db_insumo, campo, valor)
+        if {"densidad_g_ml", "peso_unidad_g"} & datos_actualizar.keys():
+            db.flush()
+            recalcular_por_insumo(db, insumo_id)
         revisar(db, db_insumo)
         db.commit()
         db.refresh(db_insumo)
