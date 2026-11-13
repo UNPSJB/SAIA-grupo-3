@@ -228,6 +228,7 @@ class Escalado(BaseModel):
     hay_faltantes: bool
 
 
+<<<<<<< HEAD
 class RenglonComposicion(BaseModel):
     renglon_id: int
     orden: int
@@ -270,6 +271,8 @@ class Composicion(BaseModel):
     faltantes: list[FaltanteComposicion]
 
 
+=======
+>>>>>>> dev
 class RecetaDeProducto(BaseModel):
     producto: ProductoResumen
     receta_id: Optional[int] = None

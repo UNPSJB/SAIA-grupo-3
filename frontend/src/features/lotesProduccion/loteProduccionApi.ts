@@ -107,8 +107,14 @@ export async function deleteLoteProduccion(id: number): Promise<LoteProduccion> 
 }
 
 
-export async function cerrarLoteProduccion(id: number): Promise<LoteProduccion> {
-  const response = await fetchWithAuth(`${API_URL}/${id}/cerrar`, { method: 'POST' });
+export async function cerrarLoteProduccion(
+  id: number,
+  cierre?: { confirmar_pasos_pendientes: boolean; motivo: string | null },
+): Promise<LoteProduccion> {
+  const response = await fetchWithAuth(`${API_URL}/${id}/cerrar`, {
+    method: 'POST',
+    body: cierre ? JSON.stringify(cierre) : undefined,
+  });
   if (!response.ok)
     throw new Error(await mensajeDeRespuesta(response, 'Error al cerrar el lote de producción.'));
   return response.json();

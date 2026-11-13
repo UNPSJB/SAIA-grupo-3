@@ -1,5 +1,9 @@
 import { useState } from 'react';
+<<<<<<< HEAD
 import { Alert, Badge, Button, Container, Tab, Tabs } from 'react-bootstrap';
+=======
+import { Alert, Badge, Button, Container } from 'react-bootstrap';
+>>>>>>> dev
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -8,7 +12,10 @@ import { useConsulta } from '../../shared/hooks/useConsulta';
 import { formatearFechaHora } from '../../shared/libreria/fechas';
 import { getReceta, getVersion } from './recetaApi';
 import type { Receta, Version } from './types';
+<<<<<<< HEAD
 import { ComposicionVersion } from './ComposicionVersion';
+=======
+>>>>>>> dev
 import { EscaladoReceta } from './EscaladoReceta';
 import { HistorialVersiones } from './HistorialVersiones';
 import { VersionDetalle } from './VersionDetalle';
@@ -37,7 +44,10 @@ export function RecetaDetallePage() {
   const mensaje = (location.state as { mensaje?: string } | null)?.mensaje;
   const [verHistorial, setVerHistorial] = useState(false);
   const [verEscalado, setVerEscalado] = useState(false);
+<<<<<<< HEAD
   const [pestana, setPestana] = useState('receta');
+=======
+>>>>>>> dev
 
   if (consulta.error) {
     return (
@@ -131,6 +141,7 @@ export function RecetaDetallePage() {
 
       {mostrarHistorial && <HistorialVersiones recetaId={receta.id} versionActualId={version.id} />}
       {puedeEscalar && verEscalado && <EscaladoReceta recetaId={receta.id} version={version} />}
+<<<<<<< HEAD
       {currentUser?.administrar ? (
         <Tabs
           id="receta-pestanas"
@@ -149,6 +160,9 @@ export function RecetaDetallePage() {
       ) : (
         <VersionDetalle version={version} />
       )}
+=======
+      <VersionDetalle version={version} />
+>>>>>>> dev
     </Container>
   );
 }

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 """Migración SQLite repetible para recetas (E9-01, E9-02, E9-04 y E10-01). Detener el backend antes de ejecutarla."""
+=======
+"""Migración SQLite repetible para recetas (E9-01, E9-02 y E9-04). Detener el backend antes de ejecutarla."""
+>>>>>>> dev
 import argparse
 import sqlite3
 from datetime import datetime
@@ -13,6 +17,7 @@ from src.models import ModeloBase
 from src.receta.composicion import recalcular_todas
 from src.unidadMedida.models import UnidadMedida
 
+<<<<<<< HEAD
 FACTORES_CONOCIDOS = {
     "un": 1.0, "par": 2.0,
     "mg": 0.001, "g": 1.0, "kg": 1000.0, "lb": 453.59237,
@@ -20,10 +25,13 @@ FACTORES_CONOCIDOS = {
     "cm": 1.0, "m": 100.0,
 }
 
+=======
+>>>>>>> dev
 COLUMNAS = {
     "insumos": {
         "tipo": "VARCHAR(11) NOT NULL DEFAULT 'INGREDIENTE'",
         "aditivo_referencia_id": "INTEGER REFERENCES aditivos_referencia(id)",
+<<<<<<< HEAD
         "densidad_g_ml": "FLOAT",
         "peso_unidad_g": "FLOAT",
     },
@@ -34,6 +42,9 @@ COLUMNAS = {
         "composicion_calculada_en": "DATETIME",
     },
     "renglones_receta": {"gramos": "FLOAT", "porcentaje": "FLOAT"},
+=======
+    },
+>>>>>>> dev
     "lotes_produccion": {
         "version_receta_id": "INTEGER REFERENCES versiones_receta(id)",
         "factor_receta": "FLOAT",

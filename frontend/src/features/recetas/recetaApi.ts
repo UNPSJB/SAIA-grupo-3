@@ -1,6 +1,9 @@
 import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type {
+<<<<<<< HEAD
   Composicion,
+=======
+>>>>>>> dev
   Escalado,
   InsumoDisponible,
   ModoEscalado,
@@ -61,9 +64,12 @@ export function escalarReceta(
   const params = new URLSearchParams({ [modo]: String(valor) });
   return pedir(`/recetas/${recetaId}/escalado?${params}`, 'No se pudo escalar la receta.');
 }
+<<<<<<< HEAD
 
 export const getComposicion = (versionId: number) =>
   pedir<Composicion>(
     `/recetas/versiones/${versionId}/composicion`,
     'No se pudo calcular la composición.',
   );
+=======
+>>>>>>> dev

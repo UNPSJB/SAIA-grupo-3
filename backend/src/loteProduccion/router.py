@@ -72,10 +72,11 @@ def read_lotes(
 @router.post("/{lote_id}/cerrar", response_model=schemas.LoteProduccion, dependencies=[Depends(tiene_permiso_administrar)])
 def cerrar_lote(
     lote_id: int,
+    datos: schemas.CierreLote | None = None,
     db: Session = Depends(get_db),
     current_personal: Personal = Depends(tiene_permiso_administrar),
 ):
-    return services.cerrar_lote(db, lote_id, current_personal.id)
+    return services.cerrar_lote(db, lote_id, current_personal.id, datos)
 
 
 @router.get("/{lote_id}", response_model=schemas.LoteProduccion, dependencies=[Depends(puede_consultar_operacion)])

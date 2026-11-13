@@ -30,7 +30,8 @@ def test_crear_receta_valida_deja_la_version_1_vigente(client, headers_administr
     assert [paso["nombre"] for paso in vigente["pasos"]] == ["Mezclar", "Hornear"]
     assert vigente["pasos"][1]["punto_control"] is True
     assert vigente["porcion_medida_casera"] == "1 unidad"
-    assert len(receta["versiones"]) == 1
+    assert receta["cantidad_versiones"] == 1
+    assert "versiones" not in receta
 
 
 def test_un_producto_solo_tiene_una_receta(client, headers_administradora, datos_receta):
@@ -99,7 +100,9 @@ def test_modificar_crea_la_version_2_y_archiva_la_1(client, headers_administrado
     assert actualizada["version_vigente"]["numero"] == 2
     assert actualizada["version_vigente"]["motivo"] == "Ajuste de sal"
     assert actualizada["version_vigente"]["renglones"][0]["cantidad"] == 7.5
-    assert [(v["numero"], v["estado"]) for v in actualizada["versiones"]] == [(2, "vigente"), (1, "archivada")]
+    assert actualizada["cantidad_versiones"] == 2
+    historial = client.get(f"/recetas/{receta['id']}/versiones", headers=headers_administradora).json()
+    assert [(v["numero"], v["estado"]) for v in historial] == [(2, "vigente"), (1, "archivada")]
     version_1 = client.get(
         f"/recetas/versiones/{receta['version_vigente']['id']}", headers=headers_administradora
     ).json()

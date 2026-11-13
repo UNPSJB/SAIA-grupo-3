@@ -42,6 +42,7 @@ import { VistaPublicaPage } from '../features/vistaPublica/VistaPublicaPage';
 import { PerfilPage } from '../features/perfil';
 import { RecetaDetallePage, RecetaFormPage, RecetasPage } from '../features/recetas';
 import { AditivosReferenciaPage, ClasesFuncionalesPage } from '../features/aditivos';
+import { ProduccionDelDiaPage } from '../features/produccionDelDia';
 import { ProveedoresPage } from '../features/abastecimiento/ProveedoresPage';
 import { RecepcionesPage } from '../features/abastecimiento/RecepcionesPage';
 import { TrazabilidadInsumosPage } from '../features/lotesProduccion/TrazabilidadInsumosPage';
@@ -84,6 +85,7 @@ export function AppRouter() {
             {/* Operación diaria: requiere capacidad operar */}
             <Route element={<ProtectedRoute requireOperate />}>
               <Route path="checklist" element={<ChecklistPage />} />
+              <Route path="produccion-del-dia" element={<ProduccionDelDiaPage />} />
               <Route path="documentos-vigentes" element={<DocumentosVigentesPage />} />
               <Route path="incidentes/nuevo" element={<IncidentePage />} />
               <Route path="lotes-produccion/nuevo" element={<LoteProduccionPage />} />

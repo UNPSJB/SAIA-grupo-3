@@ -13,6 +13,10 @@ from src.insumos.models import Insumo
 from src.pagination import filtrar_ordenar
 from src.producto.models import Producto
 from src.producto.services import leer_producto
+from src.receta.constants import EstadoVersionReceta
+from src.receta.models import VersionReceta
+from src.produccionDelDia.constants import EstadoPasoLote
+from src.produccionDelDia.generacion import pasos_desde_version
 from src.abastecimiento.models import (
     ConsumoLoteRecepcion,
     ConsumoStockAnterior,
@@ -49,8 +53,22 @@ def _generar_codigo(db: Session, fecha: date) -> str:
     return f"{prefijo}{numero:03d}"
 
 
+def _validar_version_receta(db: Session, lote: schemas.LoteProduccionCreate) -> VersionReceta | None:
+    if lote.version_receta_id is None:
+        return None
+    version = db.get(VersionReceta, lote.version_receta_id)
+    if version is None:
+        raise exceptions.VersionRecetaNoEncontrada()
+    if version.receta.producto_id != lote.producto_id:
+        raise exceptions.RecetaDeOtroProducto()
+    if version.estado != EstadoVersionReceta.VIGENTE:
+        raise exceptions.RecetaDesactualizada()
+    return version
+
+
 def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_id: int) -> LoteProduccion:
     _validar_producto(db, lote.producto_id)
+    version = _validar_version_receta(db, lote)
     _validar_fecha(lote.fecha_produccion)
     ids_insumos = [item.insumo_id for item in lote.insumos]
     if len(ids_insumos) != len(set(ids_insumos)):
@@ -75,6 +93,7 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_i
         **lote.model_dump(exclude={"insumos"}),
         codigo=_generar_codigo(db, lote.fecha_produccion),
         registrado_por_id=registrado_por_id,
+        pasos=pasos_desde_version(version) if version else [],
         insumos_asociados=[
             LoteInsumo(
                 insumo=insumos_por_id[item.insumo_id],
@@ -318,9 +337,20 @@ def eliminar_lote(db: Session, lote_id: int) -> LoteProduccion:
 
 
 
-def cerrar_lote(db: Session, lote_id: int, cerrado_por_id: int) -> LoteProduccion:
+def cerrar_lote(
+    db: Session, lote_id: int, cerrado_por_id: int, datos: schemas.CierreLote | None = None
+) -> LoteProduccion:
     db_lote = leer_lote(db, lote_id)
     _validar_abierto(db_lote)
+    datos = datos or schemas.CierreLote()
+    pendientes = sum(1 for paso in db_lote.pasos if paso.estado == EstadoPasoLote.PENDIENTE)
+    if pendientes:
+        if not datos.confirmar_pasos_pendientes:
+            raise exceptions.PasosPendientes(pendientes)
+        if not datos.motivo:
+            raise exceptions.MotivoCierreObligatorio()
+        db_lote.pasos_pendientes_al_cerrar = pendientes
+        db_lote.motivo_cierre_pendientes = datos.motivo
     db_lote.estado = EstadoLote.CERRADO
     db_lote.fecha_cierre = datetime.now()
     db_lote.cerrado_por_id = cerrado_por_id

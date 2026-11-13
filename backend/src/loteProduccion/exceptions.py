@@ -36,3 +36,24 @@ class InsumoDuplicado(BadRequest):
 
 class StockInsuficiente(BadRequest):
     DETAIL = ErrorCode.STOCK_INSUFICIENTE
+
+
+class VersionRecetaNoEncontrada(NotFound):
+    DETAIL = ErrorCode.VERSION_RECETA_NO_ENCONTRADA
+
+
+class RecetaDeOtroProducto(BadRequest):
+    DETAIL = ErrorCode.RECETA_DE_OTRO_PRODUCTO
+
+
+class RecetaDesactualizada(BadRequest):
+    DETAIL = ErrorCode.RECETA_DESACTUALIZADA
+
+
+class PasosPendientes(BadRequest):
+    def __init__(self, cantidad: int) -> None:
+        super().__init__(ErrorCode.PASOS_PENDIENTES.format(cantidad=cantidad))
+
+
+class MotivoCierreObligatorio(BadRequest):
+    DETAIL = ErrorCode.MOTIVO_CIERRE_OBLIGATORIO
