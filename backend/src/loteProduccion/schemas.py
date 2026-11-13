@@ -71,6 +71,8 @@ class LoteProduccion(BaseModel):
     insumos_asociados: list["LoteInsumoDetalle"] = Field(default_factory=list)
     version_receta: Optional["VersionRecetaResumen"] = None
     factor_receta: Optional[float] = None
+    pasos_pendientes_al_cerrar: Optional[int] = None
+    motivo_cierre_pendientes: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -81,6 +83,16 @@ class VersionRecetaResumen(BaseModel):
     numero: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CierreLote(BaseModel):
+    confirmar_pasos_pendientes: bool = False
+    motivo: Optional[str] = Field(default=None, max_length=500)
+
+    @field_validator("motivo", mode="before")
+    @classmethod
+    def validar_motivo(cls, valor: object) -> Optional[str]:
+        return _texto_opcional(valor)
 
 
 class ConsumoRecepcionCreate(BaseModel):

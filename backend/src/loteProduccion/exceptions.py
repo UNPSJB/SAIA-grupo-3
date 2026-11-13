@@ -48,3 +48,12 @@ class RecetaDeOtroProducto(BadRequest):
 
 class RecetaDesactualizada(BadRequest):
     DETAIL = ErrorCode.RECETA_DESACTUALIZADA
+
+
+class PasosPendientes(BadRequest):
+    def __init__(self, cantidad: int) -> None:
+        super().__init__(ErrorCode.PASOS_PENDIENTES.format(cantidad=cantidad))
+
+
+class MotivoCierreObligatorio(BadRequest):
+    DETAIL = ErrorCode.MOTIVO_CIERRE_OBLIGATORIO

@@ -42,11 +42,19 @@ class LoteProduccion(ModeloBase):
     cerrado_por_id: Mapped[Optional[int]] = mapped_column(ForeignKey("personal.id"), nullable=True)
     version_receta_id: Mapped[Optional[int]] = mapped_column(ForeignKey("versiones_receta.id"), nullable=True)
     factor_receta: Mapped[Optional[float]] = mapped_column(nullable=True)
+    pasos_pendientes_al_cerrar: Mapped[Optional[int]] = mapped_column(nullable=True)
+    motivo_cierre_pendientes: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     producto: Mapped[Producto] = relationship("Producto")
     registrado_por: Mapped[Personal] = relationship("Personal", foreign_keys=[registrado_por_id])
     cerrado_por: Mapped[Optional[Personal]] = relationship("Personal", foreign_keys=[cerrado_por_id])
     version_receta = relationship("src.receta.models.VersionReceta")
+    pasos = relationship(
+        "src.produccionDelDia.models.PasoLote",
+        back_populates="lote",
+        order_by="PasoLote.orden",
+        cascade="all, delete-orphan",
+    )
     insumos_asociados: Mapped[list[LoteInsumo]] = relationship(
         "LoteInsumo", back_populates="lote", cascade="all, delete-orphan"
     )

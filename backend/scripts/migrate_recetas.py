@@ -1,3 +1,4 @@
+"""Migración SQLite repetible para recetas (E9-01, E9-02 y E9-04). Detener el backend antes de ejecutarla."""
 import argparse
 import sqlite3
 from datetime import datetime
@@ -17,6 +18,8 @@ COLUMNAS = {
     "lotes_produccion": {
         "version_receta_id": "INTEGER REFERENCES versiones_receta(id)",
         "factor_receta": "FLOAT",
+        "pasos_pendientes_al_cerrar": "INTEGER",
+        "motivo_cierre_pendientes": "VARCHAR(500)",
     },
 }
 
