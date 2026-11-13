@@ -22,6 +22,10 @@ class Receta(ModeloBase):
     )
 
     @property
+    def cantidad_versiones(self) -> int:
+        return len(self.versiones)
+
+    @property
     def version_vigente(self) -> Optional["VersionReceta"]:
         return next((version for version in self.versiones if version.estado == EstadoVersionReceta.VIGENTE), None)
 
@@ -45,6 +49,10 @@ class VersionReceta(ModeloBase):
     creado_por_id: Mapped[int] = mapped_column(ForeignKey("personal.id"), nullable=False)
     fecha_creacion: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
 
+    composicion_completa: Mapped[bool] = mapped_column(default=False, nullable=False)
+    composicion_total_gramos: Mapped[Optional[float]] = mapped_column(nullable=True)
+    composicion_calculada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
     receta: Mapped[Receta] = relationship(back_populates="versiones")
     rendimiento_unidad = relationship("src.unidadMedida.models.UnidadMedida", foreign_keys=[rendimiento_unidad_id])
     porcion_unidad = relationship("src.unidadMedida.models.UnidadMedida", foreign_keys=[porcion_unidad_id])
@@ -67,6 +75,8 @@ class RenglonReceta(ModeloBase):
     aditivo_referencia_id: Mapped[Optional[int]] = mapped_column(ForeignKey("aditivos_referencia.id"), nullable=True)
     cantidad: Mapped[float] = mapped_column(nullable=False)
     unidad_medida_id: Mapped[int] = mapped_column(ForeignKey("unidad_medida.id"), nullable=False)
+    gramos: Mapped[Optional[float]] = mapped_column(nullable=True)
+    porcentaje: Mapped[Optional[float]] = mapped_column(nullable=True)
 
     insumo = relationship("src.insumos.models.Insumo")
     aditivo_referencia = relationship("src.aditivoReferencia.models.AditivoReferencia")

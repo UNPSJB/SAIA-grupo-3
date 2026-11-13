@@ -14,6 +14,8 @@ class InsumoBase(BaseModel):
     unidad_medida_id: int 
     tipo: TipoInsumo = TipoInsumo.INGREDIENTE
     aditivo_referencia_id: Optional[int] = None
+    densidad_g_ml: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
+    peso_unidad_g: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
 
 class InsumoCreate(InsumoBase):
     pass 
@@ -27,6 +29,8 @@ class InsumoUpdate(BaseModel):
     activo: Optional[bool] = None
     tipo: Optional[TipoInsumo] = None
     aditivo_referencia_id: Optional[int] = None
+    densidad_g_ml: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
+    peso_unidad_g: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
 
 class Insumo(InsumoBase):
     id: int

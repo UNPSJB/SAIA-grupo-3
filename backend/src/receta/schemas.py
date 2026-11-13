@@ -188,9 +188,86 @@ class Receta(BaseModel):
     fecha_creacion: datetime
     producto: ProductoResumen
     version_vigente: Version
-    versiones: list[VersionResumen]
+    cantidad_versiones: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RecetaVigente(BaseModel):
+    receta_id: int
+    producto: ProductoResumen
+    version_vigente: VersionResumen
+    cantidad_ingredientes: int
+    cantidad_pasos: int
+
+
+class RenglonEscalado(BaseModel):
+    insumo: InsumoResumen
+    tipo: TipoInsumo
+    aditivo_referencia: Optional[AditivoReferencia] = None
+    unidad_medida: UnidadMedida
+    cantidad_receta: float
+    cantidad_escalada: float
+    unidad_stock: UnidadMedida
+    cantidad_en_unidad_stock: Optional[float] = None
+    stock_disponible: float
+    stock_suficiente: Optional[bool] = None
+
+
+class Escalado(BaseModel):
+    receta_id: int
+    version_id: int
+    version_numero: int
+    producto: ProductoResumen
+    factor: float
+    rendimiento_receta: float
+    rendimiento_escalado: float
+    rendimiento_unidad: UnidadMedida
+    cantidad_lote: Optional[float] = None
+    renglones: list[RenglonEscalado]
+    hay_faltantes: bool
+
+
+class RenglonComposicion(BaseModel):
+    renglon_id: int
+    orden: int
+    insumo: InsumoResumen
+    tipo: TipoInsumo
+    aditivo_referencia: Optional[AditivoReferencia] = None
+    cantidad: float
+    unidad_medida: UnidadMedida
+    gramos: Optional[float] = None
+    porcentaje: Optional[float] = None
+
+
+class GrupoComposicion(BaseModel):
+    renglones: list[RenglonComposicion]
+    subtotal_gramos: Optional[float] = None
+    subtotal_porcentaje: Optional[float] = None
+
+
+class FaltanteComposicion(BaseModel):
+    insumo: InsumoResumen
+    unidad_medida: UnidadMedida
+    equivalencia: str
+    mensaje: str
+
+
+class Composicion(BaseModel):
+    version_id: int
+    receta_id: int
+    version_numero: int
+    estado: EstadoVersionReceta
+    completa: bool
+    total_gramos: Optional[float] = None
+    calculada_en: Optional[datetime] = None
+    ingredientes: GrupoComposicion
+    aditivos: GrupoComposicion
+    suma_porcentajes: Optional[float] = None
+    diferencia: Optional[float] = None
+    verificacion_ok: bool
+    tolerancia: float
+    faltantes: list[FaltanteComposicion]
 
 
 class RecetaDeProducto(BaseModel):

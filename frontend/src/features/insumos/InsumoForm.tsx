@@ -38,6 +38,8 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
     unidadMedidaId: number | '';
     tipo: TipoInsumo;
     aditivoReferenciaId: string;
+    densidad: string;
+    pesoUnidad: string;
   }>({
     defaultValues: {
       nombre: '',
@@ -45,6 +47,8 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
       unidadMedidaId: '',
       tipo: 'ingrediente',
       aditivoReferenciaId: '',
+      densidad: '',
+      pesoUnidad: '',
     },
   });
   const tipo = useWatch({ control: form.control, name: 'tipo' });
@@ -117,6 +121,8 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
         'aditivoReferenciaId',
         insumoInicial.aditivo_referencia_id ? String(insumoInicial.aditivo_referencia_id) : '',
       );
+      setValue('densidad', insumoInicial.densidad_g_ml ? String(insumoInicial.densidad_g_ml) : '');
+      setValue('pesoUnidad', insumoInicial.peso_unidad_g ? String(insumoInicial.peso_unidad_g) : '');
     }
   }, [insumoInicial, setNombre, setUnidadMedidaId, setValue]);
 
@@ -132,6 +138,8 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
         tipo: valores.tipo,
         aditivo_referencia_id:
           valores.tipo === 'aditivo' ? Number(valores.aditivoReferenciaId) : null,
+        densidad_g_ml: valores.densidad.trim() ? Number(valores.densidad.replace(',', '.')) : null,
+        peso_unidad_g: valores.pesoUnidad.trim() ? Number(valores.pesoUnidad.replace(',', '.')) : null,
       });
     } catch (err: unknown) {
       form.setError('root', {
@@ -267,6 +275,46 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               Avisamos al llegar a este valor o quedar por debajo. Dejalo vacío para desactivar el aviso.
             </Form.Text>
           </Form.Group>
+
+          <fieldset className="border rounded p-3 mb-4">
+            <legend className="fs-6 fw-semibold w-auto px-2 mb-0">
+              Equivalencias para la composición — opcional
+            </legend>
+            <p className="small text-body-secondary">
+              Permiten pasar a gramos las cantidades de las recetas. Completá la densidad si el
+              insumo se usa por volumen (ml, L) y el peso por unidad si se usa por unidades.
+            </p>
+            <div className="row g-3">
+              <Form.Group controlId="InsumoForm-densidad" className="col-sm-6">
+                <Form.Label>Densidad (g por ml)</Form.Label>
+                <Form.Control
+                  inputMode="decimal"
+                  placeholder="Ej.: 0,92 para aceite"
+                  isInvalid={!!form.formState.errors.densidad}
+                  {...form.register('densidad', {
+                    validate: (valor) =>
+                      !valor.trim() ||
+                      Number(valor.replace(',', '.')) > 0 ||
+                      'La densidad debe ser un número mayor a cero.',
+                  })}
+                />
+              </Form.Group>
+              <Form.Group controlId="InsumoForm-pesoUnidad" className="col-sm-6">
+                <Form.Label>Peso por unidad (g)</Form.Label>
+                <Form.Control
+                  inputMode="decimal"
+                  placeholder="Ej.: 50 para un huevo"
+                  isInvalid={!!form.formState.errors.pesoUnidad}
+                  {...form.register('pesoUnidad', {
+                    validate: (valor) =>
+                      !valor.trim() ||
+                      Number(valor.replace(',', '.')) > 0 ||
+                      'El peso por unidad debe ser un número mayor a cero.',
+                  })}
+                />
+              </Form.Group>
+            </div>
+          </fieldset>
 
           <div className="d-flex justify-content-end gap-2">
             <Button variant="secondary" onClick={onCancelar} disabled={enviando}>

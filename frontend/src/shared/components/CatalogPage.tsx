@@ -10,7 +10,15 @@ import { FormErrors } from './FormErrors';
 import { ErrorAlert } from './ErrorAlert';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ListPagination } from './ListPagination';
-type RecordItem = { id: number; activo: boolean; nombre?: string; tipo?: string; sufijo?: string; color?: string };
+type RecordItem = {
+  id: number;
+  activo: boolean;
+  nombre?: string;
+  tipo?: string;
+  sufijo?: string;
+  color?: string;
+  factor_base?: number | null;
+};
 interface CampoColor {
   value: string;
   label: string;
@@ -21,9 +29,18 @@ interface Props {
   fields: Record<string, string>;
   options?: Record<string, string[]>;
   colorField?: CampoColor;
+  optionalFields?: Record<string, string>;
   load: (id: number) => Promise<RecordItem>;
 }
-export function CatalogPage({ title, endpoint, fields, options, colorField, load }: Props) {
+export function CatalogPage({
+  title,
+  endpoint,
+  fields,
+  options,
+  colorField,
+  optionalFields,
+  load,
+}: Props) {
   const route = useCrudRoute(`/${endpoint}`, load);
   const list = usePagedList<RecordItem>(endpoint, route.mode === 'listado');
   const form = useForm<Record<string, string>>({ shouldUnregister: true });
@@ -63,7 +80,12 @@ export function CatalogPage({ title, endpoint, fields, options, colorField, load
       await mutate(
         route.mode === 'editar' ? 'PUT' : 'POST',
         route.mode === 'editar' ? route.item?.id : undefined,
-        Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value.trim()])),
+        Object.fromEntries(
+          Object.entries(values).map(([key, value]) => [
+            key,
+            optionalFields?.[key] !== undefined && !value.trim() ? null : value.trim(),
+          ]),
+        ),
       );
       route.back();
     } catch (err) {
@@ -276,11 +298,15 @@ export function CatalogPage({ title, endpoint, fields, options, colorField, load
                 ) : (
                   <Form.Control
                     {...form.register(key, {
-                      validate: (value) => !!value?.trim() || 'Este campo es obligatorio.',
+                      validate: (value) =>
+                        optionalFields?.[key] !== undefined ||
+                        !!value?.trim() ||
+                        'Este campo es obligatorio.',
                     })}
                     isInvalid={!!form.formState.errors[key]}
                   />
                 )}
+                {optionalFields?.[key] && <Form.Text>{optionalFields[key]}</Form.Text>}
                 {esCampoColor(key) && form.formState.errors[key] && (
                   <div className="invalid-feedback d-block">
                     {String(form.formState.errors[key]?.message ?? '')}

@@ -10,6 +10,7 @@ from src.unidadMedida.services import leer_unidad_medida
 from src.areas.services import validar_nombre_de_ingrediente
 from src.insumos.constants import TipoInsumo
 from src.aditivoReferencia.models import AditivoReferencia
+from src.receta.composicion import recalcular_por_insumo
 
 def _validar_duplicados(db: Session, nombre: str, excluir_id: int | None = None) -> None:
     query_nombre = select(Insumo).where(func.lower(Insumo.nombre) == nombre.strip().lower())
@@ -80,7 +81,7 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
         db_insumo = bloquear_insumo(db, insumo_id, permitir_inactivo=True)
         datos_actualizar = {
             campo: valor for campo, valor in insumo.model_dump(exclude_unset=True).items()
-            if valor is not None or campo == "stock_minimo"
+            if valor is not None or campo in {"stock_minimo", "densidad_g_ml", "peso_unidad_g"}
         }
         tiene_recepciones = db.scalar(
             select(LoteRecepcionInsumo.id)
@@ -104,6 +105,9 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
             datos_actualizar["aditivo_referencia_id"] = _resolver_aditivo_referencia(db, tipo_final, referencia)
         for campo, valor in datos_actualizar.items():
             setattr(db_insumo, campo, valor)
+        if {"densidad_g_ml", "peso_unidad_g"} & datos_actualizar.keys():
+            db.flush()
+            recalcular_por_insumo(db, insumo_id)
         revisar(db, db_insumo)
         db.commit()
         db.refresh(db_insumo)

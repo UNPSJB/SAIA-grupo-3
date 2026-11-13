@@ -18,4 +18,5 @@ class UnidadMedida(ModeloBase):
     tipo: Mapped[TipoUnidadMedida] = mapped_column(nullable=False)
     sufijo: Mapped[str] = mapped_column(nullable=False)
     activo: Mapped[bool] = mapped_column(default=True)
+    factor_base: Mapped[float | None] = mapped_column(nullable=True, default=None)
     insumos = relationship("Insumo", back_populates="unidadMedidaObj")

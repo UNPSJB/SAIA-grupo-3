@@ -1,11 +1,16 @@
 import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type {
+  Composicion,
+  Escalado,
   InsumoDisponible,
+  ModoEscalado,
   NuevaVersion,
   Receta,
   RecetaCreate,
   RecetaDeProducto,
+  RecetaVigente,
   Version,
+  VersionResumen,
 } from './types';
 
 async function pedir<T>(ruta: string, porDefecto: string, opciones: RequestInit = {}): Promise<T> {
@@ -18,6 +23,14 @@ export function listarRecetas(buscar = '', mostrarInactivos = false): Promise<Re
   const params = new URLSearchParams({ buscar, mostrar_inactivos: String(mostrarInactivos) });
   return pedir(`/recetas/?${params}`, 'No se pudieron cargar las recetas.');
 }
+
+export function listarRecetasVigentes(buscar = ''): Promise<RecetaVigente[]> {
+  const params = new URLSearchParams({ buscar });
+  return pedir(`/recetas/vigentes?${params}`, 'No se pudieron cargar las recetas vigentes.');
+}
+
+export const getVersiones = (recetaId: number) =>
+  pedir<VersionResumen[]>(`/recetas/${recetaId}/versiones`, 'No se pudo cargar el historial.');
 
 export const getReceta = (id: number) =>
   pedir<Receta>(`/recetas/${id}`, 'No se encontró la receta.');
@@ -39,3 +52,18 @@ export const guardarNuevaVersion = (recetaId: number, datos: NuevaVersion) =>
     method: 'POST',
     body: JSON.stringify(datos),
   });
+
+export function escalarReceta(
+  recetaId: number,
+  modo: ModoEscalado,
+  valor: number,
+): Promise<Escalado> {
+  const params = new URLSearchParams({ [modo]: String(valor) });
+  return pedir(`/recetas/${recetaId}/escalado?${params}`, 'No se pudo escalar la receta.');
+}
+
+export const getComposicion = (versionId: number) =>
+  pedir<Composicion>(
+    `/recetas/versiones/${versionId}/composicion`,
+    'No se pudo calcular la composición.',
+  );

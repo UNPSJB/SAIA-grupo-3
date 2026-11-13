@@ -9,6 +9,8 @@ INSUMOS = ["Guantes de nitrilo", "Cofias descartables", "Barbijos tricapa", "Del
     "Bolsas de envasado al vacío", "Etiquetas de trazabilidad", "Precintos de seguridad",
     "Esponjas no abrasivas", "Cepillos de uñas", "Fundas para calzado", "Papel absorbente industrial"]
 
+DENSIDADES = {"Agua": 1.0, "Aceite": 0.92, "Leche": 1.03}
+
 INGREDIENTES = [
     ("Harina de trigo", "kg", 500.0),
     ("Azúcar", "kg", 200.0),
@@ -40,7 +42,10 @@ def cargar_insumos(crear, unidades, unidades_por_sufijo):
             {"nombre": nombre},
             unidad_medida_id=unidades_por_sufijo[sufijo].id,
             activo=True,
+            densidad_g_ml=DENSIDADES.get(nombre),
         )
+        if ingrediente.densidad_g_ml is None and nombre in DENSIDADES:
+            ingrediente.densidad_g_ml = DENSIDADES[nombre]
         ingredientes_por_nombre[nombre] = ingrediente
 
     return insumos, ingredientes_por_nombre

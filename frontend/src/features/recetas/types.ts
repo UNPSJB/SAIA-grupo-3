@@ -73,7 +73,15 @@ export interface Receta {
   fecha_creacion: string;
   producto: ProductoResumen;
   version_vigente: Version;
-  versiones: VersionResumen[];
+  cantidad_versiones: number;
+}
+
+export interface RecetaVigente {
+  receta_id: number;
+  producto: ProductoResumen;
+  version_vigente: VersionResumen;
+  cantidad_ingredientes: number;
+  cantidad_pasos: number;
 }
 
 export interface RecetaDeProducto {
@@ -122,3 +130,74 @@ export const ETIQUETA_TIPO: Record<TipoInsumo, string> = {
   ingrediente: 'Ingrediente',
   aditivo: 'Aditivo',
 };
+
+export interface RenglonEscalado {
+  insumo: { id: number; nombre: string; activo: boolean };
+  tipo: TipoInsumo;
+  aditivo_referencia: AditivoReferencia | null;
+  unidad_medida: UnidadMedida;
+  cantidad_receta: number;
+  cantidad_escalada: number;
+  unidad_stock: UnidadMedida;
+  cantidad_en_unidad_stock: number | null;
+  stock_disponible: number;
+  stock_suficiente: boolean | null;
+}
+
+export interface Escalado {
+  receta_id: number;
+  version_id: number;
+  version_numero: number;
+  producto: ProductoResumen;
+  factor: number;
+  rendimiento_receta: number;
+  rendimiento_escalado: number;
+  rendimiento_unidad: UnidadMedida;
+  cantidad_lote: number | null;
+  renglones: RenglonEscalado[];
+  hay_faltantes: boolean;
+}
+
+export type ModoEscalado = 'factor' | 'cantidad_objetivo';
+
+export interface RenglonComposicion {
+  renglon_id: number;
+  orden: number;
+  insumo: { id: number; nombre: string; activo: boolean };
+  tipo: TipoInsumo;
+  aditivo_referencia: AditivoReferencia | null;
+  cantidad: number;
+  unidad_medida: UnidadMedida;
+  gramos: number | null;
+  porcentaje: number | null;
+}
+
+export interface GrupoComposicion {
+  renglones: RenglonComposicion[];
+  subtotal_gramos: number | null;
+  subtotal_porcentaje: number | null;
+}
+
+export interface FaltanteComposicion {
+  insumo: { id: number; nombre: string; activo: boolean };
+  unidad_medida: UnidadMedida;
+  equivalencia: 'factor_unidad' | 'densidad' | 'peso_unidad' | 'tipo_unidad';
+  mensaje: string;
+}
+
+export interface Composicion {
+  version_id: number;
+  receta_id: number;
+  version_numero: number;
+  estado: EstadoVersion;
+  completa: boolean;
+  total_gramos: number | null;
+  calculada_en: string | null;
+  ingredientes: GrupoComposicion;
+  aditivos: GrupoComposicion;
+  suma_porcentajes: number | null;
+  diferencia: number | null;
+  verificacion_ok: boolean;
+  tolerancia: number;
+  faltantes: FaltanteComposicion[];
+}

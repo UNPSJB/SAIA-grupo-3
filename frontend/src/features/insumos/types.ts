@@ -18,6 +18,8 @@ export interface Insumo {
   tipo?: TipoInsumo;
   aditivo_referencia_id?: number | null;
   aditivo_referencia?: AditivoReferencia | null;
+  densidad_g_ml?: number | null;
+  peso_unidad_g?: number | null;
 }
 
 export interface InsumoCreate {
@@ -26,6 +28,8 @@ export interface InsumoCreate {
   unidad_medida_id: number;
   tipo?: TipoInsumo;
   aditivo_referencia_id?: number | null;
+  densidad_g_ml?: number | null;
+  peso_unidad_g?: number | null;
 }
 
 export interface InsumoUpdate {

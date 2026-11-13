@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -21,6 +23,15 @@ def read_recetas(
     mostrar_inactivos: bool = Query(False),
 ):
     return services.listar_recetas(db, buscar, mostrar_inactivos)
+
+
+@router.get(
+    "/vigentes",
+    response_model=list[schemas.RecetaVigente],
+    dependencies=[Depends(puede_consultar_operacion)],
+)
+def read_recetas_vigentes(db: Session = Depends(get_db), buscar: str = Query("", max_length=100)):
+    return services.listar_recetas_vigentes(db, buscar)
 
 
 @router.get(
@@ -59,9 +70,41 @@ def read_version(version_id: int, db: Session = Depends(get_db)):
     return services.leer_version(db, version_id)
 
 
+@router.get(
+    "/versiones/{version_id}/composicion",
+    response_model=schemas.Composicion,
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_composicion(version_id: int, db: Session = Depends(get_db)):
+    return services.obtener_composicion(db, version_id)
+
+
 @router.get("/{receta_id}", response_model=schemas.Receta, dependencies=[Depends(puede_consultar_operacion)])
 def read_receta(receta_id: int, db: Session = Depends(get_db)):
     return services.leer_receta(db, receta_id)
+
+
+@router.get(
+    "/{receta_id}/versiones",
+    response_model=list[schemas.VersionResumen],
+    dependencies=[Depends(puede_consultar_operacion)],
+)
+def read_versiones(receta_id: int, db: Session = Depends(get_db)):
+    return services.listar_versiones(db, receta_id)
+
+
+@router.get(
+    "/{receta_id}/escalado",
+    response_model=schemas.Escalado,
+    dependencies=[Depends(puede_consultar_operacion)],
+)
+def read_escalado(
+    receta_id: int,
+    db: Session = Depends(get_db),
+    factor: Optional[float] = Query(None, gt=0, le=1000, allow_inf_nan=False),
+    cantidad_objetivo: Optional[float] = Query(None, gt=0, allow_inf_nan=False),
+):
+    return services.escalar_receta(db, receta_id, factor, cantidad_objetivo)
 
 
 @router.post(
