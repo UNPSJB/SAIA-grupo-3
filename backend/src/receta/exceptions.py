@@ -62,3 +62,11 @@ class UnidadInvalida(BadRequest):
 class EquipoInvalido(BadRequest):
     def __init__(self, nombre: str) -> None:
         super().__init__(ErrorCode.EQUIPO_INVALIDO.format(nombre=nombre))
+
+
+class OrdenIncompleto(BadRequest):
+    DETAIL = ErrorCode.ORDEN_INCOMPLETO
+
+
+class ComposicionIncompleta(BadRequest):
+    DETAIL = ErrorCode.COMPOSICION_INCOMPLETA

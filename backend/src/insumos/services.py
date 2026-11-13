@@ -81,7 +81,7 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
         db_insumo = bloquear_insumo(db, insumo_id, permitir_inactivo=True)
         datos_actualizar = {
             campo: valor for campo, valor in insumo.model_dump(exclude_unset=True).items()
-            if valor is not None or campo in {"stock_minimo", "densidad_g_ml", "peso_unidad_g"}
+            if valor is not None or campo in {"stock_minimo", "densidad_g_ml", "peso_unidad_g", "denominacion_rotulo"}
         }
         tiene_recepciones = db.scalar(
             select(LoteRecepcionInsumo.id)

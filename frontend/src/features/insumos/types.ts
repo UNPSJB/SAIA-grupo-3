@@ -20,6 +20,7 @@ export interface Insumo {
   aditivo_referencia?: AditivoReferencia | null;
   densidad_g_ml?: number | null;
   peso_unidad_g?: number | null;
+  denominacion_rotulo?: string | null;
 }
 
 export interface InsumoCreate {
@@ -30,6 +31,7 @@ export interface InsumoCreate {
   aditivo_referencia_id?: number | null;
   densidad_g_ml?: number | null;
   peso_unidad_g?: number | null;
+  denominacion_rotulo?: string | null;
 }
 
 export interface InsumoUpdate {

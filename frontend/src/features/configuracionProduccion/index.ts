@@ -1,0 +1,1 @@
+export { ConfiguracionProduccionPage } from './ConfiguracionProduccionPage';

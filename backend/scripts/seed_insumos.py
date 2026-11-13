@@ -11,6 +11,14 @@ INSUMOS = ["Guantes de nitrilo", "Cofias descartables", "Barbijos tricapa", "Del
 
 DENSIDADES = {"Agua": 1.0, "Aceite": 0.92, "Leche": 1.03}
 
+DENOMINACIONES = {
+    "Harina de trigo": "harina de trigo enriquecida (Ley 25.630)",
+    "Aceite": "aceite de girasol",
+    "Leche": "leche entera",
+    "Huevo": "huevo entero",
+    "Carne vacuna": "carne vacuna",
+}
+
 INGREDIENTES = [
     ("Harina de trigo", "kg", 500.0),
     ("Azúcar", "kg", 200.0),
@@ -46,6 +54,8 @@ def cargar_insumos(crear, unidades, unidades_por_sufijo):
         )
         if ingrediente.densidad_g_ml is None and nombre in DENSIDADES:
             ingrediente.densidad_g_ml = DENSIDADES[nombre]
+        if ingrediente.denominacion_rotulo is None and nombre in DENOMINACIONES:
+            ingrediente.denominacion_rotulo = DENOMINACIONES[nombre]
         ingredientes_por_nombre[nombre] = ingrediente
 
     return insumos, ingredientes_por_nombre

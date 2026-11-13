@@ -43,6 +43,7 @@ import { PerfilPage } from '../features/perfil';
 import { RecetaDetallePage, RecetaFormPage, RecetasPage } from '../features/recetas';
 import { AditivosReferenciaPage, ClasesFuncionalesPage } from '../features/aditivos';
 import { ProduccionDelDiaPage } from '../features/produccionDelDia';
+import { ConfiguracionProduccionPage } from '../features/configuracionProduccion';
 import { ProveedoresPage } from '../features/abastecimiento/ProveedoresPage';
 import { RecepcionesPage } from '../features/abastecimiento/RecepcionesPage';
 import { TrazabilidadInsumosPage } from '../features/lotesProduccion/TrazabilidadInsumosPage';
@@ -112,6 +113,7 @@ export function AppRouter() {
               <Route path="recepciones-insumos" element={<RecepcionesPage />} />
               <Route path="recetas/nueva" element={<RecetaFormPage />} />
               <Route path="recetas/:id/nueva-version" element={<RecetaFormPage />} />
+              <Route path="configuracion-produccion" element={<ConfiguracionProduccionPage />} />
               <Route path="clases-funcionales" element={<ClasesFuncionalesPage />} />
               <Route path="clases-funcionales/nuevo" element={<ClasesFuncionalesPage />} />
               <Route path="clases-funcionales/:id" element={<ClasesFuncionalesPage />} />

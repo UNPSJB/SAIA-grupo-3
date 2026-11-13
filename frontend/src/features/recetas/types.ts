@@ -201,3 +201,42 @@ export interface Composicion {
   tolerancia: number;
   faltantes: FaltanteComposicion[];
 }
+
+export interface IngredienteLista {
+  renglon_id: number;
+  insumo: { id: number; nombre: string; activo: boolean };
+  denominacion: string;
+  porcentaje: number | null;
+  posicion: number;
+  fuera_de_orden: boolean;
+}
+
+export interface GrupoAditivosLista {
+  clase_funcional: { id: number; nombre: string; declarar_solo_funcion: boolean };
+  solo_funcion: boolean;
+  declaracion: string;
+  aditivos: {
+    renglon_id: number;
+    insumo: { id: number; nombre: string; activo: boolean };
+    nombre: string;
+    ins: string | null;
+    porcentaje: number | null;
+  }[];
+}
+
+export interface ListaIngredientes {
+  version_id: number;
+  receta_id: number;
+  version_numero: number;
+  estado: EstadoVersion;
+  completa: boolean;
+  manual: boolean;
+  ajustado_por: PersonaResumen | null;
+  ajustado_en: string | null;
+  aviso_orden_anterior: boolean;
+  hay_empates: boolean;
+  formato: 'funcion_nombre' | 'funcion_ins' | 'funcion_nombre_ins';
+  ingredientes: IngredienteLista[];
+  grupos_aditivos: GrupoAditivosLista[];
+  texto: string | null;
+}

@@ -6,6 +6,12 @@ from src.unidadMedida.schemas import UnidadMedida
 from src.insumos.constants import TipoInsumo
 from src.aditivoReferencia.schemas import AditivoReferencia
 
+def _texto_opcional(valor: object) -> Optional[str]:
+    if valor is None:
+        return None
+    texto = str(valor).strip()
+    return texto or None
+
 class InsumoBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -16,6 +22,12 @@ class InsumoBase(BaseModel):
     aditivo_referencia_id: Optional[int] = None
     densidad_g_ml: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
     peso_unidad_g: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
+    denominacion_rotulo: Optional[str] = Field(default=None, max_length=150)
+
+    @field_validator("denominacion_rotulo", mode="before")
+    @classmethod
+    def validar_denominacion(cls, valor: object) -> Optional[str]:
+        return _texto_opcional(valor)
 
 class InsumoCreate(InsumoBase):
     pass 
@@ -31,6 +43,12 @@ class InsumoUpdate(BaseModel):
     aditivo_referencia_id: Optional[int] = None
     densidad_g_ml: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
     peso_unidad_g: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
+    denominacion_rotulo: Optional[str] = Field(default=None, max_length=150)
+
+    @field_validator("denominacion_rotulo", mode="before")
+    @classmethod
+    def validar_denominacion(cls, valor: object) -> Optional[str]:
+        return _texto_opcional(valor)
 
 class Insumo(InsumoBase):
     id: int

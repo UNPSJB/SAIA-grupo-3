@@ -4,6 +4,8 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from src.aditivoReferencia.schemas import AditivoReferencia
+from src.claseFuncional.schemas import ClaseFuncional
+from src.configuracionProduccion.constants import FormatoAditivos
 from src.insumos.constants import TipoInsumo
 from src.receta.constants import MOTIVO_VERSION_INICIAL, EstadoVersionReceta, ErrorCode
 from src.unidadMedida.schemas import UnidadMedida
@@ -268,6 +270,53 @@ class Composicion(BaseModel):
     verificacion_ok: bool
     tolerancia: float
     faltantes: list[FaltanteComposicion]
+
+
+class IngredienteLista(BaseModel):
+    renglon_id: int
+    insumo: InsumoResumen
+    denominacion: str
+    porcentaje: Optional[float] = None
+    posicion: int
+    fuera_de_orden: bool
+
+
+class AditivoLista(BaseModel):
+    renglon_id: int
+    insumo: InsumoResumen
+    nombre: str
+    ins: Optional[str] = None
+    porcentaje: Optional[float] = None
+
+
+class GrupoAditivosLista(BaseModel):
+    clase_funcional: ClaseFuncional
+    solo_funcion: bool
+    declaracion: str
+    aditivos: list[AditivoLista]
+
+
+class ListaIngredientes(BaseModel):
+    version_id: int
+    receta_id: int
+    version_numero: int
+    estado: EstadoVersionReceta
+    completa: bool
+    manual: bool
+    ajustado_por: Optional[PersonaResumen] = None
+    ajustado_en: Optional[datetime] = None
+    aviso_orden_anterior: bool
+    hay_empates: bool
+    formato: FormatoAditivos
+    ingredientes: list[IngredienteLista]
+    grupos_aditivos: list[GrupoAditivosLista]
+    texto: Optional[str] = None
+
+
+class OrdenManual(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    renglon_ids: list[int] = Field(min_length=1)
 
 
 class RecetaDeProducto(BaseModel):

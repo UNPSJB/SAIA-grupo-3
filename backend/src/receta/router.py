@@ -79,6 +79,36 @@ def read_composicion(version_id: int, db: Session = Depends(get_db)):
     return services.obtener_composicion(db, version_id)
 
 
+@router.get(
+    "/versiones/{version_id}/lista-ingredientes",
+    response_model=schemas.ListaIngredientes,
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_lista_ingredientes(version_id: int, db: Session = Depends(get_db)):
+    lista = services.obtener_lista_ingredientes(db, version_id)
+    db.commit()
+    return lista
+
+
+@router.put("/versiones/{version_id}/orden-ingredientes", response_model=schemas.ListaIngredientes)
+def update_orden_ingredientes(
+    version_id: int,
+    datos: schemas.OrdenManual,
+    db: Session = Depends(get_db),
+    persona: Personal = Depends(tiene_permiso_administrar),
+):
+    return services.ajustar_orden_ingredientes(db, version_id, datos, persona)
+
+
+@router.delete(
+    "/versiones/{version_id}/orden-ingredientes",
+    response_model=schemas.ListaIngredientes,
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def delete_orden_ingredientes(version_id: int, db: Session = Depends(get_db)):
+    return services.volver_orden_automatico(db, version_id)
+
+
 @router.get("/{receta_id}", response_model=schemas.Receta, dependencies=[Depends(puede_consultar_operacion)])
 def read_receta(receta_id: int, db: Session = Depends(get_db)):
     return services.leer_receta(db, receta_id)

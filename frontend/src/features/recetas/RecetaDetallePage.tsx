@@ -11,6 +11,7 @@ import type { Receta, Version } from './types';
 import { ComposicionVersion } from './ComposicionVersion';
 import { EscaladoReceta } from './EscaladoReceta';
 import { HistorialVersiones } from './HistorialVersiones';
+import { ListaIngredientesVersion } from './ListaIngredientesVersion';
 import { VersionDetalle } from './VersionDetalle';
 
 async function cargar(
@@ -144,6 +145,13 @@ export function RecetaDetallePage() {
           </Tab>
           <Tab eventKey="composicion" title="Composición">
             <ComposicionVersion versionId={version.id} />
+          </Tab>
+          <Tab eventKey="lista" title="Lista de ingredientes">
+            <ListaIngredientesVersion
+              versionId={version.id}
+              editable={esVigente}
+              onVerComposicion={() => setPestana('composicion')}
+            />
           </Tab>
         </Tabs>
       ) : (

@@ -3,6 +3,7 @@ import type {
   Composicion,
   Escalado,
   InsumoDisponible,
+  ListaIngredientes,
   ModoEscalado,
   NuevaVersion,
   Receta,
@@ -66,4 +67,27 @@ export const getComposicion = (versionId: number) =>
   pedir<Composicion>(
     `/recetas/versiones/${versionId}/composicion`,
     'No se pudo calcular la composición.',
+  );
+
+export const getListaIngredientes = (versionId: number) =>
+  pedir<ListaIngredientes>(
+    `/recetas/versiones/${versionId}/lista-ingredientes`,
+    'No se pudo armar la lista de ingredientes.',
+  );
+
+export const ajustarOrdenIngredientes = (versionId: number, renglonIds: number[]) =>
+  pedir<ListaIngredientes>(
+    `/recetas/versiones/${versionId}/orden-ingredientes`,
+    'No se pudo guardar el orden.',
+    {
+      method: 'PUT',
+      body: JSON.stringify({ renglon_ids: renglonIds }),
+    },
+  );
+
+export const volverOrdenAutomatico = (versionId: number) =>
+  pedir<ListaIngredientes>(
+    `/recetas/versiones/${versionId}/orden-ingredientes`,
+    'No se pudo volver al orden automático.',
+    { method: 'DELETE' },
   );

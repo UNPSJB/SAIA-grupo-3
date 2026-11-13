@@ -97,7 +97,8 @@ SEGUNDA_VERSION = {
 def _cargar_aditivos(crear, unidades_por_sufijo):
     clases = {}
     for nombre in CLASES:
-        clase, _ = crear(ClaseFuncional, {"nombre": nombre}, ins_opcional=nombre == "Aromatizante", activo=True)
+        clase, _ = crear(ClaseFuncional, {"nombre": nombre}, ins_opcional=nombre == "Aromatizante",
+                         declarar_solo_funcion=nombre == "Aromatizante", activo=True)
         clases[nombre] = clase
     aditivos = {}
     for nombre, ins, clase in ADITIVOS:

@@ -52,11 +52,16 @@ class VersionReceta(ModeloBase):
     composicion_completa: Mapped[bool] = mapped_column(default=False, nullable=False)
     composicion_total_gramos: Mapped[Optional[float]] = mapped_column(nullable=True)
     composicion_calculada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    orden_rotulo_manual: Mapped[bool] = mapped_column(default=False, nullable=False)
+    orden_rotulo_ajustado_por_id: Mapped[Optional[int]] = mapped_column(ForeignKey("personal.id"), nullable=True)
+    orden_rotulo_ajustado_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    orden_rotulo_aviso: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     receta: Mapped[Receta] = relationship(back_populates="versiones")
     rendimiento_unidad = relationship("src.unidadMedida.models.UnidadMedida", foreign_keys=[rendimiento_unidad_id])
     porcion_unidad = relationship("src.unidadMedida.models.UnidadMedida", foreign_keys=[porcion_unidad_id])
-    creado_por = relationship("src.personal.models.Personal")
+    creado_por = relationship("src.personal.models.Personal", foreign_keys=[creado_por_id])
+    orden_rotulo_ajustado_por = relationship("src.personal.models.Personal", foreign_keys=[orden_rotulo_ajustado_por_id])
     renglones: Mapped[list["RenglonReceta"]] = relationship(
         order_by="RenglonReceta.orden", cascade="all, delete-orphan"
     )
@@ -77,6 +82,7 @@ class RenglonReceta(ModeloBase):
     unidad_medida_id: Mapped[int] = mapped_column(ForeignKey("unidad_medida.id"), nullable=False)
     gramos: Mapped[Optional[float]] = mapped_column(nullable=True)
     porcentaje: Mapped[Optional[float]] = mapped_column(nullable=True)
+    orden_rotulo: Mapped[Optional[int]] = mapped_column(nullable=True)
 
     insumo = relationship("src.insumos.models.Insumo")
     aditivo_referencia = relationship("src.aditivoReferencia.models.AditivoReferencia")

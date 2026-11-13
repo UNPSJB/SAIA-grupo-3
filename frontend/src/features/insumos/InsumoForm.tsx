@@ -40,6 +40,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
     aditivoReferenciaId: string;
     densidad: string;
     pesoUnidad: string;
+    denominacion: string;
   }>({
     defaultValues: {
       nombre: '',
@@ -49,6 +50,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
       aditivoReferenciaId: '',
       densidad: '',
       pesoUnidad: '',
+      denominacion: '',
     },
   });
   const tipo = useWatch({ control: form.control, name: 'tipo' });
@@ -123,6 +125,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
       );
       setValue('densidad', insumoInicial.densidad_g_ml ? String(insumoInicial.densidad_g_ml) : '');
       setValue('pesoUnidad', insumoInicial.peso_unidad_g ? String(insumoInicial.peso_unidad_g) : '');
+      setValue('denominacion', insumoInicial.denominacion_rotulo ?? '');
     }
   }, [insumoInicial, setNombre, setUnidadMedidaId, setValue]);
 
@@ -140,6 +143,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
           valores.tipo === 'aditivo' ? Number(valores.aditivoReferenciaId) : null,
         densidad_g_ml: valores.densidad.trim() ? Number(valores.densidad.replace(',', '.')) : null,
         peso_unidad_g: valores.pesoUnidad.trim() ? Number(valores.pesoUnidad.replace(',', '.')) : null,
+        denominacion_rotulo: valores.denominacion.trim() || null,
       });
     } catch (err: unknown) {
       form.setError('root', {
@@ -206,6 +210,18 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               />
             </div>
           </Form.Group>
+
+          {tipo === 'ingrediente' && (
+            <Form.Group controlId="InsumoForm-denominacion" className="mb-3">
+              <Form.Label>Denominación para rótulo — opcional</Form.Label>
+              <Form.Control
+                maxLength={150}
+                placeholder={nombre ? `Si queda vacío se usa "${nombre}"` : 'Ej.: harina de trigo enriquecida'}
+                {...form.register('denominacion')}
+              />
+              <Form.Text>Es el nombre con el que aparece en la lista de ingredientes del rótulo.</Form.Text>
+            </Form.Group>
+          )}
 
           {tipo === 'aditivo' && (
             <Form.Group controlId="InsumoForm-aditivoReferencia" className="mb-3">

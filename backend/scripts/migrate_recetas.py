@@ -1,4 +1,4 @@
-"""Migración SQLite repetible para recetas (E9-01, E9-02, E9-04 y E10-01). Detener el backend antes de ejecutarla."""
+"""Migración SQLite repetible para recetas (E9-01 a E10-02). Detener el backend antes de ejecutarla."""
 import argparse
 import sqlite3
 from datetime import datetime
@@ -13,6 +13,8 @@ from src.models import ModeloBase
 from src.receta.composicion import recalcular_todas
 from src.unidadMedida.models import UnidadMedida
 
+TABLAS_EXISTENTES = {"insumos", "lotes_produccion", "unidad_medida"}
+
 FACTORES_CONOCIDOS = {
     "un": 1.0, "par": 2.0,
     "mg": 0.001, "g": 1.0, "kg": 1000.0, "lb": 453.59237,
@@ -26,14 +28,20 @@ COLUMNAS = {
         "aditivo_referencia_id": "INTEGER REFERENCES aditivos_referencia(id)",
         "densidad_g_ml": "FLOAT",
         "peso_unidad_g": "FLOAT",
+        "denominacion_rotulo": "VARCHAR(150)",
     },
+    "clases_funcionales": {"declarar_solo_funcion": "BOOLEAN NOT NULL DEFAULT 0"},
     "unidad_medida": {"factor_base": "FLOAT"},
     "versiones_receta": {
         "composicion_completa": "BOOLEAN NOT NULL DEFAULT 0",
         "composicion_total_gramos": "FLOAT",
         "composicion_calculada_en": "DATETIME",
+        "orden_rotulo_manual": "BOOLEAN NOT NULL DEFAULT 0",
+        "orden_rotulo_ajustado_por_id": "INTEGER REFERENCES personal(id)",
+        "orden_rotulo_ajustado_en": "DATETIME",
+        "orden_rotulo_aviso": "BOOLEAN NOT NULL DEFAULT 0",
     },
-    "renglones_receta": {"gramos": "FLOAT", "porcentaje": "FLOAT"},
+    "renglones_receta": {"gramos": "FLOAT", "porcentaje": "FLOAT", "orden_rotulo": "INTEGER"},
     "lotes_produccion": {
         "version_receta_id": "INTEGER REFERENCES versiones_receta(id)",
         "factor_receta": "FLOAT",
@@ -52,7 +60,9 @@ def migrar(ruta: Path) -> Path | None:
         for tabla, columnas_nuevas in COLUMNAS.items():
             columnas = {fila[1] for fila in db.execute(f'PRAGMA table_info("{tabla}")')}
             if not columnas:
-                raise ValueError(f"Falta la tabla {tabla}; verificá que elegiste la BDD del proyecto.")
+                if tabla in TABLAS_EXISTENTES:
+                    raise ValueError(f"Falta la tabla {tabla}; verificá que elegiste la BDD del proyecto.")
+                continue
             pendientes += [(tabla, columna, tipo) for columna, tipo in columnas_nuevas.items() if columna not in columnas]
         tablas = {fila[0] for fila in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         if not pendientes and "recetas" in tablas:
@@ -68,6 +78,10 @@ def migrar(ruta: Path) -> Path | None:
         try:
             for tabla, columna, tipo in pendientes:
                 db.execute(f'ALTER TABLE "{tabla}" ADD COLUMN "{columna}" {tipo}')
+            if ("clases_funcionales", "declarar_solo_funcion") in {(t, c) for t, c, _ in pendientes}:
+                db.execute(
+                    "UPDATE clases_funcionales SET declarar_solo_funcion = 1 WHERE lower(nombre) LIKE 'aromatizante%'"
+                )
             db.commit()
         except Exception:
             db.rollback()

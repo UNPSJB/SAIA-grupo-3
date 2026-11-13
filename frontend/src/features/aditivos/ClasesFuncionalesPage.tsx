@@ -23,12 +23,18 @@ function ClaseFuncionalForm({
   onGuardado: () => void;
   onCancelar: () => void;
 }) {
-  const form = useForm<ClaseFuncionalDatos>({ defaultValues: { nombre: '', ins_opcional: false } });
+  const form = useForm<ClaseFuncionalDatos>({
+    defaultValues: { nombre: '', ins_opcional: false, declarar_solo_funcion: false },
+  });
   const { errors, isSubmitting, submitCount } = form.formState;
   const { reset } = form;
 
   useEffect(() => {
-    reset({ nombre: clase?.nombre ?? '', ins_opcional: clase?.ins_opcional ?? false });
+    reset({
+      nombre: clase?.nombre ?? '',
+      ins_opcional: clase?.ins_opcional ?? false,
+      declarar_solo_funcion: clase?.declarar_solo_funcion ?? false,
+    });
   }, [clase, reset]);
 
   const enviar = form.handleSubmit(async (datos) => {
@@ -65,6 +71,13 @@ function ClaseFuncionalForm({
               type="switch"
               label="El número INS es opcional (por ejemplo, aromatizantes)"
               {...form.register('ins_opcional')}
+            />
+          </Form.Group>
+          <Form.Group controlId="clase-solo-funcion" className="mb-4">
+            <Form.Check
+              type="switch"
+              label="En el rótulo se declara solo por su función (por ejemplo, aromatizantes)"
+              {...form.register('declarar_solo_funcion')}
             />
           </Form.Group>
           <div className="d-flex justify-content-end gap-2">
@@ -137,6 +150,7 @@ export function ClasesFuncionalesPage() {
                     <SortableHeader column="ins_opcional" {...list}>
                       Número INS
                     </SortableHeader>
+                    <th>Rótulo</th>
                     <SortableHeader column="activo" {...list}>
                       Estado
                     </SortableHeader>
@@ -150,6 +164,7 @@ export function ClasesFuncionalesPage() {
                     <tr key={clase.id}>
                       <td>{clase.nombre}</td>
                       <td>{clase.ins_opcional ? 'Opcional' : 'Obligatorio'}</td>
+                      <td>{clase.declarar_solo_funcion ? 'Solo función' : 'Función y aditivo'}</td>
                       <td>
                         <Badge bg={clase.activo ? 'success' : 'danger'}>
                           {clase.activo ? 'Activa' : 'Inactiva'}
@@ -167,7 +182,7 @@ export function ClasesFuncionalesPage() {
                   ))}
                   {!list.loading && list.items.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="text-center py-4 text-muted">
+                      <td colSpan={5} className="text-center py-4 text-muted">
                         No hay resultados.
                       </td>
                     </tr>

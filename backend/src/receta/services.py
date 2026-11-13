@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -14,6 +16,8 @@ from src.unidadMedida.conversion import convertir
 from src.unidadMedida.models import UnidadMedida
 from src.receta.constants import DECIMALES_ESCALADO, DECIMALES_PORCENTAJE, TOLERANCIA_COMPOSICION
 from src.receta.composicion import a_gramos, calcular_composicion, mensaje_faltante
+from src.receta.lista_ingredientes import armar_lista, heredar_orden_manual
+from src.configuracionProduccion.services import obtener_configuracion
 
 ETIQUETA_TIPO = {TipoInsumo.INGREDIENTE: "ingrediente", TipoInsumo.ADITIVO: "aditivo"}
 
@@ -126,6 +130,7 @@ def guardar_nueva_version(db: Session, receta_id: int, datos: schemas.NuevaVersi
     receta.versiones.append(nueva)
     db.flush()
     calcular_composicion(nueva)
+    heredar_orden_manual(vigente, nueva)
     db.commit()
     db.refresh(receta)
     return receta
@@ -330,3 +335,49 @@ def obtener_composicion(db: Session, version_id: int) -> schemas.Composicion:
         tolerancia=TOLERANCIA_COMPOSICION,
         faltantes=faltantes,
     )
+
+
+def obtener_lista_ingredientes(db: Session, version_id: int) -> schemas.ListaIngredientes:
+    version = leer_version(db, version_id)
+    formato = obtener_configuracion(db).formato_aditivos
+    return armar_lista(version, formato)
+
+
+def _version_editable(db: Session, version_id: int) -> VersionReceta:
+    version = leer_version(db, version_id)
+    if version.estado != EstadoVersionReceta.VIGENTE:
+        raise exceptions.VersionArchivada(version.numero)
+    return version
+
+
+def ajustar_orden_ingredientes(
+    db: Session, version_id: int, datos: schemas.OrdenManual, persona: Personal
+) -> schemas.ListaIngredientes:
+    version = _version_editable(db, version_id)
+    if not version.composicion_completa:
+        raise exceptions.ComposicionIncompleta()
+    ingredientes = {r.id: r for r in version.renglones if r.tipo == TipoInsumo.INGREDIENTE}
+    if len(datos.renglon_ids) != len(set(datos.renglon_ids)) or set(datos.renglon_ids) != set(ingredientes):
+        raise exceptions.OrdenIncompleto()
+    for posicion, renglon_id in enumerate(datos.renglon_ids, start=1):
+        ingredientes[renglon_id].orden_rotulo = posicion
+    version.orden_rotulo_manual = True
+    version.orden_rotulo_ajustado_por_id = persona.id
+    version.orden_rotulo_ajustado_en = datetime.now()
+    version.orden_rotulo_aviso = False
+    db.commit()
+    db.refresh(version)
+    return obtener_lista_ingredientes(db, version_id)
+
+
+def volver_orden_automatico(db: Session, version_id: int) -> schemas.ListaIngredientes:
+    version = _version_editable(db, version_id)
+    for renglon in version.renglones:
+        renglon.orden_rotulo = None
+    version.orden_rotulo_manual = False
+    version.orden_rotulo_ajustado_por_id = None
+    version.orden_rotulo_ajustado_en = None
+    version.orden_rotulo_aviso = False
+    db.commit()
+    db.refresh(version)
+    return obtener_lista_ingredientes(db, version_id)

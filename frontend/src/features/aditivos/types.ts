@@ -2,12 +2,14 @@ export interface ClaseFuncional {
   id: number;
   nombre: string;
   ins_opcional: boolean;
+  declarar_solo_funcion: boolean;
   activo: boolean;
 }
 
 export interface ClaseFuncionalDatos {
   nombre: string;
   ins_opcional: boolean;
+  declarar_solo_funcion: boolean;
 }
 
 export interface AditivoReferencia {
