@@ -182,17 +182,8 @@ def cargar_recetas(crear, productos, ingredientes, unidades_por_sufijo, equipos,
                 ingredientes, aditivos, unidades_por_sufijo, equipos, admin, dict(cambios),
             )
         recetas.append(receta)
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feature/composicionporcentual
     for receta in recetas:
         for version in receta.versiones:
             if version.composicion_calculada_en is None or not version.composicion_completa:
                 calcular_composicion(version)
-<<<<<<< HEAD
-=======
->>>>>>> dev
-=======
->>>>>>> origin/feature/composicionporcentual
     return recetas, aditivos
