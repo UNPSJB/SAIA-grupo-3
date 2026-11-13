@@ -83,6 +83,12 @@ export function LoteProduccionView({
         <Button variant="secondary" onClick={onVolver}>
           Volver al listado
         </Button>
+        {lote.version_receta && lote.estado === 'abierto' && (
+          <Link to="/produccion-del-dia" className="btn btn-success">
+            <i className="bi bi-list-check me-1" aria-hidden="true" />
+            Seguir los pasos en Producción del día
+          </Link>
+        )}
       </Card.Footer>
     </Card>
   );

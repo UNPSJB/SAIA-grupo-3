@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Button, Card, Modal } from 'react-bootstrap';
+import { Alert, Button, Card, Form, Modal } from 'react-bootstrap';
+import { useConsulta } from '../../shared/hooks/useConsulta';
+import { getPasosDelLote, PasosLoteHistorial } from '../produccionDelDia';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
 import { EstadoLoteBadge } from './EstadoLoteBadge';
@@ -17,12 +19,22 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
   const [confirmando, setConfirmando] = useState(false);
   const [cerrando, setCerrando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [motivo, setMotivo] = useState('');
+  const pasos = useConsulta(() => getPasosDelLote(lote.id), [lote.id, lote.estado]);
+  const pendientes = (pasos.datos ?? []).filter((paso) => paso.estado === 'pendiente').length;
 
   const cerrar = async () => {
+    if (pendientes > 0 && !motivo.trim()) {
+      setError('Indicá el motivo para cerrar el lote con pasos sin realizar.');
+      return;
+    }
     setCerrando(true);
     setError(null);
     try {
-      await cerrarLoteProduccion(lote.id);
+      await cerrarLoteProduccion(
+        lote.id,
+        pendientes > 0 ? { confirmar_pasos_pendientes: true, motivo: motivo.trim() } : undefined,
+      );
       setConfirmando(false);
       await onCerrado();
     } catch (err) {
@@ -45,10 +57,22 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
     },
     { titulo: 'Observaciones', valor: lote.observaciones ?? '—' },
   ];
+  if (lote.version_receta) {
+    filas.push({
+      titulo: 'Receta',
+      valor: `Versión ${lote.version_receta.numero}${lote.factor_receta !== null ? ` · factor ×${lote.factor_receta.toLocaleString('es-AR')}` : ''}`,
+    });
+  }
   if (lote.estado === 'cerrado' && lote.cerrado_por) {
     filas.push({
       titulo: 'Cerrado por',
       valor: `${lote.cerrado_por.apellido}, ${lote.cerrado_por.nombre} (${formatearFechaHora(lote.fecha_cierre)})`,
+    });
+  }
+  if (lote.pasos_pendientes_al_cerrar) {
+    filas.push({
+      titulo: 'Cerrado con pasos pendientes',
+      valor: `${lote.pasos_pendientes_al_cerrar} paso(s) sin realizar. Motivo: ${lote.motivo_cierre_pendientes ?? '—'}`,
     });
   }
 
@@ -101,6 +125,8 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
             </table>
           </div>
         )}
+        {pasos.error && <ErrorAlert mensaje={pasos.error} />}
+        {pasos.datos && pasos.datos.length > 0 && <PasosLoteHistorial pasos={pasos.datos} />}
         <TrazabilidadProduccionDetalle loteId={lote.id} />
       </Card.Body>
       <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
@@ -119,15 +145,40 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
           <Modal.Title className="fs-5">Cerrar lote {lote.codigo}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          Una vez cerrado, el lote queda de solo lectura: no se podrá modificar ni dar de baja.
-          ¿Querés continuar?
+          {error && <ErrorAlert mensaje={error} />}
+          {pendientes > 0 && (
+            <Alert variant="warning">
+              <i className="bi bi-exclamation-triangle me-2" aria-hidden="true" />
+              El lote tiene <strong>{pendientes}</strong> paso{pendientes > 1 ? 's' : ''} de la
+              receta sin realizar. Si lo cerrás igual, la decisión y el motivo quedan registrados.
+            </Alert>
+          )}
+          <p>
+            Una vez cerrado, el lote queda de solo lectura: no se podrá modificar ni dar de baja.
+            ¿Querés continuar?
+          </p>
+          {pendientes > 0 && (
+            <Form.Group controlId="cierre-motivo">
+              <Form.Label>Motivo para cerrar con pasos pendientes</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                maxLength={500}
+                value={motivo}
+                onChange={(evento) => {
+                  setMotivo(evento.target.value);
+                  setError(null);
+                }}
+              />
+            </Form.Group>
+          )}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setConfirmando(false)} disabled={cerrando}>
             Cancelar
           </Button>
           <Button variant="danger" onClick={cerrar} disabled={cerrando}>
-            {cerrando ? 'Cerrando...' : 'Cerrar lote'}
+            {cerrando ? 'Cerrando...' : pendientes > 0 ? 'Cerrar igual' : 'Cerrar lote'}
           </Button>
         </Modal.Footer>
       </Modal>

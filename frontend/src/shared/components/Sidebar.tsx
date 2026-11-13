@@ -46,6 +46,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: '/reportes/consumos', label: 'Consumo de Insumos Químicos', icono: 'bi bi-bar-chart-line' },
     { to: "/consumos", label: "Registros de Consumo", icono: "bi bi-droplet" },
     { to: '/recetas', label: 'Recetas', icono: 'bi bi-journal-bookmark', permiso: 'consultarOperacion' },
+    { to: '/produccion-del-dia', label: 'Producción del día', icono: 'bi bi-list-check', permiso: 'operar' },
     { to: '/lotes-produccion', label: 'Lotes de Producción', icono: 'bi bi-box2', permiso: 'consultarOperacion' },
     { to: "/documentos-vigentes", label: "Documentos vigentes", icono: "bi bi-journal-check", permiso: "operar" },
     { to: "/documentos-tecnicos", label: "Documentos Técnicos", icono: "bi bi-journal-text" },
@@ -115,7 +116,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const instanceId = useId();
   const secciones = [
     { id: 'gestion', label: 'Gestión', icono: 'bi bi-graph-up', rutas: ['/tablero', '/vista-publica/configuracion'] },
-    { id: 'produccion', label: 'Producción', icono: 'bi bi-basket2', rutas: ['/recetas', '/lotes-produccion', '/recepciones-insumos', '/lotes', '/trazabilidad-insumos'] },
+    { id: 'produccion', label: 'Producción', icono: 'bi bi-basket2', rutas: ['/produccion-del-dia', '/recetas', '/lotes-produccion', '/recepciones-insumos', '/lotes', '/trazabilidad-insumos'] },
     { id: 'limpieza', label: 'Limpieza', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/planes', '/auditoria', '/consumos', '/reportes/consumos'] },
     { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/registro-temperatura', '/vencimientos', '/incidentes'] },
     { id: 'documentacion', label: 'Documentación', icono: 'bi bi-files', rutas: ['/documentos-vigentes', '/documentos-tecnicos'] },
@@ -151,7 +152,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const grupoAbierto = expansion?.pathname === location.pathname
     ? expansion.grupo
     : grupoActivo ?? null;
-  const accesos = ['/checklist', '/recetas', '/vencimientos', '/tablero']
+  const accesos = ['/checklist', '/produccion-del-dia', '/recetas', '/vencimientos', '/tablero']
     .flatMap((ruta) => menuVisible.filter((item) => item.to === ruta));
   const inicio = menuVisible.find((item) => item.to === '/inicio');
   const renderEnlace = (item: MenuItem) => item.to && (

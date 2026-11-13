@@ -18,6 +18,7 @@ const rutasNavegacion = [
   { ruta: '/tablero', titulo: 'Tablero de gestión', seccion: 'Gestión' },
   { ruta: '/vista-publica/configuracion', titulo: 'Vista pública', seccion: 'Gestión' },
   { ruta: '/recetas', titulo: 'Recetas', seccion: 'Producción' },
+  { ruta: '/produccion-del-dia', titulo: 'Producción del día', seccion: 'Producción' },
   { ruta: '/lotes-produccion', titulo: 'Lotes de producción', seccion: 'Producción' },
   { ruta: '/recepciones-insumos', titulo: 'Recepción de insumos', seccion: 'Producción' },
   { ruta: '/lotes', titulo: 'Historial de lotes', seccion: 'Producción' },

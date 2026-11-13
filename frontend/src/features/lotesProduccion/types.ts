@@ -67,6 +67,8 @@ export interface LoteProduccion {
   insumos_asociados: LoteInsumo[];
   version_receta: { id: number; receta_id: number; numero: number } | null;
   factor_receta: number | null;
+  pasos_pendientes_al_cerrar: number | null;
+  motivo_cierre_pendientes: string | null;
 }
 
 export interface PrecargaLote {
