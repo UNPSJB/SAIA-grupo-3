@@ -79,7 +79,7 @@ session = db_session
 
 @pytest.fixture
 def unidad_medida(db_session):
-    unidad = UnidadMedida(tipo=TipoUnidadMedida.PESO, sufijo="kg", activo=True)
+    unidad = UnidadMedida(tipo=TipoUnidadMedida.PESO, sufijo="kg", activo=True, factor_base=1000)
     db_session.add(unidad)
     db_session.commit()
     db_session.refresh(unidad)

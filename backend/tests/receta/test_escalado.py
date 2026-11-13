@@ -78,7 +78,7 @@ def test_informa_el_stock_y_avisa_si_no_alcanza(client, headers_operadora, recet
 def test_convierte_a_la_unidad_del_insumo_para_comparar_stock(
     client, db_session, headers_administradora, headers_operadora, datos_receta, lote_recepcion
 ):
-    gramos = UnidadMedida(tipo=TipoUnidadMedida.PESO, sufijo="g", activo=True)
+    gramos = UnidadMedida(tipo=TipoUnidadMedida.PESO, sufijo="g", activo=True, factor_base=1)
     db_session.add(gramos)
     db_session.commit()
     datos = datos_receta()

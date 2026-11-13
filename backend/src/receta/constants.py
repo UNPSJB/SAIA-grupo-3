@@ -3,11 +3,8 @@ from enum import StrEnum, auto
 PREFIJO_RUTA = "/recetas"
 MOTIVO_VERSION_INICIAL = "Versión inicial"
 DECIMALES_ESCALADO = 3
-<<<<<<< HEAD
 DECIMALES_PORCENTAJE = 2
 TOLERANCIA_COMPOSICION = 0.1
-=======
->>>>>>> dev
 
 
 class EstadoVersionReceta(StrEnum):

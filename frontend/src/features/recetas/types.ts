@@ -159,7 +159,6 @@ export interface Escalado {
 }
 
 export type ModoEscalado = 'factor' | 'cantidad_objetivo';
-<<<<<<< HEAD
 
 export interface RenglonComposicion {
   renglon_id: number;
@@ -202,5 +201,3 @@ export interface Composicion {
   tolerancia: number;
   faltantes: FaltanteComposicion[];
 }
-=======
->>>>>>> dev

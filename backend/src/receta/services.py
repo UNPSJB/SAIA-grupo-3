@@ -12,12 +12,8 @@ from src.receta.constants import EstadoVersionReceta
 from src.receta.models import PasoReceta, Receta, RenglonReceta, VersionReceta
 from src.unidadMedida.conversion import convertir
 from src.unidadMedida.models import UnidadMedida
-<<<<<<< HEAD
 from src.receta.constants import DECIMALES_ESCALADO, DECIMALES_PORCENTAJE, TOLERANCIA_COMPOSICION
 from src.receta.composicion import a_gramos, calcular_composicion, mensaje_faltante
-=======
-from src.receta.constants import DECIMALES_ESCALADO
->>>>>>> dev
 
 ETIQUETA_TIPO = {TipoInsumo.INGREDIENTE: "ingrediente", TipoInsumo.ADITIVO: "aditivo"}
 
@@ -259,7 +255,6 @@ def escalar_receta(
         renglones=renglones,
         hay_faltantes=any(not r.insumo.activo or r.stock_suficiente is False for r in renglones),
     )
-<<<<<<< HEAD
 
 
 def _grupo(renglones: list[RenglonReceta], completa: bool) -> schemas.GrupoComposicion:
@@ -335,5 +330,3 @@ def obtener_composicion(db: Session, version_id: int) -> schemas.Composicion:
         tolerancia=TOLERANCIA_COMPOSICION,
         faltantes=faltantes,
     )
-=======
->>>>>>> dev
