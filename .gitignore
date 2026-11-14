@@ -328,4 +328,6 @@ backend/almacenamiento/
 backend/uploads/
 backend/archivos/
 
+*.bak
+
 # End of https://www.toptal.com/developers/gitignore/api/react,node,python

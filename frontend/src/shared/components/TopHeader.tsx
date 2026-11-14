@@ -41,6 +41,8 @@ const rutasNavegacion = [
   { ruta: '/proveedores', titulo: 'Proveedores', seccion: 'Maestros de producción' },
   { ruta: '/clases-funcionales', titulo: 'Clases funcionales', seccion: 'Maestros de producción' },
   { ruta: '/aditivos-referencia', titulo: 'Aditivos de referencia', seccion: 'Maestros de producción' },
+  { ruta: '/alimentos-referencia', titulo: 'Alimentos de referencia', seccion: 'Maestros de producción' },
+  { ruta: '/configuracion-produccion', titulo: 'Configuración de producción', seccion: 'Maestros de producción' },
   { ruta: '/tarea', titulo: 'Tareas', seccion: 'Maestros de limpieza' },
   { ruta: '/elementos', titulo: 'Elementos de limpieza', seccion: 'Maestros de limpieza' },
   { ruta: '/insumos-quimicos', titulo: 'Insumos químicos', seccion: 'Maestros de limpieza' },

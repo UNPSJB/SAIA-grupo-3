@@ -23,6 +23,7 @@ class InsumoBase(BaseModel):
     densidad_g_ml: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
     peso_unidad_g: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
     denominacion_rotulo: Optional[str] = Field(default=None, max_length=150)
+    aporta_energia_sodio: bool = False
 
     @field_validator("denominacion_rotulo", mode="before")
     @classmethod
@@ -44,6 +45,7 @@ class InsumoUpdate(BaseModel):
     densidad_g_ml: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
     peso_unidad_g: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
     denominacion_rotulo: Optional[str] = Field(default=None, max_length=150)
+    aporta_energia_sodio: Optional[bool] = None
 
     @field_validator("denominacion_rotulo", mode="before")
     @classmethod

@@ -75,6 +75,8 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         { to: '/proveedores', label: 'Proveedores', icono: 'bi bi-truck', permiso: 'administrar' },
         { to: '/clases-funcionales', label: 'Clases funcionales', icono: 'bi bi-tags' },
         { to: '/aditivos-referencia', label: 'Aditivos de referencia', icono: 'bi bi-capsule' },
+        { to: '/alimentos-referencia', label: 'Alimentos de referencia', icono: 'bi bi-clipboard2-pulse' },
+        { to: '/configuracion-produccion', label: 'Configuración de producción', icono: 'bi bi-sliders' },
       ],
     },
     {

@@ -16,6 +16,7 @@ class Insumo(ModeloBase):
     unidad_medida_id: Mapped[int] = mapped_column(ForeignKey("unidad_medida.id"), nullable=False)
     activo: Mapped[bool] = mapped_column(default=True, nullable=False)
     tipo: Mapped[TipoInsumo] = mapped_column(default=TipoInsumo.INGREDIENTE, nullable=False)
+    aporta_energia_sodio: Mapped[bool] = mapped_column(default=False, nullable=False)
     denominacion_rotulo: Mapped[str | None] = mapped_column(nullable=True, default=None)
     densidad_g_ml: Mapped[float | None] = mapped_column(nullable=True, default=None)
     peso_unidad_g: Mapped[float | None] = mapped_column(nullable=True, default=None)

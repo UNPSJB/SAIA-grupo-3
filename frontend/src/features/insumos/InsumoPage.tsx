@@ -1,4 +1,4 @@
-import { Container, Button } from 'react-bootstrap';
+import { Container, Button, Tab, Tabs } from 'react-bootstrap';
 import { InsumoList } from './InsumoList';
 import { InsumoForm } from './InsumoForm';
 import { InsumoView } from './InsumoView';
@@ -9,6 +9,7 @@ import type { Insumo, InsumoCreate } from './types';
 import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
+import { NutricionInsumo } from '../nutricion';
 
 export function InsumoPage() {
   const route = useCrudRoute<Insumo>('/insumos', getInsumoById);
@@ -44,13 +45,23 @@ export function InsumoPage() {
       {mode === 'ver' && item && (
         <InsumoView insumo={item} onEditar={() => open(item, 'editar')} onVolver={back} />
       )}
-      {(mode === 'crear' || (mode === 'editar' && item)) && (
-        <InsumoForm
-          key={item?.id ?? 'nuevo'}
-          insumoInicial={mode === 'crear' ? null : item}
-          onGuardar={handleGuardar}
-          onCancelar={back}
-        />
+      {mode === 'crear' && (
+        <InsumoForm key="nuevo" insumoInicial={null} onGuardar={handleGuardar} onCancelar={back} />
+      )}
+      {mode === 'editar' && item && (
+        <Tabs defaultActiveKey="datos" id="insumo-pestanas" className="mb-3" mountOnEnter>
+          <Tab eventKey="datos" title="Datos">
+            <InsumoForm
+              key={item.id}
+              insumoInicial={item}
+              onGuardar={handleGuardar}
+              onCancelar={back}
+            />
+          </Tab>
+          <Tab eventKey="nutricion" title="Información nutricional">
+            <NutricionInsumo key={item.id} insumoId={item.id} />
+          </Tab>
+        </Tabs>
       )}
       {mode === 'eliminar' && item && item.id !== undefined && (
         <InsumoDeleteView

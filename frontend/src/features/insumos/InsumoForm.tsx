@@ -41,6 +41,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
     densidad: string;
     pesoUnidad: string;
     denominacion: string;
+    aportaEnergiaSodio: boolean;
   }>({
     defaultValues: {
       nombre: '',
@@ -51,6 +52,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
       densidad: '',
       pesoUnidad: '',
       denominacion: '',
+      aportaEnergiaSodio: false,
     },
   });
   const tipo = useWatch({ control: form.control, name: 'tipo' });
@@ -126,6 +128,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
       setValue('densidad', insumoInicial.densidad_g_ml ? String(insumoInicial.densidad_g_ml) : '');
       setValue('pesoUnidad', insumoInicial.peso_unidad_g ? String(insumoInicial.peso_unidad_g) : '');
       setValue('denominacion', insumoInicial.denominacion_rotulo ?? '');
+      setValue('aportaEnergiaSodio', insumoInicial.aporta_energia_sodio ?? false);
     }
   }, [insumoInicial, setNombre, setUnidadMedidaId, setValue]);
 
@@ -144,6 +147,7 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
         densidad_g_ml: valores.densidad.trim() ? Number(valores.densidad.replace(',', '.')) : null,
         peso_unidad_g: valores.pesoUnidad.trim() ? Number(valores.pesoUnidad.replace(',', '.')) : null,
         denominacion_rotulo: valores.denominacion.trim() || null,
+        aporta_energia_sodio: valores.tipo === 'aditivo' && valores.aportaEnergiaSodio,
       });
     } catch (err: unknown) {
       form.setError('root', {
@@ -249,6 +253,17 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
                 ))}
               </SearchableSelect>
               <Form.Text>Define su clase funcional y su número INS en las recetas.</Form.Text>
+              <Form.Check
+                type="checkbox"
+                id="InsumoForm-aportaEnergiaSodio"
+                className="mt-2"
+                label="Aporta energía o sodio"
+                {...form.register('aportaEnergiaSodio')}
+              />
+              <Form.Text>
+                Marcalo si el aditivo suma calorías o sodio al producto (por ejemplo, el
+                bicarbonato). Solo entonces se cargan su energía y su sodio.
+              </Form.Text>
             </Form.Group>
           )}
 

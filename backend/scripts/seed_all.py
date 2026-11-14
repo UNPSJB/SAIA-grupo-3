@@ -26,6 +26,7 @@ from scripts.seed_insumos_quimicos import cargar_insumos_quimicos
 from scripts.seed_lotes_produccion import cargar_lotes_produccion
 from scripts.seed_personal import cargar_personal
 from scripts.seed_planes import cargar_planes
+from scripts.seed_nutricion import cargar_nutricion
 from scripts.seed_produccion_del_dia import cargar_pasos_lotes
 from scripts.seed_productos import cargar_productos
 from scripts.seed_recetas import cargar_recepciones_aditivos, cargar_recetas
@@ -78,6 +79,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             )
             productos = cargar_productos(crear, unidades_por_sufijo)
             _, aditivos = cargar_recetas(crear, productos, ingredientes, unidades_por_sufijo, equipos, admin)
+            cargar_nutricion(db, ingredientes, aditivos, admin)
             proveedores = cargar_abastecimiento_demo(
                 db, crear, unidades_por_sufijo, admin.id, hoy, insumos_maestros
             )

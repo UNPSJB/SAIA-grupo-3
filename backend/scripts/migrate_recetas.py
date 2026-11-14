@@ -1,4 +1,3 @@
-"""Migración SQLite repetible para recetas (E9-01 a E10-02). Detener el backend antes de ejecutarla."""
 import argparse
 import sqlite3
 from datetime import datetime
@@ -29,6 +28,7 @@ COLUMNAS = {
         "densidad_g_ml": "FLOAT",
         "peso_unidad_g": "FLOAT",
         "denominacion_rotulo": "VARCHAR(150)",
+        "aporta_energia_sodio": "BOOLEAN NOT NULL DEFAULT 0",
     },
     "clases_funcionales": {"declarar_solo_funcion": "BOOLEAN NOT NULL DEFAULT 0"},
     "unidad_medida": {"factor_base": "FLOAT"},

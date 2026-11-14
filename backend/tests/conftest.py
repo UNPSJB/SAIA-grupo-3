@@ -28,7 +28,7 @@ def client(db_session):
                    'documentacion', 'vistaPublica', 'notificaciones',
                    'consumoQuimico', 'checklist', 'equipos', 'registroTemperatura',
                    'tarea', 'receta', 'claseFuncional', 'aditivoReferencia', 'produccionDelDia',
-                   'configuracionProduccion'):
+                   'configuracionProduccion', 'nutricion'):
         modulo = importlib.import_module(f'src.{nombre}.router')
         api.include_router(modulo.router)
         for extra in ('publico_router', 'vencimientos_router'):

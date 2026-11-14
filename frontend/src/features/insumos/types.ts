@@ -21,6 +21,7 @@ export interface Insumo {
   densidad_g_ml?: number | null;
   peso_unidad_g?: number | null;
   denominacion_rotulo?: string | null;
+  aporta_energia_sodio?: boolean;
 }
 
 export interface InsumoCreate {
@@ -32,6 +33,7 @@ export interface InsumoCreate {
   densidad_g_ml?: number | null;
   peso_unidad_g?: number | null;
   denominacion_rotulo?: string | null;
+  aporta_energia_sodio?: boolean;
 }
 
 export interface InsumoUpdate {

@@ -36,6 +36,7 @@ def crear_insumo(db: Session, insumo: schemas.InsumoCreate) -> Insumo:
     leer_unidad_medida(db, insumo.unidad_medida_id)
     datos = insumo.model_dump()
     datos["aditivo_referencia_id"] = _resolver_aditivo_referencia(db, insumo.tipo, insumo.aditivo_referencia_id)
+    datos["aporta_energia_sodio"] = insumo.tipo == TipoInsumo.ADITIVO and insumo.aporta_energia_sodio
     _insumo = Insumo(**datos)
     db.add(_insumo)
     revisar(db, _insumo)
@@ -105,6 +106,8 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
             datos_actualizar["aditivo_referencia_id"] = _resolver_aditivo_referencia(db, tipo_final, referencia)
         for campo, valor in datos_actualizar.items():
             setattr(db_insumo, campo, valor)
+        if db_insumo.tipo != TipoInsumo.ADITIVO:
+            db_insumo.aporta_energia_sodio = False
         if {"densidad_g_ml", "peso_unidad_g"} & datos_actualizar.keys():
             db.flush()
             recalcular_por_insumo(db, insumo_id)

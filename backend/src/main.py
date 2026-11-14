@@ -46,6 +46,7 @@ from src.tablero.router import router as tablero_router
 from src.documentoTecnico.consulta_router import router as documentos_vigentes_router
 from src.perfil.router import router as perfil_router
 from src.receta.router import router as receta_router
+from src.nutricion.router import router as nutricion_router
 from src.configuracionProduccion.router import router as configuracion_produccion_router
 from src.produccionDelDia.router import router as produccion_del_dia_router
 from src.claseFuncional.router import router as clase_funcional_router
@@ -121,6 +122,7 @@ app.include_router(vista_publica_router)
 app.include_router(vista_publica_publico_router)
 app.include_router(perfil_router)
 app.include_router(receta_router)
+app.include_router(nutricion_router)
 app.include_router(configuracion_produccion_router)
 app.include_router(produccion_del_dia_router)
 app.include_router(clase_funcional_router)
