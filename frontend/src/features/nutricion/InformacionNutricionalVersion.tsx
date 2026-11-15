@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Alert, Badge, Card, Form, Table } from 'react-bootstrap';
+import { Badge, Card, Form, Table } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { useConsulta } from '../../shared/hooks/useConsulta';
 import { formatearFechaHora } from '../../shared/libreria/fechas';
+import { AvisoFaltantes } from './AvisoFaltantes';
+import { CompletarInsumoModal } from './CompletarInsumoModal';
 import { formatearValor } from './formato';
+import { InsigniaIncompleta } from './InsigniaIncompleta';
 import { getInformacionVersion } from './nutricionApi';
 import { SUBNUTRIENTES, type ExpresionValor } from './types';
 
@@ -42,9 +45,27 @@ function Celda({
   );
 }
 
-export function InformacionNutricionalVersion({ versionId }: { versionId: number }) {
-  const consulta = useConsulta(() => getInformacionVersion(versionId), [versionId]);
+interface Props {
+  versionId: number;
+  onVerComposicion?: () => void;
+  rutaNuevaVersion?: string;
+  onActualizada?: (completa: boolean) => void;
+}
+
+export function InformacionNutricionalVersion({
+  versionId,
+  onVerComposicion,
+  rutaNuevaVersion,
+  onActualizada,
+}: Props) {
+  const [revision, setRevision] = useState(0);
+  const consulta = useConsulta(async () => {
+    const info = await getInformacionVersion(versionId);
+    onActualizada?.(info.completa);
+    return info;
+  }, [versionId, revision]);
   const [verCalculado, setVerCalculado] = useState(false);
+  const [completando, setCompletando] = useState<{ id: number; nombre: string } | null>(null);
 
   if (consulta.error) return <ErrorAlert mensaje={consulta.error} />;
   if (!consulta.datos) return <LoadingSpinner mensaje="Calculando información nutricional..." />;
@@ -52,38 +73,27 @@ export function InformacionNutricionalVersion({ versionId }: { versionId: number
   const info = consulta.datos;
   const base = info.base ?? 'g';
   const tienePorcion = info.porcion_base !== null;
-  const porcionIncompatible = info.faltantes.some((faltante) => faltante.startsWith('La porción'));
+  const porcionIncompatible =
+    info.base === null || info.faltantes.some((faltante) => faltante.tipo === 'porcion');
 
   return (
     <Card className="shadow-sm">
       <Card.Header className="bg-body d-flex flex-wrap gap-2 align-items-center justify-content-between py-3">
         <div className="d-flex flex-wrap gap-2 align-items-center">
           <span className="fw-semibold">Información nutricional</span>
-          {info.completa ? (
-            <Badge bg="success">Completa</Badge>
-          ) : (
-            <Badge bg="warning" text="dark">
-              Incompleta
-            </Badge>
-          )}
+          <InsigniaIncompleta completa={info.completa} mostrarCompleta />
         </div>
         <span className="small text-body-secondary">
           Calculada {formatearFechaHora(info.calculada_en)}
         </span>
       </Card.Header>
       <Card.Body className="p-3 p-md-4">
-        {info.faltantes.length > 0 && (
-          <Alert variant="warning">
-            <div className="fw-semibold mb-1">
-              Faltan datos: los valores que dependen de ellos no se calculan.
-            </div>
-            <ul className="mb-0 small">
-              {info.faltantes.map((faltante) => (
-                <li key={faltante}>{faltante}</li>
-              ))}
-            </ul>
-          </Alert>
-        )}
+        <AvisoFaltantes
+          faltantes={info.faltantes}
+          onCompletar={setCompletando}
+          onVerComposicion={onVerComposicion}
+          rutaNuevaVersion={rutaNuevaVersion}
+        />
         <div className="d-flex flex-wrap gap-3 small text-body-secondary mb-3">
           {info.rendimiento_base !== null && (
             <span>
@@ -183,6 +193,11 @@ export function InformacionNutricionalVersion({ versionId }: { versionId: number
           </Link>
         </div>
       </Card.Body>
+      <CompletarInsumoModal
+        insumo={completando}
+        onCambio={() => setRevision((valor) => valor + 1)}
+        onCerrar={() => setCompletando(null)}
+      />
     </Card>
   );
 }

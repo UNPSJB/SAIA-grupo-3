@@ -67,6 +67,7 @@ export interface Version extends VersionResumen {
   porcion_medida_casera: string | null;
   renglones: Renglon[];
   pasos: Paso[];
+  informacion_nutricional_completa: boolean | null;
 }
 
 export interface Receta {

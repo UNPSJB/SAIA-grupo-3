@@ -62,6 +62,10 @@ export function CargaManual({ show, nutrientes, actuales, onCerrar, onGuardar }:
       setError('Cargá al menos un valor.');
       return;
     }
+    if (!detalle.trim()) {
+      setError('Indicá el detalle de la fuente: de dónde sale el dato.');
+      return;
+    }
     setGuardando(true);
     setError(null);
     try {

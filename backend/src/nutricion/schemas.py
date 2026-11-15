@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.insumos.constants import TipoInsumo
-from src.nutricion.constants import AccionHistorial, BaseCalculo, ErrorCode, FuenteNutricional, Nutriente
+from src.nutricion.constants import AccionHistorial, BaseCalculo, ErrorCode, FuenteNutricional, Nutriente, TipoFaltante
 
 
 def _validar_valores(valores: dict) -> dict:
@@ -30,7 +30,7 @@ class CargaManual(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     fuente: FuenteNutricional
-    detalle_fuente: Optional[str] = Field(default=None, max_length=250)
+    detalle_fuente: str = Field(max_length=250)
     valores: dict[Nutriente, Optional[float]] = Field(min_length=1)
 
     @field_validator("valores")
@@ -40,8 +40,11 @@ class CargaManual(BaseModel):
 
     @field_validator("detalle_fuente", mode="before")
     @classmethod
-    def validar_detalle(cls, valor: object) -> Optional[str]:
-        return _texto_opcional(valor)
+    def validar_detalle(cls, valor: object) -> str:
+        texto = _texto_opcional(valor)
+        if not texto:
+            raise ValueError(ErrorCode.DETALLE_FUENTE_OBLIGATORIO)
+        return texto
 
     @field_validator("fuente")
     @classmethod
@@ -113,6 +116,7 @@ class ValorNutricional(BaseModel):
     modificado: bool
     modificado_por: Optional[PersonaResumen] = None
     modificado_en: Optional[datetime] = None
+    sin_fuente: bool = False
 
 
 class NutrienteDisponible(BaseModel):
@@ -137,6 +141,7 @@ class DatosNutricionales(BaseModel):
     valores: list[ValorNutricional]
     energia_kj: Optional[float] = None
     faltantes: list[Nutriente]
+    sin_fuente: list[Nutriente] = Field(default_factory=list)
 
 
 class MovimientoHistorial(BaseModel):
@@ -188,6 +193,43 @@ class EnergiaKilojoules(BaseModel):
     por_porcion: Optional[ExpresionValor] = None
 
 
+class InsumoFaltante(BaseModel):
+    id: int
+    nombre: str
+    tipo: TipoInsumo
+
+
+class FaltanteNutricional(BaseModel):
+    tipo: TipoFaltante
+    mensaje: str
+    insumo: Optional[InsumoFaltante] = None
+    nutrientes: list[Nutriente] = Field(default_factory=list)
+    sin_fuente: list[Nutriente] = Field(default_factory=list)
+
+
+class RegistroFuente(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    nutrientes: list[Nutriente] = Field(min_length=1)
+    fuente: FuenteNutricional
+    detalle_fuente: str = Field(max_length=250)
+
+    @field_validator("detalle_fuente", mode="before")
+    @classmethod
+    def validar_detalle(cls, valor: object) -> str:
+        texto = _texto_opcional(valor)
+        if not texto:
+            raise ValueError(ErrorCode.DETALLE_FUENTE_OBLIGATORIO)
+        return texto
+
+    @field_validator("fuente")
+    @classmethod
+    def validar_fuente(cls, fuente: FuenteNutricional) -> FuenteNutricional:
+        if fuente == FuenteNutricional.BASE_REFERENCIA:
+            raise ValueError(ErrorCode.FUENTE_BASE_SOLO_POR_COPIA)
+        return fuente
+
+
 class InformacionNutricional(BaseModel):
     version_id: int
     numero: int
@@ -198,7 +240,7 @@ class InformacionNutricional(BaseModel):
     rendimiento_base: Optional[float] = None
     porcion_base: Optional[float] = None
     porcion_medida_casera: Optional[str] = None
-    faltantes: list[str]
+    faltantes: list[FaltanteNutricional]
     filas: list[FilaNutricional]
     energia_kj: EnergiaKilojoules
     leyenda_vd: str

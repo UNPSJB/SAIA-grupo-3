@@ -185,6 +185,7 @@ class Version(VersionResumen):
     porcion_medida_casera: Optional[str] = None
     renglones: list[Renglon]
     pasos: list[Paso]
+    informacion_nutricional_completa: Optional[bool] = None
 
 
 class Receta(BaseModel):

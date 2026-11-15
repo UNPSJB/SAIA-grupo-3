@@ -67,6 +67,13 @@ class VersionReceta(ModeloBase):
         order_by="RenglonReceta.orden", cascade="all, delete-orphan"
     )
     pasos: Mapped[list["PasoReceta"]] = relationship(order_by="PasoReceta.orden", cascade="all, delete-orphan")
+    informacion_nutricional = relationship(
+        "src.nutricion.models.InformacionNutricionalVersion", uselist=False, viewonly=True
+    )
+
+    @property
+    def informacion_nutricional_completa(self) -> Optional[bool]:
+        return self.informacion_nutricional.completa if self.informacion_nutricional is not None else None
 
 
 class RenglonReceta(ModeloBase):

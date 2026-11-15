@@ -54,6 +54,7 @@ export interface ValorNutricional {
   modificado: boolean;
   modificado_por: PersonaResumen | null;
   modificado_en: string | null;
+  sin_fuente: boolean;
 }
 
 export interface NutrienteDisponible {
@@ -74,13 +75,14 @@ export interface DatosNutricionales {
   valores: ValorNutricional[];
   energia_kj: number | null;
   faltantes: Nutriente[];
+  sin_fuente: Nutriente[];
 }
 
 export interface MovimientoHistorial {
   id: number;
   nutriente: Nutriente;
   etiqueta: string;
-  accion: 'copia_referencia' | 'carga_manual' | 'modificacion' | 'borrado';
+  accion: 'copia_referencia' | 'carga_manual' | 'modificacion' | 'borrado' | 'registro_fuente';
   valor_anterior: number | null;
   valor_nuevo: number | null;
   fuente: FuenteNutricional | null;
@@ -148,6 +150,14 @@ export interface FilaNutricional {
   porcentaje_vd: { valor: number; texto: string } | null;
 }
 
+export interface FaltanteNutricional {
+  tipo: 'insumo' | 'composicion' | 'rendimiento' | 'porcion' | 'otro';
+  mensaje: string;
+  insumo: { id: number; nombre: string; tipo: 'ingrediente' | 'aditivo' } | null;
+  nutrientes: Nutriente[];
+  sin_fuente: Nutriente[];
+}
+
 export interface InformacionNutricional {
   version_id: number;
   numero: number;
@@ -158,7 +168,7 @@ export interface InformacionNutricional {
   rendimiento_base: number | null;
   porcion_base: number | null;
   porcion_medida_casera: string | null;
-  faltantes: string[];
+  faltantes: FaltanteNutricional[];
   filas: FilaNutricional[];
   energia_kj: { por_100: ExpresionValor | null; por_porcion: ExpresionValor | null };
   leyenda_vd: string;

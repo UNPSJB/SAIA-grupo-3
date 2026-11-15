@@ -73,6 +73,16 @@ def modificar_valores(
     return services.modificar_valores(db, insumo_id, datos, persona)
 
 
+@router.patch("/insumos/{insumo_id}/fuente", response_model=schemas.DatosNutricionales)
+def registrar_fuente(
+    insumo_id: int,
+    datos: schemas.RegistroFuente,
+    db: Session = Depends(get_db),
+    persona: Personal = Depends(tiene_permiso_administrar),
+):
+    return services.registrar_fuente(db, insumo_id, datos, persona)
+
+
 @router.get("/insumos/{insumo_id}/historial", response_model=list[schemas.MovimientoHistorial])
 def read_historial(insumo_id: int, db: Session = Depends(get_db)):
     return services.listar_historial(db, insumo_id)

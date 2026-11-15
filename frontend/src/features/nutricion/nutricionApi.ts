@@ -69,6 +69,21 @@ export const modificarValor = (insumoId: number, nutriente: Nutriente, valor: nu
     },
   );
 
+export const registrarFuente = (
+  insumoId: number,
+  nutrientes: Nutriente[],
+  fuente: FuenteNutricional,
+  detalle: string,
+) =>
+  pedir<DatosNutricionales>(
+    `/nutricion/insumos/${insumoId}/fuente`,
+    'No se pudo registrar la fuente.',
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ nutrientes, fuente, detalle_fuente: detalle }),
+    },
+  );
+
 export function importarAlimentos(archivo: File, fuente: string): Promise<ResultadoImportacion> {
   const formulario = new FormData();
   formulario.append('archivo', archivo);

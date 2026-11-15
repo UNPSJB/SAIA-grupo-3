@@ -13,6 +13,7 @@ const ACCIONES: Record<MovimientoHistorial['accion'], string> = {
   carga_manual: 'Carga manual',
   modificacion: 'Modificación',
   borrado: 'Borrado',
+  registro_fuente: 'Registro de fuente',
 };
 
 export function HistorialNutricional({

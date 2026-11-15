@@ -8,11 +8,13 @@ import { BuscadorReferencia } from './BuscadorReferencia';
 import { CargaManual } from './CargaManual';
 import { HistorialNutricional } from './HistorialNutricional';
 import { InsigniaFuente } from './InsigniaFuente';
+import { RegistrarFuente } from './RegistrarFuente';
 import {
   cargarManual,
   copiarDesdeReferencia,
   getDatosNutricionales,
   modificarValor,
+  registrarFuente,
 } from './nutricionApi';
 import { formatearValor, numeroDesdeTexto } from './formato';
 import type { DatosNutricionales, Nutriente, ValorNutricional } from './types';
@@ -22,11 +24,17 @@ interface Edicion {
   texto: string;
 }
 
-export function NutricionInsumo({ insumoId }: { insumoId: number }) {
+export function NutricionInsumo({
+  insumoId,
+  onCambio,
+}: {
+  insumoId: number;
+  onCambio?: () => void;
+}) {
   const [revision, setRevision] = useState(0);
   const consulta = useConsulta(() => getDatosNutricionales(insumoId), [insumoId]);
   const [datos, setDatos] = useState<DatosNutricionales | null>(null);
-  const [modal, setModal] = useState<'referencia' | 'manual' | null>(null);
+  const [modal, setModal] = useState<'referencia' | 'manual' | 'fuente' | null>(null);
   const [edicion, setEdicion] = useState<Edicion | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -38,6 +46,7 @@ export function NutricionInsumo({ insumoId }: { insumoId: number }) {
     setAviso(mensaje);
     setError(null);
     setRevision((valor) => valor + 1);
+    onCambio?.();
   };
 
   if (consulta.error && !actual) return <ErrorAlert mensaje={consulta.error} />;
@@ -158,6 +167,24 @@ export function NutricionInsumo({ insumoId }: { insumoId: number }) {
             parte de una receta, hacen falta para calcular la tabla nutricional del producto.
           </Alert>
         )}
+        {actual.sin_fuente.length > 0 && (
+          <Alert
+            variant="warning"
+            className="py-2 d-flex flex-wrap gap-2 align-items-center justify-content-between"
+          >
+            <span>
+              {actual.sin_fuente.length === 1
+                ? 'Hay 1 valor sin fuente registrada'
+                : `Hay ${actual.sin_fuente.length} valores sin fuente registrada`}
+              {actual.sin_fuente.length === 1
+                ? ': cuenta como dato faltante.'
+                : ': cuentan como dato faltante.'}
+            </span>
+            <Button size="sm" variant="warning" onClick={() => setModal('fuente')}>
+              Registrar fuente
+            </Button>
+          </Alert>
+        )}
         {aviso && !error && (
           <Alert variant="success" className="py-2" dismissible onClose={() => setAviso(null)}>
             {aviso}
@@ -199,6 +226,11 @@ export function NutricionInsumo({ insumoId }: { insumoId: number }) {
                       {valor && edicion?.nutriente !== n.nutriente && (
                         <div className="d-md-none mt-1 d-flex flex-wrap gap-1">
                           <InsigniaFuente fuente={valor.fuente} />
+                          {valor.sin_fuente && (
+                            <Badge bg="danger" className="fw-normal">
+                              Sin fuente
+                            </Badge>
+                          )}
                           {valor.modificado && (
                             <Badge bg="warning" text="dark" className="text-wrap text-start">
                               Modificado · original {formatearValor(valor.valor_fuente, n.unidad)}
@@ -212,6 +244,11 @@ export function NutricionInsumo({ insumoId }: { insumoId: number }) {
                       {valor && (
                         <div className="d-flex flex-wrap gap-1 align-items-center">
                           <InsigniaFuente fuente={valor.fuente} />
+                          {valor.sin_fuente && (
+                            <Badge bg="danger" className="fw-normal">
+                              Sin fuente registrada
+                            </Badge>
+                          )}
                           {valor.modificado && (
                             <Badge
                               bg="warning"
@@ -290,6 +327,17 @@ export function NutricionInsumo({ insumoId }: { insumoId: number }) {
         onCerrar={() => setModal(null)}
         onGuardar={async (fuente, detalle, nuevos) => {
           aplicar(await cargarManual(insumoId, fuente, detalle, nuevos), 'Valores guardados.');
+        }}
+      />
+      <RegistrarFuente
+        show={modal === 'fuente'}
+        nutrientes={nutrientes.filter((n) => actual.sin_fuente.includes(n.nutriente))}
+        onCerrar={() => setModal(null)}
+        onGuardar={async (fuente, detalle) => {
+          aplicar(
+            await registrarFuente(insumoId, actual.sin_fuente, fuente, detalle),
+            'Fuente registrada.',
+          );
         }}
       />
     </Card>

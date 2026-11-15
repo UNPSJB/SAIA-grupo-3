@@ -44,6 +44,15 @@ class AccionHistorial(StrEnum):
     CARGA_MANUAL = auto()
     MODIFICACION = auto()
     BORRADO = auto()
+    REGISTRO_FUENTE = auto()
+
+
+class TipoFaltante(StrEnum):
+    INSUMO = auto()
+    COMPOSICION = auto()
+    RENDIMIENTO = auto()
+    PORCION = auto()
+    OTRO = auto()
 
 
 class BaseCalculo(StrEnum):
@@ -100,6 +109,8 @@ class ErrorCode:
     VALOR_INEXISTENTE = "Ese valor todavía no está cargado: cargalo indicando su fuente."
     REFERENCIA_OBLIGATORIA = "Indicá el alimento de referencia del que se copian los valores."
     ARCHIVO_INVALIDO = "El archivo no es un CSV válido o le faltan columnas: {detalle}"
+    FUENTE_BASE_SOLO_POR_COPIA = "La base de referencia se registra copiando los valores de un alimento."
+    DETALLE_FUENTE_OBLIGATORIO = "Indicá el detalle de la fuente: de dónde sale el dato."
     VERSION_NO_ENCONTRADA = "La versión de receta no fue encontrada."
     REGLA_DUPLICADA = "Cada nutriente se configura una sola vez."
     REGLA_INCOMPLETA = "Faltan las reglas de: {nutrientes}."
@@ -117,4 +128,6 @@ class Faltante:
         "La porción está en '{unidad}' y el rendimiento en {base}: declará la porción en {base} "
         "para calcular los valores por porción y el % VD."
     )
-    INSUMO_SIN_DATOS = "'{insumo}' no tiene cargado: {nutrientes}."
+    INSUMO_SIN_DATOS = "no tiene cargado: {nutrientes}"
+    INSUMO_SIN_FUENTE = "sin fuente registrada: {nutrientes}"
+    INSUMO = "'{insumo}' {detalle}."

@@ -13,6 +13,7 @@ import { EscaladoReceta } from './EscaladoReceta';
 import { HistorialVersiones } from './HistorialVersiones';
 import { ListaIngredientesVersion } from './ListaIngredientesVersion';
 import { InformacionNutricionalVersion } from '../nutricion/InformacionNutricionalVersion';
+import { InsigniaIncompleta } from '../nutricion/InsigniaIncompleta';
 import { VersionDetalle } from './VersionDetalle';
 
 async function cargar(
@@ -40,6 +41,7 @@ export function RecetaDetallePage() {
   const [verHistorial, setVerHistorial] = useState(false);
   const [verEscalado, setVerEscalado] = useState(false);
   const [pestana, setPestana] = useState('receta');
+  const [nutricionCompleta, setNutricionCompleta] = useState<Record<number, boolean>>({});
 
   if (consulta.error) {
     return (
@@ -58,6 +60,7 @@ export function RecetaDetallePage() {
   const puedeModificar = currentUser?.administrar === true && esVigente && receta.producto.activo;
   const mostrarHistorial = verHistorial || !esVigente;
   const puedeEscalar = esVigente && receta.producto.activo;
+  const completa = nutricionCompleta[version.id] ?? version.informacion_nutricional_completa;
 
   return (
     <Container className="py-2">
@@ -68,6 +71,19 @@ export function RecetaDetallePage() {
             <Badge bg={esVigente ? 'success' : 'secondary'}>
               Versión {version.numero} · {esVigente ? 'vigente' : 'archivada'}
             </Badge>
+            {currentUser?.administrar && (
+              <button
+                type="button"
+                className="btn btn-link p-0 border-0 lh-1"
+                onClick={() => setPestana('nutricion')}
+                aria-label="Ver la información nutricional incompleta"
+              >
+                <InsigniaIncompleta
+                  completa={completa}
+                  texto="Información nutricional incompleta"
+                />
+              </button>
+            )}
             <span className="small text-body-secondary">
               {formatearFechaHora(version.fecha_creacion)} por {version.creado_por.nombre}{' '}
               {version.creado_por.apellido} · {version.motivo}
@@ -155,7 +171,16 @@ export function RecetaDetallePage() {
             />
           </Tab>
           <Tab eventKey="nutricion" title="Información nutricional">
-            <InformacionNutricionalVersion versionId={version.id} />
+            <InformacionNutricionalVersion
+              versionId={version.id}
+              onVerComposicion={() => setPestana('composicion')}
+              rutaNuevaVersion={puedeModificar ? `/recetas/${receta.id}/nueva-version` : undefined}
+              onActualizada={(valor) =>
+                setNutricionCompleta((anterior) =>
+                  anterior[version.id] === valor ? anterior : { ...anterior, [version.id]: valor },
+                )
+              }
+            />
           </Tab>
         </Tabs>
       ) : (

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from src.insumos.constants import TipoInsumo
 from src.insumos.models import Insumo
 from src.nutricion import exceptions, schemas
-from src.nutricion.calculo import recalcular_por_insumo
+from src.nutricion.calculo import recalcular_por_insumo, tiene_fuente
 from src.nutricion.constants import (
     COLUMNAS_CSV,
     ErrorCode,
@@ -192,6 +192,30 @@ def modificar_valores(db: Session, insumo_id: int, datos: schemas.ModificacionVa
     return obtener_datos(db, insumo_id)
 
 
+def registrar_fuente(db: Session, insumo_id: int, datos: schemas.RegistroFuente, persona: Personal) -> schemas.DatosNutricionales:
+    insumo = _leer_insumo(db, insumo_id)
+    _validar_permitidos(insumo, datos.nutrientes)
+    actuales = _valores_actuales(db, insumo_id)
+    if any(nutriente not in actuales for nutriente in datos.nutrientes):
+        raise exceptions.ValorInexistente()
+    ahora = datetime.now()
+    for nutriente in dict.fromkeys(datos.nutrientes):
+        fila = actuales[nutriente]
+        fila.fuente = datos.fuente
+        fila.detalle_fuente = datos.detalle_fuente
+        fila.alimento_referencia_id = None
+        fila.valor_fuente = fila.valor
+        fila.modificado = False
+        fila.modificado_por_id = None
+        fila.modificado_en = None
+        fila.cargado_por_id = persona.id
+        fila.cargado_en = ahora
+        _historial(db, insumo_id, nutriente, AccionHistorial.REGISTRO_FUENTE, fila.valor, fila.valor, persona, ahora, datos.fuente, datos.detalle_fuente)
+    recalcular_por_insumo(db, insumo_id)
+    db.commit()
+    return obtener_datos(db, insumo_id)
+
+
 def obtener_datos(db: Session, insumo_id: int) -> schemas.DatosNutricionales:
     insumo = _leer_insumo(db, insumo_id)
     permitidos = nutrientes_permitidos(insumo)
@@ -211,6 +235,7 @@ def obtener_datos(db: Session, insumo_id: int) -> schemas.DatosNutricionales:
             modificado=fila.modificado,
             modificado_por=fila.modificado_por,
             modificado_en=fila.modificado_en,
+            sin_fuente=not tiene_fuente(fila),
         )
         for nutriente in NUTRIENTES
         if (fila := actuales.get(nutriente)) is not None
@@ -218,7 +243,7 @@ def obtener_datos(db: Session, insumo_id: int) -> schemas.DatosNutricionales:
     energia = actuales.get(Nutriente.ENERGIA)
     return schemas.DatosNutricionales(
         insumo=insumo,
-        requiere_datos=bool(permitidos) and insumo.tipo == TipoInsumo.INGREDIENTE,
+        requiere_datos=bool(permitidos),
         nutrientes=[
             schemas.NutrienteDisponible(nutriente=n, etiqueta=NUTRIENTES[n][0], unidad=NUTRIENTES[n][1])
             for n in permitidos
@@ -226,6 +251,7 @@ def obtener_datos(db: Session, insumo_id: int) -> schemas.DatosNutricionales:
         valores=valores,
         energia_kj=round(energia.valor * FACTOR_KJ_POR_KCAL, 1) if energia else None,
         faltantes=[n for n in permitidos if n not in actuales],
+        sin_fuente=[n for n in permitidos if n in actuales and not tiene_fuente(actuales[n])],
     )
 
 

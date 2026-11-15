@@ -16,6 +16,7 @@ from src.nutricion.constants import (
     REGLAS_INICIALES,
     VALORES_DIARIOS_INICIALES,
     Nutriente,
+    TipoFaltante,
 )
 from src.nutricion.models import ConfiguracionNutricional, ReglaExpresionNutriente, ValorDiarioReferencia
 from src.personal.models import Personal
@@ -166,6 +167,12 @@ def _porcentaje_vd(
     return schemas.PorcentajeValorDiario(valor=float(numero), texto=_texto(numero))
 
 
+def _faltante(guardado) -> schemas.FaltanteNutricional:
+    if isinstance(guardado, str):
+        return schemas.FaltanteNutricional(tipo=TipoFaltante.OTRO, mensaje=guardado)
+    return schemas.FaltanteNutricional.model_validate(guardado)
+
+
 def obtener_informacion(db: Session, version_id: int) -> schemas.InformacionNutricional:
     version = db.get(VersionReceta, version_id)
     if version is None:
@@ -205,7 +212,7 @@ def obtener_informacion(db: Session, version_id: int) -> schemas.InformacionNutr
         rendimiento_base=informacion.rendimiento_base,
         porcion_base=informacion.porcion_base,
         porcion_medida_casera=version.porcion_medida_casera,
-        faltantes=informacion.faltantes,
+        faltantes=[_faltante(faltante) for faltante in informacion.faltantes],
         filas=filas,
         energia_kj=schemas.EnergiaKilojoules(
             por_100=_kilojoules(energia.por_100, regla_energia, no_significativo),

@@ -103,7 +103,7 @@ def test_rechaza_valores_negativos_o_incoherentes(client, headers_administradora
     respuesta = client.put(
         f"/nutricion/insumos/{insumo_activo.id}",
         headers=headers_administradora,
-        json={"fuente": "valor_propio", "valores": valores},
+        json={"fuente": "valor_propio", "detalle_fuente": "Análisis propio", "valores": valores},
     )
 
     assert respuesta.status_code == codigo
@@ -126,7 +126,7 @@ def test_un_aditivo_sin_la_marca_no_acepta_energia_ni_sodio(client, headers_admi
     carga = client.put(
         f"/nutricion/insumos/{aditivo.id}",
         headers=headers_administradora,
-        json={"fuente": "bibliografia", "valores": {"sodio": 27360}},
+        json={"fuente": "bibliografia", "detalle_fuente": "Tabla de aditivos", "valores": {"sodio": 27360}},
     )
     copia = copiar(client, headers_administradora, aditivo.id, harina_referencia.id)
 
@@ -145,7 +145,7 @@ def test_un_aditivo_con_la_marca_acepta_solo_energia_y_sodio(
     con_proteinas = client.put(
         f"/nutricion/insumos/{aditivo.id}",
         headers=headers_administradora,
-        json={"fuente": "bibliografia", "valores": {"proteinas": 1}},
+        json={"fuente": "bibliografia", "detalle_fuente": "Tabla de aditivos", "valores": {"proteinas": 1}},
     )
     copia = copiar(client, headers_administradora, aditivo.id, harina_referencia.id)
 
@@ -164,7 +164,7 @@ def test_historial_de_cambios(client, headers_administradora, insumo_activo, har
     client.put(
         f"/nutricion/insumos/{insumo_activo.id}",
         headers=headers_administradora,
-        json={"fuente": "valor_propio", "valores": {"fibra": None}},
+        json={"fuente": "valor_propio", "detalle_fuente": "Análisis propio", "valores": {"fibra": None}},
     )
 
     historial = client.get(f"/nutricion/insumos/{insumo_activo.id}/historial", headers=headers_administradora).json()
