@@ -1,11 +1,11 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import JSON, DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models import ModeloBase
-from src.nutricion.constants import AccionHistorial, FuenteNutricional, Nutriente
+from src.nutricion.constants import AccionHistorial, BaseCalculo, FuenteNutricional, Nutriente
 
 
 class AlimentoReferencia(ModeloBase):
@@ -70,3 +70,66 @@ class HistorialValorNutricional(ModeloBase):
 
     alimento_referencia = relationship("AlimentoReferencia")
     personal = relationship("src.personal.models.Personal")
+
+
+class ValorDiarioReferencia(ModeloBase):
+    __tablename__ = "valores_diarios_referencia"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    nutriente: Mapped[Nutriente] = mapped_column(unique=True, nullable=False)
+    valor: Mapped[Optional[float]] = mapped_column(nullable=True)
+
+
+class ReglaExpresionNutriente(ModeloBase):
+    __tablename__ = "reglas_expresion_nutriente"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    nutriente: Mapped[Nutriente] = mapped_column(unique=True, nullable=False)
+    unidad: Mapped[str] = mapped_column(String(10), nullable=False)
+    decimales: Mapped[int] = mapped_column(nullable=False)
+    entero_desde: Mapped[Optional[float]] = mapped_column(nullable=True)
+    umbral_no_significativo: Mapped[Optional[float]] = mapped_column(nullable=True)
+
+
+class ConfiguracionNutricional(ModeloBase):
+    __tablename__ = "configuracion_nutricional"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    expresion_no_significativo: Mapped[str] = mapped_column(String(40), nullable=False)
+    decimales_vd: Mapped[int] = mapped_column(nullable=False)
+    leyenda_vd: Mapped[str] = mapped_column(String(250), nullable=False)
+    modificado_por_id: Mapped[Optional[int]] = mapped_column(ForeignKey("personal.id"), nullable=True)
+    modificado_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    modificado_por = relationship("src.personal.models.Personal")
+
+
+class InformacionNutricionalVersion(ModeloBase):
+    __tablename__ = "informacion_nutricional_version"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    version_id: Mapped[int] = mapped_column(ForeignKey("versiones_receta.id"), unique=True, nullable=False, index=True)
+    completa: Mapped[bool] = mapped_column(default=False, nullable=False)
+    base: Mapped[Optional[BaseCalculo]] = mapped_column(nullable=True)
+    rendimiento_base: Mapped[Optional[float]] = mapped_column(nullable=True)
+    porcion_base: Mapped[Optional[float]] = mapped_column(nullable=True)
+    faltantes: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    calculada_en: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    valores: Mapped[list["ValorNutricionalVersion"]] = relationship(
+        cascade="all, delete-orphan", order_by="ValorNutricionalVersion.id"
+    )
+
+
+class ValorNutricionalVersion(ModeloBase):
+    __tablename__ = "valores_nutricionales_version"
+    __table_args__ = (UniqueConstraint("informacion_id", "nutriente", name="uq_valor_nutricional_version"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    informacion_id: Mapped[int] = mapped_column(
+        ForeignKey("informacion_nutricional_version.id"), nullable=False, index=True
+    )
+    nutriente: Mapped[Nutriente] = mapped_column(nullable=False)
+    total_receta: Mapped[Optional[float]] = mapped_column(nullable=True)
+    por_100: Mapped[Optional[float]] = mapped_column(nullable=True)
+    por_porcion: Mapped[Optional[float]] = mapped_column(nullable=True)

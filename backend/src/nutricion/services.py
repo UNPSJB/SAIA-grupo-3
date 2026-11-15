@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from src.insumos.constants import TipoInsumo
 from src.insumos.models import Insumo
 from src.nutricion import exceptions, schemas
+from src.nutricion.calculo import recalcular_por_insumo
 from src.nutricion.constants import (
     COLUMNAS_CSV,
     ErrorCode,
@@ -138,6 +139,7 @@ def cargar_manual(db: Session, insumo_id: int, datos: schemas.CargaManual, perso
     insumo = _leer_insumo(db, insumo_id)
     _validar_permitidos(insumo, [n for n, v in datos.valores.items() if v is not None])
     cargar_valores(db, insumo, datos.valores, datos.fuente, datos.detalle_fuente, None, AccionHistorial.CARGA_MANUAL, persona)
+    recalcular_por_insumo(db, insumo_id)
     db.commit()
     return obtener_datos(db, insumo_id)
 
@@ -161,6 +163,7 @@ def copiar_referencia(db: Session, insumo_id: int, datos: schemas.CopiaReferenci
     valores = {n: v for n, v in valores_de_alimento(alimento).items() if n in permitidos}
     detalle = f"{alimento.fuente} · {alimento.codigo} · {alimento.nombre}"
     cargar_valores(db, insumo, valores, FuenteNutricional.BASE_REFERENCIA, detalle, alimento.id, AccionHistorial.COPIA_REFERENCIA, persona)
+    recalcular_por_insumo(db, insumo_id)
     db.commit()
     return obtener_datos(db, insumo_id)
 
@@ -184,6 +187,7 @@ def modificar_valores(db: Session, insumo_id: int, datos: schemas.ModificacionVa
         fila.modificado_por_id = persona.id if fila.modificado else None
         fila.modificado_en = ahora if fila.modificado else None
         _historial(db, insumo_id, nutriente, AccionHistorial.MODIFICACION, anterior, valor, persona, ahora, fila.fuente, fila.detalle_fuente, fila.alimento_referencia_id)
+    recalcular_por_insumo(db, insumo_id)
     db.commit()
     return obtener_datos(db, insumo_id)
 

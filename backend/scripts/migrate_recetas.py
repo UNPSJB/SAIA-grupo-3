@@ -1,3 +1,4 @@
+"""Migración SQLite repetible para recetas y producción (E9-01 a E11-01). Detener el backend antes de ejecutarla."""
 import argparse
 import sqlite3
 from datetime import datetime
@@ -40,6 +41,7 @@ COLUMNAS = {
         "orden_rotulo_ajustado_por_id": "INTEGER REFERENCES personal(id)",
         "orden_rotulo_ajustado_en": "DATETIME",
         "orden_rotulo_aviso": "BOOLEAN NOT NULL DEFAULT 0",
+        "rendimiento_peso_g": "FLOAT",
     },
     "renglones_receta": {"gramos": "FLOAT", "porcentaje": "FLOAT", "orden_rotulo": "INTEGER"},
     "lotes_produccion": {

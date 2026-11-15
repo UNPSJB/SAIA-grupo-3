@@ -3,8 +3,12 @@
 from sqlalchemy import select
 
 from scripts.seed_common import ASSETS_DIR
+from src.nutricion.calculo import calcular_informacion
 from src.nutricion.constants import AccionHistorial, FuenteNutricional
+from src.nutricion.informacion import asegurar_configuracion
 from src.nutricion.models import AlimentoReferencia, ValorNutricionalInsumo
+from src.receta.models import VersionReceta
+from src.unidadMedida.models import TipoUnidadMedida
 from src.nutricion.services import cargar_valores, importar_csv, nutrientes_permitidos, valores_de_alimento
 
 FUENTE_DEMO = "DEMO - valores de prueba"
@@ -27,6 +31,21 @@ REFERENCIAS = {
 }
 
 ADITIVOS_CON_APORTE = {"Polvo de hornear (bicarbonato)": "DEMO-019"}
+
+RENDIMIENTO_COCCION_DEMO = 0.88
+RENDIMIENTO_SIN_COCCION_DEMO = {"Tapas de empanada": 0.98}
+
+
+def _completar_peso_final(db):
+    versiones = db.scalars(select(VersionReceta)).all()
+    for version in versiones:
+        if version.rendimiento_unidad.tipo != TipoUnidadMedida.UNIDAD or version.rendimiento_peso_g:
+            continue
+        if not version.composicion_total_gramos:
+            continue
+        factor = RENDIMIENTO_SIN_COCCION_DEMO.get(version.receta.producto.nombre, RENDIMIENTO_COCCION_DEMO)
+        version.rendimiento_peso_g = round(version.composicion_total_gramos * factor, -1)
+    return versiones
 
 
 def cargar_nutricion(db, ingredientes, aditivos, admin):
@@ -53,4 +72,8 @@ def cargar_nutricion(db, ingredientes, aditivos, admin):
             f"{alimento.fuente} · {alimento.codigo} · {alimento.nombre}", alimento.id,
             AccionHistorial.COPIA_REFERENCIA, admin,
         )
+    db.flush()
+    asegurar_configuracion(db)
+    for version in _completar_peso_final(db):
+        calcular_informacion(db, version)
     db.flush()

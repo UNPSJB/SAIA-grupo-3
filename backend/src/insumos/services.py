@@ -11,6 +11,7 @@ from src.areas.services import validar_nombre_de_ingrediente
 from src.insumos.constants import TipoInsumo
 from src.aditivoReferencia.models import AditivoReferencia
 from src.receta.composicion import recalcular_por_insumo
+from src.nutricion.calculo import recalcular_por_insumo as recalcular_nutricion
 
 def _validar_duplicados(db: Session, nombre: str, excluir_id: int | None = None) -> None:
     query_nombre = select(Insumo).where(func.lower(Insumo.nombre) == nombre.strip().lower())
@@ -104,6 +105,7 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
             )
             datos_actualizar["tipo"] = tipo_final
             datos_actualizar["aditivo_referencia_id"] = _resolver_aditivo_referencia(db, tipo_final, referencia)
+        aporte_anterior = db_insumo.aporta_energia_sodio
         for campo, valor in datos_actualizar.items():
             setattr(db_insumo, campo, valor)
         if db_insumo.tipo != TipoInsumo.ADITIVO:
@@ -111,6 +113,8 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
         if {"densidad_g_ml", "peso_unidad_g"} & datos_actualizar.keys():
             db.flush()
             recalcular_por_insumo(db, insumo_id)
+        elif aporte_anterior != db_insumo.aporta_energia_sodio:
+            recalcular_nutricion(db, insumo_id)
         revisar(db, db_insumo)
         db.commit()
         db.refresh(db_insumo)

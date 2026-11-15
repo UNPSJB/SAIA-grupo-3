@@ -101,7 +101,8 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             faltantes = {
                 nombre: total
                 for nombre, total in conteos.items()
-                if nombre not in {"ConfiguracionVistaPublica", "ConfiguracionProduccion", "ConsumoStockAnterior"}
+                if nombre not in {"ConfiguracionVistaPublica", "ConfiguracionProduccion", "ConsumoStockAnterior",
+                                   "ConfiguracionNutricional", "ValorDiarioReferencia", "ReglaExpresionNutriente"}
                 and total < (1 if nombre == "TipoIncidente" else CANTIDAD)
             }
             if faltantes:

@@ -42,6 +42,7 @@ class VersionReceta(ModeloBase):
 
     rendimiento_cantidad: Mapped[float] = mapped_column(nullable=False)
     rendimiento_unidad_id: Mapped[int] = mapped_column(ForeignKey("unidad_medida.id"), nullable=False)
+    rendimiento_peso_g: Mapped[Optional[float]] = mapped_column(nullable=True)
     porcion_cantidad: Mapped[Optional[float]] = mapped_column(nullable=True)
     porcion_unidad_id: Mapped[Optional[int]] = mapped_column(ForeignKey("unidad_medida.id"), nullable=True)
     porcion_medida_casera: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)

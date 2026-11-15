@@ -48,6 +48,12 @@ export function VersionDetalle({ version }: { version: Version }) {
             <div className="small text-body-secondary">Rendimiento final</div>
             <div className="fs-5 fw-semibold mb-3">
               {cantidadConUnidad(version.rendimiento_cantidad, version.rendimiento_unidad.sufijo)}
+              {version.rendimiento_peso_g !== null && (
+                <span className="fs-6 text-body-secondary fw-normal">
+                  {' '}
+                  · peso final {cantidadConUnidad(version.rendimiento_peso_g, 'g')}
+                </span>
+              )}
             </div>
             <div className="small text-body-secondary">Porción o unidad de venta</div>
             <div className="fw-semibold">

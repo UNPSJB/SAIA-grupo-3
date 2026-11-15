@@ -7,6 +7,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from src.insumos.models import Insumo
+from src.nutricion.calculo import calcular_informacion
 from src.receta.constants import EstadoVersionReceta
 from src.receta.models import RenglonReceta, VersionReceta
 from src.unidadMedida.models import TipoUnidadMedida, UnidadMedida
@@ -81,6 +82,7 @@ def _recalcular(db: Session, condicion) -> int:
     ).all()
     for version in versiones:
         calcular_composicion(version)
+        calcular_informacion(db, version)
     return len(versiones)
 
 
@@ -96,4 +98,5 @@ def recalcular_todas(db: Session) -> int:
     versiones = db.scalars(select(VersionReceta)).all()
     for version in versiones:
         calcular_composicion(version)
+        calcular_informacion(db, version)
     return len(versiones)

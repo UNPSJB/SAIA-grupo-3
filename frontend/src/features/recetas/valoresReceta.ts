@@ -21,6 +21,7 @@ export interface ValoresReceta {
   producto_id: string;
   rendimiento_cantidad: string;
   rendimiento_unidad_id: string;
+  rendimiento_peso_g: string;
   porcion_cantidad: string;
   porcion_unidad_id: string;
   porcion_medida_casera: string;
@@ -44,6 +45,7 @@ export function valoresIniciales(productoId: string, version?: Version): Valores
       producto_id: productoId,
       rendimiento_cantidad: '',
       rendimiento_unidad_id: '',
+      rendimiento_peso_g: '',
       porcion_cantidad: '',
       porcion_unidad_id: '',
       porcion_medida_casera: '',
@@ -56,6 +58,7 @@ export function valoresIniciales(productoId: string, version?: Version): Valores
     producto_id: productoId,
     rendimiento_cantidad: String(version.rendimiento_cantidad),
     rendimiento_unidad_id: String(version.rendimiento_unidad.id),
+    rendimiento_peso_g: textoOpcional(version.rendimiento_peso_g),
     porcion_cantidad: textoOpcional(version.porcion_cantidad),
     porcion_unidad_id: version.porcion_unidad ? String(version.porcion_unidad.id) : '',
     porcion_medida_casera: version.porcion_medida_casera ?? '',
@@ -81,10 +84,11 @@ function numeroOpcional(valor: string): number | null {
   return valor.trim() ? numeroDesdeTexto(valor) : null;
 }
 
-export function aDatosVersion(valores: ValoresReceta): VersionDatos {
+export function aDatosVersion(valores: ValoresReceta, rendimientoEnUnidades = false): VersionDatos {
   return {
     rendimiento_cantidad: numeroDesdeTexto(valores.rendimiento_cantidad),
     rendimiento_unidad_id: Number(valores.rendimiento_unidad_id),
+    rendimiento_peso_g: rendimientoEnUnidades ? numeroOpcional(valores.rendimiento_peso_g) : null,
     porcion_cantidad: numeroOpcional(valores.porcion_cantidad),
     porcion_unidad_id: valores.porcion_unidad_id ? Number(valores.porcion_unidad_id) : null,
     porcion_medida_casera: valores.porcion_medida_casera.trim() || null,

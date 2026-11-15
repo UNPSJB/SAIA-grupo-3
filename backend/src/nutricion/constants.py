@@ -46,6 +46,42 @@ class AccionHistorial(StrEnum):
     BORRADO = auto()
 
 
+class BaseCalculo(StrEnum):
+    GRAMOS = "g"
+    MILILITROS = "ml"
+
+
+VALORES_DIARIOS_INICIALES = {
+    Nutriente.ENERGIA: 2000,
+    Nutriente.CARBOHIDRATOS: 300,
+    Nutriente.AZUCARES_TOTALES: None,
+    Nutriente.AZUCARES_ANADIDOS: None,
+    Nutriente.PROTEINAS: 75,
+    Nutriente.GRASAS_TOTALES: 55,
+    Nutriente.GRASAS_SATURADAS: 22,
+    Nutriente.GRASAS_TRANS: None,
+    Nutriente.FIBRA: 25,
+    Nutriente.SODIO: 2400,
+}
+
+REGLAS_INICIALES = {
+    Nutriente.ENERGIA: (0, None, 4),
+    Nutriente.CARBOHIDRATOS: (1, 10, 0.5),
+    Nutriente.AZUCARES_TOTALES: (1, 10, None),
+    Nutriente.AZUCARES_ANADIDOS: (1, 10, None),
+    Nutriente.PROTEINAS: (1, 10, 0.5),
+    Nutriente.GRASAS_TOTALES: (1, 10, 0.5),
+    Nutriente.GRASAS_SATURADAS: (1, 10, 0.2),
+    Nutriente.GRASAS_TRANS: (1, 10, 0.2),
+    Nutriente.FIBRA: (1, 10, 0.5),
+    Nutriente.SODIO: (1, 10, 5),
+}
+
+EXPRESION_NO_SIGNIFICATIVO_INICIAL = "0"
+DECIMALES_VD_INICIAL = 0
+LEYENDA_VD_INICIAL = "% Valores Diarios con base a una dieta de 2.000 kcal u 8.400 kJ."
+
+
 COLUMNAS_CSV = ["codigo", "nombre", "grupo", *(campo for _, _, campo in NUTRIENTES.values())]
 
 
@@ -64,3 +100,21 @@ class ErrorCode:
     VALOR_INEXISTENTE = "Ese valor todavía no está cargado: cargalo indicando su fuente."
     REFERENCIA_OBLIGATORIA = "Indicá el alimento de referencia del que se copian los valores."
     ARCHIVO_INVALIDO = "El archivo no es un CSV válido o le faltan columnas: {detalle}"
+    VERSION_NO_ENCONTRADA = "La versión de receta no fue encontrada."
+    REGLA_DUPLICADA = "Cada nutriente se configura una sola vez."
+    REGLA_INCOMPLETA = "Faltan las reglas de: {nutrientes}."
+
+
+class Faltante:
+    COMPOSICION = "La composición de la receta está incompleta: completá las equivalencias en la pestaña Composición."
+    RENDIMIENTO_SIN_FACTOR = "La unidad del rendimiento ('{unidad}') no tiene factor de conversión."
+    RENDIMIENTO_EN_UNIDADES = (
+        "El rendimiento está en '{unidad}': cargá en la versión el peso final del rendimiento (g) "
+        "para poder llevar los valores a 100 g."
+    )
+    RENDIMIENTO_NO_MEDIBLE = "La unidad del rendimiento ('{unidad}') no es de peso, volumen ni unidades."
+    PORCION_INCOMPATIBLE = (
+        "La porción está en '{unidad}' y el rendimiento en {base}: declará la porción en {base} "
+        "para calcular los valores por porción y el % VD."
+    )
+    INSUMO_SIN_DATOS = "'{insumo}' no tiene cargado: {nutrientes}."

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from src.auth.dependencies import tiene_permiso_administrar
 from src.database import get_db
-from src.nutricion import exceptions, schemas, services
+from src.nutricion import exceptions, informacion, schemas, services
 from src.personal.models import Personal
 
 router = APIRouter(
@@ -76,3 +76,22 @@ def modificar_valores(
 @router.get("/insumos/{insumo_id}/historial", response_model=list[schemas.MovimientoHistorial])
 def read_historial(insumo_id: int, db: Session = Depends(get_db)):
     return services.listar_historial(db, insumo_id)
+
+
+@router.get("/versiones/{version_id}", response_model=schemas.InformacionNutricional)
+def read_informacion_version(version_id: int, db: Session = Depends(get_db)):
+    return informacion.obtener_informacion(db, version_id)
+
+
+@router.get("/configuracion", response_model=schemas.ConfiguracionNutricional)
+def read_configuracion(db: Session = Depends(get_db)):
+    return informacion.obtener_configuracion(db)
+
+
+@router.put("/configuracion", response_model=schemas.ConfiguracionNutricional)
+def guardar_configuracion(
+    datos: schemas.ConfiguracionNutricionalDatos,
+    db: Session = Depends(get_db),
+    persona: Personal = Depends(tiene_permiso_administrar),
+):
+    return informacion.guardar_configuracion(db, datos, persona)

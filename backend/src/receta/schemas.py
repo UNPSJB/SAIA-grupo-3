@@ -59,6 +59,7 @@ class VersionDatos(BaseModel):
 
     rendimiento_cantidad: float = Field(gt=0, allow_inf_nan=False)
     rendimiento_unidad_id: int = Field(gt=0)
+    rendimiento_peso_g: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
     porcion_cantidad: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
     porcion_unidad_id: Optional[int] = Field(default=None, gt=0)
     porcion_medida_casera: Optional[str] = Field(default=None, max_length=100)
@@ -178,6 +179,7 @@ class Version(VersionResumen):
     receta_id: int
     rendimiento_cantidad: float
     rendimiento_unidad: UnidadMedida
+    rendimiento_peso_g: Optional[float] = None
     porcion_cantidad: Optional[float] = None
     porcion_unidad: Optional[UnidadMedida] = None
     porcion_medida_casera: Optional[str] = None

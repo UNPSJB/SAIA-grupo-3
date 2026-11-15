@@ -29,3 +29,16 @@ class ValorInexistente(BadRequest):
 class ArchivoInvalido(BadRequest):
     def __init__(self, detalle: str) -> None:
         super().__init__(ErrorCode.ARCHIVO_INVALIDO.format(detalle=detalle))
+
+
+class VersionNoEncontrada(NotFound):
+    DETAIL = ErrorCode.VERSION_NO_ENCONTRADA
+
+
+class ReglaDuplicada(BadRequest):
+    DETAIL = ErrorCode.REGLA_DUPLICADA
+
+
+class ReglasIncompletas(BadRequest):
+    def __init__(self, nutrientes: str) -> None:
+        super().__init__(ErrorCode.REGLA_INCOMPLETA.format(nutrientes=nutrientes))

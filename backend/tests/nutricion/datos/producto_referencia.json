@@ -1,0 +1,42 @@
+{
+  "producto": "Pan casero (EJEMPLO, reemplazar por el producto validado de la cátedra)",
+  "validado_por": null,
+  "observaciones": "Ejemplo calculado a mano por el equipo para probar el circuito. Cuando la cátedra entregue el producto de referencia validado por un/a profesional, reemplazar ingredientes, rendimiento, porción, valores esperados y tolerancia en este archivo; la prueba no cambia.",
+  "tolerancia": {"relativa": 0.02, "absoluta": 0.05},
+  "rendimiento_g": 1500,
+  "porcion_g": 50,
+  "ingredientes": [
+    {
+      "nombre": "Harina de trigo 000",
+      "cantidad_g": 1000,
+      "valores_por_100g": {"energia": 340, "carbohidratos": 72, "azucares_totales": 0.3, "azucares_anadidos": 0, "proteinas": 10, "grasas_totales": 1, "grasas_saturadas": 0.2, "grasas_trans": 0, "fibra": 2.7, "sodio": 2}
+    },
+    {
+      "nombre": "Agua",
+      "cantidad_g": 600,
+      "valores_por_100g": {"energia": 0, "carbohidratos": 0, "azucares_totales": 0, "azucares_anadidos": 0, "proteinas": 0, "grasas_totales": 0, "grasas_saturadas": 0, "grasas_trans": 0, "fibra": 0, "sodio": 0}
+    },
+    {
+      "nombre": "Sal fina",
+      "cantidad_g": 20,
+      "valores_por_100g": {"energia": 0, "carbohidratos": 0, "azucares_totales": 0, "azucares_anadidos": 0, "proteinas": 0, "grasas_totales": 0, "grasas_saturadas": 0, "grasas_trans": 0, "fibra": 0, "sodio": 38700}
+    },
+    {
+      "nombre": "Levadura fresca",
+      "cantidad_g": 30,
+      "valores_por_100g": {"energia": 100, "carbohidratos": 12, "azucares_totales": 0, "azucares_anadidos": 0, "proteinas": 8.4, "grasas_totales": 1.5, "grasas_saturadas": 0.2, "grasas_trans": 0, "fibra": 6.9, "sodio": 30}
+    },
+    {
+      "nombre": "Aceite de girasol",
+      "cantidad_g": 30,
+      "valores_por_100g": {"energia": 884, "carbohidratos": 0, "azucares_totales": 0, "azucares_anadidos": 0, "proteinas": 0, "grasas_totales": 100, "grasas_saturadas": 11, "grasas_trans": 0, "fibra": 0, "sodio": 0}
+    },
+    {
+      "nombre": "Azúcar blanca",
+      "cantidad_g": 20,
+      "valores_por_100g": {"energia": 400, "carbohidratos": 100, "azucares_totales": 100, "azucares_anadidos": 100, "proteinas": 0, "grasas_totales": 0, "grasas_saturadas": 0, "grasas_trans": 0, "fibra": 0, "sodio": 0}
+    }
+  ],
+  "esperado_por_100g": {"energia": 251.68, "carbohidratos": 49.57, "azucares_totales": 1.53, "azucares_anadidos": 1.33, "proteinas": 6.83, "grasas_totales": 2.70, "grasas_saturadas": 0.36, "grasas_trans": 0, "fibra": 1.94, "sodio": 517.93},
+  "esperado_por_porcion": {"energia": 125.84, "carbohidratos": 24.79, "azucares_totales": 0.77, "azucares_anadidos": 0.67, "proteinas": 3.42, "grasas_totales": 1.35, "grasas_saturadas": 0.18, "grasas_trans": 0, "fibra": 0.97, "sodio": 258.97}
+}

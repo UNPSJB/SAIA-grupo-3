@@ -61,6 +61,7 @@ export interface Version extends VersionResumen {
   receta_id: number;
   rendimiento_cantidad: number;
   rendimiento_unidad: UnidadMedida;
+  rendimiento_peso_g: number | null;
   porcion_cantidad: number | null;
   porcion_unidad: UnidadMedida | null;
   porcion_medida_casera: string | null;
@@ -109,6 +110,7 @@ export interface PasoDatos {
 export interface VersionDatos {
   rendimiento_cantidad: number;
   rendimiento_unidad_id: number;
+  rendimiento_peso_g: number | null;
   porcion_cantidad: number | null;
   porcion_unidad_id: number | null;
   porcion_medida_casera: string | null;

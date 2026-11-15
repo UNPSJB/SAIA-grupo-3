@@ -130,3 +130,74 @@ export const NUTRIENTES_TODOS: NutrienteDisponible[] = [
   { nutriente: 'fibra', etiqueta: 'Fibra alimentaria', unidad: 'g' },
   { nutriente: 'sodio', etiqueta: 'Sodio', unidad: 'mg' },
 ];
+
+export interface ExpresionValor {
+  calculado: number;
+  valor: number;
+  texto: string;
+  no_significativo: boolean;
+}
+
+export interface FilaNutricional {
+  nutriente: Nutriente;
+  etiqueta: string;
+  unidad: string;
+  por_100: ExpresionValor | null;
+  por_porcion: ExpresionValor | null;
+  valor_diario: number | null;
+  porcentaje_vd: { valor: number; texto: string } | null;
+}
+
+export interface InformacionNutricional {
+  version_id: number;
+  numero: number;
+  estado: string;
+  completa: boolean;
+  calculada_en: string;
+  base: 'g' | 'ml' | null;
+  rendimiento_base: number | null;
+  porcion_base: number | null;
+  porcion_medida_casera: string | null;
+  faltantes: string[];
+  filas: FilaNutricional[];
+  energia_kj: { por_100: ExpresionValor | null; por_porcion: ExpresionValor | null };
+  leyenda_vd: string;
+  expresion_no_significativo: string;
+}
+
+export interface NutrienteConfiguracion {
+  nutriente: Nutriente;
+  valor_diario: number | null;
+  unidad: string;
+  decimales: number;
+  entero_desde: number | null;
+  umbral_no_significativo: number | null;
+}
+
+export interface NutrienteConfigurado extends NutrienteConfiguracion {
+  etiqueta: string;
+  unidad_dato: string;
+}
+
+export interface ConfiguracionNutricionalDatos {
+  expresion_no_significativo: string;
+  decimales_vd: number;
+  leyenda_vd: string;
+  nutrientes: NutrienteConfiguracion[];
+}
+
+export interface ConfiguracionNutricional extends Omit<
+  ConfiguracionNutricionalDatos,
+  'nutrientes'
+> {
+  nutrientes: NutrienteConfigurado[];
+  modificado_por: PersonaResumen | null;
+  modificado_en: string | null;
+}
+
+export const SUBNUTRIENTES: Nutriente[] = [
+  'azucares_totales',
+  'azucares_anadidos',
+  'grasas_saturadas',
+  'grasas_trans',
+];

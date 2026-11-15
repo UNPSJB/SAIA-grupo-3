@@ -12,6 +12,7 @@ import { ComposicionVersion } from './ComposicionVersion';
 import { EscaladoReceta } from './EscaladoReceta';
 import { HistorialVersiones } from './HistorialVersiones';
 import { ListaIngredientesVersion } from './ListaIngredientesVersion';
+import { InformacionNutricionalVersion } from '../nutricion/InformacionNutricionalVersion';
 import { VersionDetalle } from './VersionDetalle';
 
 async function cargar(
@@ -152,6 +153,9 @@ export function RecetaDetallePage() {
               editable={esVigente}
               onVerComposicion={() => setPestana('composicion')}
             />
+          </Tab>
+          <Tab eventKey="nutricion" title="Información nutricional">
+            <InformacionNutricionalVersion versionId={version.id} />
           </Tab>
         </Tabs>
       ) : (

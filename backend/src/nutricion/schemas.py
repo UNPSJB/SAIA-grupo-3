@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.insumos.constants import TipoInsumo
-from src.nutricion.constants import AccionHistorial, ErrorCode, FuenteNutricional, Nutriente
+from src.nutricion.constants import AccionHistorial, BaseCalculo, ErrorCode, FuenteNutricional, Nutriente
 
 
 def _validar_valores(valores: dict) -> dict:
@@ -159,3 +159,91 @@ class ResultadoImportacion(BaseModel):
     actualizados: int
     sin_cambios: int
     errores: list[str]
+
+
+class ExpresionValor(BaseModel):
+    calculado: float
+    valor: float
+    texto: str
+    no_significativo: bool
+
+
+class PorcentajeValorDiario(BaseModel):
+    valor: float
+    texto: str
+
+
+class FilaNutricional(BaseModel):
+    nutriente: Nutriente
+    etiqueta: str
+    unidad: str
+    por_100: Optional[ExpresionValor] = None
+    por_porcion: Optional[ExpresionValor] = None
+    valor_diario: Optional[float] = None
+    porcentaje_vd: Optional[PorcentajeValorDiario] = None
+
+
+class EnergiaKilojoules(BaseModel):
+    por_100: Optional[ExpresionValor] = None
+    por_porcion: Optional[ExpresionValor] = None
+
+
+class InformacionNutricional(BaseModel):
+    version_id: int
+    numero: int
+    estado: str
+    completa: bool
+    calculada_en: datetime
+    base: Optional[BaseCalculo] = None
+    rendimiento_base: Optional[float] = None
+    porcion_base: Optional[float] = None
+    porcion_medida_casera: Optional[str] = None
+    faltantes: list[str]
+    filas: list[FilaNutricional]
+    energia_kj: EnergiaKilojoules
+    leyenda_vd: str
+    expresion_no_significativo: str
+
+
+class NutrienteConfiguracion(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    nutriente: Nutriente
+    valor_diario: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
+    unidad: str = Field(min_length=1, max_length=10)
+    decimales: int = Field(ge=0, le=3)
+    entero_desde: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    umbral_no_significativo: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+
+    @field_validator("unidad", mode="before")
+    @classmethod
+    def limpiar_unidad(cls, valor: object) -> object:
+        return valor.strip() if isinstance(valor, str) else valor
+
+
+class ConfiguracionNutricionalDatos(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expresion_no_significativo: str = Field(min_length=1, max_length=40)
+    decimales_vd: int = Field(ge=0, le=2)
+    leyenda_vd: str = Field(min_length=1, max_length=250)
+    nutrientes: list[NutrienteConfiguracion]
+
+    @field_validator("expresion_no_significativo", "leyenda_vd", mode="before")
+    @classmethod
+    def limpiar_texto(cls, valor: object) -> object:
+        return valor.strip() if isinstance(valor, str) else valor
+
+
+class NutrienteConfigurado(NutrienteConfiguracion):
+    etiqueta: str
+    unidad_dato: str
+
+
+class ConfiguracionNutricional(BaseModel):
+    expresion_no_significativo: str
+    decimales_vd: int
+    leyenda_vd: str
+    nutrientes: list[NutrienteConfigurado]
+    modificado_por: Optional[PersonaResumen] = None
+    modificado_en: Optional[datetime] = None

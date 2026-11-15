@@ -1,6 +1,9 @@
 import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type {
   AlimentoReferencia,
+  ConfiguracionNutricional,
+  ConfiguracionNutricionalDatos,
+  InformacionNutricional,
   DatosNutricionales,
   FuenteNutricional,
   MovimientoHistorial,
@@ -75,3 +78,25 @@ export function importarAlimentos(archivo: File, fuente: string): Promise<Result
     body: formulario,
   });
 }
+
+export const getInformacionVersion = (versionId: number) =>
+  pedir<InformacionNutricional>(
+    `/nutricion/versiones/${versionId}`,
+    'No se pudo calcular la información nutricional.',
+  );
+
+export const getConfiguracionNutricional = () =>
+  pedir<ConfiguracionNutricional>(
+    '/nutricion/configuracion',
+    'No se pudo cargar la configuración.',
+  );
+
+export const guardarConfiguracionNutricional = (datos: ConfiguracionNutricionalDatos) =>
+  pedir<ConfiguracionNutricional>(
+    '/nutricion/configuracion',
+    'No se pudo guardar la configuración.',
+    {
+      method: 'PUT',
+      body: JSON.stringify(datos),
+    },
+  );

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -13,10 +14,11 @@ from src.receta import exceptions, schemas
 from src.receta.constants import EstadoVersionReceta
 from src.receta.models import PasoReceta, Receta, RenglonReceta, VersionReceta
 from src.unidadMedida.conversion import convertir
-from src.unidadMedida.models import UnidadMedida
+from src.unidadMedida.models import TipoUnidadMedida, UnidadMedida
 from src.receta.constants import DECIMALES_ESCALADO, DECIMALES_PORCENTAJE, TOLERANCIA_COMPOSICION
 from src.receta.composicion import a_gramos, calcular_composicion, mensaje_faltante
 from src.receta.lista_ingredientes import armar_lista, heredar_orden_manual
+from src.nutricion.calculo import calcular_informacion
 from src.configuracionProduccion.services import obtener_configuracion
 
 ETIQUETA_TIPO = {TipoInsumo.INGREDIENTE: "ingrediente", TipoInsumo.ADITIVO: "aditivo"}
@@ -79,6 +81,11 @@ def _armar_pasos(db: Session, pasos: list[schemas.PasoCreate]) -> list[PasoRecet
     return armados
 
 
+def _peso_final(db: Session, datos: schemas.VersionDatos) -> Optional[float]:
+    unidad = db.get(UnidadMedida, datos.rendimiento_unidad_id)
+    return datos.rendimiento_peso_g if unidad is not None and unidad.tipo == TipoUnidadMedida.UNIDAD else None
+
+
 def _armar_version(
     db: Session, datos: schemas.VersionDatos, numero: int, motivo: str, persona: Personal
 ) -> VersionReceta:
@@ -92,6 +99,7 @@ def _armar_version(
         motivo=motivo,
         rendimiento_cantidad=datos.rendimiento_cantidad,
         rendimiento_unidad_id=datos.rendimiento_unidad_id,
+        rendimiento_peso_g=_peso_final(db, datos),
         porcion_cantidad=datos.porcion_cantidad,
         porcion_unidad_id=datos.porcion_unidad_id,
         porcion_medida_casera=datos.porcion_medida_casera,
@@ -110,6 +118,7 @@ def crear_receta(db: Session, datos: schemas.RecetaCreate, persona: Personal) ->
     db.add(receta)
     db.flush()
     calcular_composicion(version)
+    calcular_informacion(db, version)
     db.commit()
     db.refresh(receta)
     return receta
@@ -130,6 +139,7 @@ def guardar_nueva_version(db: Session, receta_id: int, datos: schemas.NuevaVersi
     receta.versiones.append(nueva)
     db.flush()
     calcular_composicion(nueva)
+    calcular_informacion(db, nueva)
     heredar_orden_manual(vigente, nueva)
     db.commit()
     db.refresh(receta)

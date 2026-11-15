@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Alert, Button, Card, Col, Form, Row } from 'react-bootstrap';
 import { FormErrors } from '../../shared/components/FormErrors';
 import { SearchableSelect } from '../../shared/components/SearchableSelect';
@@ -36,6 +36,9 @@ export function RecetaForm({
     defaultValues: valoresIniciales(productoInicial, versionBase),
   });
   const { errors, isSubmitting, submitCount } = form.formState;
+  const unidadRendimientoId = useWatch({ control: form.control, name: 'rendimiento_unidad_id' });
+  const unidadRendimiento = unidades.find((unidad) => String(unidad.id) === unidadRendimientoId);
+  const rendimientoEnUnidades = unidadRendimiento?.tipo === 'unidad';
 
   const enviar = form.handleSubmit(async (valores) => {
     if (!valores.renglones.some((renglon) => renglon.tipo === 'ingrediente')) {
@@ -43,7 +46,7 @@ export function RecetaForm({
       return;
     }
     try {
-      await onGuardar(valores, aDatosVersion(valores));
+      await onGuardar(valores, aDatosVersion(valores, rendimientoEnUnidades));
     } catch (err: unknown) {
       form.setError('root', {
         message: err instanceof Error ? err.message : 'No se pudo guardar la receta.',
@@ -122,6 +125,26 @@ export function RecetaForm({
                   {opcionesUnidad}
                 </Form.Select>
               </div>
+              {rendimientoEnUnidades && (
+                <Form.Group controlId="receta-peso-final" className="mb-3">
+                  <Form.Label>
+                    Peso final del rendimiento (g) — para la información nutricional
+                  </Form.Label>
+                  <Form.Control
+                    inputMode="decimal"
+                    placeholder="Ej.: 9000"
+                    isInvalid={!!errors.rendimiento_peso_g}
+                    {...form.register('rendimiento_peso_g', {
+                      validate: (valor) =>
+                        !valor.trim() || positivo(valor) || 'El peso final debe ser mayor a cero.',
+                    })}
+                  />
+                  <Form.Text>
+                    Lo que pesa todo lo producido ya terminado (después de la cocción). Sin este
+                    dato no se pueden llevar los nutrientes a 100 g.
+                  </Form.Text>
+                </Form.Group>
+              )}
               <Form.Label htmlFor="receta-porcion">Porción o unidad de venta — opcional</Form.Label>
               <div className="d-flex gap-2 mb-2">
                 <Form.Control
