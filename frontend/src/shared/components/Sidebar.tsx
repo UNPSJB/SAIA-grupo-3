@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Offcanvas, Collapse } from 'react-bootstrap';
 import { useAuth } from '../hooks/useAuth';
+import { useRotuladoFrontalActivo } from '../../features/rotuladoFrontal/useRotuladoFrontalActivo';
 
 interface SidebarProps {
   show: boolean;
@@ -30,6 +31,7 @@ interface MenuItem {
 export function Sidebar({ show, onClose }: SidebarProps) {
   const location = useLocation();
   const { currentUser } = useAuth();
+  const rotuladoActivo = useRotuladoFrontalActivo(currentUser?.administrar === true);
 
 
   const menuItems: MenuItem[] = [
@@ -77,6 +79,9 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         { to: '/aditivos-referencia', label: 'Aditivos de referencia', icono: 'bi bi-capsule' },
         { to: '/alimentos-referencia', label: 'Alimentos de referencia', icono: 'bi bi-clipboard2-pulse' },
         { to: '/valores-diarios', label: 'Valores diarios y redondeo', icono: 'bi bi-percent' },
+        ...(rotuladoActivo
+          ? [{ to: '/parametros-normativos', label: 'Parámetros normativos', icono: 'bi bi-journal-check' }]
+          : []),
         { to: '/configuracion-produccion', label: 'Configuración de producción', icono: 'bi bi-sliders' },
       ],
     },

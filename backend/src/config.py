@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     ROOT_PATH_PRODUCTION: str = ""
     LOG_LEVEL: str = "INFO"
     SCHEDULER_ACTIVO: bool = True
+    ROTULADO_FRONTAL_ACTIVO: bool = True
     DIAS_AVISO_VENCIMIENTO: int = Field(default=15, ge=0)
 
     SECRET_KEY: str = "tu-clave-secreta-para-access-token"

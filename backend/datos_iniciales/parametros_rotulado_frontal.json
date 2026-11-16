@@ -1,0 +1,25 @@
+{
+  "nombre": "Perfil de nutrientes Ley 27.642 (segunda etapa)",
+  "norma_origen": "Ley 27.642; Decreto 151/2022, Anexo I, art. 6 (valores de la segunda etapa); Manual de Aplicación aprobado por Disposición ANMAT 11362/2024 (solo se evalúan los nutrientes críticos añadidos).",
+  "fecha_vigencia": "2024-12-27",
+  "motivo": "Parámetros iniciales del sistema.",
+  "umbrales": [
+    {"sello": "azucares", "leyenda": "EXCESO EN AZÚCARES", "nutriente": "azucares_anadidos", "formula": "porcentaje_energia", "factor_energetico": 4, "limite": 10, "unidad": "% del valor energético", "comparacion": "mayor_o_igual", "aplica_a": "ambos", "requiere_agregado": "agrega_azucares"},
+    {"sello": "grasas_totales", "leyenda": "EXCESO EN GRASAS TOTALES", "nutriente": "grasas_totales", "formula": "porcentaje_energia", "factor_energetico": 9, "limite": 30, "unidad": "% del valor energético", "comparacion": "mayor_o_igual", "aplica_a": "ambos", "requiere_agregado": "agrega_grasas"},
+    {"sello": "grasas_saturadas", "leyenda": "EXCESO EN GRASAS SATURADAS", "nutriente": "grasas_saturadas", "formula": "porcentaje_energia", "factor_energetico": 9, "limite": 10, "unidad": "% del valor energético", "comparacion": "mayor_o_igual", "aplica_a": "ambos", "requiere_agregado": "agrega_grasas"},
+    {"sello": "sodio", "leyenda": "EXCESO EN SODIO", "nutriente": "sodio", "formula": "mg_por_kcal", "limite": 1, "unidad": "mg por kcal", "comparacion": "mayor_o_igual", "aplica_a": "ambos", "requiere_agregado": "agrega_sodio", "nota": "Basta con superar uno de los límites de sodio (por kcal o por 100 g o ml)."},
+    {"sello": "sodio", "leyenda": "EXCESO EN SODIO", "nutriente": "sodio", "formula": "cantidad_por_100", "limite": 300, "unidad": "mg por 100 g o 100 ml", "comparacion": "mayor_o_igual", "aplica_a": "ambos", "requiere_agregado": "agrega_sodio"},
+    {"sello": "sodio", "leyenda": "EXCESO EN SODIO", "nutriente": "sodio", "formula": "cantidad_por_100", "limite": 40, "unidad": "mg por 100 ml", "comparacion": "mayor_o_igual", "aplica_a": "liquido", "requiere_agregado": "agrega_sodio", "energia_maxima_porcion": 4},
+    {"sello": "calorias", "leyenda": "EXCESO EN CALORÍAS", "nutriente": "energia", "formula": "cantidad_por_100", "limite": 275, "unidad": "kcal por 100 g", "comparacion": "mayor_o_igual", "aplica_a": "solido", "requiere_alguno_de": ["azucares", "grasas_totales", "grasas_saturadas"]},
+    {"sello": "calorias", "leyenda": "EXCESO EN CALORÍAS", "nutriente": "energia", "formula": "cantidad_por_100", "limite": 25, "unidad": "kcal por 100 ml", "comparacion": "mayor_o_igual", "aplica_a": "liquido", "requiere_alguno_de": ["azucares", "grasas_totales", "grasas_saturadas"]}
+  ],
+  "reglas": [
+    {"operador": "ninguno", "hechos": ["envasado_ausencia_cliente"], "resultado": "no_corresponde", "mensaje": "El producto no se vende envasado en ausencia del cliente: no corresponde el rotulado frontal."},
+    {"operador": "ninguno", "hechos": ["agrega_azucares", "agrega_grasas", "agrega_sodio", "contiene_edulcorantes", "contiene_cafeina"], "resultado": "exceptuado", "mensaje": "El producto no tiene azúcares, grasas ni sodio añadidos y no contiene edulcorantes ni cafeína: queda exceptuado del rotulado frontal."},
+    {"operador": "siempre", "hechos": [], "resultado": "corresponde", "mensaje": "Corresponde calcular los sellos de advertencia."}
+  ],
+  "advertencias": [
+    {"hecho": "contiene_edulcorantes", "texto": "CONTIENE EDULCORANTES, NO RECOMENDABLE EN NIÑOS/AS"},
+    {"hecho": "contiene_cafeina", "texto": "CONTIENE CAFEÍNA. EVITAR EN NIÑOS/AS"}
+  ]
+}
