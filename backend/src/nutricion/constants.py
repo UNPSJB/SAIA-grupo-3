@@ -89,6 +89,11 @@ REGLAS_INICIALES = {
 EXPRESION_NO_SIGNIFICATIVO_INICIAL = "0"
 DECIMALES_VD_INICIAL = 0
 LEYENDA_VD_INICIAL = "% Valores Diarios con base a una dieta de 2.000 kcal u 8.400 kJ."
+LEYENDA_REVISION_INICIAL = (
+    "Valores calculados por el sistema a partir de la receta y de datos de referencia de los "
+    "ingredientes. Deben ser revisados por un/a profesional del área antes de usarse en un rótulo."
+)
+LEYENDA_INCOMPLETA = "Tabla incompleta: calculada con datos faltantes. No usar en un rótulo."
 
 
 COLUMNAS_CSV = ["codigo", "nombre", "grupo", *(campo for _, _, campo in NUTRIENTES.values())]

@@ -105,3 +105,11 @@ def receta_referencia_incompleta(client, headers_administradora, unidades, ingre
     )
     receta = crear_receta(client, headers_administradora, nuevo_producto("Pan con semillas"), datos)
     return receta["version_vigente"]["id"]
+
+
+@pytest.fixture
+def receta_referencia(client, headers_administradora, unidades, ingredientes, nuevo_producto):
+    cargar_referencia(client, headers_administradora, ingredientes)
+    return crear_receta(
+        client, headers_administradora, nuevo_producto("Pan casero"), datos_version(unidades, ingredientes)
+    )

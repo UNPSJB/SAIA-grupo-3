@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Badge, Card, Form, Table } from 'react-bootstrap';
+import { createPortal } from 'react-dom';
+import { Badge, Button, ButtonGroup, Card, Form, Table } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -9,6 +10,7 @@ import { AvisoFaltantes } from './AvisoFaltantes';
 import { CompletarInsumoModal } from './CompletarInsumoModal';
 import { formatearValor } from './formato';
 import { InsigniaIncompleta } from './InsigniaIncompleta';
+import { TablaNutricional } from './TablaNutricional';
 import { getInformacionVersion } from './nutricionApi';
 import { SUBNUTRIENTES, type ExpresionValor } from './types';
 
@@ -45,6 +47,17 @@ function Celda({
   );
 }
 
+function imprimir() {
+  const clase = 'imprimiendo-tabla-nutricional';
+  const quitar = () => {
+    document.body.classList.remove(clase);
+    window.removeEventListener('afterprint', quitar);
+  };
+  document.body.classList.add(clase);
+  window.addEventListener('afterprint', quitar);
+  window.print();
+}
+
 interface Props {
   versionId: number;
   onVerComposicion?: () => void;
@@ -66,6 +79,7 @@ export function InformacionNutricionalVersion({
   }, [versionId, revision]);
   const [verCalculado, setVerCalculado] = useState(false);
   const [completando, setCompletando] = useState<{ id: number; nombre: string } | null>(null);
+  const [vista, setVista] = useState<'calculo' | 'rotulo'>('calculo');
 
   if (consulta.error) return <ErrorAlert mensaje={consulta.error} />;
   if (!consulta.datos) return <LoadingSpinner mensaje="Calculando información nutricional..." />;
@@ -83,9 +97,31 @@ export function InformacionNutricionalVersion({
           <span className="fw-semibold">Información nutricional</span>
           <InsigniaIncompleta completa={info.completa} mostrarCompleta />
         </div>
-        <span className="small text-body-secondary">
-          Calculada {formatearFechaHora(info.calculada_en)}
-        </span>
+        <div className="d-flex flex-wrap gap-2 align-items-center">
+          <span className="small text-body-secondary">
+            Calculada {formatearFechaHora(info.calculada_en)}
+          </span>
+          <ButtonGroup size="sm" aria-label="Vista de la información nutricional">
+            <Button
+              variant={vista === 'calculo' ? 'secondary' : 'outline-secondary'}
+              onClick={() => setVista('calculo')}
+            >
+              Cálculo
+            </Button>
+            <Button
+              variant={vista === 'rotulo' ? 'secondary' : 'outline-secondary'}
+              onClick={() => setVista('rotulo')}
+            >
+              Formato de rótulo
+            </Button>
+          </ButtonGroup>
+          {vista === 'rotulo' && (
+            <Button size="sm" variant="primary" onClick={imprimir}>
+              <i className="bi bi-printer-fill me-1" aria-hidden="true" />
+              Imprimir / guardar PDF
+            </Button>
+          )}
+        </div>
       </Card.Header>
       <Card.Body className="p-3 p-md-4">
         <AvisoFaltantes
@@ -94,104 +130,129 @@ export function InformacionNutricionalVersion({
           onVerComposicion={onVerComposicion}
           rutaNuevaVersion={rutaNuevaVersion}
         />
-        <div className="d-flex flex-wrap gap-3 small text-body-secondary mb-3">
-          {info.rendimiento_base !== null && (
-            <span>
-              Rendimiento final: <strong>{formatearValor(info.rendimiento_base, base)}</strong>
-            </span>
-          )}
-          <span>
-            Porción:{' '}
-            <strong>
-              {tienePorcion
-                ? formatearValor(info.porcion_base, base)
-                : porcionIncompatible
-                  ? 'sin calcular'
-                  : 'no declarada'}
-            </strong>
-            {info.porcion_medida_casera && ` (${info.porcion_medida_casera})`}
-          </span>
-        </div>
-        <Table
-          responsive
-          size="sm"
-          className="align-middle mb-2"
-          style={{ fontSize: 'clamp(0.78rem, 2.4vw, 1rem)' }}
-        >
-          <thead>
-            <tr className="small text-body-secondary">
-              <th>Nutriente</th>
-              <th className="text-end">Por 100 {base}</th>
-              <th className="text-end">
-                <span className="d-none d-md-inline">Por porción</span>
-                <span className="d-md-none">Porción</span>
-                {tienePorcion && (
-                  <span className="d-none d-md-inline">
-                    {` (${formatearValor(info.porcion_base, base)})`}
-                  </span>
-                )}
-              </th>
-              <th className="text-end text-nowrap">% VD (*)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {info.filas.map((fila) => (
-              <tr key={fila.nutriente}>
-                <td className={SUBNUTRIENTES.includes(fila.nutriente) ? 'ps-4' : ''}>
-                  {fila.etiqueta}
-                </td>
-                <td className="text-end text-nowrap">
-                  <Celda valor={fila.por_100} unidad={fila.unidad} verCalculado={verCalculado} />
-                  {fila.nutriente === 'energia' && info.energia_kj.por_100 && (
-                    <div className="small text-body-secondary">
-                      = {info.energia_kj.por_100.texto} kJ
-                    </div>
-                  )}
-                </td>
-                <td className="text-end text-nowrap">
-                  <Celda
-                    valor={fila.por_porcion}
-                    unidad={fila.unidad}
-                    verCalculado={verCalculado}
-                  />
-                  {fila.nutriente === 'energia' && info.energia_kj.por_porcion && (
-                    <div className="small text-body-secondary">
-                      = {info.energia_kj.por_porcion.texto} kJ
-                    </div>
-                  )}
-                </td>
-                <td className="text-end">
-                  {fila.porcentaje_vd ? (
-                    `${fila.porcentaje_vd.texto} %`
-                  ) : (
-                    <span className="text-body-tertiary">
-                      {fila.valor_diario ? '—' : 'no aplica'}
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-        <p className="small text-body-secondary mb-3">(*) {info.leyenda_vd}</p>
-        {!tienePorcion && !porcionIncompatible && (
-          <p className="small text-body-secondary">
-            Para ver los valores por porción y el % VD, declará la porción en una nueva versión de
-            la receta.
-          </p>
+        {vista === 'calculo' ? (
+          <>
+            <div className="d-flex flex-wrap gap-3 small text-body-secondary mb-3">
+              {info.rendimiento_base !== null && (
+                <span>
+                  Rendimiento final: <strong>{formatearValor(info.rendimiento_base, base)}</strong>
+                </span>
+              )}
+              <span>
+                Porción:{' '}
+                <strong>
+                  {tienePorcion
+                    ? formatearValor(info.porcion_base, base)
+                    : porcionIncompatible
+                      ? 'sin calcular'
+                      : 'no declarada'}
+                </strong>
+                {info.porcion_medida_casera && ` (${info.porcion_medida_casera})`}
+              </span>
+            </div>
+            <Table
+              responsive
+              size="sm"
+              className="align-middle mb-2"
+              style={{ fontSize: 'clamp(0.78rem, 2.4vw, 1rem)' }}
+            >
+              <thead>
+                <tr className="small text-body-secondary">
+                  <th>Nutriente</th>
+                  <th className="text-end">Por 100 {base}</th>
+                  <th className="text-end">
+                    <span className="d-none d-md-inline">Por porción</span>
+                    <span className="d-md-none">Porción</span>
+                    {tienePorcion && (
+                      <span className="d-none d-md-inline">
+                        {` (${formatearValor(info.porcion_base, base)})`}
+                      </span>
+                    )}
+                  </th>
+                  <th className="text-end text-nowrap">% VD (*)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {info.filas.map((fila) => (
+                  <tr key={fila.nutriente}>
+                    <td className={SUBNUTRIENTES.includes(fila.nutriente) ? 'ps-4' : ''}>
+                      {fila.etiqueta}
+                    </td>
+                    <td className="text-end text-nowrap">
+                      <Celda
+                        valor={fila.por_100}
+                        unidad={fila.unidad}
+                        verCalculado={verCalculado}
+                      />
+                      {fila.nutriente === 'energia' && info.energia_kj.por_100 && (
+                        <div className="small text-body-secondary">
+                          = {info.energia_kj.por_100.texto} kJ
+                        </div>
+                      )}
+                    </td>
+                    <td className="text-end text-nowrap">
+                      <Celda
+                        valor={fila.por_porcion}
+                        unidad={fila.unidad}
+                        verCalculado={verCalculado}
+                      />
+                      {fila.nutriente === 'energia' && info.energia_kj.por_porcion && (
+                        <div className="small text-body-secondary">
+                          = {info.energia_kj.por_porcion.texto} kJ
+                        </div>
+                      )}
+                    </td>
+                    <td className="text-end">
+                      {fila.porcentaje_vd ? (
+                        `${fila.porcentaje_vd.texto} %`
+                      ) : (
+                        <span className="text-body-tertiary">
+                          {fila.valor_diario ? '—' : 'no aplica'}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+            <p className="small text-body-secondary mb-3">(*) {info.leyenda_vd}</p>
+            {!tienePorcion && !porcionIncompatible && (
+              <p className="small text-body-secondary">
+                Para ver los valores por porción y el % VD, declará la porción en una nueva versión
+                de la receta.
+              </p>
+            )}
+            <div className="d-flex flex-wrap gap-3 justify-content-between align-items-center border-top pt-3">
+              <Form.Check
+                type="switch"
+                id={`ver-calculado-${versionId}`}
+                label="Mostrar los valores calculados sin redondear"
+                checked={verCalculado}
+                onChange={(evento) => setVerCalculado(evento.target.checked)}
+              />
+              <Link to="/valores-diarios" className="small">
+                Valores diarios y reglas de redondeo
+              </Link>
+            </div>
+          </>
+        ) : (
+          <>
+            <TablaNutricional info={info} />
+            {createPortal(
+              <div className="tabla-nutricional-impresion">
+                <div className="tabla-nutricional-encabezado">
+                  <h4 className="mb-1">{info.producto}</h4>
+                  <div className="small">
+                    Receta versión {info.numero} ({info.estado}) · calculada{' '}
+                    {formatearFechaHora(info.calculada_en)}
+                  </div>
+                </div>
+                <TablaNutricional info={info} />
+              </div>,
+              document.body,
+            )}
+          </>
         )}
-        <div className="d-flex flex-wrap gap-3 justify-content-between align-items-center border-top pt-3">
-          <Form.Check
-            type="switch"
-            id={`ver-calculado-${versionId}`}
-            label="Mostrar los valores calculados sin redondear"
-            checked={verCalculado}
-            onChange={(evento) => setVerCalculado(evento.target.checked)}
-          />
-          <Link to="/valores-diarios" className="small">
-            Valores diarios y reglas de redondeo
-          </Link>
-        </div>
       </Card.Body>
       <CompletarInsumoModal
         insumo={completando}

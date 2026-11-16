@@ -17,12 +17,15 @@ interface FilaEditable {
   decimales: string;
   entero_desde: string;
   umbral_no_significativo: string;
+  nombre_rotulo: string;
+  obligatorio: boolean;
 }
 
 interface Borrador {
   expresion_no_significativo: string;
   decimales_vd: string;
   leyenda_vd: string;
+  leyenda_revision: string;
   filas: FilaEditable[];
 }
 
@@ -33,6 +36,7 @@ function aBorrador(config: ConfiguracionNutricional): Borrador {
     expresion_no_significativo: config.expresion_no_significativo,
     decimales_vd: String(config.decimales_vd),
     leyenda_vd: config.leyenda_vd,
+    leyenda_revision: config.leyenda_revision,
     filas: config.nutrientes.map((fila) => ({
       nutriente: fila.nutriente,
       etiqueta: fila.etiqueta,
@@ -42,6 +46,8 @@ function aBorrador(config: ConfiguracionNutricional): Borrador {
       decimales: String(fila.decimales),
       entero_desde: texto(fila.entero_desde),
       umbral_no_significativo: texto(fila.umbral_no_significativo),
+      nombre_rotulo: fila.nombre_rotulo,
+      obligatorio: fila.obligatorio,
     })),
   };
 }
@@ -77,7 +83,14 @@ export function ValoresDiariosPage() {
     setGuardado(false);
     setBorrador({ ...actual, ...cambios });
   };
-  const cambiarFila = (nutriente: Nutriente, campo: keyof FilaEditable, valor: string) =>
+  const mover = (indice: number, desplazamiento: number) => {
+    const filas = [...actual.filas];
+    const destino = indice + desplazamiento;
+    if (destino < 0 || destino >= filas.length) return;
+    [filas[indice], filas[destino]] = [filas[destino], filas[indice]];
+    cambiar({ filas });
+  };
+  const cambiarFila = (nutriente: Nutriente, campo: keyof FilaEditable, valor: string | boolean) =>
     cambiar({
       filas: actual.filas.map((fila) =>
         fila.nutriente === nutriente ? { ...fila, [campo]: valor } : fila,
@@ -93,19 +106,25 @@ export function ValoresDiariosPage() {
         expresion_no_significativo: actual.expresion_no_significativo.trim(),
         decimales_vd: entero(actual.decimales_vd, 'Los decimales del % VD', 2),
         leyenda_vd: actual.leyenda_vd.trim(),
-        nutrientes: actual.filas.map((fila) => {
+        leyenda_revision: actual.leyenda_revision.trim(),
+        nutrientes: actual.filas.map((fila, indice) => {
           const valorDiario = numeroOpcional(fila.valor_diario, 'el valor diario', fila.etiqueta);
           if (valorDiario === 0)
             throw new Error(
               `${fila.etiqueta}: el valor diario debe ser mayor a cero o quedar vacío.`,
             );
           if (!fila.unidad.trim()) throw new Error(`${fila.etiqueta}: indicá la unidad.`);
+          if (!fila.nombre_rotulo.trim())
+            throw new Error(`${fila.etiqueta}: indicá el nombre con que se muestra en el rótulo.`);
           return {
             nutriente: fila.nutriente,
             valor_diario: valorDiario,
             unidad: fila.unidad.trim(),
             decimales: entero(fila.decimales, `${fila.etiqueta}: los decimales`, 3),
             entero_desde: numeroOpcional(fila.entero_desde, '"entero desde"', fila.etiqueta),
+            nombre_rotulo: fila.nombre_rotulo.trim(),
+            orden: indice + 1,
+            obligatorio: fila.obligatorio,
             umbral_no_significativo: numeroOpcional(
               fila.umbral_no_significativo,
               'el umbral',
@@ -117,6 +136,8 @@ export function ValoresDiariosPage() {
       if (!datos.expresion_no_significativo)
         throw new Error('Indicá cómo se expresa un valor no significativo.');
       if (!datos.leyenda_vd) throw new Error('Indicá la leyenda del % VD.');
+      if (!datos.leyenda_revision)
+        throw new Error('Indicá la leyenda de revisión profesional: no puede quedar vacía.');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Revisá los datos.');
       return;
@@ -184,6 +205,21 @@ export function ValoresDiariosPage() {
                   />
                 </Form.Group>
               </Col>
+              <Col xs={12}>
+                <Form.Group controlId="vd-leyenda-revision">
+                  <Form.Label>Leyenda de revisión profesional</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={2}
+                    maxLength={500}
+                    value={actual.leyenda_revision}
+                    onChange={(evento) => cambiar({ leyenda_revision: evento.target.value })}
+                  />
+                  <Form.Text>
+                    Se muestra siempre debajo de la tabla en formato de rótulo y en su impresión.
+                  </Form.Text>
+                </Form.Group>
+              </Col>
             </Row>
           </Card.Body>
         </Card>
@@ -196,7 +232,9 @@ export function ValoresDiariosPage() {
             <Table responsive className="mb-0 align-middle small">
               <thead>
                 <tr className="text-body-secondary">
-                  <th className="ps-3">Nutriente</th>
+                  <th className="ps-3">Orden</th>
+                  <th style={{ minWidth: '9rem' }}>Nombre en el rótulo</th>
+                  <th className="text-center">En la tabla</th>
                   <th style={{ minWidth: '8rem' }}>Valor diario</th>
                   <th style={{ minWidth: '6rem' }}>Unidad a mostrar</th>
                   <th style={{ minWidth: '5rem' }}>Decimales</th>
@@ -205,9 +243,50 @@ export function ValoresDiariosPage() {
                 </tr>
               </thead>
               <tbody>
-                {actual.filas.map((fila) => (
+                {actual.filas.map((fila, indice) => (
                   <tr key={fila.nutriente}>
-                    <td className="ps-3 fw-semibold">{fila.etiqueta}</td>
+                    <td className="ps-3 text-nowrap">
+                      <Button
+                        size="sm"
+                        variant="outline-secondary"
+                        className="py-0 px-1 me-1"
+                        aria-label={`Subir ${fila.etiqueta}`}
+                        disabled={indice === 0}
+                        onClick={() => mover(indice, -1)}
+                      >
+                        ↑
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline-secondary"
+                        className="py-0 px-1"
+                        aria-label={`Bajar ${fila.etiqueta}`}
+                        disabled={indice === actual.filas.length - 1}
+                        onClick={() => mover(indice, 1)}
+                      >
+                        ↓
+                      </Button>
+                    </td>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        aria-label={`Nombre en el rótulo de ${fila.etiqueta}`}
+                        maxLength={60}
+                        value={fila.nombre_rotulo}
+                        onChange={(evento) =>
+                          cambiarFila(fila.nutriente, 'nombre_rotulo', evento.target.value)
+                        }
+                      />
+                    </td>
+                    <td className="text-center">
+                      <Form.Check
+                        aria-label={`${fila.etiqueta} se declara en la tabla`}
+                        checked={fila.obligatorio}
+                        onChange={(evento) =>
+                          cambiarFila(fila.nutriente, 'obligatorio', evento.target.checked)
+                        }
+                      />
+                    </td>
                     <td>
                       <div className="input-group input-group-sm">
                         <Form.Control
@@ -296,6 +375,11 @@ export function ValoresDiariosPage() {
             de valor no significativo y su % VD es 0. Vacío: nunca.
           </li>
           <li>Un valor diario vacío significa que ese nutriente no lleva % VD.</li>
+          <li>
+            <strong>Orden</strong>, <strong>Nombre en el rótulo</strong> y{' '}
+            <strong>En la tabla</strong> definen la tabla en formato de rótulo: qué nutrientes se
+            declaran, en qué orden y con qué nombre.
+          </li>
         </ul>
         {error && <ErrorAlert mensaje={error} />}
         {guardado && (

@@ -11,6 +11,8 @@ from src.nutricion.constants import (
     DECIMALES_VD_INICIAL,
     EXPRESION_NO_SIGNIFICATIVO_INICIAL,
     FACTOR_KJ_POR_KCAL,
+    LEYENDA_INCOMPLETA,
+    LEYENDA_REVISION_INICIAL,
     LEYENDA_VD_INICIAL,
     NUTRIENTES,
     REGLAS_INICIALES,
@@ -23,6 +25,7 @@ from src.personal.models import Personal
 from src.receta.models import VersionReceta
 
 ID_CONFIGURACION = 1
+ORDEN_INICIAL = {nutriente: posicion for posicion, nutriente in enumerate(NUTRIENTES, start=1)}
 
 
 def asegurar_configuracion(db: Session) -> bool:
@@ -34,9 +37,15 @@ def asegurar_configuracion(db: Session) -> bool:
                 expresion_no_significativo=EXPRESION_NO_SIGNIFICATIVO_INICIAL,
                 decimales_vd=DECIMALES_VD_INICIAL,
                 leyenda_vd=LEYENDA_VD_INICIAL,
+                leyenda_revision=LEYENDA_REVISION_INICIAL,
             )
         )
         creado = True
+    else:
+        configuracion = db.get(ConfiguracionNutricional, ID_CONFIGURACION)
+        if not configuracion.leyenda_revision:
+            configuracion.leyenda_revision = LEYENDA_REVISION_INICIAL
+            creado = True
     existentes_vd = set(db.scalars(select(ValorDiarioReferencia.nutriente)).all())
     existentes_reglas = set(db.scalars(select(ReglaExpresionNutriente.nutriente)).all())
     for nutriente in NUTRIENTES:
@@ -52,8 +61,16 @@ def asegurar_configuracion(db: Session) -> bool:
                     decimales=decimales,
                     entero_desde=entero_desde,
                     umbral_no_significativo=umbral,
+                    nombre_rotulo=NUTRIENTES[nutriente][0],
+                    orden=ORDEN_INICIAL[nutriente],
+                    obligatorio=True,
                 )
             )
+            creado = True
+    for regla in db.scalars(select(ReglaExpresionNutriente)).all():
+        if not regla.nombre_rotulo or not regla.orden:
+            regla.nombre_rotulo = regla.nombre_rotulo or NUTRIENTES[regla.nutriente][0]
+            regla.orden = regla.orden or ORDEN_INICIAL[regla.nutriente]
             creado = True
     if creado:
         db.flush()
@@ -69,6 +86,10 @@ def _cargar(db: Session):
     return configuracion, valores_diarios, reglas
 
 
+def _ordenados(reglas: dict) -> list:
+    return sorted(NUTRIENTES.items(), key=lambda item: (reglas[item[0]].orden, ORDEN_INICIAL[item[0]]))
+
+
 def obtener_configuracion(db: Session) -> schemas.ConfiguracionNutricional:
     configuracion, valores_diarios, reglas = _cargar(db)
     nutrientes = [
@@ -81,13 +102,17 @@ def obtener_configuracion(db: Session) -> schemas.ConfiguracionNutricional:
             decimales=reglas[nutriente].decimales,
             entero_desde=reglas[nutriente].entero_desde,
             umbral_no_significativo=reglas[nutriente].umbral_no_significativo,
+            nombre_rotulo=reglas[nutriente].nombre_rotulo,
+            orden=reglas[nutriente].orden,
+            obligatorio=reglas[nutriente].obligatorio,
         )
-        for nutriente, (etiqueta, unidad, _) in NUTRIENTES.items()
+        for nutriente, (etiqueta, unidad, _) in _ordenados(reglas)
     ]
     return schemas.ConfiguracionNutricional(
         expresion_no_significativo=configuracion.expresion_no_significativo,
         decimales_vd=configuracion.decimales_vd,
         leyenda_vd=configuracion.leyenda_vd,
+        leyenda_revision=configuracion.leyenda_revision,
         nutrientes=nutrientes,
         modificado_por=configuracion.modificado_por,
         modificado_en=configuracion.modificado_en,
@@ -107,6 +132,7 @@ def guardar_configuracion(
     configuracion.expresion_no_significativo = datos.expresion_no_significativo
     configuracion.decimales_vd = datos.decimales_vd
     configuracion.leyenda_vd = datos.leyenda_vd
+    configuracion.leyenda_revision = datos.leyenda_revision
     configuracion.modificado_por_id = persona.id
     configuracion.modificado_en = datetime.now()
     for fila in datos.nutrientes:
@@ -116,6 +142,9 @@ def guardar_configuracion(
         regla.decimales = fila.decimales
         regla.entero_desde = fila.entero_desde
         regla.umbral_no_significativo = fila.umbral_no_significativo
+        regla.nombre_rotulo = fila.nombre_rotulo
+        regla.orden = fila.orden
+        regla.obligatorio = fila.obligatorio
     db.commit()
     return obtener_configuracion(db)
 
@@ -183,7 +212,7 @@ def obtener_informacion(db: Session, version_id: int) -> schemas.InformacionNutr
     calculados = {fila.nutriente: fila for fila in informacion.valores}
     no_significativo = configuracion.expresion_no_significativo
     filas = []
-    for nutriente, (etiqueta, _, _) in NUTRIENTES.items():
+    for nutriente, (etiqueta, _, _) in _ordenados(reglas):
         regla = reglas[nutriente]
         fila = calculados.get(nutriente)
         por_100 = expresar(fila.por_100 if fila else None, regla, no_significativo)
@@ -193,6 +222,9 @@ def obtener_informacion(db: Session, version_id: int) -> schemas.InformacionNutr
             schemas.FilaNutricional(
                 nutriente=nutriente,
                 etiqueta=etiqueta,
+                nombre_rotulo=regla.nombre_rotulo,
+                orden=regla.orden,
+                obligatorio=regla.obligatorio,
                 unidad=regla.unidad,
                 por_100=por_100,
                 por_porcion=por_porcion,
@@ -204,6 +236,8 @@ def obtener_informacion(db: Session, version_id: int) -> schemas.InformacionNutr
     regla_energia = reglas[Nutriente.ENERGIA]
     return schemas.InformacionNutricional(
         version_id=version.id,
+        receta_id=version.receta_id,
+        producto=version.receta.producto.nombre,
         numero=version.numero,
         estado=version.estado.value,
         completa=informacion.completa,
@@ -211,6 +245,8 @@ def obtener_informacion(db: Session, version_id: int) -> schemas.InformacionNutr
         base=informacion.base,
         rendimiento_base=informacion.rendimiento_base,
         porcion_base=informacion.porcion_base,
+        porcion_cantidad=version.porcion_cantidad,
+        porcion_unidad=version.porcion_unidad.sufijo if version.porcion_unidad else None,
         porcion_medida_casera=version.porcion_medida_casera,
         faltantes=[_faltante(faltante) for faltante in informacion.faltantes],
         filas=filas,
@@ -219,5 +255,7 @@ def obtener_informacion(db: Session, version_id: int) -> schemas.InformacionNutr
             por_porcion=_kilojoules(energia.por_porcion, regla_energia, no_significativo),
         ),
         leyenda_vd=configuracion.leyenda_vd,
+        leyenda_revision=configuracion.leyenda_revision,
+        leyenda_incompleta=LEYENDA_INCOMPLETA,
         expresion_no_significativo=no_significativo,
     )

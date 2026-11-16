@@ -44,6 +44,12 @@ COLUMNAS = {
         "rendimiento_peso_g": "FLOAT",
     },
     "renglones_receta": {"gramos": "FLOAT", "porcentaje": "FLOAT", "orden_rotulo": "INTEGER"},
+    "reglas_expresion_nutriente": {
+        "nombre_rotulo": "VARCHAR(60) NOT NULL DEFAULT ''",
+        "orden": "INTEGER NOT NULL DEFAULT 0",
+        "obligatorio": "BOOLEAN NOT NULL DEFAULT 1",
+    },
+    "configuracion_nutricional": {"leyenda_revision": "VARCHAR(500) NOT NULL DEFAULT ''"},
     "lotes_produccion": {
         "version_receta_id": "INTEGER REFERENCES versiones_receta(id)",
         "factor_receta": "FLOAT",

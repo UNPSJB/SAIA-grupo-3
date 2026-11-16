@@ -181,6 +181,9 @@ class PorcentajeValorDiario(BaseModel):
 class FilaNutricional(BaseModel):
     nutriente: Nutriente
     etiqueta: str
+    nombre_rotulo: str
+    orden: int
+    obligatorio: bool
     unidad: str
     por_100: Optional[ExpresionValor] = None
     por_porcion: Optional[ExpresionValor] = None
@@ -232,6 +235,8 @@ class RegistroFuente(BaseModel):
 
 class InformacionNutricional(BaseModel):
     version_id: int
+    receta_id: int
+    producto: str
     numero: int
     estado: str
     completa: bool
@@ -239,11 +244,15 @@ class InformacionNutricional(BaseModel):
     base: Optional[BaseCalculo] = None
     rendimiento_base: Optional[float] = None
     porcion_base: Optional[float] = None
+    porcion_cantidad: Optional[float] = None
+    porcion_unidad: Optional[str] = None
     porcion_medida_casera: Optional[str] = None
     faltantes: list[FaltanteNutricional]
     filas: list[FilaNutricional]
     energia_kj: EnergiaKilojoules
     leyenda_vd: str
+    leyenda_revision: str
+    leyenda_incompleta: str
     expresion_no_significativo: str
 
 
@@ -256,8 +265,11 @@ class NutrienteConfiguracion(BaseModel):
     decimales: int = Field(ge=0, le=3)
     entero_desde: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
     umbral_no_significativo: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    nombre_rotulo: str = Field(min_length=1, max_length=60)
+    orden: int = Field(ge=1, le=99)
+    obligatorio: bool = True
 
-    @field_validator("unidad", mode="before")
+    @field_validator("unidad", "nombre_rotulo", mode="before")
     @classmethod
     def limpiar_unidad(cls, valor: object) -> object:
         return valor.strip() if isinstance(valor, str) else valor
@@ -269,9 +281,10 @@ class ConfiguracionNutricionalDatos(BaseModel):
     expresion_no_significativo: str = Field(min_length=1, max_length=40)
     decimales_vd: int = Field(ge=0, le=2)
     leyenda_vd: str = Field(min_length=1, max_length=250)
+    leyenda_revision: str = Field(min_length=1, max_length=500)
     nutrientes: list[NutrienteConfiguracion]
 
-    @field_validator("expresion_no_significativo", "leyenda_vd", mode="before")
+    @field_validator("expresion_no_significativo", "leyenda_vd", "leyenda_revision", mode="before")
     @classmethod
     def limpiar_texto(cls, valor: object) -> object:
         return valor.strip() if isinstance(valor, str) else valor
@@ -286,6 +299,7 @@ class ConfiguracionNutricional(BaseModel):
     expresion_no_significativo: str
     decimales_vd: int
     leyenda_vd: str
+    leyenda_revision: str
     nutrientes: list[NutrienteConfigurado]
     modificado_por: Optional[PersonaResumen] = None
     modificado_en: Optional[datetime] = None

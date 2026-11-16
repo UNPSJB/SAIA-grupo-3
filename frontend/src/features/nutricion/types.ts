@@ -143,6 +143,9 @@ export interface ExpresionValor {
 export interface FilaNutricional {
   nutriente: Nutriente;
   etiqueta: string;
+  nombre_rotulo: string;
+  orden: number;
+  obligatorio: boolean;
   unidad: string;
   por_100: ExpresionValor | null;
   por_porcion: ExpresionValor | null;
@@ -160,6 +163,8 @@ export interface FaltanteNutricional {
 
 export interface InformacionNutricional {
   version_id: number;
+  receta_id: number;
+  producto: string;
   numero: number;
   estado: string;
   completa: boolean;
@@ -167,11 +172,15 @@ export interface InformacionNutricional {
   base: 'g' | 'ml' | null;
   rendimiento_base: number | null;
   porcion_base: number | null;
+  porcion_cantidad: number | null;
+  porcion_unidad: string | null;
   porcion_medida_casera: string | null;
   faltantes: FaltanteNutricional[];
   filas: FilaNutricional[];
   energia_kj: { por_100: ExpresionValor | null; por_porcion: ExpresionValor | null };
   leyenda_vd: string;
+  leyenda_revision: string;
+  leyenda_incompleta: string;
   expresion_no_significativo: string;
 }
 
@@ -182,6 +191,9 @@ export interface NutrienteConfiguracion {
   decimales: number;
   entero_desde: number | null;
   umbral_no_significativo: number | null;
+  nombre_rotulo: string;
+  orden: number;
+  obligatorio: boolean;
 }
 
 export interface NutrienteConfigurado extends NutrienteConfiguracion {
@@ -193,6 +205,7 @@ export interface ConfiguracionNutricionalDatos {
   expresion_no_significativo: string;
   decimales_vd: number;
   leyenda_vd: string;
+  leyenda_revision: string;
   nutrientes: NutrienteConfiguracion[];
 }
 

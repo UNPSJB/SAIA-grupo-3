@@ -13,16 +13,10 @@ from tests.nutricion.utilidades import (
     datos_version,
     dentro_de_tolerancia,
     filas,
+    configuracion,
+    guardar,
     informacion,
 )
-
-
-@pytest.fixture
-def receta_referencia(client, headers_administradora, unidades, ingredientes, nuevo_producto):
-    cargar_referencia(client, headers_administradora, ingredientes)
-    return crear_receta(
-        client, headers_administradora, nuevo_producto("Pan casero"), datos_version(unidades, ingredientes)
-    )
 
 
 def test_el_producto_de_referencia_da_los_valores_validados_dentro_de_la_tolerancia(
@@ -73,25 +67,6 @@ def test_valores_por_porcion_y_porcentaje_de_valor_diario(client, headers_admini
     assert valores["azucares_totales"]["porcentaje_vd"] is None
     assert valores["grasas_trans"]["porcentaje_vd"] is None
     assert info["energia_kj"]["por_porcion"]["texto"] == "529"
-
-
-def configuracion(client, headers):
-    respuesta = client.get("/nutricion/configuracion", headers=headers)
-    assert respuesta.status_code == 200, respuesta.text
-    return respuesta.json()
-
-
-def guardar(client, headers, config):
-    datos = {
-        "expresion_no_significativo": config["expresion_no_significativo"],
-        "decimales_vd": config["decimales_vd"],
-        "leyenda_vd": config["leyenda_vd"],
-        "nutrientes": [
-            {k: fila[k] for k in ("nutriente", "valor_diario", "unidad", "decimales", "entero_desde", "umbral_no_significativo")}
-            for fila in config["nutrientes"]
-        ],
-    }
-    return client.put("/nutricion/configuracion", headers=headers, json=datos)
 
 
 def test_cambiar_una_regla_de_redondeo_cambia_la_expresion_sin_tocar_el_codigo(

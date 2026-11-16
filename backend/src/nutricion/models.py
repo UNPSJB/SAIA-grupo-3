@@ -89,6 +89,9 @@ class ReglaExpresionNutriente(ModeloBase):
     decimales: Mapped[int] = mapped_column(nullable=False)
     entero_desde: Mapped[Optional[float]] = mapped_column(nullable=True)
     umbral_no_significativo: Mapped[Optional[float]] = mapped_column(nullable=True)
+    nombre_rotulo: Mapped[str] = mapped_column(String(60), default="", nullable=False)
+    orden: Mapped[int] = mapped_column(default=0, nullable=False)
+    obligatorio: Mapped[bool] = mapped_column(default=True, nullable=False)
 
 
 class ConfiguracionNutricional(ModeloBase):
@@ -98,6 +101,7 @@ class ConfiguracionNutricional(ModeloBase):
     expresion_no_significativo: Mapped[str] = mapped_column(String(40), nullable=False)
     decimales_vd: Mapped[int] = mapped_column(nullable=False)
     leyenda_vd: Mapped[str] = mapped_column(String(250), nullable=False)
+    leyenda_revision: Mapped[str] = mapped_column(String(500), default="", nullable=False)
     modificado_por_id: Mapped[Optional[int]] = mapped_column(ForeignKey("personal.id"), nullable=True)
     modificado_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 

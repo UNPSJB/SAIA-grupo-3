@@ -58,3 +58,33 @@ def filas(info):
 def dentro_de_tolerancia(calculado, esperado):
     tolerancia = REFERENCIA["tolerancia"]
     return abs(calculado - esperado) <= max(tolerancia["absoluta"], abs(esperado) * tolerancia["relativa"])
+
+
+CAMPOS_NUTRIENTE = (
+    "nutriente",
+    "valor_diario",
+    "unidad",
+    "decimales",
+    "entero_desde",
+    "umbral_no_significativo",
+    "nombre_rotulo",
+    "orden",
+    "obligatorio",
+)
+
+
+def configuracion(client, headers):
+    respuesta = client.get("/nutricion/configuracion", headers=headers)
+    assert respuesta.status_code == 200, respuesta.text
+    return respuesta.json()
+
+
+def guardar(client, headers, config):
+    datos = {
+        "expresion_no_significativo": config["expresion_no_significativo"],
+        "decimales_vd": config["decimales_vd"],
+        "leyenda_vd": config["leyenda_vd"],
+        "leyenda_revision": config["leyenda_revision"],
+        "nutrientes": [{k: fila[k] for k in CAMPOS_NUTRIENTE} for fila in config["nutrientes"]],
+    }
+    return client.put("/nutricion/configuracion", headers=headers, json=datos)

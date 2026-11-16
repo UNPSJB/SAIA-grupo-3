@@ -1,0 +1,134 @@
+.tabla-nutricional {
+  --tn-tinta: #111;
+  --tn-papel: #fff;
+  max-width: 34rem;
+  color: var(--tn-tinta);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.tabla-nutricional-marco {
+  background: var(--tn-papel);
+  border: 2px solid var(--tn-tinta);
+  padding: 0.4rem 0.6rem 0.5rem;
+}
+
+.tabla-nutricional table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--tn-tinta);
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.tabla-nutricional .tn-titulo {
+  font-weight: 800;
+  font-size: 1.15rem;
+  text-align: center;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--tn-tinta);
+  padding-bottom: 0.2rem;
+}
+
+.tabla-nutricional .tn-porcion {
+  text-align: center;
+  padding: 0.25rem 0;
+  border-bottom: 3px solid var(--tn-tinta);
+}
+
+.tabla-nutricional th,
+.tabla-nutricional td {
+  padding: 0.22rem 0.3rem;
+  border-bottom: 1px solid var(--tn-tinta);
+  vertical-align: top;
+}
+
+.tabla-nutricional thead th {
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-align: right;
+}
+
+.tabla-nutricional .tn-nombre {
+  text-align: left;
+}
+
+.tabla-nutricional .tn-sub {
+  padding-left: 1.1rem;
+}
+
+.tabla-nutricional .tn-num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tabla-nutricional tfoot td {
+  border-bottom: 0;
+  border-top: 3px solid var(--tn-tinta);
+  font-size: 0.75rem;
+  padding-top: 0.3rem;
+}
+
+.tabla-nutricional .tn-incompleta {
+  border: 2px dashed #b45309;
+  background: #fff7e6;
+  color: #7a3b00;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.tabla-nutricional .tn-leyenda-revision {
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.6rem;
+  border-left: 4px solid var(--tn-tinta);
+  background: #f2f2f2;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 576px) {
+  .tabla-nutricional .tn-kj {
+    display: block;
+  }
+
+  .tabla-nutricional-marco {
+    padding: 0.3rem 0.35rem 0.4rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .tabla-nutricional table {
+    font-size: 0.78rem;
+  }
+
+  .tabla-nutricional thead th {
+    font-size: 0.68rem;
+  }
+}
+
+.tabla-nutricional-impresion {
+  display: none;
+}
+
+@media print {
+  body.imprimiendo-tabla-nutricional > #root {
+    display: none !important;
+  }
+
+  body.imprimiendo-tabla-nutricional > .tabla-nutricional-impresion {
+    display: block;
+    padding: 1cm;
+    color: #111;
+    background: #fff;
+  }
+
+  .tabla-nutricional-impresion .tabla-nutricional-encabezado {
+    margin-bottom: 0.6cm;
+  }
+
+  .tabla-nutricional .tn-incompleta,
+  .tabla-nutricional .tn-leyenda-revision {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
