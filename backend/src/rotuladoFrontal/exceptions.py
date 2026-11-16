@@ -29,3 +29,7 @@ class BorradorExistente(BadRequest):
 
 class ConjuntoInvalido(BadRequest):
     pass
+
+
+class ProductoNoEncontrado(NotFound):
+    DETAIL = ErrorCode.PRODUCTO_NO_ENCONTRADO

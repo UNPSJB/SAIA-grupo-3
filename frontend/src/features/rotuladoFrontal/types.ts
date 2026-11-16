@@ -122,3 +122,54 @@ export interface ResultadoPrueba {
   advertencias: string[];
   detalle: DetalleUmbral[];
 }
+
+export interface AgregadoProducto {
+  hecho: Hecho;
+  etiqueta: string;
+  sugerido: boolean;
+  causas: { id: number; nombre: string; tipo: string }[];
+  corregido: boolean | null;
+  valor: boolean;
+}
+
+export interface RecetaEvaluada {
+  receta_id: number;
+  version_id: number;
+  numero: number;
+}
+
+export interface AplicabilidadProducto {
+  producto: { id: number; nombre: string; activo: boolean };
+  receta: RecetaEvaluada | null;
+  envasado_ausencia_cliente: boolean | null;
+  tipo_producto: TipoProducto;
+  agregados: AgregadoProducto[];
+  evaluacion: {
+    resultado: ResultadoAplicabilidad;
+    mensaje: string;
+    regla_orden: number | null;
+    conjunto: ConjuntoReferencia;
+    version_receta: RecetaEvaluada | null;
+    hechos: Hecho[];
+    evaluado_por: PersonaResumen | null;
+    evaluado_en: string;
+  } | null;
+  avisos: string[];
+  historial: {
+    id: number;
+    hecho: Hecho;
+    etiqueta: string;
+    valor_sugerido: boolean;
+    valor_anterior: boolean | null;
+    valor_nuevo: boolean | null;
+    motivo: string | null;
+    personal: PersonaResumen;
+    fecha_hora: string;
+  }[];
+}
+
+export interface AplicabilidadDatos {
+  envasado_ausencia_cliente: boolean;
+  tipo_producto: TipoProducto;
+  correcciones: { hecho: Hecho; valor: boolean | null; motivo: string | null }[];
+}

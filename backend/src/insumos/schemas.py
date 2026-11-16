@@ -24,6 +24,10 @@ class InsumoBase(BaseModel):
     peso_unidad_g: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
     denominacion_rotulo: Optional[str] = Field(default=None, max_length=150)
     aporta_energia_sodio: bool = False
+    es_azucar_anadido: bool = False
+    es_grasa_anadida: bool = False
+    aporta_sodio_anadido: bool = False
+    contiene_cafeina: bool = False
 
     @field_validator("denominacion_rotulo", mode="before")
     @classmethod
@@ -46,6 +50,10 @@ class InsumoUpdate(BaseModel):
     peso_unidad_g: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
     denominacion_rotulo: Optional[str] = Field(default=None, max_length=150)
     aporta_energia_sodio: Optional[bool] = None
+    es_azucar_anadido: Optional[bool] = None
+    es_grasa_anadida: Optional[bool] = None
+    aporta_sodio_anadido: Optional[bool] = None
+    contiene_cafeina: Optional[bool] = None
 
     @field_validator("denominacion_rotulo", mode="before")
     @classmethod

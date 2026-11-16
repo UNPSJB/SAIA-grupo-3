@@ -49,6 +49,7 @@ class Hecho(StrEnum):
 
 
 AGREGADOS = (Hecho.AGREGA_AZUCARES, Hecho.AGREGA_GRASAS, Hecho.AGREGA_SODIO)
+HECHOS_DE_RECETA = (*AGREGADOS, Hecho.CONTIENE_EDULCORANTES, Hecho.CONTIENE_CAFEINA)
 
 
 class OperadorRegla(StrEnum):
@@ -95,3 +96,12 @@ class ErrorCode:
     REGLA_SIN_HECHOS = "La regla {orden} necesita al menos un dato a evaluar."
     FACTOR_OBLIGATORIO = "El umbral {orden} usa proporción de energía: indicá el factor energético (kcal/g)."
     FECHA_OBLIGATORIA = "Indicá la fecha de vigencia antes de publicar."
+    PRODUCTO_NO_ENCONTRADO = "El producto no fue encontrado."
+    HECHO_NO_CORREGIBLE = "Solo se corrigen los agregados, los edulcorantes y la cafeína."
+
+
+class Aviso:
+    SIN_RECETA = "El producto no tiene receta vigente: no hay sugerencias, marcá los agregados a mano."
+    PARAMETROS_NUEVOS = "Se publicó la versión {numero} de los parámetros: volvé a evaluar para usarla."
+    RECETA_NUEVA = "La receta cambió desde la última evaluación (versión {numero}): revisá los agregados y volvé a evaluar."
+    SUGERENCIAS_CAMBIARON = "Las sugerencias cambiaron desde la última evaluación: revisalas y volvé a evaluar."

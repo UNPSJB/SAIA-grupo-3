@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from src.nutricion.constants import Nutriente
 from src.rotuladoFrontal.constants import (
     AGREGADOS,
+    HECHOS_DE_RECETA,
     NUTRIENTES_EVALUABLES,
     AplicaA,
     Comparacion,
@@ -255,3 +256,94 @@ class ResultadoPrueba(BaseModel):
 
 class EstadoModulo(BaseModel):
     activo: bool
+
+
+class CorreccionDatos(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    hecho: Hecho
+    valor: Optional[bool] = None
+    motivo: Optional[str] = Field(default=None, max_length=300)
+
+    @field_validator("motivo", mode="before")
+    @classmethod
+    def limpiar_motivo(cls, valor: object) -> object:
+        return _texto_opcional(valor)
+
+    @field_validator("hecho")
+    @classmethod
+    def validar_hecho(cls, hecho: Hecho) -> Hecho:
+        if hecho not in HECHOS_DE_RECETA:
+            raise ValueError("Solo se corrigen los agregados, los edulcorantes y la cafeína.")
+        return hecho
+
+
+class AplicabilidadDatos(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    envasado_ausencia_cliente: bool
+    tipo_producto: TipoProducto = TipoProducto.SOLIDO
+    correcciones: list[CorreccionDatos] = Field(default_factory=list)
+
+
+class InsumoCausa(BaseModel):
+    id: int
+    nombre: str
+    tipo: str
+
+
+class AgregadoProducto(BaseModel):
+    hecho: Hecho
+    etiqueta: str
+    sugerido: bool
+    causas: list[InsumoCausa]
+    corregido: Optional[bool] = None
+    valor: bool
+
+
+class RecetaEvaluada(BaseModel):
+    receta_id: int
+    version_id: int
+    numero: int
+
+
+class Evaluacion(BaseModel):
+    resultado: ResultadoAplicabilidad
+    mensaje: str
+    regla_orden: Optional[int] = None
+    conjunto: ConjuntoReferencia
+    version_receta: Optional[RecetaEvaluada] = None
+    hechos: list[Hecho]
+    evaluado_por: Optional[PersonaResumen] = None
+    evaluado_en: datetime
+
+
+class MovimientoCorreccion(BaseModel):
+    id: int
+    hecho: Hecho
+    etiqueta: str
+    valor_sugerido: bool
+    valor_anterior: Optional[bool] = None
+    valor_nuevo: Optional[bool] = None
+    motivo: Optional[str] = None
+    personal: PersonaResumen
+    fecha_hora: datetime
+
+
+class ProductoResumen(BaseModel):
+    id: int
+    nombre: str
+    activo: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AplicabilidadProducto(BaseModel):
+    producto: ProductoResumen
+    receta: Optional[RecetaEvaluada] = None
+    envasado_ausencia_cliente: Optional[bool] = None
+    tipo_producto: TipoProducto
+    agregados: list[AgregadoProducto]
+    evaluacion: Optional[Evaluacion] = None
+    avisos: list[str]
+    historial: list[MovimientoCorreccion]

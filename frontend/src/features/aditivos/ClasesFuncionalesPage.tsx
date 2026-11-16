@@ -24,7 +24,7 @@ function ClaseFuncionalForm({
   onCancelar: () => void;
 }) {
   const form = useForm<ClaseFuncionalDatos>({
-    defaultValues: { nombre: '', ins_opcional: false, declarar_solo_funcion: false },
+    defaultValues: { nombre: '', ins_opcional: false, declarar_solo_funcion: false, es_edulcorante: false },
   });
   const { errors, isSubmitting, submitCount } = form.formState;
   const { reset } = form;
@@ -34,6 +34,7 @@ function ClaseFuncionalForm({
       nombre: clase?.nombre ?? '',
       ins_opcional: clase?.ins_opcional ?? false,
       declarar_solo_funcion: clase?.declarar_solo_funcion ?? false,
+      es_edulcorante: clase?.es_edulcorante ?? false,
     });
   }, [clase, reset]);
 
@@ -78,6 +79,13 @@ function ClaseFuncionalForm({
               type="switch"
               label="En el rótulo se declara solo por su función (por ejemplo, aromatizantes)"
               {...form.register('declarar_solo_funcion')}
+            />
+          </Form.Group>
+          <Form.Group controlId="clase-edulcorante" className="mb-4">
+            <Form.Check
+              type="switch"
+              label="Es edulcorante: el producto que lo use lleva la leyenda de edulcorantes"
+              {...form.register('es_edulcorante')}
             />
           </Form.Group>
           <div className="d-flex justify-content-end gap-2">
@@ -164,7 +172,14 @@ export function ClasesFuncionalesPage() {
                     <tr key={clase.id}>
                       <td>{clase.nombre}</td>
                       <td>{clase.ins_opcional ? 'Opcional' : 'Obligatorio'}</td>
-                      <td>{clase.declarar_solo_funcion ? 'Solo función' : 'Función y aditivo'}</td>
+                      <td>
+                        {clase.declarar_solo_funcion ? 'Solo función' : 'Función y aditivo'}
+                        {clase.es_edulcorante && (
+                          <Badge bg="dark" className="ms-2 fw-normal">
+                            Edulcorante
+                          </Badge>
+                        )}
+                      </td>
                       <td>
                         <Badge bg={clase.activo ? 'success' : 'danger'}>
                           {clase.activo ? 'Activa' : 'Inactiva'}

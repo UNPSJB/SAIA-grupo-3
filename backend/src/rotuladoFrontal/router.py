@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from src.auth.dependencies import get_current_personal, tiene_permiso_administrar
 from src.database import get_db
 from src.personal.models import Personal
-from src.rotuladoFrontal import schemas, services
+from src.rotuladoFrontal import aplicabilidad, schemas, services
 from src.rotuladoFrontal.dependencies import modulo_activo, verificar_modulo_activo
 
 router = APIRouter(prefix="/rotulado-frontal", tags=["producción - rotulado frontal"])
@@ -73,3 +73,26 @@ def probar(
     db: Session = Depends(get_db),
 ):
     return services.evaluar(services.conjunto_para_calculo(db, conjunto_id), entrada)
+
+
+@router.get(
+    "/productos/{producto_id}/aplicabilidad",
+    response_model=schemas.AplicabilidadProducto,
+    dependencies=PROTEGIDO,
+)
+def read_aplicabilidad(producto_id: int, db: Session = Depends(get_db)):
+    return aplicabilidad.obtener_aplicabilidad(db, producto_id)
+
+
+@router.put(
+    "/productos/{producto_id}/aplicabilidad",
+    response_model=schemas.AplicabilidadProducto,
+    dependencies=[Depends(verificar_modulo_activo)],
+)
+def guardar_aplicabilidad(
+    producto_id: int,
+    datos: schemas.AplicabilidadDatos,
+    db: Session = Depends(get_db),
+    persona: Personal = Depends(tiene_permiso_administrar),
+):
+    return aplicabilidad.guardar_aplicabilidad(db, producto_id, datos, persona)

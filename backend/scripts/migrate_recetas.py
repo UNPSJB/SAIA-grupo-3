@@ -30,8 +30,15 @@ COLUMNAS = {
         "peso_unidad_g": "FLOAT",
         "denominacion_rotulo": "VARCHAR(150)",
         "aporta_energia_sodio": "BOOLEAN NOT NULL DEFAULT 0",
+        "es_azucar_anadido": "BOOLEAN NOT NULL DEFAULT 0",
+        "es_grasa_anadida": "BOOLEAN NOT NULL DEFAULT 0",
+        "aporta_sodio_anadido": "BOOLEAN NOT NULL DEFAULT 0",
+        "contiene_cafeina": "BOOLEAN NOT NULL DEFAULT 0",
     },
-    "clases_funcionales": {"declarar_solo_funcion": "BOOLEAN NOT NULL DEFAULT 0"},
+    "clases_funcionales": {
+        "declarar_solo_funcion": "BOOLEAN NOT NULL DEFAULT 0",
+        "es_edulcorante": "BOOLEAN NOT NULL DEFAULT 0",
+    },
     "unidad_medida": {"factor_base": "FLOAT"},
     "versiones_receta": {
         "composicion_completa": "BOOLEAN NOT NULL DEFAULT 0",
@@ -86,6 +93,8 @@ def migrar(ruta: Path) -> Path | None:
         try:
             for tabla, columna, tipo in pendientes:
                 db.execute(f'ALTER TABLE "{tabla}" ADD COLUMN "{columna}" {tipo}')
+            if ("clases_funcionales", "es_edulcorante") in {(t, c) for t, c, _ in pendientes}:
+                db.execute("UPDATE clases_funcionales SET es_edulcorante = 1 WHERE lower(nombre) LIKE 'edulcorante%'")
             if ("clases_funcionales", "declarar_solo_funcion") in {(t, c) for t, c, _ in pendientes}:
                 db.execute(
                     "UPDATE clases_funcionales SET declarar_solo_funcion = 1 WHERE lower(nombre) LIKE 'aromatizante%'"

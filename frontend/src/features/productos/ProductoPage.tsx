@@ -1,7 +1,10 @@
-import { Button, Container } from 'react-bootstrap';
+import { Button, Container, Tab, Tabs } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { useAuth } from '../../shared/hooks/useAuth';
 import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
+import { AplicabilidadProducto } from '../rotuladoFrontal/AplicabilidadProducto';
+import { useRotuladoFrontalActivo } from '../rotuladoFrontal/useRotuladoFrontalActivo';
 import { ProductoDeleteView } from './ProductoDeleteView';
 import { ProductoForm } from './ProductoForm';
 import { ProductoList } from './ProductoList';
@@ -14,6 +17,8 @@ export function ProductoPage() {
   const route = useCrudRoute<Producto>('/productos', getProductoById);
   const { mode, item, open, back, error, loading } = route;
   const { guardar, eliminar } = useProducto(false);
+  const { currentUser } = useAuth();
+  const rotuladoActivo = useRotuladoFrontalActivo(currentUser?.administrar === true);
 
   const handleGuardar = async (datos: ProductoCreate) => {
     await guardar(datos, mode === 'editar' ? item?.id : undefined);
@@ -43,8 +48,18 @@ export function ProductoPage() {
           onEliminarClick={(producto) => open(producto, 'eliminar')}
         />
       )}
-      {mode === 'ver' && item && (
+      {mode === 'ver' && item && !rotuladoActivo && (
         <ProductoView producto={item} onEditar={() => open(item, 'editar')} onVolver={back} />
+      )}
+      {mode === 'ver' && item && rotuladoActivo && (
+        <Tabs defaultActiveKey="datos" id="producto-pestanas" className="mb-3" mountOnEnter>
+          <Tab eventKey="datos" title="Datos">
+            <ProductoView producto={item} onEditar={() => open(item, 'editar')} onVolver={back} />
+          </Tab>
+          <Tab eventKey="rotulado" title="Rotulado frontal">
+            <AplicabilidadProducto key={item.id} productoId={item.id} />
+          </Tab>
+        </Tabs>
       )}
       {(mode === 'crear' || (mode === 'editar' && item)) && (
         <ProductoForm

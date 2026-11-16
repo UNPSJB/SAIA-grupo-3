@@ -1,5 +1,7 @@
 import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type {
+  AplicabilidadDatos,
+  AplicabilidadProducto,
   Conjunto,
   ConjuntoDatos,
   ConjuntoResumen,
@@ -56,4 +58,17 @@ export const probarParametros = (entrada: EntradaPrueba, conjuntoId: number) =>
     `/rotulado-frontal/parametros/probar?conjunto_id=${conjuntoId}`,
     'No se pudo probar el conjunto.',
     { method: 'POST', body: JSON.stringify(entrada) },
+  );
+
+export const getAplicabilidad = (productoId: number) =>
+  pedir<AplicabilidadProducto>(
+    `/rotulado-frontal/productos/${productoId}/aplicabilidad`,
+    'No se pudo cargar el rotulado frontal del producto.',
+  );
+
+export const guardarAplicabilidad = (productoId: number, datos: AplicabilidadDatos) =>
+  pedir<AplicabilidadProducto>(
+    `/rotulado-frontal/productos/${productoId}/aplicabilidad`,
+    'No se pudo evaluar el rotulado frontal.',
+    { method: 'PUT', body: JSON.stringify(datos) },
   );
