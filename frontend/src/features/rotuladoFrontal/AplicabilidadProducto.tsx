@@ -55,7 +55,6 @@ function Paso({
   );
 }
 
-<<<<<<< HEAD
 export function AplicabilidadProducto({
   productoId,
   onIrASellos,
@@ -63,9 +62,6 @@ export function AplicabilidadProducto({
   productoId: number;
   onIrASellos?: () => void;
 }) {
-=======
-export function AplicabilidadProducto({ productoId }: { productoId: number }) {
->>>>>>> dev
   const consulta = useConsulta(() => getAplicabilidad(productoId), [productoId]);
   const [estado, setEstado] = useState<Estado | null>(null);
   const [respuestas, setRespuestas] = useState<Respuestas | null>(null);
@@ -259,25 +255,11 @@ export function AplicabilidadProducto({ productoId }: { productoId: number }) {
                 {evaluacion.evaluado_por &&
                   ` por ${evaluacion.evaluado_por.nombre} ${evaluacion.evaluado_por.apellido}`}
               </div>
-<<<<<<< HEAD
               {evaluacion.resultado === 'corresponde' && onIrASellos && (
                 <div className="mt-3">
                   <Button variant="dark" size="sm" onClick={onIrASellos}>
                     Ir al cálculo de sellos
                   </Button>
-=======
-              {evaluacion.resultado === 'corresponde' && (
-                <div className="mt-3">
-                  <Button
-                    variant="dark"
-                    size="sm"
-                    disabled
-                    title="Se habilita con el cálculo de sellos (E12-02)"
-                  >
-                    Ir al cálculo de sellos
-                  </Button>
-                  <span className="small ms-2">Se habilita con el cálculo de sellos.</span>
->>>>>>> dev
                 </div>
               )}
             </Alert>

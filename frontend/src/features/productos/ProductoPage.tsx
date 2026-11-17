@@ -3,13 +3,9 @@ import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
-<<<<<<< HEAD
 import { useState } from 'react';
 import { AplicabilidadProducto } from '../rotuladoFrontal/AplicabilidadProducto';
 import { SellosProducto } from '../rotuladoFrontal/SellosProducto';
-=======
-import { AplicabilidadProducto } from '../rotuladoFrontal/AplicabilidadProducto';
->>>>>>> dev
 import { useRotuladoFrontalActivo } from '../rotuladoFrontal/useRotuladoFrontalActivo';
 import { ProductoDeleteView } from './ProductoDeleteView';
 import { ProductoForm } from './ProductoForm';
@@ -25,12 +21,9 @@ export function ProductoPage() {
   const { guardar, eliminar } = useProducto(false);
   const { currentUser } = useAuth();
   const rotuladoActivo = useRotuladoFrontalActivo(currentUser?.administrar === true);
-<<<<<<< HEAD
   const [pestana, setPestana] = useState<{ id: number; clave: string } | null>(null);
   const pestanaActiva = item && pestana?.id === item.id ? pestana.clave : 'datos';
   const irA = (clave: string) => item && setPestana({ id: item.id, clave });
-=======
->>>>>>> dev
 
   const handleGuardar = async (datos: ProductoCreate) => {
     await guardar(datos, mode === 'editar' ? item?.id : undefined);
@@ -64,7 +57,6 @@ export function ProductoPage() {
         <ProductoView producto={item} onEditar={() => open(item, 'editar')} onVolver={back} />
       )}
       {mode === 'ver' && item && rotuladoActivo && (
-<<<<<<< HEAD
         <Tabs
           activeKey={pestanaActiva}
           onSelect={(clave) => irA(clave ?? 'datos')}
@@ -72,14 +64,10 @@ export function ProductoPage() {
           className="mb-3"
           mountOnEnter
         >
-=======
-        <Tabs defaultActiveKey="datos" id="producto-pestanas" className="mb-3" mountOnEnter>
->>>>>>> dev
           <Tab eventKey="datos" title="Datos">
             <ProductoView producto={item} onEditar={() => open(item, 'editar')} onVolver={back} />
           </Tab>
           <Tab eventKey="rotulado" title="Rotulado frontal">
-<<<<<<< HEAD
             <AplicabilidadProducto
               key={item.id}
               productoId={item.id}
@@ -92,9 +80,6 @@ export function ProductoPage() {
               productoId={item.id}
               onIrAAplicabilidad={() => irA('rotulado')}
             />
-=======
-            <AplicabilidadProducto key={item.id} productoId={item.id} />
->>>>>>> dev
           </Tab>
         </Tabs>
       )}
