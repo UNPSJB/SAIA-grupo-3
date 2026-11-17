@@ -4,7 +4,9 @@ from datetime import datetime
 
 from sqlalchemy import select
 
-from src.rotulo.constants import CampoAutomatico, TipoRegistro, UnidadVidaUtil
+from src.alergeno.models import Alergeno
+from src.rotulo import alergenos
+from src.rotulo.constants import CampoAutomatico, CondicionConservacion, TipoRegistro, UnidadVidaUtil
 from src.rotulo.models import BorradorRotulo, EdicionCampoRotulo
 from src.rotulo.services import datos_del_sistema, meta_automatico, refrescar_automaticos
 from src.unidadMedida.models import UnidadMedida
@@ -36,14 +38,40 @@ CON_INSTRUCCIONES = {
     "Ñoquis de papa": "Cocinar en abundante agua hirviendo con sal hasta que suban a la superficie.",
 }
 
+REFRIGERADOS = {"Tarta de verduras", "Empanadas de carne", "Ñoquis de papa", "Tapas de empanada", "Masa de hojaldre", "Prepizza"}
+CONSERVACION = {
+    "Tarta de verduras": (0, 5, 3, "Consumir dentro de las 24 h"),
+    "Empanadas de carne": (0, 5, 3, None),
+    "Ñoquis de papa": (0, 5, 4, None),
+    "Tapas de empanada": (0, 8, 30, "Mantener refrigerado y consumir dentro de los 5 días"),
+    "Masa de hojaldre": (0, 8, 45, None),
+    "Prepizza": (2, 8, 10, None),
+}
+PUEDE_CONTENER = {
+    "Facturas surtidas": ["Maní", "Nuez"],
+    "Alfajores de maicena": ["Maní"],
+    "Torta de chocolate": ["Almendra", "Avellana"],
+    "Budín de vainilla": ["Nuez"],
+    "Galletitas de agua": ["Soja"],
+}
+SIN_CONFIRMAR = {"Torta de chocolate", "Budín de vainilla", "Salsa de tomate"}
+
 
 def cargar_rotulos(db, productos, admin):
+    por_nombre = {a.nombre: a for a in db.scalars(select(Alergeno))}
     unidades = {u.sufijo: u for u in db.scalars(select(UnidadMedida)).all()}
     ahora = datetime.now()
     for indice, producto in enumerate(productos, start=1):
         if producto.nombre not in CONTENIDOS:
             continue
-        if db.scalar(select(BorradorRotulo.id).where(BorradorRotulo.producto_id == producto.id)):
+        existente = db.scalar(select(BorradorRotulo).where(BorradorRotulo.producto_id == producto.id))
+        if existente is not None:
+            if (
+                existente.razon_social == RAZON_SOCIAL
+                and existente.conservacion_condicion is None
+                and existente.alergenos_confirmacion is None
+            ):
+                completar_alergenos(db, existente, producto.nombre, por_nombre, admin)
             continue
         cantidad, sufijo, vida_util = CONTENIDOS[producto.nombre]
         borrador = BorradorRotulo(
@@ -85,4 +113,23 @@ def cargar_rotulos(db, productos, admin):
         automaticos[CampoAutomatico.IDENTIFICACION_LOTE.value] = meta_automatico(valor_sistema, origen, True, admin.id, ahora)
         borrador.automaticos = automaticos
         db.add(borrador)
+        db.flush()
+        completar_alergenos(db, borrador, producto.nombre, por_nombre, admin)
+    db.flush()
+
+
+def completar_alergenos(db, borrador, nombre, por_nombre, admin):
+    if nombre in REFRIGERADOS:
+        minima, maxima, dias, abierto = CONSERVACION[nombre]
+        borrador.conservacion_condicion = CondicionConservacion.REFRIGERADO
+        borrador.conservacion_temp_min = minima
+        borrador.conservacion_temp_max = maxima
+        borrador.conservacion_duracion_cantidad = dias
+        borrador.conservacion_abierto = abierto
+    elif nombre != "Salsa de tomate":
+        borrador.conservacion_condicion = CondicionConservacion.AMBIENTE
+    borrador.puede_contener_ids = sorted(por_nombre[n].id for n in PUEDE_CONTENER.get(nombre, []))
+    db.flush()
+    if nombre not in SIN_CONFIRMAR and alergenos.armar_propuesta(db, borrador.producto_id).version is not None:
+        alergenos.confirmar(db, borrador, admin)
     db.flush()

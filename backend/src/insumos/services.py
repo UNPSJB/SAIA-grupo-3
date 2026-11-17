@@ -12,6 +12,7 @@ from src.insumos.constants import TipoInsumo
 from src.aditivoReferencia.models import AditivoReferencia
 from src.receta.composicion import recalcular_por_insumo
 from src.nutricion.calculo import recalcular_por_insumo as recalcular_nutricion
+from src.alergeno.services import resolver as resolver_alergenos
 
 def _validar_duplicados(db: Session, nombre: str, excluir_id: int | None = None) -> None:
     query_nombre = select(Insumo).where(func.lower(Insumo.nombre) == nombre.strip().lower())
@@ -38,7 +39,9 @@ def crear_insumo(db: Session, insumo: schemas.InsumoCreate) -> Insumo:
     datos = insumo.model_dump()
     datos["aditivo_referencia_id"] = _resolver_aditivo_referencia(db, insumo.tipo, insumo.aditivo_referencia_id)
     datos["aporta_energia_sodio"] = insumo.tipo == TipoInsumo.ADITIVO and insumo.aporta_energia_sodio
+    alergeno_ids = datos.pop("alergeno_ids", [])
     _insumo = Insumo(**datos)
+    _insumo.alergenos = resolver_alergenos(db, alergeno_ids)
     db.add(_insumo)
     revisar(db, _insumo)
     db.commit()
@@ -105,6 +108,8 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
             )
             datos_actualizar["tipo"] = tipo_final
             datos_actualizar["aditivo_referencia_id"] = _resolver_aditivo_referencia(db, tipo_final, referencia)
+        if "alergeno_ids" in datos_actualizar:
+            db_insumo.alergenos = resolver_alergenos(db, datos_actualizar.pop("alergeno_ids"), db_insumo.alergenos)
         aporte_anterior = (db_insumo.aporta_energia_sodio, db_insumo.es_azucar_anadido)
         for campo, valor in datos_actualizar.items():
             setattr(db_insumo, campo, valor)

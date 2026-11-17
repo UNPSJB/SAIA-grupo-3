@@ -1,6 +1,7 @@
 import pytest
 
 from src.loteProduccion.models import LoteProduccion
+from tests.alergeno.conftest import alergenos_caa
 from tests.nutricion.conftest import (
     ingredientes,
     nuevo_producto,
@@ -9,7 +10,7 @@ from tests.nutricion.conftest import (
     unidades,
 )
 
-__all__ = ["ingredientes", "nuevo_producto", "receta_referencia", "receta_referencia_incompleta", "unidades"]
+__all__ = ["alergenos_caa", "ingredientes", "nuevo_producto", "receta_referencia", "receta_referencia_incompleta", "unidades"]
 
 
 @pytest.fixture

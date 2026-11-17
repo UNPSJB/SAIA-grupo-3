@@ -1,9 +1,16 @@
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from src.rotulo.constants import CampoAutomatico, TipoRegistro, UnidadVidaUtil
+from src.rotulo.constants import (
+    CampoAutomatico,
+    CondicionConservacion,
+    ErrorCode,
+    EstadoDeclaracion,
+    TipoRegistro,
+    UnidadVidaUtil,
+)
 
 
 def _texto(valor: object) -> object:
@@ -50,6 +57,25 @@ class BorradorDatos(BaseModel):
     leyenda_duracion: Optional[str] = Field(default=None, max_length=150)
     requiere_instrucciones: bool = False
     instrucciones: Optional[str] = Field(default=None, max_length=2000)
+    puede_contener_ids: list[int] = Field(default_factory=list, max_length=30)
+    conservacion_condicion: Optional[CondicionConservacion] = None
+    conservacion_temp_min: Optional[float] = Field(default=None, ge=-60, le=60, allow_inf_nan=False)
+    conservacion_temp_max: Optional[float] = Field(default=None, ge=-60, le=60, allow_inf_nan=False)
+    conservacion_duracion_cantidad: Optional[int] = Field(default=None, gt=0, le=3650)
+    conservacion_duracion_unidad: UnidadVidaUtil = UnidadVidaUtil.DIAS
+    conservacion_abierto: Optional[str] = Field(default=None, max_length=300)
+
+    @model_validator(mode="after")
+    def validar_conservacion(self) -> "BorradorDatos":
+        if (
+            self.conservacion_temp_min is not None
+            and self.conservacion_temp_max is not None
+            and self.conservacion_temp_min > self.conservacion_temp_max
+        ):
+            raise ValueError(ErrorCode.TEMPERATURAS)
+        if self.conservacion_duracion_cantidad is not None and self.conservacion_condicion is None:
+            raise ValueError(ErrorCode.DURACION_SIN_CONDICION)
+        return self
 
     @field_validator(
         "denominacion_venta",
@@ -64,6 +90,7 @@ class BorradorDatos(BaseModel):
         "importador_domicilio",
         "leyenda_duracion",
         "instrucciones",
+        "conservacion_abierto",
         mode="before",
     )
     @classmethod
@@ -116,6 +143,41 @@ class RotuladoFrontalResumen(BaseModel):
     calculado_en: Optional[datetime] = None
 
 
+class InsumoCausa(BaseModel):
+    id: int
+    nombre: str
+
+
+class AlergenoDeclarado(BaseModel):
+    id: int
+    nombre: str
+    grupo: str
+    implica_gluten: bool
+    causas: list[InsumoCausa] = Field(default_factory=list)
+
+
+class AlergenoElegible(BaseModel):
+    id: int
+    nombre: str
+    grupo: str
+    activo: bool
+
+
+class DeclaracionAlergenos(BaseModel):
+    estado: EstadoDeclaracion
+    version_receta_numero: Optional[int] = None
+    contiene: list[AlergenoDeclarado]
+    contiene_gluten: bool
+    causas_gluten: list[InsumoCausa]
+    puede_contener: list[AlergenoElegible]
+    texto_contiene: Optional[str] = None
+    texto_puede_contener: Optional[str] = None
+    confirmado_por: Optional[PersonaResumen] = None
+    confirmado_en: Optional[datetime] = None
+    aviso: Optional[str] = None
+    advertencias: list[str] = Field(default_factory=list)
+
+
 class Faltante(BaseModel):
     campo: str
     etiqueta: str
@@ -159,6 +221,14 @@ class Borrador(BaseModel):
     leyenda_duracion: str
     requiere_instrucciones: bool
     instrucciones: Optional[str] = None
+    conservacion_condicion: Optional[CondicionConservacion] = None
+    conservacion_temp_min: Optional[float] = None
+    conservacion_temp_max: Optional[float] = None
+    conservacion_duracion_cantidad: Optional[int] = None
+    conservacion_duracion_unidad: UnidadVidaUtil
+    conservacion_abierto: Optional[str] = None
+    leyenda_conservacion: Optional[str] = None
+    alergenos: DeclaracionAlergenos
     automaticos: list[CampoAutomaticoEstado]
     informacion_nutricional: Optional[InformacionNutricionalResumen] = None
     rotulado_frontal: Optional[RotuladoFrontalResumen] = None

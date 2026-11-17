@@ -5,6 +5,7 @@ from src.insumos import exceptions
 from src.unidadMedida.schemas import UnidadMedida 
 from src.insumos.constants import TipoInsumo
 from src.aditivoReferencia.schemas import AditivoReferencia
+from src.alergeno.schemas import AlergenoResumen
 
 def _texto_opcional(valor: object) -> Optional[str]:
     if valor is None:
@@ -28,6 +29,8 @@ class InsumoBase(BaseModel):
     es_grasa_anadida: bool = False
     aporta_sodio_anadido: bool = False
     contiene_cafeina: bool = False
+    contiene_gluten: bool = False
+    alergeno_ids: list[int] = Field(default_factory=list)
 
     @field_validator("denominacion_rotulo", mode="before")
     @classmethod
@@ -54,6 +57,8 @@ class InsumoUpdate(BaseModel):
     es_grasa_anadida: Optional[bool] = None
     aporta_sodio_anadido: Optional[bool] = None
     contiene_cafeina: Optional[bool] = None
+    contiene_gluten: Optional[bool] = None
+    alergeno_ids: Optional[list[int]] = None
 
     @field_validator("denominacion_rotulo", mode="before")
     @classmethod
@@ -67,6 +72,7 @@ class Insumo(InsumoBase):
     stock_bajo: bool = False
     unidadMedidaObj: UnidadMedida
     aditivo_referencia: Optional[AditivoReferencia] = None
+    alergenos: list[AlergenoResumen] = Field(default_factory=list)
     model_config = ConfigDict(from_attributes=True)
 
 class InsumoDelete(InsumoBase):

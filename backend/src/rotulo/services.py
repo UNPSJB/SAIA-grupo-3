@@ -13,12 +13,13 @@ from src.rotuladoFrontal.aplicabilidad import registro_aplicabilidad, version_vi
 from src.rotuladoFrontal.constants import ResultadoAplicabilidad
 from src.rotuladoFrontal.dependencies import modulo_activo
 from src.rotuladoFrontal.models import CalculoSellos
-from src.rotulo import exceptions, schemas
+from src.rotulo import alergenos, exceptions, schemas
 from src.rotulo.constants import (
     ETIQUETAS_AUTOMATICOS,
     LEYENDA_DURACION_INICIAL,
     PAIS_ORIGEN_INICIAL,
     CampoAutomatico,
+    EstadoDeclaracion,
     Origen,
     Seccion,
 )
@@ -41,6 +42,12 @@ CAMPOS_MANUALES = (
     "vida_util_unidad",
     "requiere_instrucciones",
     "instrucciones",
+    "conservacion_condicion",
+    "conservacion_temp_min",
+    "conservacion_temp_max",
+    "conservacion_duracion_cantidad",
+    "conservacion_duracion_unidad",
+    "conservacion_abierto",
 )
 
 
@@ -202,6 +209,20 @@ def completitud(
             or (frontal.calculo_id is not None and not frontal.provisorio)
         )
         requisitos.append(("rotulado_frontal", "Rotulado frontal evaluado y sellos calculados", Seccion.FRONTAL, listo))
+    requisitos += [
+        (
+            "alergenos",
+            "Declaración de alérgenos confirmada",
+            Seccion.ALERGENOS,
+            borrador.alergenos_estado == EstadoDeclaracion.CONFIRMADA,
+        ),
+        (
+            "conservacion_condicion",
+            "Condiciones de conservación",
+            Seccion.ALERGENOS,
+            borrador.conservacion_condicion is not None,
+        ),
+    ]
     faltantes = [
         schemas.Faltante(campo=campo, etiqueta=etiqueta, seccion=seccion)
         for campo, etiqueta, seccion, cumple in requisitos
@@ -214,7 +235,9 @@ def completitud(
     )
 
 
-def _a_schema(db: Session, borrador: BorradorRotulo, sistema: dict) -> schemas.Borrador:
+def _a_schema(
+    db: Session, borrador: BorradorRotulo, sistema: dict, propuesta: alergenos.Propuesta
+) -> schemas.Borrador:
     informacion = _informacion_nutricional(db, borrador.producto_id)
     frontal = _rotulado_frontal(db, borrador.producto_id)
     personas = {}
@@ -261,6 +284,14 @@ def _a_schema(db: Session, borrador: BorradorRotulo, sistema: dict) -> schemas.B
         leyenda_duracion=borrador.leyenda_duracion,
         requiere_instrucciones=borrador.requiere_instrucciones,
         instrucciones=borrador.instrucciones,
+        conservacion_condicion=borrador.conservacion_condicion,
+        conservacion_temp_min=borrador.conservacion_temp_min,
+        conservacion_temp_max=borrador.conservacion_temp_max,
+        conservacion_duracion_cantidad=borrador.conservacion_duracion_cantidad,
+        conservacion_duracion_unidad=borrador.conservacion_duracion_unidad,
+        conservacion_abierto=borrador.conservacion_abierto,
+        leyenda_conservacion=alergenos.leyenda_conservacion(borrador),
+        alergenos=alergenos.declaracion(db, borrador, propuesta),
         automaticos=automaticos,
         informacion_nutricional=informacion,
         rotulado_frontal=frontal,
@@ -289,11 +320,12 @@ def _a_schema(db: Session, borrador: BorradorRotulo, sistema: dict) -> schemas.B
 def obtener_borrador(db: Session, producto_id: int) -> schemas.Borrador:
     borrador = leer_borrador(db, producto_id)
     sistema = datos_del_sistema(db, borrador.producto)
-    if refrescar_automaticos(borrador, sistema):
-        db.flush()
+    refrescar_automaticos(borrador, sistema)
+    propuesta = alergenos.armar_propuesta(db, producto_id)
+    alergenos.revisar_declaracion(borrador, propuesta)
     db.commit()
     db.refresh(borrador)
-    return _a_schema(db, borrador, sistema)
+    return _a_schema(db, borrador, sistema, propuesta)
 
 
 def crear_borrador(db: Session, producto_id: int, persona: Personal) -> schemas.Borrador:
@@ -306,6 +338,8 @@ def crear_borrador(db: Session, producto_id: int, persona: Personal) -> schemas.
         pais_origen=PAIS_ORIGEN_INICIAL,
         leyenda_duracion=LEYENDA_DURACION_INICIAL,
         automaticos={},
+        puede_contener_ids=[],
+        alergenos_estado=EstadoDeclaracion.SUGERIDA,
         creado_por_id=persona.id,
         creado_en=ahora,
         actualizado_por_id=persona.id,
@@ -359,6 +393,9 @@ def actualizar_borrador(
     borrador.automaticos = automaticos
     for campo in CAMPOS_MANUALES:
         setattr(borrador, campo, getattr(datos, campo))
+    propuesta = alergenos.armar_propuesta(db, producto_id)
+    alergenos.revisar_declaracion(borrador, propuesta)
+    alergenos.actualizar_puede_contener(db, borrador, datos.puede_contener_ids, propuesta)
     if not datos.es_importado:
         borrador.importador_razon_social = None
         borrador.importador_domicilio = None
@@ -381,6 +418,7 @@ def listar_rotulos(db: Session) -> list[schemas.RotuloListado]:
             if producto.activo:
                 resultado.append(schemas.RotuloListado(producto=producto))
             continue
+        alergenos.revisar_declaracion(borrador, alergenos.armar_propuesta(db, producto.id))
         estado = completitud(
             borrador, _informacion_nutricional(db, producto.id), _rotulado_frontal(db, producto.id)
         )
@@ -395,3 +433,12 @@ def listar_rotulos(db: Session) -> list[schemas.RotuloListado]:
         )
     db.commit()
     return resultado
+
+
+def confirmar_alergenos(db: Session, producto_id: int, persona: Personal) -> schemas.Borrador:
+    borrador = leer_borrador(db, producto_id)
+    alergenos.confirmar(db, borrador, persona)
+    borrador.actualizado_por_id = persona.id
+    borrador.actualizado_en = datetime.now()
+    db.commit()
+    return obtener_borrador(db, producto_id)

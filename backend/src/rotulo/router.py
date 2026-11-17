@@ -40,3 +40,12 @@ def update_borrador(
     persona: Personal = Depends(tiene_permiso_administrar),
 ):
     return services.actualizar_borrador(db, producto_id, datos, persona)
+
+
+@router.post("/productos/{producto_id}/alergenos/confirmar", response_model=schemas.Borrador)
+def confirm_alergenos(
+    producto_id: int,
+    db: Session = Depends(get_db),
+    persona: Personal = Depends(tiene_permiso_administrar),
+):
+    return services.confirmar_alergenos(db, producto_id, persona)

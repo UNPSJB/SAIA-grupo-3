@@ -9,6 +9,8 @@ from src.rotulo.constants import (
     LEYENDA_DURACION_INICIAL,
     PAIS_ORIGEN_INICIAL,
     CampoAutomatico,
+    CondicionConservacion,
+    EstadoDeclaracion,
     TipoRegistro,
     UnidadVidaUtil,
 )
@@ -39,6 +41,19 @@ class BorradorRotulo(ModeloBase):
     requiere_instrucciones: Mapped[bool] = mapped_column(default=False, nullable=False)
     instrucciones: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     automaticos: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    puede_contener_ids: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    conservacion_condicion: Mapped[Optional[CondicionConservacion]] = mapped_column(nullable=True)
+    conservacion_temp_min: Mapped[Optional[float]] = mapped_column(nullable=True)
+    conservacion_temp_max: Mapped[Optional[float]] = mapped_column(nullable=True)
+    conservacion_duracion_cantidad: Mapped[Optional[int]] = mapped_column(nullable=True)
+    conservacion_duracion_unidad: Mapped[UnidadVidaUtil] = mapped_column(default=UnidadVidaUtil.DIAS, nullable=False)
+    conservacion_abierto: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    alergenos_estado: Mapped[EstadoDeclaracion] = mapped_column(default=EstadoDeclaracion.SUGERIDA, nullable=False)
+    alergenos_confirmado_por_id: Mapped[Optional[int]] = mapped_column(ForeignKey("personal.id"), nullable=True)
+    alergenos_confirmado_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    alergenos_version_receta_id: Mapped[Optional[int]] = mapped_column(nullable=True)
+    alergenos_confirmacion: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    alergenos_aviso: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
     creado_por_id: Mapped[int] = mapped_column(ForeignKey("personal.id"), nullable=False)
     creado_en: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     actualizado_por_id: Mapped[int] = mapped_column(ForeignKey("personal.id"), nullable=False)
@@ -48,6 +63,7 @@ class BorradorRotulo(ModeloBase):
     contenido_neto_unidad = relationship("src.unidadMedida.models.UnidadMedida")
     creado_por = relationship("src.personal.models.Personal", foreign_keys=[creado_por_id])
     actualizado_por = relationship("src.personal.models.Personal", foreign_keys=[actualizado_por_id])
+    alergenos_confirmado_por = relationship("src.personal.models.Personal", foreign_keys=[alergenos_confirmado_por_id])
     ediciones: Mapped[list["EdicionCampoRotulo"]] = relationship(
         order_by="EdicionCampoRotulo.id.desc()", cascade="all, delete-orphan"
     )

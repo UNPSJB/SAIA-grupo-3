@@ -1,0 +1,24 @@
+{
+  "fuente": "Código Alimentario Argentino, art. 235 séptimo (Res. Conjunta SPReI y SAV 11-E/2017) y Guía de alérgenos del Ministerio de Salud.",
+  "alergenos": [
+    {"nombre": "Trigo", "grupo": "Cereales que contienen gluten", "texto_declaracion": "trigo", "implica_gluten": true},
+    {"nombre": "Avena", "grupo": "Cereales que contienen gluten", "texto_declaracion": "avena", "implica_gluten": true},
+    {"nombre": "Cebada", "grupo": "Cereales que contienen gluten", "texto_declaracion": "cebada", "implica_gluten": true},
+    {"nombre": "Centeno", "grupo": "Cereales que contienen gluten", "texto_declaracion": "centeno", "implica_gluten": true},
+    {"nombre": "Crustáceos", "grupo": "Crustáceos y productos derivados", "texto_declaracion": "crustáceos"},
+    {"nombre": "Huevo", "grupo": "Huevos y productos derivados", "texto_declaracion": "huevo"},
+    {"nombre": "Pescado", "grupo": "Pescados y productos de la pesca", "texto_declaracion": "pescado"},
+    {"nombre": "Maní", "grupo": "Maní y productos derivados", "texto_declaracion": "maní"},
+    {"nombre": "Soja", "grupo": "Soja y productos derivados", "texto_declaracion": "soja"},
+    {"nombre": "Leche", "grupo": "Leche y productos lácteos (incluida la lactosa)", "texto_declaracion": "leche"},
+    {"nombre": "Almendra", "grupo": "Frutas secas", "texto_declaracion": "almendra"},
+    {"nombre": "Avellana", "grupo": "Frutas secas", "texto_declaracion": "avellana"},
+    {"nombre": "Nuez", "grupo": "Frutas secas", "texto_declaracion": "nuez"},
+    {"nombre": "Castaña de cajú", "grupo": "Frutas secas", "texto_declaracion": "castaña de cajú"},
+    {"nombre": "Castaña de Pará", "grupo": "Frutas secas", "texto_declaracion": "castaña de Pará"},
+    {"nombre": "Nuez de macadamia", "grupo": "Frutas secas", "texto_declaracion": "nuez de macadamia"},
+    {"nombre": "Pistacho", "grupo": "Frutas secas", "texto_declaracion": "pistacho"},
+    {"nombre": "Nuez pecán", "grupo": "Frutas secas", "texto_declaracion": "nuez pecán"},
+    {"nombre": "Sulfitos", "grupo": "Dióxido de azufre y sulfitos (10 mg/kg o más)", "texto_declaracion": "sulfitos"}
+  ]
+}

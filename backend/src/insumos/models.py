@@ -21,12 +21,14 @@ class Insumo(ModeloBase):
     es_grasa_anadida: Mapped[bool] = mapped_column(default=False, nullable=False)
     aporta_sodio_anadido: Mapped[bool] = mapped_column(default=False, nullable=False)
     contiene_cafeina: Mapped[bool] = mapped_column(default=False, nullable=False)
+    contiene_gluten: Mapped[bool] = mapped_column(default=False, nullable=False)
     denominacion_rotulo: Mapped[str | None] = mapped_column(nullable=True, default=None)
     densidad_g_ml: Mapped[float | None] = mapped_column(nullable=True, default=None)
     peso_unidad_g: Mapped[float | None] = mapped_column(nullable=True, default=None)
     aditivo_referencia_id: Mapped[int | None] = mapped_column(ForeignKey("aditivos_referencia.id"), nullable=True, default=None)
 
     aditivo_referencia = relationship("src.aditivoReferencia.models.AditivoReferencia", lazy="selectin")
+    alergenos = relationship("src.alergeno.models.Alergeno", secondary="insumo_alergenos", lazy="selectin")
     unidadMedidaObj: Mapped[UnidadMedida] = relationship("UnidadMedida", back_populates="insumos")
     lotes_recepcion = relationship(
         "LoteRecepcionInsumo",
@@ -53,6 +55,10 @@ class Insumo(ModeloBase):
             .correlate_except(LoteRecepcionInsumo)
             .scalar_subquery()
         )
+
+    @property
+    def alergeno_ids(self) -> list[int]:
+        return sorted(alergeno.id for alergeno in self.alergenos)
 
     @property
     def stock_bajo(self) -> bool:

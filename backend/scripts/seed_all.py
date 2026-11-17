@@ -4,6 +4,7 @@ from datetime import date, timedelta
 
 from sqlalchemy import func, inspect, select
 
+from scripts.seed_alergenos import cargar_alergenos
 from scripts.seed_abastecimiento import cargar_abastecimiento_demo, cargar_recepciones_ingredientes
 from scripts.seed_calibraciones import cargar_calibraciones
 from scripts.seed_checklist import cargar_checklist
@@ -85,6 +86,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             cargar_nutricion(db, ingredientes, aditivos, admin)
             cargar_parametros_iniciales(db)
             cargar_rotulado_frontal(db, productos, ingredientes, aditivos, admin)
+            cargar_alergenos(db, ingredientes, aditivos)
             cargar_rotulos(db, productos, admin)
             proveedores = cargar_abastecimiento_demo(
                 db, crear, unidades_por_sufijo, admin.id, hoy, insumos_maestros

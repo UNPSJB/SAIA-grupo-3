@@ -1,4 +1,4 @@
-"""Migración SQLite repetible para recetas y producción (E9-01 a E11-01). Detener el backend antes de ejecutarla."""
+"""Migración SQLite repetible para recetas y producción (E9-01 a E13-02). Detener el backend antes de ejecutarla."""
 import argparse
 import sqlite3
 from datetime import datetime
@@ -34,6 +34,22 @@ COLUMNAS = {
         "es_grasa_anadida": "BOOLEAN NOT NULL DEFAULT 0",
         "aporta_sodio_anadido": "BOOLEAN NOT NULL DEFAULT 0",
         "contiene_cafeina": "BOOLEAN NOT NULL DEFAULT 0",
+        "contiene_gluten": "BOOLEAN NOT NULL DEFAULT 0",
+    },
+    "borradores_rotulo": {
+        "puede_contener_ids": "JSON NOT NULL DEFAULT '[]'",
+        "conservacion_condicion": "VARCHAR(11)",
+        "conservacion_temp_min": "FLOAT",
+        "conservacion_temp_max": "FLOAT",
+        "conservacion_duracion_cantidad": "INTEGER",
+        "conservacion_duracion_unidad": "VARCHAR(5) NOT NULL DEFAULT 'DIAS'",
+        "conservacion_abierto": "VARCHAR(300)",
+        "alergenos_estado": "VARCHAR(10) NOT NULL DEFAULT 'SUGERIDA'",
+        "alergenos_confirmado_por_id": "INTEGER REFERENCES personal(id)",
+        "alergenos_confirmado_en": "DATETIME",
+        "alergenos_version_receta_id": "INTEGER",
+        "alergenos_confirmacion": "JSON",
+        "alergenos_aviso": "VARCHAR(300)",
     },
     "clases_funcionales": {
         "declarar_solo_funcion": "BOOLEAN NOT NULL DEFAULT 0",
@@ -103,6 +119,14 @@ def migrar(ruta: Path) -> Path | None:
         except Exception:
             db.rollback()
             raise
+    if "alergenos" not in tablas:
+        from scripts.datos_iniciales_alergenos import cargar_alergenos_iniciales
+
+        motor = create_engine(f"sqlite:///{ruta}")
+        with Session(motor) as sesion:
+            cargar_alergenos_iniciales(sesion)
+            sesion.commit()
+        motor.dispose()
     if any(tabla in {"unidad_medida", "versiones_receta"} for tabla, _, _ in pendientes):
         motor = create_engine(f"sqlite:///{ruta}")
         with Session(motor) as sesion:

@@ -15,6 +15,7 @@ COMPLETO = {
     "numero_establecimiento": "02-000123",
     "vida_util_cantidad": 5,
     "vida_util_unidad": "dias",
+    "conservacion_condicion": "ambiente",
 }
 
 
@@ -33,9 +34,12 @@ def datos_desde(borrador, **cambios):
         "denominacion_venta", "lista_ingredientes", "identificacion_lote", "contenido_neto", "razon_social",
         "domicilio", "pais_origen", "tipo_registro", "numero_registro", "numero_establecimiento", "es_importado",
         "importador_razon_social", "importador_domicilio", "vida_util_cantidad", "vida_util_unidad",
-        "leyenda_duracion", "requiere_instrucciones", "instrucciones",
+        "leyenda_duracion", "requiere_instrucciones", "instrucciones", "conservacion_condicion",
+        "conservacion_temp_min", "conservacion_temp_max", "conservacion_duracion_cantidad",
+        "conservacion_duracion_unidad", "conservacion_abierto",
     )
     datos = {campo: borrador[campo] for campo in campos}
+    datos["puede_contener_ids"] = [a["id"] for a in borrador["alergenos"]["puede_contener"]]
     unidad = borrador["contenido_neto_unidad"]
     datos["contenido_neto_unidad_id"] = unidad["id"] if unidad else None
     datos.update(cambios)
@@ -88,6 +92,8 @@ def test_se_puede_guardar_con_faltantes_y_la_completitud_los_informa(
 
     monkeypatch.setattr(settings, "ROTULADO_FRONTAL_ACTIVO", False)
     nuevo_lote(producto_id, "L-2026-001", date(2026, 11, 1))
+    confirmada = client.post(f"{ruta(producto_id)}/alergenos/confirmar", headers=headers_administradora)
+    assert confirmada.status_code == 200, confirmada.text
     completo = guardar(
         client, headers_administradora, producto_id,
         datos_desde(client.get(ruta(producto_id), headers=headers_administradora).json(),

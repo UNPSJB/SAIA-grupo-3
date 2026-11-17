@@ -20,3 +20,7 @@ class UnidadContenidoInvalida(BadRequest):
 
 class UnidadNoEncontrada(NotFound):
     DETAIL = ErrorCode.UNIDAD_NO_ENCONTRADA
+
+
+class SinRecetaParaAlergenos(BadRequest):
+    DETAIL = ErrorCode.SIN_RECETA_ALERGENOS

@@ -50,6 +50,7 @@ from src.nutricion.router import router as nutricion_router
 from src.configuracionProduccion.router import router as configuracion_produccion_router
 from src.rotuladoFrontal.router import router as rotulado_frontal_router
 from src.rotulo.router import router as rotulo_router
+from src.alergeno.router import router as alergeno_router
 from src.produccionDelDia.router import router as produccion_del_dia_router
 from src.claseFuncional.router import router as clase_funcional_router
 from src.aditivoReferencia.router import router as aditivo_referencia_router
@@ -128,6 +129,7 @@ app.include_router(nutricion_router)
 app.include_router(configuracion_produccion_router)
 app.include_router(rotulado_frontal_router)
 app.include_router(rotulo_router)
+app.include_router(alergeno_router)
 app.include_router(produccion_del_dia_router)
 app.include_router(clase_funcional_router)
 app.include_router(aditivo_referencia_router)
