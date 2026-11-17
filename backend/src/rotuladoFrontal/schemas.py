@@ -347,3 +347,41 @@ class AplicabilidadProducto(BaseModel):
     evaluacion: Optional[Evaluacion] = None
     avisos: list[str]
     historial: list[MovimientoCorreccion]
+
+
+class CalculoSellos(BaseModel):
+    id: int
+    producto_id: int
+    version_receta: RecetaEvaluada
+    conjunto: ConjuntoReferencia
+    tipo_producto: TipoProducto
+    base: Optional[str] = None
+    provisorio: bool
+    faltantes: list[str]
+    entrada: dict[str, Optional[float]]
+    hechos: list[Hecho]
+    sellos: list[Sello]
+    leyendas: list[str]
+    advertencias: list[str]
+    detalle: list[DetalleUmbral]
+    calculado_por: PersonaResumen
+    calculado_en: datetime
+
+
+class CalculoResumen(BaseModel):
+    id: int
+    conjunto_numero: int
+    receta_numero: int
+    sellos: list[Sello]
+    provisorio: bool
+    calculado_en: datetime
+
+
+class SellosProducto(BaseModel):
+    producto: ProductoResumen
+    aplicabilidad: Optional[Aplicabilidad] = None
+    puede_calcular: bool
+    motivo_no_calcula: Optional[str] = None
+    calculo: Optional[CalculoSellos] = None
+    avisos: list[str]
+    historial: list[CalculoResumen] = Field(default_factory=list)

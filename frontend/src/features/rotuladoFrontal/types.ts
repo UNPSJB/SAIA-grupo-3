@@ -173,3 +173,43 @@ export interface AplicabilidadDatos {
   tipo_producto: TipoProducto;
   correcciones: { hecho: Hecho; valor: boolean | null; motivo: string | null }[];
 }
+
+export interface CalculoSellos {
+  id: number;
+  producto_id: number;
+  version_receta: RecetaEvaluada;
+  conjunto: ConjuntoReferencia;
+  tipo_producto: TipoProducto;
+  base: string | null;
+  provisorio: boolean;
+  faltantes: string[];
+  entrada: Record<string, number | null>;
+  hechos: Hecho[];
+  sellos: Sello[];
+  leyendas: string[];
+  advertencias: string[];
+  detalle: (DetalleUmbral & { datos: Record<string, number> })[];
+  calculado_por: PersonaResumen;
+  calculado_en: string;
+}
+
+export interface SellosProducto {
+  producto: { id: number; nombre: string; activo: boolean };
+  aplicabilidad: {
+    resultado: ResultadoAplicabilidad;
+    mensaje: string;
+    regla_orden: number | null;
+  } | null;
+  puede_calcular: boolean;
+  motivo_no_calcula: string | null;
+  calculo: CalculoSellos | null;
+  avisos: string[];
+  historial: {
+    id: number;
+    conjunto_numero: number;
+    receta_numero: number;
+    sellos: Sello[];
+    provisorio: boolean;
+    calculado_en: string;
+  }[];
+}

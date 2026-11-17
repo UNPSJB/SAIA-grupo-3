@@ -131,3 +131,28 @@ class CorreccionAgregado(ModeloBase):
     fecha_hora: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     personal = relationship("src.personal.models.Personal")
+
+
+class CalculoSellos(ModeloBase):
+    __tablename__ = "calculos_sellos_rotulado"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    producto_id: Mapped[int] = mapped_column(ForeignKey("productos.id"), nullable=False, index=True)
+    version_receta_id: Mapped[int] = mapped_column(ForeignKey("versiones_receta.id"), nullable=False)
+    conjunto_id: Mapped[int] = mapped_column(ForeignKey("conjuntos_parametros_rotulado.id"), nullable=False)
+    tipo_producto: Mapped[TipoProducto] = mapped_column(nullable=False)
+    base: Mapped[Optional[str]] = mapped_column(String(5), nullable=True)
+    provisorio: Mapped[bool] = mapped_column(default=False, nullable=False)
+    faltantes: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    entrada: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    hechos: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    sellos: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    leyendas: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    advertencias: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    detalle: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    calculado_por_id: Mapped[int] = mapped_column(ForeignKey("personal.id"), nullable=False)
+    calculado_en: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    conjunto = relationship("ConjuntoParametros")
+    version_receta = relationship("src.receta.models.VersionReceta")
+    calculado_por = relationship("src.personal.models.Personal")

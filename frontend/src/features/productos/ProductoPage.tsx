@@ -3,7 +3,9 @@ import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
+import { useState } from 'react';
 import { AplicabilidadProducto } from '../rotuladoFrontal/AplicabilidadProducto';
+import { SellosProducto } from '../rotuladoFrontal/SellosProducto';
 import { useRotuladoFrontalActivo } from '../rotuladoFrontal/useRotuladoFrontalActivo';
 import { ProductoDeleteView } from './ProductoDeleteView';
 import { ProductoForm } from './ProductoForm';
@@ -19,6 +21,9 @@ export function ProductoPage() {
   const { guardar, eliminar } = useProducto(false);
   const { currentUser } = useAuth();
   const rotuladoActivo = useRotuladoFrontalActivo(currentUser?.administrar === true);
+  const [pestana, setPestana] = useState<{ id: number; clave: string } | null>(null);
+  const pestanaActiva = item && pestana?.id === item.id ? pestana.clave : 'datos';
+  const irA = (clave: string) => item && setPestana({ id: item.id, clave });
 
   const handleGuardar = async (datos: ProductoCreate) => {
     await guardar(datos, mode === 'editar' ? item?.id : undefined);
@@ -52,12 +57,29 @@ export function ProductoPage() {
         <ProductoView producto={item} onEditar={() => open(item, 'editar')} onVolver={back} />
       )}
       {mode === 'ver' && item && rotuladoActivo && (
-        <Tabs defaultActiveKey="datos" id="producto-pestanas" className="mb-3" mountOnEnter>
+        <Tabs
+          activeKey={pestanaActiva}
+          onSelect={(clave) => irA(clave ?? 'datos')}
+          id="producto-pestanas"
+          className="mb-3"
+          mountOnEnter
+        >
           <Tab eventKey="datos" title="Datos">
             <ProductoView producto={item} onEditar={() => open(item, 'editar')} onVolver={back} />
           </Tab>
           <Tab eventKey="rotulado" title="Rotulado frontal">
-            <AplicabilidadProducto key={item.id} productoId={item.id} />
+            <AplicabilidadProducto
+              key={item.id}
+              productoId={item.id}
+              onIrASellos={() => irA('sellos')}
+            />
+          </Tab>
+          <Tab eventKey="sellos" title="Sellos">
+            <SellosProducto
+              key={`${item.id}-${pestanaActiva}`}
+              productoId={item.id}
+              onIrAAplicabilidad={() => irA('rotulado')}
+            />
           </Tab>
         </Tabs>
       )}

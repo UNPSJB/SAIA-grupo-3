@@ -63,6 +63,12 @@ def tiene_fuente(fila: ValorNutricionalInsumo) -> bool:
     return bool(fila.detalle_fuente and fila.detalle_fuente.strip())
 
 
+def _origen(renglon: RenglonReceta, nutriente: Nutriente) -> Nutriente:
+    if nutriente == Nutriente.AZUCARES_ANADIDOS and renglon.insumo.es_azucar_anadido:
+        return Nutriente.AZUCARES_TOTALES
+    return nutriente
+
+
 def _filas_por_insumo(db: Session, insumo_ids: set[int]) -> dict[int, dict[Nutriente, ValorNutricionalInsumo]]:
     resultado: dict[int, dict[Nutriente, ValorNutricionalInsumo]] = {insumo_id: {} for insumo_id in insumo_ids}
     filas = db.scalars(select(ValorNutricionalInsumo).where(ValorNutricionalInsumo.insumo_id.in_(insumo_ids))).all()
@@ -91,7 +97,7 @@ def _nombres(nutrientes: list[Nutriente]) -> str:
 def revisar_insumos(version: VersionReceta, filas: dict[int, dict[Nutriente, ValorNutricionalInsumo]]) -> list[dict]:
     faltantes = []
     for renglon in version.renglones:
-        requeridos = [n for n in NUTRIENTES if _cuenta(renglon, n)]
+        requeridos = list(dict.fromkeys(_origen(renglon, n) for n in NUTRIENTES if _cuenta(renglon, n)))
         cargados = filas.get(renglon.insumo_id, {})
         sin_dato = [n for n in requeridos if n not in cargados]
         sin_fuente = [n for n in requeridos if n in cargados and not tiene_fuente(cargados[n])]
@@ -135,7 +141,7 @@ def calcular_informacion(db: Session, version: VersionReceta) -> InformacionNutr
         for renglon in version.renglones:
             if not _cuenta(renglon, nutriente):
                 continue
-            fila = filas[renglon.insumo_id].get(nutriente)
+            fila = filas[renglon.insumo_id].get(_origen(renglon, nutriente))
             if fila is None or renglon.gramos is None or total is None:
                 total = None
                 continue

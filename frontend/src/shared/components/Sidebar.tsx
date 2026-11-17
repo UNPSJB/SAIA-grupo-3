@@ -50,6 +50,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: '/recetas', label: 'Recetas', icono: 'bi bi-journal-bookmark', permiso: 'consultarOperacion' },
     { to: '/produccion-del-dia', label: 'Producción del día', icono: 'bi bi-list-check', permiso: 'operar' },
     { to: '/lotes-produccion', label: 'Lotes de Producción', icono: 'bi bi-box2', permiso: 'consultarOperacion' },
+    { to: '/rotulado', label: 'Rotulado', icono: 'bi bi-tag', permiso: 'administrar' },
     { to: "/documentos-vigentes", label: "Documentos vigentes", icono: "bi bi-journal-check", permiso: "operar" },
     { to: "/documentos-tecnicos", label: "Documentos Técnicos", icono: "bi bi-journal-text" },
     { to: '/vencimientos', label: 'Vencimientos', icono: 'bi bi-calendar-x' },
@@ -124,7 +125,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const instanceId = useId();
   const secciones = [
     { id: 'gestion', label: 'Gestión', icono: 'bi bi-graph-up', rutas: ['/tablero', '/vista-publica/configuracion'] },
-    { id: 'produccion', label: 'Producción', icono: 'bi bi-basket2', rutas: ['/produccion-del-dia', '/recetas', '/lotes-produccion', '/recepciones-insumos', '/lotes', '/trazabilidad-insumos'] },
+    { id: 'produccion', label: 'Producción', icono: 'bi bi-basket2', rutas: ['/produccion-del-dia', '/recetas', '/lotes-produccion', '/rotulado', '/recepciones-insumos', '/lotes', '/trazabilidad-insumos'] },
     { id: 'limpieza', label: 'Limpieza', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/planes', '/auditoria', '/consumos', '/reportes/consumos'] },
     { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/registro-temperatura', '/vencimientos', '/incidentes'] },
     { id: 'documentacion', label: 'Documentación', icono: 'bi bi-files', rutas: ['/documentos-vigentes', '/documentos-tecnicos'] },

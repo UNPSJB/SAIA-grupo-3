@@ -98,6 +98,11 @@ class ErrorCode:
     FECHA_OBLIGATORIA = "Indicá la fecha de vigencia antes de publicar."
     PRODUCTO_NO_ENCONTRADO = "El producto no fue encontrado."
     HECHO_NO_CORREGIBLE = "Solo se corrigen los agregados, los edulcorantes y la cafeína."
+    SIN_APLICABILIDAD = "Primero evaluá si al producto le corresponde el rotulado frontal (pestaña Rotulado frontal)."
+    NO_SE_CALCULA = "No se calculan sellos: {mensaje}"
+    APLICABILIDAD_DESACTUALIZADA = "La evaluación de rotulado frontal está desactualizada: {motivo} Volvé a evaluarla antes de calcular."
+    SIN_RECETA = "El producto no tiene receta vigente: no hay información nutricional para calcular sellos."
+    CALCULO_NO_ENCONTRADO = "El cálculo de sellos no fue encontrado."
 
 
 class Aviso:
@@ -105,3 +110,7 @@ class Aviso:
     PARAMETROS_NUEVOS = "Se publicó la versión {numero} de los parámetros: volvé a evaluar para usarla."
     RECETA_NUEVA = "La receta cambió desde la última evaluación (versión {numero}): revisá los agregados y volvé a evaluar."
     SUGERENCIAS_CAMBIARON = "Las sugerencias cambiaron desde la última evaluación: revisalas y volvé a evaluar."
+    SELLOS_RECETA_NUEVA = "La receta vigente ahora es la versión {numero}: volvé a calcular los sellos."
+    SELLOS_PARAMETROS_NUEVOS = "Los parámetros vigentes ahora son la versión {numero}: volvé a calcular los sellos."
+    SELLOS_NUTRICION_NUEVA = "La información nutricional cambió después del cálculo: volvé a calcular los sellos."
+    SELLOS_APLICABILIDAD_NUEVA = "La evaluación de rotulado frontal cambió después del cálculo: volvé a calcular los sellos."

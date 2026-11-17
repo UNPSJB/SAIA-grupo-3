@@ -7,6 +7,8 @@ import type {
   ConjuntoResumen,
   EntradaPrueba,
   ResultadoPrueba,
+  CalculoSellos,
+  SellosProducto,
 } from './types';
 
 async function pedir<T>(ruta: string, porDefecto: string, opciones: RequestInit = {}): Promise<T> {
@@ -72,3 +74,21 @@ export const guardarAplicabilidad = (productoId: number, datos: AplicabilidadDat
     'No se pudo evaluar el rotulado frontal.',
     { method: 'PUT', body: JSON.stringify(datos) },
   );
+
+export const getSellos = (productoId: number) =>
+  pedir<SellosProducto>(
+    `/rotulado-frontal/productos/${productoId}/sellos`,
+    'No se pudieron cargar los sellos.',
+  );
+
+export const calcularSellos = (productoId: number) =>
+  pedir<SellosProducto>(
+    `/rotulado-frontal/productos/${productoId}/sellos`,
+    'No se pudieron calcular los sellos.',
+    {
+      method: 'POST',
+    },
+  );
+
+export const getCalculoSellos = (calculoId: number) =>
+  pedir<CalculoSellos>(`/rotulado-frontal/sellos/${calculoId}`, 'No se pudo cargar el cálculo.');

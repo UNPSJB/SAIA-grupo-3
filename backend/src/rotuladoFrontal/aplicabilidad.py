@@ -22,7 +22,7 @@ MARCAS_INSUMO = {
 }
 
 
-def _leer_producto(db: Session, producto_id: int) -> Producto:
+def leer_producto(db: Session, producto_id: int) -> Producto:
     producto = db.get(Producto, producto_id)
     if producto is None:
         raise exceptions.ProductoNoEncontrado()
@@ -60,7 +60,7 @@ def proponer_agregados(version: Optional[VersionReceta]) -> dict[Hecho, list[sch
     return causas
 
 
-def _registro(db: Session, producto_id: int) -> Optional[AplicabilidadProducto]:
+def registro_aplicabilidad(db: Session, producto_id: int) -> Optional[AplicabilidadProducto]:
     return db.scalar(select(AplicabilidadProducto).where(AplicabilidadProducto.producto_id == producto_id))
 
 
@@ -87,11 +87,11 @@ def _avisos(db: Session, registro, version, sugeridos: dict[str, bool]) -> list[
 
 
 def obtener_aplicabilidad(db: Session, producto_id: int) -> schemas.AplicabilidadProducto:
-    producto = _leer_producto(db, producto_id)
+    producto = leer_producto(db, producto_id)
     version = version_vigente(db, producto_id)
     causas = proponer_agregados(version)
     sugeridos = {hecho.value: bool(causas[hecho]) for hecho in HECHOS_DE_RECETA}
-    registro = _registro(db, producto_id)
+    registro = registro_aplicabilidad(db, producto_id)
     correcciones = registro.correcciones if registro else {}
     agregados = [
         schemas.AgregadoProducto(
@@ -149,12 +149,12 @@ def obtener_aplicabilidad(db: Session, producto_id: int) -> schemas.Aplicabilida
 def evaluar_producto(
     db: Session, producto_id: int, datos: schemas.AplicabilidadDatos, persona: Personal
 ) -> AplicabilidadProducto:
-    _leer_producto(db, producto_id)
+    leer_producto(db, producto_id)
     conjunto = conjunto_vigente(db)
     version = version_vigente(db, producto_id)
     causas = proponer_agregados(version)
     sugeridos = {hecho.value: bool(causas[hecho]) for hecho in HECHOS_DE_RECETA}
-    registro = _registro(db, producto_id)
+    registro = registro_aplicabilidad(db, producto_id)
     if registro is None:
         registro = AplicabilidadProducto(producto_id=producto_id, correcciones={}, sugeridos={}, hechos=[])
         db.add(registro)

@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import pytest
+
 from src.insumos.constants import TipoInsumo
 from src.insumos.models import Insumo
 from src.nutricion.constants import FuenteNutricional, Nutriente
@@ -220,3 +222,21 @@ def test_un_resultado_guardado_con_el_formato_anterior_se_recalcula_con_el_detal
 
     assert [f["tipo"] for f in info["faltantes"]] == ["insumo"]
     assert info["faltantes"][0]["insumo"]["nombre"] == "Semillas"
+
+
+def test_un_insumo_marcado_como_azucar_anadido_aporta_sus_azucares_totales_como_anadidos(
+    client, headers_administradora, unidades, ingredientes, nuevo_producto
+):
+    cargar_referencia(client, headers_administradora, ingredientes)
+    azucar = ingredientes["Azúcar blanca"]
+    cargar_valores(client, headers_administradora, azucar.id, {"azucares_anadidos": 0})
+    receta = crear_receta(client, headers_administradora, nuevo_producto("Pan dulce"), datos_version(unidades, ingredientes))
+    version_id = receta["version_vigente"]["id"]
+    antes = filas(informacion(client, headers_administradora, version_id))["azucares_anadidos"]["por_100"]["calculado"]
+
+    client.put(f"/insumos/{azucar.id}", headers=headers_administradora, json={"es_azucar_anadido": True})
+    despues = filas(informacion(client, headers_administradora, version_id))["azucares_anadidos"]["por_100"]["calculado"]
+
+    assert antes == 0
+    totales = filas(informacion(client, headers_administradora, version_id))["azucares_totales"]["por_100"]["calculado"]
+    assert despues == pytest.approx(totales - 3 * 100 / 1500)
