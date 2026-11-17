@@ -1,10 +1,14 @@
 import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
 import type {
+  AplicabilidadDatos,
+  AplicabilidadProducto,
   Conjunto,
   ConjuntoDatos,
   ConjuntoResumen,
   EntradaPrueba,
   ResultadoPrueba,
+  CalculoSellos,
+  SellosProducto,
 } from './types';
 
 async function pedir<T>(ruta: string, porDefecto: string, opciones: RequestInit = {}): Promise<T> {
@@ -57,3 +61,34 @@ export const probarParametros = (entrada: EntradaPrueba, conjuntoId: number) =>
     'No se pudo probar el conjunto.',
     { method: 'POST', body: JSON.stringify(entrada) },
   );
+
+export const getAplicabilidad = (productoId: number) =>
+  pedir<AplicabilidadProducto>(
+    `/rotulado-frontal/productos/${productoId}/aplicabilidad`,
+    'No se pudo cargar el rotulado frontal del producto.',
+  );
+
+export const guardarAplicabilidad = (productoId: number, datos: AplicabilidadDatos) =>
+  pedir<AplicabilidadProducto>(
+    `/rotulado-frontal/productos/${productoId}/aplicabilidad`,
+    'No se pudo evaluar el rotulado frontal.',
+    { method: 'PUT', body: JSON.stringify(datos) },
+  );
+
+export const getSellos = (productoId: number) =>
+  pedir<SellosProducto>(
+    `/rotulado-frontal/productos/${productoId}/sellos`,
+    'No se pudieron cargar los sellos.',
+  );
+
+export const calcularSellos = (productoId: number) =>
+  pedir<SellosProducto>(
+    `/rotulado-frontal/productos/${productoId}/sellos`,
+    'No se pudieron calcular los sellos.',
+    {
+      method: 'POST',
+    },
+  );
+
+export const getCalculoSellos = (calculoId: number) =>
+  pedir<CalculoSellos>(`/rotulado-frontal/sellos/${calculoId}`, 'No se pudo cargar el cálculo.');

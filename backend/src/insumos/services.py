@@ -105,7 +105,7 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
             )
             datos_actualizar["tipo"] = tipo_final
             datos_actualizar["aditivo_referencia_id"] = _resolver_aditivo_referencia(db, tipo_final, referencia)
-        aporte_anterior = db_insumo.aporta_energia_sodio
+        aporte_anterior = (db_insumo.aporta_energia_sodio, db_insumo.es_azucar_anadido)
         for campo, valor in datos_actualizar.items():
             setattr(db_insumo, campo, valor)
         if db_insumo.tipo != TipoInsumo.ADITIVO:
@@ -113,7 +113,7 @@ def modificar_insumo(db: Session, insumo_id: int, insumo: schemas.InsumoUpdate) 
         if {"densidad_g_ml", "peso_unidad_g"} & datos_actualizar.keys():
             db.flush()
             recalcular_por_insumo(db, insumo_id)
-        elif aporte_anterior != db_insumo.aporta_energia_sodio:
+        elif aporte_anterior != (db_insumo.aporta_energia_sodio, db_insumo.es_azucar_anadido):
             recalcular_nutricion(db, insumo_id)
         revisar(db, db_insumo)
         db.commit()
