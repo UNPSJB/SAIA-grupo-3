@@ -173,6 +173,7 @@ export interface AplicabilidadDatos {
   tipo_producto: TipoProducto;
   correcciones: { hecho: Hecho; valor: boolean | null; motivo: string | null }[];
 }
+<<<<<<< HEAD
 
 export interface CalculoSellos {
   id: number;
@@ -213,3 +214,5 @@ export interface SellosProducto {
     calculado_en: string;
   }[];
 }
+=======
+>>>>>>> dev

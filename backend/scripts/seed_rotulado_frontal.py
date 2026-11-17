@@ -5,9 +5,14 @@ from sqlalchemy import select
 from src.claseFuncional.models import ClaseFuncional
 from src.rotuladoFrontal import schemas
 from src.rotuladoFrontal.aplicabilidad import evaluar_producto
+<<<<<<< HEAD
 from src.rotuladoFrontal.constants import Hecho, ResultadoAplicabilidad, TipoProducto
 from src.rotuladoFrontal.models import AplicabilidadProducto, CalculoSellos
 from src.rotuladoFrontal.sellos import calcular_sellos
+=======
+from src.rotuladoFrontal.constants import Hecho, TipoProducto
+from src.rotuladoFrontal.models import AplicabilidadProducto
+>>>>>>> dev
 
 MARCAS = {
     "Azúcar": {"es_azucar_anadido": True},
@@ -16,8 +21,11 @@ MARCAS = {
     "Polvo de hornear (bicarbonato)": {"aporta_sodio_anadido": True},
 }
 
+<<<<<<< HEAD
 RECALCULADOS = {"Pan de molde blanco", "Galletitas de agua", "Prepizza", "Torta de chocolate", "Budín de vainilla"}
 
+=======
+>>>>>>> dev
 VENTA_EN_MOSTRADOR = {"Pan francés", "Facturas surtidas", "Empanadas de carne", "Tarta de verduras"}
 
 REVISAR = "DEMO: revisado con la nutricionista, vuelve a la sugerencia"
@@ -60,6 +68,7 @@ def cargar_rotulado_frontal(db, productos, ingredientes, aditivos, admin):
             )
             evaluar_producto(db, producto.id, datos, admin)
     db.flush()
+<<<<<<< HEAD
     for producto in productos:
         registro = db.scalar(select(AplicabilidadProducto).where(AplicabilidadProducto.producto_id == producto.id))
         if registro is None or registro.resultado != ResultadoAplicabilidad.CORRESPONDE:
@@ -69,3 +78,5 @@ def cargar_rotulado_frontal(db, productos, ingredientes, aditivos, admin):
         for _ in range(2 if producto.nombre in RECALCULADOS else 1):
             calcular_sellos(db, producto.id, admin)
     db.flush()
+=======
+>>>>>>> dev

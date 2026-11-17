@@ -74,6 +74,7 @@ export const guardarAplicabilidad = (productoId: number, datos: AplicabilidadDat
     'No se pudo evaluar el rotulado frontal.',
     { method: 'PUT', body: JSON.stringify(datos) },
   );
+<<<<<<< HEAD
 
 export const getSellos = (productoId: number) =>
   pedir<SellosProducto>(
@@ -92,3 +93,5 @@ export const calcularSellos = (productoId: number) =>
 
 export const getCalculoSellos = (calculoId: number) =>
   pedir<CalculoSellos>(`/rotulado-frontal/sellos/${calculoId}`, 'No se pudo cargar el cálculo.');
+=======
+>>>>>>> dev

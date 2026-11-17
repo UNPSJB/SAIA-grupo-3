@@ -3,6 +3,7 @@ export interface ClaseFuncional {
   nombre: string;
   ins_opcional: boolean;
   declarar_solo_funcion: boolean;
+  es_edulcorante: boolean;
   activo: boolean;
 }
 
@@ -10,6 +11,7 @@ export interface ClaseFuncionalDatos {
   nombre: string;
   ins_opcional: boolean;
   declarar_solo_funcion: boolean;
+  es_edulcorante: boolean;
 }
 
 export interface AditivoReferencia {

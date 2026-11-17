@@ -31,6 +31,7 @@ class ConjuntoInvalido(BadRequest):
     pass
 
 
+<<<<<<< HEAD
 class CalculoNoPermitido(BadRequest):
     pass
 
@@ -39,5 +40,7 @@ class CalculoNoEncontrado(NotFound):
     DETAIL = ErrorCode.CALCULO_NO_ENCONTRADO
 
 
+=======
+>>>>>>> dev
 class ProductoNoEncontrado(NotFound):
     DETAIL = ErrorCode.PRODUCTO_NO_ENCONTRADO

@@ -347,6 +347,7 @@ class AplicabilidadProducto(BaseModel):
     evaluacion: Optional[Evaluacion] = None
     avisos: list[str]
     historial: list[MovimientoCorreccion]
+<<<<<<< HEAD
 
 
 class CalculoSellos(BaseModel):
@@ -386,3 +387,5 @@ class SellosProducto(BaseModel):
     avisos: list[str]
     historial: list[CalculoResumen] = Field(default_factory=list)
 
+=======
+>>>>>>> dev

@@ -1,4 +1,5 @@
 import { SearchableSelect } from '../../shared/components/SearchableSelect';
+import { useRotuladoFrontalActivo } from '../rotuladoFrontal/useRotuladoFrontalActivo';
 import { useForm, useController, useWatch } from 'react-hook-form';
 import { FormErrors } from '../../shared/components/FormErrors';
 import { useCallback, useEffect } from 'react';
@@ -42,6 +43,10 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
     pesoUnidad: string;
     denominacion: string;
     aportaEnergiaSodio: boolean;
+    esAzucarAnadido: boolean;
+    esGrasaAnadida: boolean;
+    aportaSodioAnadido: boolean;
+    contieneCafeina: boolean;
   }>({
     defaultValues: {
       nombre: '',
@@ -53,9 +58,14 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
       pesoUnidad: '',
       denominacion: '',
       aportaEnergiaSodio: false,
+      esAzucarAnadido: false,
+      esGrasaAnadida: false,
+      aportaSodioAnadido: false,
+      contieneCafeina: false,
     },
   });
   const tipo = useWatch({ control: form.control, name: 'tipo' });
+  const rotuladoActivo = useRotuladoFrontalActivo();
   const aditivos = useConsultaCompartida(getAditivosActivos, []);
   const referenciaActual = insumoInicial?.aditivo_referencia;
   const opcionesAditivo = [
@@ -129,6 +139,10 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
       setValue('pesoUnidad', insumoInicial.peso_unidad_g ? String(insumoInicial.peso_unidad_g) : '');
       setValue('denominacion', insumoInicial.denominacion_rotulo ?? '');
       setValue('aportaEnergiaSodio', insumoInicial.aporta_energia_sodio ?? false);
+      setValue('esAzucarAnadido', insumoInicial.es_azucar_anadido ?? false);
+      setValue('esGrasaAnadida', insumoInicial.es_grasa_anadida ?? false);
+      setValue('aportaSodioAnadido', insumoInicial.aporta_sodio_anadido ?? false);
+      setValue('contieneCafeina', insumoInicial.contiene_cafeina ?? false);
     }
   }, [insumoInicial, setNombre, setUnidadMedidaId, setValue]);
 
@@ -148,6 +162,10 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
         peso_unidad_g: valores.pesoUnidad.trim() ? Number(valores.pesoUnidad.replace(',', '.')) : null,
         denominacion_rotulo: valores.denominacion.trim() || null,
         aporta_energia_sodio: valores.tipo === 'aditivo' && valores.aportaEnergiaSodio,
+        es_azucar_anadido: valores.esAzucarAnadido,
+        es_grasa_anadida: valores.esGrasaAnadida,
+        aporta_sodio_anadido: valores.aportaSodioAnadido,
+        contiene_cafeina: valores.contieneCafeina,
       });
     } catch (err: unknown) {
       form.setError('root', {
@@ -265,6 +283,40 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
                 bicarbonato). Solo entonces se cargan su energía y su sodio.
               </Form.Text>
             </Form.Group>
+          )}
+
+          {rotuladoActivo && (
+            <fieldset className="mb-4">
+              <legend className="fs-6 mb-1">Rotulado frontal</legend>
+              <Form.Check
+                type="checkbox"
+                id="InsumoForm-esAzucarAnadido"
+                label={<>Es azúcar añadido <span className="text-body-secondary small">(azúcar, miel, jarabes)</span></>}
+                {...form.register('esAzucarAnadido')}
+              />
+              <Form.Check
+                type="checkbox"
+                id="InsumoForm-esGrasaAnadida"
+                label={<>Es grasa añadida <span className="text-body-secondary small">(aceites, manteca, margarina, crema)</span></>}
+                {...form.register('esGrasaAnadida')}
+              />
+              <Form.Check
+                type="checkbox"
+                id="InsumoForm-aportaSodioAnadido"
+                label={<>Aporta sodio añadido <span className="text-body-secondary small">(sal, bicarbonato de sodio, caldos)</span></>}
+                {...form.register('aportaSodioAnadido')}
+              />
+              <Form.Check
+                type="checkbox"
+                id="InsumoForm-contieneCafeina"
+                label={<>Contiene cafeína <span className="text-body-secondary small">(café, té, guaraná)</span></>}
+                {...form.register('contieneCafeina')}
+              />
+              <Form.Text>
+                Con estas marcas el sistema sugiere si un producto tiene agregados de azúcares,
+                grasas o sodio, o contiene cafeína.
+              </Form.Text>
+            </fieldset>
           )}
 
           <Form.Group controlId="InsumoForm-unidadMedidaId" className="mb-4">

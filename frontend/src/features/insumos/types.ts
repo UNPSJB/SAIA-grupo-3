@@ -22,6 +22,10 @@ export interface Insumo {
   peso_unidad_g?: number | null;
   denominacion_rotulo?: string | null;
   aporta_energia_sodio?: boolean;
+  es_azucar_anadido?: boolean;
+  es_grasa_anadida?: boolean;
+  aporta_sodio_anadido?: boolean;
+  contiene_cafeina?: boolean;
 }
 
 export interface InsumoCreate {
@@ -34,6 +38,10 @@ export interface InsumoCreate {
   peso_unidad_g?: number | null;
   denominacion_rotulo?: string | null;
   aporta_energia_sodio?: boolean;
+  es_azucar_anadido?: boolean;
+  es_grasa_anadida?: boolean;
+  aporta_sodio_anadido?: boolean;
+  contiene_cafeina?: boolean;
 }
 
 export interface InsumoUpdate {

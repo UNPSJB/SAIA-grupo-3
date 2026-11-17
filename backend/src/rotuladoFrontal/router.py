@@ -6,7 +6,11 @@ from sqlalchemy.orm import Session
 from src.auth.dependencies import get_current_personal, tiene_permiso_administrar
 from src.database import get_db
 from src.personal.models import Personal
+<<<<<<< HEAD
 from src.rotuladoFrontal import aplicabilidad, schemas, sellos, services
+=======
+from src.rotuladoFrontal import aplicabilidad, schemas, services
+>>>>>>> dev
 from src.rotuladoFrontal.dependencies import modulo_activo, verificar_modulo_activo
 
 router = APIRouter(prefix="/rotulado-frontal", tags=["producción - rotulado frontal"])
@@ -96,6 +100,7 @@ def guardar_aplicabilidad(
     persona: Personal = Depends(tiene_permiso_administrar),
 ):
     return aplicabilidad.guardar_aplicabilidad(db, producto_id, datos, persona)
+<<<<<<< HEAD
 
 
 @router.get("/productos/{producto_id}/sellos", response_model=schemas.SellosProducto, dependencies=PROTEGIDO)
@@ -119,3 +124,5 @@ def calcular_sellos(
 @router.get("/sellos/{calculo_id}", response_model=schemas.CalculoSellos, dependencies=PROTEGIDO)
 def read_calculo(calculo_id: int, db: Session = Depends(get_db)):
     return sellos.a_schema(sellos.leer_calculo(db, calculo_id))
+=======
+>>>>>>> dev

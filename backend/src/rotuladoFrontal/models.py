@@ -131,6 +131,7 @@ class CorreccionAgregado(ModeloBase):
     fecha_hora: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     personal = relationship("src.personal.models.Personal")
+<<<<<<< HEAD
 
 
 class CalculoSellos(ModeloBase):
@@ -156,3 +157,5 @@ class CalculoSellos(ModeloBase):
     conjunto = relationship("ConjuntoParametros")
     version_receta = relationship("src.receta.models.VersionReceta")
     calculado_por = relationship("src.personal.models.Personal")
+=======
+>>>>>>> dev
