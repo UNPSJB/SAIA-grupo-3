@@ -46,6 +46,7 @@ import { ProduccionDelDiaPage } from '../features/produccionDelDia';
 import { ConfiguracionProduccionPage } from '../features/configuracionProduccion';
 import { AlimentosReferenciaPage, ValoresDiariosPage } from '../features/nutricion';
 import { ConjuntoParametrosPage, ParametrosNormativosPage } from '../features/rotuladoFrontal';
+import { BorradorRotuloPage, RotulosPage } from '../features/rotulo';
 import { ProveedoresPage } from '../features/abastecimiento/ProveedoresPage';
 import { RecepcionesPage } from '../features/abastecimiento/RecepcionesPage';
 import { TrazabilidadInsumosPage } from '../features/lotesProduccion/TrazabilidadInsumosPage';
@@ -120,6 +121,8 @@ export function AppRouter() {
               <Route path="valores-diarios" element={<ValoresDiariosPage />} />
               <Route path="parametros-normativos" element={<ParametrosNormativosPage />} />
               <Route path="parametros-normativos/:id" element={<ConjuntoParametrosPage />} />
+              <Route path="rotulado" element={<RotulosPage />} />
+              <Route path="rotulado/:productoId" element={<BorradorRotuloPage />} />
               <Route path="clases-funcionales" element={<ClasesFuncionalesPage />} />
               <Route path="clases-funcionales/nuevo" element={<ClasesFuncionalesPage />} />
               <Route path="clases-funcionales/:id" element={<ClasesFuncionalesPage />} />

@@ -29,6 +29,7 @@ from scripts.seed_planes import cargar_planes
 from scripts.seed_nutricion import cargar_nutricion
 from scripts.datos_iniciales_rotulado_frontal import cargar_parametros_iniciales
 from scripts.seed_rotulado_frontal import cargar_rotulado_frontal
+from scripts.seed_rotulo import cargar_rotulos
 from scripts.seed_produccion_del_dia import cargar_pasos_lotes
 from scripts.seed_productos import cargar_productos
 from scripts.seed_recetas import cargar_recepciones_aditivos, cargar_recetas
@@ -84,6 +85,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             cargar_nutricion(db, ingredientes, aditivos, admin)
             cargar_parametros_iniciales(db)
             cargar_rotulado_frontal(db, productos, ingredientes, aditivos, admin)
+            cargar_rotulos(db, productos, admin)
             proveedores = cargar_abastecimiento_demo(
                 db, crear, unidades_por_sufijo, admin.id, hoy, insumos_maestros
             )
