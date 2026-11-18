@@ -1,6 +1,8 @@
 export type TipoRegistro = 'rnpa' | 'rppa';
 export type UnidadVidaUtil = 'dias' | 'meses';
 export type CampoAutomatico = 'denominacion_venta' | 'lista_ingredientes' | 'identificacion_lote';
+export type EstadoDeclaracion = 'sugerida' | 'confirmada';
+export type CondicionConservacion = 'ambiente' | 'refrigerado' | 'congelado';
 
 export interface PersonaResumen {
   id: number;
@@ -18,6 +20,32 @@ export interface CampoAutomaticoEstado {
   editado_por: PersonaResumen | null;
   editado_en: string | null;
   cambio_en_sistema: boolean;
+}
+
+export interface InsumoCausa {
+  id: number;
+  nombre: string;
+}
+
+export interface DeclaracionAlergenos {
+  estado: EstadoDeclaracion;
+  version_receta_numero: number | null;
+  contiene: {
+    id: number;
+    nombre: string;
+    grupo: string;
+    implica_gluten: boolean;
+    causas: InsumoCausa[];
+  }[];
+  contiene_gluten: boolean;
+  causas_gluten: InsumoCausa[];
+  puede_contener: { id: number; nombre: string; grupo: string; activo: boolean }[];
+  texto_contiene: string | null;
+  texto_puede_contener: string | null;
+  confirmado_por: PersonaResumen | null;
+  confirmado_en: string | null;
+  aviso: string | null;
+  advertencias: string[];
 }
 
 export interface Faltante {
@@ -46,16 +74,25 @@ export interface BorradorDatos {
   leyenda_duracion: string | null;
   requiere_instrucciones: boolean;
   instrucciones: string | null;
+  puede_contener_ids: number[];
+  conservacion_condicion: CondicionConservacion | null;
+  conservacion_temp_min: number | null;
+  conservacion_temp_max: number | null;
+  conservacion_duracion_cantidad: number | null;
+  conservacion_duracion_unidad: UnidadVidaUtil;
+  conservacion_abierto: string | null;
 }
 
 export interface Borrador extends Omit<
   BorradorDatos,
-  'contenido_neto_unidad_id' | 'leyenda_duracion'
+  'contenido_neto_unidad_id' | 'leyenda_duracion' | 'puede_contener_ids'
 > {
   id: number;
   producto: { id: number; nombre: string; activo: boolean };
   contenido_neto_unidad: { id: number; sufijo: string; tipo: string } | null;
   leyenda_duracion: string;
+  leyenda_conservacion: string | null;
+  alergenos: DeclaracionAlergenos;
   automaticos: CampoAutomaticoEstado[];
   informacion_nutricional: {
     receta_id: number;

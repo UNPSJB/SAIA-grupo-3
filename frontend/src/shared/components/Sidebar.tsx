@@ -79,6 +79,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         { to: '/clases-funcionales', label: 'Clases funcionales', icono: 'bi bi-tags' },
         { to: '/aditivos-referencia', label: 'Aditivos de referencia', icono: 'bi bi-capsule' },
         { to: '/alimentos-referencia', label: 'Alimentos de referencia', icono: 'bi bi-clipboard2-pulse' },
+        { to: '/alergenos', label: 'Alérgenos', icono: 'bi bi-exclamation-octagon', permiso: 'administrar' },
         { to: '/valores-diarios', label: 'Valores diarios y redondeo', icono: 'bi bi-percent' },
         ...(rotuladoActivo
           ? [{ to: '/parametros-normativos', label: 'Parámetros normativos', icono: 'bi bi-journal-check' }]

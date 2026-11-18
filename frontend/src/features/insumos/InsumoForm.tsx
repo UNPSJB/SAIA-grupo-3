@@ -11,6 +11,7 @@ import { listarLotes } from '../abastecimiento/abastecimientoApi';
 import { useConsulta } from '../abastecimiento/useConsulta';
 import { useConsulta as useConsultaCompartida } from '../../shared/hooks/useConsulta';
 import { getAditivosActivos, textoAditivo } from '../aditivos';
+import { listarAlergenos } from '../alergenos';
 import type { TipoInsumo } from './types';
 
 interface InsumoFormProps {
@@ -47,6 +48,8 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
     esGrasaAnadida: boolean;
     aportaSodioAnadido: boolean;
     contieneCafeina: boolean;
+    contieneGluten: boolean;
+    alergenoIds: string[];
   }>({
     defaultValues: {
       nombre: '',
@@ -62,9 +65,23 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
       esGrasaAnadida: false,
       aportaSodioAnadido: false,
       contieneCafeina: false,
+      contieneGluten: false,
+      alergenoIds: [],
     },
   });
   const tipo = useWatch({ control: form.control, name: 'tipo' });
+  const alergenoIds = useWatch({ control: form.control, name: 'alergenoIds' });
+  const alergenos = useConsultaCompartida(() => listarAlergenos(), []);
+  const opcionesAlergeno = [
+    ...(alergenos.datos ?? []),
+    ...(insumoInicial?.alergenos ?? [])
+      .filter((actual) => !alergenos.datos?.some((alergeno) => alergeno.id === actual.id))
+      .map((actual) => ({ ...actual, grupo: 'Dados de baja', activo: false })),
+  ];
+  const gruposAlergeno = [...new Set(opcionesAlergeno.map((alergeno) => alergeno.grupo))];
+  const glutenPorCereal = opcionesAlergeno.some(
+    (alergeno) => alergeno.implica_gluten && (alergenoIds ?? []).includes(String(alergeno.id)),
+  );
   const rotuladoActivo = useRotuladoFrontalActivo();
   const aditivos = useConsultaCompartida(getAditivosActivos, []);
   const referenciaActual = insumoInicial?.aditivo_referencia;
@@ -143,6 +160,8 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
       setValue('esGrasaAnadida', insumoInicial.es_grasa_anadida ?? false);
       setValue('aportaSodioAnadido', insumoInicial.aporta_sodio_anadido ?? false);
       setValue('contieneCafeina', insumoInicial.contiene_cafeina ?? false);
+      setValue('contieneGluten', insumoInicial.contiene_gluten ?? false);
+      setValue('alergenoIds', (insumoInicial.alergeno_ids ?? []).map(String));
     }
   }, [insumoInicial, setNombre, setUnidadMedidaId, setValue]);
 
@@ -166,6 +185,8 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
         es_grasa_anadida: valores.esGrasaAnadida,
         aporta_sodio_anadido: valores.aportaSodioAnadido,
         contiene_cafeina: valores.contieneCafeina,
+        contiene_gluten: valores.contieneGluten || glutenPorCereal,
+        alergeno_ids: (valores.alergenoIds ?? []).map(Number),
       });
     } catch (err: unknown) {
       form.setError('root', {
@@ -318,6 +339,48 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               </Form.Text>
             </fieldset>
           )}
+
+          <fieldset className="mb-4">
+            <legend className="fs-6 mb-1">Alérgenos y gluten</legend>
+            {alergenos.error && <div role="alert" className="text-danger small">{alergenos.error}</div>}
+            {gruposAlergeno.map((grupo) => (
+              <div key={grupo} className="mb-2">
+                <div className="small text-body-secondary">{grupo}</div>
+                {opcionesAlergeno
+                  .filter((alergeno) => alergeno.grupo === grupo)
+                  .map((alergeno) => (
+                    <Form.Check
+                      key={alergeno.id}
+                      inline
+                      type="checkbox"
+                      id={`InsumoForm-alergeno-${alergeno.id}`}
+                      label={alergeno.nombre}
+                      value={String(alergeno.id)}
+                      {...form.register('alergenoIds')}
+                    />
+                  ))}
+              </div>
+            ))}
+            {glutenPorCereal ? (
+              <Form.Check
+                type="checkbox"
+                id="InsumoForm-contieneGlutenCereal"
+                checked
+                disabled
+                label="Contiene gluten (TACC): por el cereal marcado"
+              />
+            ) : (
+              <Form.Check
+                type="checkbox"
+                id="InsumoForm-contieneGluten"
+                label={<>Contiene gluten (TACC) <span className="text-body-secondary small">(trigo, avena, cebada, centeno o derivados)</span></>}
+                {...form.register('contieneGluten')}
+              />
+            )}
+            <Form.Text>
+              Con estas marcas el rótulo propone la declaración «CONTIENE …» de cada producto que use este insumo.
+            </Form.Text>
+          </fieldset>
 
           <Form.Group controlId="InsumoForm-unidadMedidaId" className="mb-4">
             <Form.Label>Unidad de Medida</Form.Label>

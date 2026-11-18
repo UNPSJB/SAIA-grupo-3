@@ -20,7 +20,9 @@ import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas
 import { getUnidadesMedidaActivas } from '../unidadMedida/unidadMedidaApi';
 import { Octogono } from '../rotuladoFrontal/Octogono';
 import { CampoAutomatico } from './CampoAutomatico';
-import { crearBorrador, getBorrador, guardarBorrador } from './rotuloApi';
+import { confirmarAlergenos, crearBorrador, getBorrador, guardarBorrador } from './rotuloApi';
+import { SeccionAlergenos } from './SeccionAlergenos';
+import type { ConservacionFormulario } from './SeccionAlergenos';
 import type {
   Borrador,
   BorradorDatos,
@@ -29,10 +31,16 @@ import type {
   UnidadVidaUtil,
 } from './types';
 
-interface Formulario extends Omit<
-  BorradorDatos,
-  'contenido_neto' | 'vida_util_cantidad' | 'contenido_neto_unidad_id'
-> {
+interface Formulario
+  extends
+    Omit<
+      BorradorDatos,
+      | 'contenido_neto'
+      | 'vida_util_cantidad'
+      | 'contenido_neto_unidad_id'
+      | keyof ConservacionFormulario
+    >,
+    ConservacionFormulario {
   contenido_neto: string;
   contenido_neto_unidad_id: string;
   vida_util_cantidad: string;
@@ -40,6 +48,8 @@ interface Formulario extends Omit<
 
 const texto = (valor: string | null | undefined) => valor ?? '';
 const opcional = (valor: string) => (valor.trim() === '' ? null : valor.trim());
+const numeroTexto = (valor: number | null) =>
+  valor === null ? '' : String(valor).replace('.', ',');
 
 function aFormulario(b: Borrador): Formulario {
   return {
@@ -62,7 +72,18 @@ function aFormulario(b: Borrador): Formulario {
     leyenda_duracion: b.leyenda_duracion,
     requiere_instrucciones: b.requiere_instrucciones,
     instrucciones: texto(b.instrucciones),
+    puede_contener_ids: b.alergenos.puede_contener.map((a) => a.id),
+    conservacion_condicion: b.conservacion_condicion,
+    conservacion_temp_min: numeroTexto(b.conservacion_temp_min),
+    conservacion_temp_max: numeroTexto(b.conservacion_temp_max),
+    conservacion_duracion_cantidad: numeroTexto(b.conservacion_duracion_cantidad),
+    conservacion_duracion_unidad: b.conservacion_duracion_unidad,
+    conservacion_abierto: texto(b.conservacion_abierto),
   };
+}
+
+function aNumero(valor: string): number | null {
+  return valor.trim() ? Number(valor.replace(',', '.')) : null;
 }
 
 function Seccion({
@@ -101,6 +122,7 @@ export function BorradorRotuloPage() {
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
   const [verEdiciones, setVerEdiciones] = useState(false);
 
   const actual = borrador ?? consulta.datos;
@@ -146,45 +168,75 @@ export function BorradorRotuloPage() {
       destino.focus();
   };
 
-  const guardar = async () => {
+  const hayCambios =
+    formulario !== null && JSON.stringify(formulario) !== JSON.stringify(aFormulario(actual));
+
+  const enviar = async (): Promise<Borrador | null> => {
     const contenido = f.contenido_neto.trim() ? Number(f.contenido_neto.replace(',', '.')) : null;
     const vida = f.vida_util_cantidad.trim() ? Number(f.vida_util_cantidad) : null;
     if (contenido !== null && (Number.isNaN(contenido) || contenido <= 0)) {
       setError('El contenido neto debe ser un número mayor a cero.');
-      return;
+      return null;
     }
     if (vida !== null && (!Number.isInteger(vida) || vida <= 0)) {
       setError('La vida útil debe ser un número entero mayor a cero.');
-      return;
+      return null;
     }
-    setGuardando(true);
+    const temperaturaMinima = aNumero(f.conservacion_temp_min);
+    const temperaturaMaxima = aNumero(f.conservacion_temp_max);
+    const duracion = aNumero(f.conservacion_duracion_cantidad);
+    if ([temperaturaMinima, temperaturaMaxima].some((t) => t !== null && Number.isNaN(t))) {
+      setError('Las temperaturas de conservación deben ser números.');
+      return null;
+    }
+    if (duracion !== null && (!Number.isInteger(duracion) || duracion <= 0)) {
+      setError(
+        'La duración en las condiciones de conservación debe ser un número entero mayor a cero.',
+      );
+      return null;
+    }
+    const conCondicion = f.conservacion_condicion !== null;
     setError(null);
+    const nuevo = await guardarBorrador(id, {
+      denominacion_venta: opcional(f.denominacion_venta ?? ''),
+      lista_ingredientes: opcional(f.lista_ingredientes ?? ''),
+      identificacion_lote: opcional(f.identificacion_lote ?? ''),
+      contenido_neto: contenido,
+      contenido_neto_unidad_id: f.contenido_neto_unidad_id
+        ? Number(f.contenido_neto_unidad_id)
+        : null,
+      razon_social: opcional(f.razon_social ?? ''),
+      domicilio: opcional(f.domicilio ?? ''),
+      pais_origen: opcional(f.pais_origen ?? ''),
+      tipo_registro: f.tipo_registro,
+      numero_registro: opcional(f.numero_registro ?? ''),
+      numero_establecimiento: opcional(f.numero_establecimiento ?? ''),
+      es_importado: f.es_importado,
+      importador_razon_social: opcional(f.importador_razon_social ?? ''),
+      importador_domicilio: opcional(f.importador_domicilio ?? ''),
+      vida_util_cantidad: vida,
+      vida_util_unidad: f.vida_util_unidad,
+      leyenda_duracion: opcional(f.leyenda_duracion ?? ''),
+      requiere_instrucciones: f.requiere_instrucciones,
+      instrucciones: opcional(f.instrucciones ?? ''),
+      puede_contener_ids: f.puede_contener_ids,
+      conservacion_condicion: f.conservacion_condicion,
+      conservacion_temp_min: conCondicion ? temperaturaMinima : null,
+      conservacion_temp_max: conCondicion ? temperaturaMaxima : null,
+      conservacion_duracion_cantidad: conCondicion ? duracion : null,
+      conservacion_duracion_unidad: f.conservacion_duracion_unidad,
+      conservacion_abierto: opcional(f.conservacion_abierto),
+    });
+    setBorrador(nuevo);
+    setFormulario(aFormulario(nuevo));
+    return nuevo;
+  };
+
+  const guardar = async () => {
+    setGuardando(true);
     try {
-      const nuevo = await guardarBorrador(id, {
-        denominacion_venta: opcional(f.denominacion_venta ?? ''),
-        lista_ingredientes: opcional(f.lista_ingredientes ?? ''),
-        identificacion_lote: opcional(f.identificacion_lote ?? ''),
-        contenido_neto: contenido,
-        contenido_neto_unidad_id: f.contenido_neto_unidad_id
-          ? Number(f.contenido_neto_unidad_id)
-          : null,
-        razon_social: opcional(f.razon_social ?? ''),
-        domicilio: opcional(f.domicilio ?? ''),
-        pais_origen: opcional(f.pais_origen ?? ''),
-        tipo_registro: f.tipo_registro,
-        numero_registro: opcional(f.numero_registro ?? ''),
-        numero_establecimiento: opcional(f.numero_establecimiento ?? ''),
-        es_importado: f.es_importado,
-        importador_razon_social: opcional(f.importador_razon_social ?? ''),
-        importador_domicilio: opcional(f.importador_domicilio ?? ''),
-        vida_util_cantidad: vida,
-        vida_util_unidad: f.vida_util_unidad,
-        leyenda_duracion: opcional(f.leyenda_duracion ?? ''),
-        requiere_instrucciones: f.requiere_instrucciones,
-        instrucciones: opcional(f.instrucciones ?? ''),
-      });
-      setBorrador(nuevo);
-      setFormulario(aFormulario(nuevo));
+      const nuevo = await enviar();
+      if (!nuevo) return;
       setAviso(
         nuevo.completitud.faltantes.length
           ? `Borrador guardado. Faltan ${nuevo.completitud.faltantes.length} datos obligatorios.`
@@ -194,6 +246,22 @@ export function BorradorRotuloPage() {
       setError(err instanceof Error ? err.message : 'No se pudo guardar el borrador.');
     } finally {
       setGuardando(false);
+    }
+  };
+
+  const confirmar = async () => {
+    setConfirmando(true);
+    setAviso(null);
+    try {
+      if (hayCambios && !(await enviar())) return;
+      const nuevo = await confirmarAlergenos(id);
+      setBorrador(nuevo);
+      setFormulario(aFormulario(nuevo));
+      setAviso('Declaración de alérgenos confirmada.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'No se pudo confirmar la declaración.');
+    } finally {
+      setConfirmando(false);
     }
   };
 
@@ -284,7 +352,20 @@ export function BorradorRotuloPage() {
         />
       </Seccion>
 
-      <Seccion id="seccion-contenido_neto" titulo="3. Contenido neto">
+      <Seccion id="seccion-alergenos" titulo="3. Alérgenos y conservación">
+        <SeccionAlergenos
+          declaracion={actual.alergenos}
+          leyendaConservacion={actual.leyenda_conservacion}
+          recetaId={nutricion?.receta_id ?? null}
+          valores={f}
+          hayCambios={hayCambios}
+          confirmando={confirmando}
+          onCambiar={cambiar}
+          onConfirmar={() => void confirmar()}
+        />
+      </Seccion>
+
+      <Seccion id="seccion-contenido_neto" titulo="4. Contenido neto">
         <Row className="g-2">
           <Col sm={6} md={4}>
             <Form.Label htmlFor="campo-contenido_neto">Cantidad</Form.Label>
@@ -313,7 +394,7 @@ export function BorradorRotuloPage() {
         </Row>
       </Seccion>
 
-      <Seccion id="seccion-origen" titulo="4. Identificación del origen">
+      <Seccion id="seccion-origen" titulo="5. Identificación del origen">
         <Row className="g-3">
           <Col md={6}>
             <Form.Group controlId="campo-razon_social">
@@ -420,7 +501,7 @@ export function BorradorRotuloPage() {
         </Row>
       </Seccion>
 
-      <Seccion id="seccion-identificacion_lote" titulo="5. Identificación del lote">
+      <Seccion id="seccion-identificacion_lote" titulo="6. Identificación del lote">
         <CampoAutomatico
           estado={auto('identificacion_lote')}
           valor={f.identificacion_lote ?? ''}
@@ -429,7 +510,7 @@ export function BorradorRotuloPage() {
         />
       </Seccion>
 
-      <Seccion id="seccion-vida_util_cantidad" titulo="6. Fecha de duración">
+      <Seccion id="seccion-vida_util_cantidad" titulo="7. Fecha de duración">
         <Row className="g-2 align-items-end">
           <Col sm={6} md={3}>
             <Form.Label htmlFor="campo-vida_util_cantidad">Vida útil</Form.Label>
@@ -467,7 +548,7 @@ export function BorradorRotuloPage() {
         </Form.Text>
       </Seccion>
 
-      <Seccion id="seccion-instrucciones" titulo="7. Preparación e instrucciones de uso">
+      <Seccion id="seccion-instrucciones" titulo="8. Preparación e instrucciones de uso">
         <Form.Check
           type="switch"
           id="campo-requiere_instrucciones"
@@ -489,7 +570,7 @@ export function BorradorRotuloPage() {
         )}
       </Seccion>
 
-      <Seccion id="seccion-informacion_nutricional" titulo="8. Información nutricional">
+      <Seccion id="seccion-informacion_nutricional" titulo="9. Información nutricional">
         {nutricion ? (
           <div className="d-flex flex-wrap gap-2 align-items-center">
             <Badge bg="info" text="dark" className="fw-normal">
@@ -519,7 +600,7 @@ export function BorradorRotuloPage() {
       </Seccion>
 
       {frontal && (
-        <Seccion id="seccion-rotulado_frontal" titulo="9. Rotulado frontal">
+        <Seccion id="seccion-rotulado_frontal" titulo="10. Rotulado frontal">
           {!frontal.resultado ? (
             <div className="d-flex flex-wrap gap-2 align-items-center">
               <span>Todavía no se evaluó si corresponde.</span>

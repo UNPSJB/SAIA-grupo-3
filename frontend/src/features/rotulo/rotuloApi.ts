@@ -18,6 +18,13 @@ export const crearBorrador = (productoId: number) =>
     method: 'POST',
   });
 
+export const confirmarAlergenos = (productoId: number) =>
+  pedir<Borrador>(
+    `/rotulos/productos/${productoId}/alergenos/confirmar`,
+    'No se pudo confirmar la declaración de alérgenos.',
+    { method: 'POST' },
+  );
+
 export const guardarBorrador = (productoId: number, datos: BorradorDatos) =>
   pedir<Borrador>(`/rotulos/productos/${productoId}`, 'No se pudo guardar el borrador.', {
     method: 'PUT',

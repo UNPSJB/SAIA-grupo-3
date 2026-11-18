@@ -1,4 +1,5 @@
 import type { AditivoReferencia } from '../aditivos/types';
+import type { AlergenoResumen } from '../alergenos/types';
 
 export type TipoInsumo = 'ingrediente' | 'aditivo';
 
@@ -26,6 +27,9 @@ export interface Insumo {
   es_grasa_anadida?: boolean;
   aporta_sodio_anadido?: boolean;
   contiene_cafeina?: boolean;
+  contiene_gluten?: boolean;
+  alergeno_ids?: number[];
+  alergenos?: AlergenoResumen[];
 }
 
 export interface InsumoCreate {
@@ -42,6 +46,8 @@ export interface InsumoCreate {
   es_grasa_anadida?: boolean;
   aporta_sodio_anadido?: boolean;
   contiene_cafeina?: boolean;
+  contiene_gluten?: boolean;
+  alergeno_ids?: number[];
 }
 
 export interface InsumoUpdate {

@@ -43,6 +43,7 @@ const rutasNavegacion = [
   { ruta: '/clases-funcionales', titulo: 'Clases funcionales', seccion: 'Maestros de producción' },
   { ruta: '/aditivos-referencia', titulo: 'Aditivos de referencia', seccion: 'Maestros de producción' },
   { ruta: '/alimentos-referencia', titulo: 'Alimentos de referencia', seccion: 'Maestros de producción' },
+  { ruta: '/alergenos', titulo: 'Alérgenos', seccion: 'Maestros de producción' },
   { ruta: '/valores-diarios', titulo: 'Valores diarios y redondeo', seccion: 'Maestros de producción' },
   { ruta: '/parametros-normativos', titulo: 'Parámetros normativos', seccion: 'Maestros de producción' },
   { ruta: '/configuracion-produccion', titulo: 'Configuración de producción', seccion: 'Maestros de producción' },

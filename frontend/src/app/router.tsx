@@ -45,6 +45,7 @@ import { AditivosReferenciaPage, ClasesFuncionalesPage } from '../features/aditi
 import { ProduccionDelDiaPage } from '../features/produccionDelDia';
 import { ConfiguracionProduccionPage } from '../features/configuracionProduccion';
 import { AlimentosReferenciaPage, ValoresDiariosPage } from '../features/nutricion';
+import { AlergenosPage } from '../features/alergenos';
 import { ConjuntoParametrosPage, ParametrosNormativosPage } from '../features/rotuladoFrontal';
 import { BorradorRotuloPage, RotulosPage } from '../features/rotulo';
 import { ProveedoresPage } from '../features/abastecimiento/ProveedoresPage';
@@ -118,6 +119,7 @@ export function AppRouter() {
               <Route path="recetas/:id/nueva-version" element={<RecetaFormPage />} />
               <Route path="configuracion-produccion" element={<ConfiguracionProduccionPage />} />
               <Route path="alimentos-referencia" element={<AlimentosReferenciaPage />} />
+              <Route path="alergenos" element={<AlergenosPage />} />
               <Route path="valores-diarios" element={<ValoresDiariosPage />} />
               <Route path="parametros-normativos" element={<ParametrosNormativosPage />} />
               <Route path="parametros-normativos/:id" element={<ConjuntoParametrosPage />} />
