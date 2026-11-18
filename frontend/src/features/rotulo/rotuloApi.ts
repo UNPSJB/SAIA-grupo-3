@@ -1,5 +1,5 @@
 import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
-import type { Borrador, BorradorDatos, RotuloListado } from './types';
+import type { Borrador, BorradorDatos, RotuloListado, VistaPrevia } from './types';
 
 async function pedir<T>(ruta: string, porDefecto: string, opciones: RequestInit = {}): Promise<T> {
   const res = await fetchWithAuth(`${API_BASE_URL}${ruta}`, opciones);
@@ -12,6 +12,12 @@ export const listarRotulos = () =>
 
 export const getBorrador = (productoId: number) =>
   pedir<Borrador>(`/rotulos/productos/${productoId}`, 'No se pudo cargar el borrador de rótulo.');
+
+export const getVistaPrevia = (productoId: number) =>
+  pedir<VistaPrevia>(
+    `/rotulos/productos/${productoId}/vista-previa`,
+    'No se pudo armar la vista previa del rótulo.',
+  );
 
 export const crearBorrador = (productoId: number) =>
   pedir<Borrador>(`/rotulos/productos/${productoId}`, 'No se pudo crear el borrador.', {

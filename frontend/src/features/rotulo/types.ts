@@ -1,3 +1,5 @@
+import type { InformacionNutricional } from '../nutricion/types';
+
 export type TipoRegistro = 'rnpa' | 'rppa';
 export type UnidadVidaUtil = 'dias' | 'meses';
 export type CampoAutomatico = 'denominacion_venta' | 'lista_ingredientes' | 'identificacion_lote';
@@ -137,4 +139,22 @@ export interface RotuloListado {
   porcentaje: number | null;
   faltantes: number;
   actualizado_en: string | null;
+}
+
+export interface VistaPrevia {
+  leyenda_borrador: string;
+  generada_en: string;
+  borrador: Borrador;
+  contenido_neto_texto: string | null;
+  fecha_duracion: {
+    leyenda: string;
+    fecha: string | null;
+    lote_codigo: string | null;
+    lote_fecha_produccion: string | null;
+  };
+  informacion_nutricional: InformacionNutricional | null;
+  tabla_incompleta: boolean;
+  faltantes: Faltante[];
+  advertencias: string[];
+  lista_para_revision: boolean;
 }

@@ -24,6 +24,9 @@ ETIQUETAS_AUTOMATICOS = {
 }
 
 LEYENDA_DURACION_INICIAL = "Consumir preferentemente antes del"
+LEYENDA_BORRADOR = (
+    "BORRADOR: debe ser revisado por un/a profesional y por la autoridad sanitaria competente antes de su uso"
+)
 PAIS_ORIGEN_INICIAL = "Argentina"
 
 
@@ -43,6 +46,14 @@ ETIQUETAS_CONSERVACION = {
     CondicionConservacion.REFRIGERADO: "Conservar refrigerado",
     CondicionConservacion.CONGELADO: "Conservar congelado",
 }
+
+
+class AdvertenciaVistaPrevia:
+    FALTANTES = "Faltan {cantidad} datos obligatorios: el rótulo todavía no está listo para revisión."
+    FALTANTE_UNO = "Falta 1 dato obligatorio: el rótulo todavía no está listo para revisión."
+    TABLA_INCOMPLETA = "La tabla nutricional está incompleta ({cantidad} datos faltantes en la receta v{numero})."
+    SIN_TABLA = "El producto no tiene receta vigente: no hay tabla nutricional."
+    SELLOS_PROVISORIOS = "Los sellos se calcularon con información nutricional incompleta (provisorios)."
 
 
 class Aviso:

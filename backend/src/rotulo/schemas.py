@@ -3,6 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from src.nutricion.schemas import InformacionNutricional
 from src.rotulo.constants import (
     CampoAutomatico,
     CondicionConservacion,
@@ -246,3 +247,29 @@ class RotuloListado(BaseModel):
     porcentaje: Optional[int] = None
     faltantes: int = 0
     actualizado_en: Optional[datetime] = None
+
+
+class FechaDuracionVistaPrevia(BaseModel):
+    leyenda: str
+    fecha: Optional[date] = None
+    lote_codigo: Optional[str] = None
+    lote_fecha_produccion: Optional[date] = None
+
+
+class FaltanteVistaPrevia(BaseModel):
+    campo: str
+    etiqueta: str
+    seccion: str
+
+
+class VistaPrevia(BaseModel):
+    leyenda_borrador: str
+    generada_en: datetime
+    borrador: Borrador
+    contenido_neto_texto: Optional[str] = None
+    fecha_duracion: FechaDuracionVistaPrevia
+    informacion_nutricional: Optional[InformacionNutricional] = None
+    tabla_incompleta: bool
+    faltantes: list[FaltanteVistaPrevia]
+    advertencias: list[str]
+    lista_para_revision: bool

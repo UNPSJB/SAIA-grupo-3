@@ -96,13 +96,22 @@ export function RotulosPage() {
                   </td>
                   <td className="text-end pe-3">
                     {fila.borrador_id ? (
-                      <Button
-                        size="sm"
-                        variant="outline-primary"
-                        onClick={() => navigate(`/rotulado/${fila.producto.id}`)}
-                      >
-                        Abrir
-                      </Button>
+                      <div className="d-inline-flex flex-wrap justify-content-end gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline-secondary"
+                          onClick={() => navigate(`/rotulado/${fila.producto.id}/vista-previa`)}
+                        >
+                          Vista previa
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline-primary"
+                          onClick={() => navigate(`/rotulado/${fila.producto.id}`)}
+                        >
+                          Abrir
+                        </Button>
+                      </div>
                     ) : (
                       <Button
                         size="sm"

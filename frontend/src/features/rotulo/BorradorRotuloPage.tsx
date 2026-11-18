@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Badge,
@@ -12,7 +12,7 @@ import {
   Row,
   Table,
 } from 'react-bootstrap';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { useConsulta } from '../../shared/hooks/useConsulta';
@@ -126,6 +126,25 @@ export function BorradorRotuloPage() {
   const [verEdiciones, setVerEdiciones] = useState(false);
 
   const actual = borrador ?? consulta.datos;
+  const { hash } = useLocation();
+  const listo = Boolean(actual);
+
+  useEffect(() => {
+    if (!listo || !hash.startsWith('#campo-')) return;
+    const campo = hash.slice('#campo-'.length);
+    const espera = window.setTimeout(() => {
+      const destino =
+        document.getElementById(`campo-${campo}`) ?? document.getElementById(`seccion-${campo}`);
+      destino?.scrollIntoView({ block: 'center' });
+      if (
+        destino instanceof HTMLInputElement ||
+        destino instanceof HTMLTextAreaElement ||
+        destino instanceof HTMLSelectElement
+      )
+        destino.focus();
+    }, 150);
+    return () => window.clearTimeout(espera);
+  }, [listo, hash]);
   if (consulta.error && !actual) {
     const sinBorrador = consulta.error.includes('todavía no tiene borrador');
     return (
@@ -279,9 +298,20 @@ export function BorradorRotuloPage() {
             {actual.actualizado_por.nombre} {actual.actualizado_por.apellido}
           </div>
         </div>
-        <Button variant="outline-secondary" onClick={() => navigate('/rotulado')}>
-          Volver
-        </Button>
+        <div className="d-flex flex-wrap gap-2">
+          <Button
+            variant="outline-primary"
+            onClick={() => navigate(`/rotulado/${id}/vista-previa`)}
+            disabled={guardando || confirmando}
+            title={hayCambios ? 'La vista previa usa los datos guardados' : undefined}
+          >
+            <i className="bi bi-eye me-1" aria-hidden="true" />
+            Vista previa
+          </Button>
+          <Button variant="outline-secondary" onClick={() => navigate('/rotulado')}>
+            Volver
+          </Button>
+        </div>
       </div>
 
       <Card className="shadow-sm border-0 mb-3 sticky-top" style={{ top: '0.5rem', zIndex: 5 }}>
