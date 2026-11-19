@@ -83,3 +83,27 @@ class EdicionCampoRotulo(ModeloBase):
     fecha_hora: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     personal = relationship("src.personal.models.Personal")
+
+
+class ExportacionRotulo(ModeloBase):
+    __tablename__ = "exportaciones_rotulo"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    producto_id: Mapped[int] = mapped_column(ForeignKey("productos.id"), nullable=False, index=True)
+    borrador_id: Mapped[int] = mapped_column(ForeignKey("borradores_rotulo.id"), nullable=False)
+    numero: Mapped[int] = mapped_column(nullable=False)
+    version_receta_id: Mapped[int] = mapped_column(ForeignKey("versiones_receta.id"), nullable=False)
+    version_receta_numero: Mapped[int] = mapped_column(nullable=False)
+    conjunto_parametros_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("conjuntos_parametros_rotulado.id"), nullable=True
+    )
+    conjunto_parametros_numero: Mapped[Optional[int]] = mapped_column(nullable=True)
+    calculo_sellos_id: Mapped[Optional[int]] = mapped_column(ForeignKey("calculos_sellos_rotulado.id"), nullable=True)
+    lista_para_revision: Mapped[bool] = mapped_column(default=False, nullable=False)
+    faltantes: Mapped[int] = mapped_column(default=0, nullable=False)
+    contenido: Mapped[dict] = mapped_column(JSON, nullable=False)
+    generado_por_id: Mapped[int] = mapped_column(ForeignKey("personal.id"), nullable=False)
+    generado_en: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    producto = relationship("src.producto.models.Producto")
+    generado_por = relationship("src.personal.models.Personal")

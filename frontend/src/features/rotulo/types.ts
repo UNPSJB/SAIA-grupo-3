@@ -1,4 +1,6 @@
 import type { InformacionNutricional } from '../nutricion/types';
+import type { Composicion, Version } from '../recetas/types';
+import type { SellosProducto } from '../rotuladoFrontal/types';
 
 export type TipoRegistro = 'rnpa' | 'rppa';
 export type UnidadVidaUtil = 'dias' | 'meses';
@@ -157,4 +159,43 @@ export interface VistaPrevia {
   faltantes: Faltante[];
   advertencias: string[];
   lista_para_revision: boolean;
+}
+
+export interface FuenteInsumo {
+  insumo_id: number;
+  insumo: string;
+  tipo: string;
+  porcentaje: number | null;
+  fuentes: string[];
+  detalles: string[];
+  alimentos_referencia: string[];
+  nutrientes_cargados: number;
+  actualizado_en: string | null;
+}
+
+export interface Anexo {
+  producto: { id: number; nombre: string; activo: boolean };
+  receta: Version;
+  composicion: Composicion;
+  informacion_nutricional: InformacionNutricional;
+  fuentes: FuenteInsumo[];
+  rotulado_frontal: SellosProducto | null;
+  conjunto_parametros_numero: number | null;
+}
+
+export interface ExportacionResumen {
+  id: number;
+  numero: number;
+  producto: { id: number; nombre: string; activo: boolean };
+  version_receta_numero: number;
+  conjunto_parametros_numero: number | null;
+  lista_para_revision: boolean;
+  faltantes: number;
+  generado_por: PersonaResumen;
+  generado_en: string;
+}
+
+export interface Exportacion extends ExportacionResumen {
+  vista_previa: VistaPrevia;
+  anexo: Anexo;
 }
