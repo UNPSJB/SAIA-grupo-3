@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Table } from 'react-bootstrap';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -19,6 +20,7 @@ export function TrazabilidadProduccionDetalle({
   loteId,
 }: TrazabilidadProduccionDetalleProps) {
   const { currentUser } = useAuth();
+  const location = useLocation();
   const [resultado, setResultado] = useState<ResultadoTrazabilidad | null>(null);
 
   useEffect(() => {
@@ -79,7 +81,15 @@ export function TrazabilidadProduccionDetalle({
                 const filas = insumo.lotes_recepcion.map((lote) => (
                   <tr key={`${insumo.insumo_id}-${lote.lote_recepcion_id}`}>
                     <td>{insumo.insumo_nombre}</td>
-                    <td>{lote.numero_lote}</td>
+                    <td>
+                      <Link
+                        to={`/recepciones-insumos/${lote.lote_recepcion_id}`}
+                        state={{ volverA: location.pathname }}
+                        title={`Ver el detalle del lote ${lote.numero_lote} de ${insumo.insumo_nombre}`}
+                      >
+                        {lote.numero_lote}
+                      </Link>
+                    </td>
                     <td>{lote.proveedor_nombre}</td>
                     <td>
                       {formatearFecha(lote.fecha_recepcion)} /{' '}
