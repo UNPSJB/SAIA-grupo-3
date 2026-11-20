@@ -3,7 +3,6 @@ from src.exceptions import PermissionDenied
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
-from src.personal import schemas, services
 from src.pagination import PaginatedResponse
 from src.auth.router_base import PermissionedRouter
 from src.personal import models, schemas, services

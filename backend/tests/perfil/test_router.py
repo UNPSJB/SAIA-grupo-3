@@ -21,7 +21,7 @@ def test_ver_mi_perfil_devuelve_mis_datos_y_permisos(client, headers_con_passwor
     datos = respuesta.json()
     assert datos["id"] == persona_con_password.id
     assert datos["nombre"] == "Lucía"
-    assert datos["dni"] == "300"
+    assert datos["dni"] == "301"
     assert datos["nroLegajo"] == "L-300"
     assert datos["username"] == "lucia"
     assert datos["operar"] is True
@@ -126,7 +126,7 @@ def test_no_puedo_cambiar_mis_permisos_dni_ni_legajo(client, headers_con_passwor
     assert respuesta.status_code == 200
     datos = respuesta.json()
     assert datos["administrar"] is False
-    assert datos["dni"] == "300"
+    assert datos["dni"] == "301"
     assert datos["nroLegajo"] == "L-300"
 
 

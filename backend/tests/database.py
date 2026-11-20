@@ -16,6 +16,7 @@ from src.abastecimiento.models import (
     Proveedor,
 )
 from src.abastecimiento.router import router as abastecimiento_router
+from src.documentacion.constants import DIAS_AVISO_VENCIMIENTO
 from src.documentacion.models import Documentacion
 from src.perfil.router import router as perfil_router
 from src.tipoDocumento.models import TipoDocumento
@@ -25,6 +26,7 @@ from src.insumos.router import router as insumos_router
 from src.loteProduccion.router import router as lote_router
 from src.models import ModeloBase
 from src.personal.models import Personal
+from src.personal.router import router as personal_router
 from src.producto.models import Producto
 from src.producto.router import router as producto_router
 from src.unidadMedida.models import TipoUnidadMedida, UnidadMedida
@@ -46,6 +48,7 @@ app.include_router(abastecimiento_router)
 app.include_router(insumos_router)
 app.include_router(unidad_router)
 app.include_router(perfil_router)
+app.include_router(personal_router)
 
 
 @pytest.fixture(scope="function")
@@ -253,6 +256,178 @@ def headers_sin_permisos(persona_sin_permisos):
     return {"Authorization": f"Bearer {create_access_token(persona_sin_permisos)}"}
 
 
+@pytest.fixture
+def persona_inactiva(db_session):
+    persona = Personal(
+        nombre="Inactiva",
+        apellido="Prueba",
+        dni="400",
+        nroLegajo="L-400",
+        email="inactiva@example.com",
+        username="inactiva",
+        hashed_password="unused",
+        operar=True,
+        administrar=False,
+        activo=False,
+    )
+    db_session.add(persona)
+    db_session.commit()
+    db_session.refresh(persona)
+    return persona
+
+
+@pytest.fixture
+def personas_para_listado(db_session):
+    personas = [
+        Personal(
+            nombre="Listado A",
+            apellido="Zapata",
+            dni="501",
+            nroLegajo="L-501",
+            email="listado.a@example.com",
+            username="listado_a",
+            hashed_password="unused",
+            operar=True,
+            administrar=False,
+            activo=True,
+        ),
+        Personal(
+            nombre="Listado B",
+            apellido="Molina",
+            dni="502",
+            nroLegajo="L-502",
+            email="listado.b@example.com",
+            username="listado_b",
+            hashed_password="unused",
+            operar=True,
+            administrar=False,
+            activo=True,
+        ),
+        Personal(
+            nombre="Listado C",
+            apellido="Gómez",
+            dni="503",
+            nroLegajo="L-503",
+            email="listado.c@example.com",
+            username="listado_c",
+            hashed_password="unused",
+            operar=True,
+            administrar=False,
+            activo=True,
+        ),
+    ]
+    db_session.add_all(personas)
+    db_session.commit()
+    for persona in personas:
+        db_session.refresh(persona)
+    return personas
+
+
+@pytest.fixture
+def personas_con_vencimientos(db_session):
+    hoy = date.today()
+    tipo = TipoDocumento(nombre="Libreta sanitaria de vencimientos", activo=True)
+    db_session.add(tipo)
+    db_session.flush()
+
+    vencida = Personal(
+        nombre="Documentación vencida",
+        apellido="Prueba",
+        dni="601",
+        nroLegajo="L-601",
+        email="vencida@example.com",
+        username="vencida",
+        hashed_password="unused",
+        operar=True,
+        administrar=False,
+        activo=True,
+    )
+    por_vencer = Personal(
+        nombre="Documentación por vencer",
+        apellido="Prueba",
+        dni="602",
+        nroLegajo="L-602",
+        email="por.vencer@example.com",
+        username="por_vencer",
+        hashed_password="unused",
+        operar=True,
+        administrar=False,
+        activo=True,
+    )
+    vigente = Personal(
+        nombre="Documentación vigente",
+        apellido="Prueba",
+        dni="603",
+        nroLegajo="L-603",
+        email="vigente@example.com",
+        username="vigente",
+        hashed_password="unused",
+        operar=True,
+        administrar=False,
+        activo=True,
+    )
+    sin_documentacion = Personal(
+        nombre="Sin documentación",
+        apellido="Prueba",
+        dni="604",
+        nroLegajo="L-604",
+        email="sin.documentacion@example.com",
+        username="sin_documentacion",
+        hashed_password="unused",
+        operar=True,
+        administrar=False,
+        activo=True,
+    )
+    inactiva = Personal(
+        nombre="Inactiva con documentación",
+        apellido="Prueba",
+        dni="605",
+        nroLegajo="L-605",
+        email="inactiva.documentacion@example.com",
+        username="inactiva_documentacion",
+        hashed_password="unused",
+        operar=True,
+        administrar=False,
+        activo=False,
+    )
+    db_session.add_all([vencida, por_vencer, vigente, sin_documentacion, inactiva])
+    db_session.flush()
+
+    db_session.add_all(
+        [
+            Documentacion(
+                personal_id=vencida.id,
+                tipo_documento_id=tipo.id,
+                fecha_vencimiento=hoy - timedelta(days=3),
+            ),
+            Documentacion(
+                personal_id=por_vencer.id,
+                tipo_documento_id=tipo.id,
+                fecha_vencimiento=hoy + timedelta(days=DIAS_AVISO_VENCIMIENTO),
+            ),
+            Documentacion(
+                personal_id=vigente.id,
+                tipo_documento_id=tipo.id,
+                fecha_vencimiento=hoy + timedelta(days=DIAS_AVISO_VENCIMIENTO + 1),
+            ),
+            Documentacion(
+                personal_id=inactiva.id,
+                tipo_documento_id=tipo.id,
+                fecha_vencimiento=hoy - timedelta(days=5),
+            ),
+        ]
+    )
+    db_session.commit()
+
+    return {
+        "vencida": vencida,
+        "por_vencer": por_vencer,
+        "vigente": vigente,
+        "sin_documentacion": sin_documentacion,
+        "inactiva": inactiva,
+    }
+
+
 PASSWORD_ACTUAL = "clave-actual-123"
 
 
@@ -261,7 +436,7 @@ def persona_con_password(db_session):
     persona = Personal(
         nombre="Lucía",
         apellido="Pérez",
-        dni="300",
+        dni="301",
         nroLegajo="L-300",
         email="lucia@example.com",
         username="lucia",
