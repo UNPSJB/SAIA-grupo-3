@@ -100,6 +100,72 @@ def test_reactivar_personal_dado_de_baja(client, headers_administradora, persona
     assert client.get(f"/personal/{persona_inactiva.id}", headers=headers_administradora).status_code == 200
 
 
+def test_admin_crea_personal(client, headers_administradora):
+    # Arrange
+    datos = {
+        "nombre": "Nueva",
+        "apellido": "Persona",
+        "dni": "700",
+        "nroLegajo": "L-700",
+        "email": "nueva@example.com",
+        "username": "nueva",
+        "password": "clave-segura-123",
+        "operar": True,
+    }
+
+    # Act
+    respuesta = client.post("/personal/", headers=headers_administradora, json=datos)
+
+    # Assert
+    assert respuesta.status_code == 200
+    creada = respuesta.json()
+    assert creada["nombre"] == "Nueva"
+    assert creada["dni"] == "700"
+    assert creada["operar"] is True
+    assert creada["administrar"] is False
+    assert creada["activo"] is True
+    assert "hashed_password" not in creada
+
+
+def test_admin_modifica_datos_y_permisos(client, headers_administradora, persona_operadora):
+    # Act
+    respuesta = client.put(
+        f"/personal/{persona_operadora.id}",
+        headers=headers_administradora,
+        json={
+            "nombre": "Operadora Actualizada",
+            "operar": True,
+            "administrar": True,
+        },
+    )
+
+    # Assert
+    assert respuesta.status_code == 200
+    actualizada = respuesta.json()
+    assert actualizada["nombre"] == "Operadora Actualizada"
+    assert actualizada["operar"] is True
+    assert actualizada["administrar"] is True
+    assert persona_operadora.nombre == "Operadora Actualizada"
+
+
+def test_admin_da_de_baja_por_endpoint(client, headers_administradora, persona_operadora):
+    # Act
+    respuesta = client.delete(
+        f"/personal/{persona_operadora.id}", headers=headers_administradora
+    )
+
+    # Assert
+    assert respuesta.status_code == 200
+    assert respuesta.json()["activo"] is False
+    assert persona_operadora.activo is False
+    assert (
+        client.get(
+            f"/personal/{persona_operadora.id}", headers=headers_administradora
+        ).status_code
+        == 404
+    )
+
+
 @pytest.mark.parametrize("email_invalido", ["no-es-un-email", "sin-arroba.example.com"])
 def test_email_invalido_devuelve_422(
     client, headers_administradora, persona_operadora, email_invalido
