@@ -85,6 +85,12 @@ class ErrorCode:
     SIN_RECETA_ALERGENOS = "El producto no tiene receta vigente: no se puede confirmar la declaración de alérgenos."
     TEMPERATURAS = "La temperatura mínima no puede ser mayor que la máxima."
     DURACION_SIN_CONDICION = "Indicá la condición de conservación a la que corresponde la duración."
+    EXPORTACION_SIN_RECETA = "El producto no tiene receta vigente: no hay cálculos que respalden el rótulo."
+    EXPORTACION_NO_ENCONTRADA = "La exportación no fue encontrada."
+    TEXTO_NO_PERMITIDO = (
+        "El contenido a exportar menciona {menciones}. Un borrador no puede llevar menciones de "
+        "aprobación, conformidad o certificación: corregilo antes de exportar."
+    )
 
 
 class Origen:
@@ -94,3 +100,38 @@ class Origen:
     SIN_RECETA = "sin receta vigente"
     LOTE = "del lote {codigo}"
     SIN_LOTE = "sin lotes registrados"
+
+
+ETIQUETAS_FUENTE = {
+    "base_referencia": "Base de referencia",
+    "rotulo_proveedor": "Rótulo del proveedor",
+    "bibliografia": "Bibliografía",
+    "valor_propio": "Valor propio (análisis)",
+}
+
+PALABRAS_NO_PERMITIDAS = (
+    r"\b(aprobad\w*|aprobaci\w*|aprueba\w*|conformes?\b|conformidad\w*|certificad\w*|certificaci\w*"
+    r"|certifica\b|homologad\w*|homologaci\w*)"
+)
+REFERENCIA_NORMATIVA = r"\baprobad[oa]s? por (la |el )?(disposici[oó]n|resoluci[oó]n|decreto|ley)\b"
+
+ETIQUETAS_CAMPOS = {
+    "denominacion_venta": "Denominación de venta",
+    "lista_ingredientes": "Lista de ingredientes",
+    "identificacion_lote": "Identificación del lote",
+    "razon_social": "Razón social",
+    "domicilio": "Domicilio",
+    "pais_origen": "País de origen",
+    "numero_registro": "Número de registro",
+    "numero_establecimiento": "Registro del establecimiento",
+    "importador_razon_social": "Razón social del importador",
+    "importador_domicilio": "Domicilio del importador",
+    "leyenda_duracion": "Leyenda de duración",
+    "instrucciones": "Instrucciones de uso",
+    "conservacion_abierto": "Conservación una vez abierto",
+    "leyenda_conservacion": "Conservación",
+    "nombre": "Nombre",
+    "motivo": "Motivo",
+    "detalle_fuente": "Detalle de la fuente",
+    "porcion_medida_casera": "Medida casera",
+}

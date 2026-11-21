@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from src.auth.dependencies import tiene_permiso_administrar
 from src.database import get_db
 from src.personal.models import Personal
-from src.rotulo import schemas, services, vista_previa
+from src.rotulo import exportacion, schemas, services, vista_previa
 
 router = APIRouter(prefix="/rotulos", tags=["producción - rotulado"])
 
@@ -58,3 +58,39 @@ def confirm_alergenos(
     persona: Personal = Depends(tiene_permiso_administrar),
 ):
     return services.confirmar_alergenos(db, producto_id, persona)
+
+
+@router.get(
+    "/productos/{producto_id}/anexo",
+    response_model=schemas.Anexo,
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_anexo(producto_id: int, db: Session = Depends(get_db)):
+    return exportacion.armar_anexo(db, producto_id)
+
+
+@router.get(
+    "/productos/{producto_id}/exportaciones",
+    response_model=list[schemas.ExportacionResumen],
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_exportaciones(producto_id: int, db: Session = Depends(get_db)):
+    return exportacion.listar_exportaciones(db, producto_id)
+
+
+@router.post("/productos/{producto_id}/exportaciones", response_model=schemas.Exportacion)
+def create_exportacion(
+    producto_id: int,
+    db: Session = Depends(get_db),
+    persona: Personal = Depends(tiene_permiso_administrar),
+):
+    return exportacion.exportar(db, producto_id, persona)
+
+
+@router.get(
+    "/exportaciones/{exportacion_id}",
+    response_model=schemas.Exportacion,
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_exportacion(exportacion_id: int, db: Session = Depends(get_db)):
+    return exportacion.leer_exportacion(db, exportacion_id)

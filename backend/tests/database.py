@@ -1,6 +1,4 @@
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -15,22 +13,14 @@ from src.abastecimiento.models import (
     LoteRecepcionInsumo,
     Proveedor,
 )
-from src.abastecimiento.router import router as abastecimiento_router
 from src.documentacion.constants import DIAS_AVISO_VENCIMIENTO
 from src.documentacion.models import Documentacion
-from src.perfil.router import router as perfil_router
 from src.tipoDocumento.models import TipoDocumento
-from src.database import get_db
 from src.insumos.models import Insumo
-from src.insumos.router import router as insumos_router
-from src.loteProduccion.router import router as lote_router
 from src.models import ModeloBase
 from src.personal.models import Personal
-from src.personal.router import router as personal_router
 from src.producto.models import Producto
-from src.producto.router import router as producto_router
 from src.unidadMedida.models import TipoUnidadMedida, UnidadMedida
-from src.unidadMedida.router import router as unidad_router
 from src.main import app as registered_app  # noqa: F401 — registra todos los modelos en el metadata
 
 
@@ -40,15 +30,6 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-app = FastAPI()
-app.include_router(producto_router)
-app.include_router(lote_router)
-app.include_router(abastecimiento_router)
-app.include_router(insumos_router)
-app.include_router(unidad_router)
-app.include_router(perfil_router)
-app.include_router(personal_router)
 
 
 @pytest.fixture(scope="function")
@@ -60,20 +41,6 @@ def db_session():
     finally:
         session.close()
         ModeloBase.metadata.drop_all(bind=engine)
-
-
-@pytest.fixture(scope="function")
-def client(db_session):
-    def override_get_db():
-        try:
-            yield db_session
-        finally:
-            db_session.close()
-
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
 
 
 # Conserva el nombre usado por las pruebas de vencimientos anteriores.

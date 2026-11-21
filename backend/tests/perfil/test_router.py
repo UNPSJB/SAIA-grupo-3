@@ -2,7 +2,6 @@ from src.auth.utils import password_hash
 from src.personal.models import Personal
 from tests.database import (
     PASSWORD_ACTUAL,
-    client,
     db_session,
     documentos_de_persona,
     headers_con_password,

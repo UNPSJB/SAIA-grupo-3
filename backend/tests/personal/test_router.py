@@ -1,7 +1,6 @@
 import pytest
 
 from tests.database import (
-    client,
     headers_administradora,
     headers_operadora,
     persona_administradora,

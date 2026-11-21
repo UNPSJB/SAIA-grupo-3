@@ -255,3 +255,182 @@
     -webkit-print-color-adjust: exact;
   }
 }
+
+.exp-impresion {
+  display: none;
+}
+
+.exp-documento {
+  color: #111;
+  background: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.exp-hoja {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.exp-hoja > thead > tr > td,
+.exp-hoja > tbody > tr > td {
+  padding: 0;
+  vertical-align: top;
+}
+
+.exp-hoja + .exp-hoja {
+  break-before: page;
+}
+
+.exp-leyenda-pagina {
+  color: #b91c1c;
+  border-bottom: 2px solid #b91c1c;
+  font-weight: 700;
+  font-size: 9pt;
+  text-align: center;
+  padding: 0.1cm 0.3cm 0.15cm;
+  margin-bottom: 0.35cm;
+}
+.exp-encabezado {
+  border-bottom: 2px solid #111;
+  padding-bottom: 0.25cm;
+  margin-bottom: 0.4cm;
+}
+
+.exp-titulo {
+  font-size: 15pt;
+  font-weight: 800;
+  margin-bottom: 0.15cm;
+}
+
+.exp-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1cm 0.6cm;
+  margin: 0;
+  font-size: 9pt;
+}
+
+.exp-datos dt {
+  font-weight: 400;
+  color: #555;
+}
+
+.exp-datos dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.exp-seccion {
+  margin-bottom: 0.5cm;
+}
+
+.exp-seccion h3 {
+  font-size: 12pt;
+  font-weight: 800;
+  border-bottom: 1px solid #111;
+  padding-bottom: 0.05cm;
+  margin: 0.3cm 0 0.2cm;
+  break-after: avoid;
+}
+
+.exp-seccion h4 {
+  font-size: 10pt;
+  font-weight: 700;
+  margin: 0.3cm 0 0.15cm;
+}
+
+.exp-texto {
+  font-size: 9pt;
+  margin-bottom: 0.2cm;
+}
+
+.exp-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+  margin-bottom: 0.2cm;
+}
+
+.exp-tabla th,
+.exp-tabla td {
+  border: 1px solid #999;
+  padding: 0.05cm 0.12cm;
+  vertical-align: top;
+}
+
+.exp-tabla th {
+  background: #eee;
+  text-align: left;
+}
+
+.exp-tabla tr {
+  break-inside: avoid;
+}
+
+.exp-num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.exp-sutil {
+  color: #555;
+}
+
+.exp-subtitulo td {
+  font-weight: 700;
+  background: #f6f6f6;
+}
+
+.exp-total td {
+  font-weight: 700;
+}
+
+.exp-alerta {
+  border: 2px solid #b91c1c;
+  background: #fef2f2;
+  color: #7f1d1d;
+  padding: 0.15cm 0.25cm;
+  font-size: 9pt;
+  margin-bottom: 0.3cm;
+}
+
+.exp-falta {
+  color: #7a3b00;
+  font-weight: 700;
+}
+
+.exp-tabla-nutricional .tabla-nutricional {
+  max-width: 13cm;
+  break-inside: avoid;
+}
+
+@media print {
+  body.imprimiendo-exportacion > #root {
+    display: none !important;
+  }
+
+  body.imprimiendo-exportacion > .exp-impresion {
+    display: block;
+    padding: 0 0.6cm;
+  }
+
+  .exp-impresion .vp-rotulo {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5cm;
+  }
+
+  .exp-impresion .vp-cara {
+    break-inside: avoid;
+  }
+
+  .exp-impresion .exp-alerta,
+  .exp-impresion .exp-tabla th,
+  .exp-impresion .exp-subtitulo td,
+  .exp-impresion .vp-leyenda-borrador,
+  .exp-impresion .vp-panel::after,
+  .exp-impresion .vp-falta,
+  .exp-impresion .vp-nota {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

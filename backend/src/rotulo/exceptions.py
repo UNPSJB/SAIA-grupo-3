@@ -24,3 +24,15 @@ class UnidadNoEncontrada(NotFound):
 
 class SinRecetaParaAlergenos(BadRequest):
     DETAIL = ErrorCode.SIN_RECETA_ALERGENOS
+
+
+class ExportacionSinReceta(BadRequest):
+    DETAIL = ErrorCode.EXPORTACION_SIN_RECETA
+
+
+class ExportacionNoEncontrada(NotFound):
+    DETAIL = ErrorCode.EXPORTACION_NO_ENCONTRADA
+
+
+class TextoNoPermitido(BadRequest):
+    DETAIL = ErrorCode.TEXTO_NO_PERMITIDO

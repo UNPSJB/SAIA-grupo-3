@@ -4,6 +4,8 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from src.nutricion.schemas import InformacionNutricional
+from src.receta.schemas import Composicion, Version
+from src.rotuladoFrontal.schemas import SellosProducto
 from src.rotulo.constants import (
     CampoAutomatico,
     CondicionConservacion,
@@ -273,3 +275,42 @@ class VistaPrevia(BaseModel):
     faltantes: list[FaltanteVistaPrevia]
     advertencias: list[str]
     lista_para_revision: bool
+
+
+class FuenteInsumo(BaseModel):
+    insumo_id: int
+    insumo: str
+    tipo: str
+    porcentaje: Optional[float] = None
+    fuentes: list[str]
+    detalles: list[str]
+    alimentos_referencia: list[str]
+    nutrientes_cargados: int
+    actualizado_en: Optional[datetime] = None
+
+
+class Anexo(BaseModel):
+    producto: ProductoResumen
+    receta: Version
+    composicion: Composicion
+    informacion_nutricional: InformacionNutricional
+    fuentes: list[FuenteInsumo]
+    rotulado_frontal: Optional[SellosProducto] = None
+    conjunto_parametros_numero: Optional[int] = None
+
+
+class ExportacionResumen(BaseModel):
+    id: int
+    numero: int
+    producto: ProductoResumen
+    version_receta_numero: int
+    conjunto_parametros_numero: Optional[int] = None
+    lista_para_revision: bool
+    faltantes: int
+    generado_por: PersonaResumen
+    generado_en: datetime
+
+
+class Exportacion(ExportacionResumen):
+    vista_previa: VistaPrevia
+    anexo: Anexo

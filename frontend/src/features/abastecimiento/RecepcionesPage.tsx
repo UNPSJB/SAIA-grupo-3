@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import './RecepcionesPage.css';
 import { Alert, Badge, Button, Card, Container, Form, InputGroup, Table } from 'react-bootstrap';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
 import { formatearFecha, textoDiasRestantes } from '../../shared/libreria/fechas';
@@ -411,9 +411,15 @@ export function RecepcionesPage() {
   );
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const volverA = mode === 'ver' && typeof state?.volverA === 'string' ? state.volverA : null;
   const [mensaje, setMensaje] = useState('');
   const conciliar = mode === 'crear' && params.get('conciliar') === 'true';
   function back() {
+    if (volverA) {
+      navigate(volverA);
+      return;
+    }
     const query = new URLSearchParams(params);
     query.delete('conciliar');
     navigate(`/recepciones-insumos${query.size ? `?${query}` : ''}`);
@@ -578,7 +584,7 @@ export function RecepcionesPage() {
             </Card.Body>
             <Card.Footer className="bg-body border-0 d-flex justify-content-end gap-2 pb-4 px-4">
               <Button variant="secondary" onClick={back}>
-                Volver
+                {volverA ? 'Volver al lote de producción' : 'Volver'}
               </Button>
               <Button variant="warning" disabled={!editable} onClick={() => abrir(item, 'editar')}>
                 Editar

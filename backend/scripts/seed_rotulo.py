@@ -1,11 +1,15 @@
 """Borradores de rótulo de prueba para los productos con receta."""
 
+from contextlib import contextmanager
 from datetime import datetime
 
 from sqlalchemy import select
 
 from src.alergeno.models import Alergeno
 from src.rotulo import alergenos
+from src.rotulo.exportacion import registrar_exportacion
+from src.rotulo.models import ExportacionRotulo
+from src.rotuladoFrontal.aplicabilidad import version_vigente
 from src.rotulo.constants import CampoAutomatico, CondicionConservacion, TipoRegistro, UnidadVidaUtil
 from src.rotulo.models import BorradorRotulo, EdicionCampoRotulo
 from src.rotulo.services import datos_del_sistema, meta_automatico, refrescar_automaticos
@@ -115,6 +119,27 @@ def cargar_rotulos(db, productos, admin):
         db.add(borrador)
         db.flush()
         completar_alergenos(db, borrador, producto.nombre, por_nombre, admin)
+    db.flush()
+    cargar_exportaciones(db, productos, admin)
+
+
+@contextmanager
+def sin_cerrar_transaccion(db):
+    original = db.commit
+    db.commit = db.flush
+    try:
+        yield
+    finally:
+        db.commit = original
+
+
+def cargar_exportaciones(db, productos, admin):
+    con_borrador = set(db.scalars(select(BorradorRotulo.producto_id)))
+    exportados = set(db.scalars(select(ExportacionRotulo.producto_id)))
+    with sin_cerrar_transaccion(db):
+        for producto in productos:
+            if producto.id in con_borrador and producto.id not in exportados and version_vigente(db, producto.id):
+                registrar_exportacion(db, producto.id, admin)
     db.flush()
 
 

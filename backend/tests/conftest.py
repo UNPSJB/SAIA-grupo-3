@@ -23,7 +23,8 @@ from tests.database import (
 @pytest.fixture
 def client(db_session):
     api = FastAPI()
-    for nombre in ('unidadMedida', 'insumos', 'insumosQuimicos', 'producto',
+    for nombre in ('auth', 'personal', 'perfil', 'sector',
+                   'unidadMedida', 'insumos', 'insumosQuimicos', 'producto',
                    'loteProduccion', 'abastecimiento', 'tablero', 'incidente',
                    'documentacion', 'vistaPublica', 'notificaciones',
                    'consumoQuimico', 'checklist', 'equipos', 'registroTemperatura',

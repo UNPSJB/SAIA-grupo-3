@@ -330,6 +330,7 @@ def modificar_lote(db: Session, lote_id: int, lote: schemas.LoteProduccionUpdate
 
 def eliminar_lote(db: Session, lote_id: int) -> LoteProduccion:
     db_lote = leer_lote(db, lote_id)
+    _validar_abierto(db_lote)
     db_lote.activo = False
     db.commit()
     db.refresh(db_lote)
