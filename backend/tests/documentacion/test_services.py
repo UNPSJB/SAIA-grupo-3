@@ -13,6 +13,16 @@ from src.registroCalibracion.vencimientos import listar_vencimientos_calibracion
 from src.sector.models import Sector
 from src.tipoDocumento.models import TipoDocumento
 from tests.database import db_session as session
+import pytest
+from sqlalchemy import select
+from src.documentacion import exceptions as doc_exceptions
+from src.documentacion import schemas as doc_schemas
+from src.documentacion import services as doc_services
+from src.documentacion.constants import EstadoVencimiento
+from src.documentacion.vencimientos import calcular_estado
+from src.notificaciones.models import Notificacion, TipoNotificacion
+from src.personal import exceptions as personal_exceptions
+from src.tipoDocumento import exceptions as tipo_doc_exceptions
 
 def crear_personal(session, *, dni: str, activo: bool=True, administrar: bool=False):
     personal = Personal(dni=dni, nroLegajo=dni, nombre='Ana', apellido='Pérez', email=f'{dni}@example.com', username=dni, hashed_password='x', operar=True, administrar=administrar, activo=activo)
@@ -77,3 +87,119 @@ def test_listar_calibraciones_solo_alertas_incluye_vencidas_y_proximas(session):
     resultado = listar_vencimientos_calibracion(session, page=1, size=10, solo_alertas=True, hoy=hoy)
     assert resultado['total'] == 2
     assert {item['estado'] for item in resultado['items']} == {'vencido', 'por_vencer'}
+
+def test_crear_documento_para_personal_existente(db_session, persona_operadora, tipo_carnet):
+    vencimiento = date.today() + timedelta(days=90)
+    datos = doc_schemas.DocumentoCreate(
+        personal_id=persona_operadora.id,
+        tipo_documento_id=tipo_carnet.id,
+        fecha_vencimiento=vencimiento,
+    )
+
+    doc = doc_services.crear_documento(db_session, datos)
+
+    assert doc.id is not None
+    assert doc.personal_id == persona_operadora.id
+    assert doc.tipo_documento_id == tipo_carnet.id
+    assert doc.fecha_vencimiento == vencimiento
+    assert doc.nombre_personal == persona_operadora.nombre
+
+
+def test_crear_documento_error_si_personal_o_tipo_no_existen(
+    db_session, persona_operadora, tipo_carnet
+):
+    vencimiento = date.today() + timedelta(days=30)
+
+    with pytest.raises(personal_exceptions.PersonalNoEncontrado):
+        doc_services.crear_documento(
+            db_session,
+            doc_schemas.DocumentoCreate(
+                personal_id=999999,
+                tipo_documento_id=tipo_carnet.id,
+                fecha_vencimiento=vencimiento,
+            ),
+        )
+
+    with pytest.raises(tipo_doc_exceptions.TipoDocumentoNoEncontrado):
+        doc_services.crear_documento(
+            db_session,
+            doc_schemas.DocumentoCreate(
+                personal_id=persona_operadora.id,
+                tipo_documento_id=999999,
+                fecha_vencimiento=vencimiento,
+            ),
+        )
+
+
+def test_no_permite_usar_tipo_de_documento_dado_de_baja(
+    db_session, persona_operadora, tipo_inactivo
+):
+    with pytest.raises(tipo_doc_exceptions.TipoDocumentoNoEncontrado):
+        doc_services.crear_documento(
+            db_session,
+            doc_schemas.DocumentoCreate(
+                personal_id=persona_operadora.id,
+                tipo_documento_id=tipo_inactivo.id,
+                fecha_vencimiento=date.today() + timedelta(days=30),
+            ),
+        )
+
+
+@pytest.mark.parametrize(
+    ("desplazamiento_dias", "estado_esperado"),
+    [
+        (-10, EstadoVencimiento.VENCIDO),
+        (-1, EstadoVencimiento.VENCIDO),
+        (0, EstadoVencimiento.POR_VENCER),
+        (DIAS_AVISO_VENCIMIENTO, EstadoVencimiento.POR_VENCER),
+        (DIAS_AVISO_VENCIMIENTO + 1, EstadoVencimiento.VIGENTE),
+        (90, EstadoVencimiento.VIGENTE),
+    ],
+)
+def test_calculo_estado_vencimiento_con_distintas_fechas(
+    desplazamiento_dias, estado_esperado
+):
+    hoy = date(2026, 6, 1)
+    fecha = hoy + timedelta(days=desplazamiento_dias)
+
+    assert calcular_estado(fecha, hoy) == estado_esperado
+
+
+def test_al_guardar_documento_se_actualiza_el_aviso_de_vencimientos(
+    db_session, persona_operadora, tipo_carnet
+):
+    clave_hoy = f"vencimientos-{date.today().isoformat()}"
+
+    # Al guardar un documento próximo a vencer, se crea el aviso del día
+    doc = doc_services.crear_documento(
+        db_session,
+        doc_schemas.DocumentoCreate(
+            personal_id=persona_operadora.id,
+            tipo_documento_id=tipo_carnet.id,
+            fecha_vencimiento=date.today() + timedelta(days=3),
+        ),
+    )
+
+    aviso = db_session.scalar(
+        select(Notificacion).where(
+            Notificacion.clave == clave_hoy,
+            Notificacion.tipo == TipoNotificacion.VENCIMIENTO_DOCUMENTACION,
+        )
+    )
+    assert aviso is not None
+    assert "por vencer" in aviso.mensaje
+
+    # Al renovarlo (pasar a vigente), el aviso de vencimientos se limpia
+    doc_services.modificar_documento(
+        db_session,
+        doc.id,
+        doc_schemas.DocumentoUpdate(
+            tipo_documento_id=tipo_carnet.id,
+            fecha_vencimiento=date.today() + timedelta(days=DIAS_AVISO_VENCIMIENTO + 30),
+        ),
+    )
+
+    aviso_actualizado = db_session.scalar(
+        select(Notificacion).where(Notificacion.clave == clave_hoy)
+    )
+    assert aviso_actualizado is None
