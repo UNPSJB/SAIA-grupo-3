@@ -26,7 +26,7 @@ def client(db_session):
     for nombre in ('auth', 'personal', 'perfil', 'sector',
                    'unidadMedida', 'insumos', 'insumosQuimicos', 'producto',
                    'loteProduccion', 'abastecimiento', 'tablero', 'incidente',
-                   'documentacion', 'vistaPublica', 'notificaciones',
+                   'accionCorrectiva','documentacion', 'vistaPublica', 'notificaciones',
                    'consumoQuimico', 'checklist', 'equipos', 'registroTemperatura',
                    'tarea', 'plan', 'receta', 'claseFuncional', 'aditivoReferencia', 'produccionDelDia',
                    'configuracionProduccion', 'nutricion', 'rotuladoFrontal', 'rotulo', 'alergeno'):
@@ -86,7 +86,7 @@ MODULOS_ENTREGA = {
     'unidadMedida', 'insumos', 'insumosQuimicos', 'tablero', 'incidente',
     'documentacion', 'vistaPublica', 'producto', 'loteProduccion',
     'notificaciones', 'consumoQuimico', 'checklist', 'equipos',
-    'registroTemperatura', 'abastecimiento', 'tarea', 'plan',
+    'registroTemperatura', 'abastecimiento', 'tarea', 'plan', 'accionCorrectiva',
 }
 
 
