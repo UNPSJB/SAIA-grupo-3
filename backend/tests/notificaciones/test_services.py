@@ -1,5 +1,5 @@
-"""Aceptación de stock mínimo; toda la persistencia se hace en SQLite aislado."""
-from datetime import date
+"""toda la persistencia se hace en SQLite aislado."""
+from datetime import date, datetime, timedelta
 import sqlite3
 from pathlib import Path
 import pytest
@@ -18,6 +18,11 @@ from src.consumoQuimico import services as consumos
 from src.consumoQuimico.schemas import ConsumoQuimicoCreate, ConsumoQuimicoUpdate
 from src.consumoQuimico.models import ConsumoQuimico
 from scripts.migrate_stock_minimo import migrar
+from src.documentacion.models import Documentacion
+from src.documentacion.vencimientos import DIAS_AVISO_VENCIMIENTO
+from src.notificaciones.constants import ENLACE_VENCIMIENTOS
+from src.notificaciones.models import TipoNotificacion
+from src.tipoDocumento.models import TipoDocumento
 
 def crear_quimico(db, unidad, nombre='Detergente', cantidad=10, minimo=5):
     return quimicos.crear_insumo_quimico(db, InsumoQuimicoCreate(nombre=nombre, cantidad=cantidad, stock_minimo=minimo, tipo_quimico=TipoQuimico.DETERGENTE, unidad_medida_id=unidad.id))
@@ -143,3 +148,146 @@ def test_cantidad_calculada_coincide_en_filtro_y_aviso(db_session, unidad_medida
     assert ingredientes.listar_insumos(db_session, solo_stock_bajo=True)['total'] == 1
     assert avisos.contar_stock_bajo(db_session)['insumos'] == 1
     assert cantidad_avisos(db_session) == 1
+
+def _crear_documento(db, personal_id, nombre_tipo, fecha_vencimiento):
+    tipo = db.scalar(select(TipoDocumento).where(TipoDocumento.nombre == nombre_tipo))
+    if tipo is None:
+        tipo = TipoDocumento(nombre=nombre_tipo, activo=True)
+        db.add(tipo)
+        db.flush()
+    doc = Documentacion(
+        personal_id=personal_id,
+        tipo_documento_id=tipo.id,
+        fecha_vencimiento=fecha_vencimiento,
+    )
+    db.add(doc)
+    db.commit()
+    return doc
+
+
+def test_con_documentos_vencidos_o_por_vencer_genera_aviso_con_mensaje_correcto(
+    db_session, persona_operadora, persona_administradora
+):
+    hoy = date(2026, 6, 1)
+    _crear_documento(db_session, persona_operadora.id, "Carnet", hoy - timedelta(days=2))
+
+    aviso = avisos.generar_aviso_vencimientos(db_session, hoy=hoy)
+
+    assert aviso is not None
+    assert aviso.tipo == TipoNotificacion.VENCIMIENTO_DOCUMENTACION
+    assert aviso.titulo == "Documentación para renovar"
+    assert aviso.mensaje == "1 empleado tiene 1 documento vencido."
+    assert aviso.enlace == ENLACE_VENCIMIENTOS
+    assert aviso.leida is False
+
+    _crear_documento(db_session, persona_administradora.id, "Libreta", hoy + timedelta(days=3))
+    aviso_actualizado = avisos.generar_aviso_vencimientos(db_session, hoy=hoy)
+
+    assert aviso_actualizado.mensaje == (
+        "2 empleados tienen 1 documento vencido y 1 documento por vencer "
+        f"en los próximos {DIAS_AVISO_VENCIMIENTO} días."
+    )
+
+
+def test_sin_vencimientos_no_se_genera_aviso(db_session, persona_operadora):
+    hoy = date(2026, 6, 1)
+    assert avisos.generar_aviso_vencimientos(db_session, hoy=hoy) is None
+    assert cantidad_avisos(db_session) == 0
+
+    # Con un documento vigente (fuera de la ventana de aviso) tampoco genera
+    _crear_documento(
+        db_session,
+        persona_operadora.id,
+        "Carnet",
+        hoy + timedelta(days=DIAS_AVISO_VENCIMIENTO + 15),
+    )
+    assert avisos.generar_aviso_vencimientos(db_session, hoy=hoy) is None
+    assert cantidad_avisos(db_session) == 0
+
+
+def test_generar_dos_veces_el_mismo_dia_no_duplica(db_session, persona_operadora):
+    hoy = date(2026, 6, 1)
+    _crear_documento(db_session, persona_operadora.id, "Carnet", hoy - timedelta(days=1))
+
+    primero = avisos.generar_aviso_vencimientos(db_session, hoy=hoy)
+    segundo = avisos.generar_aviso_vencimientos(db_session, hoy=hoy)
+
+    assert primero.id == segundo.id
+    assert cantidad_avisos(db_session) == 1
+
+
+def test_avisos_de_dias_anteriores_quedan_marcados_como_leidos(
+    db_session, persona_operadora
+):
+    ayer = date(2026, 5, 31)
+    hoy = date(2026, 6, 1)
+    _crear_documento(db_session, persona_operadora.id, "Carnet", ayer - timedelta(days=1))
+
+    aviso_ayer = avisos.generar_aviso_vencimientos(db_session, hoy=ayer)
+    assert aviso_ayer.leida is False
+
+    aviso_hoy = avisos.generar_aviso_vencimientos(db_session, hoy=hoy)
+    db_session.refresh(aviso_ayer)
+
+    assert aviso_ayer.leida is True
+    assert aviso_hoy.id != aviso_ayer.id
+    assert aviso_hoy.leida is False
+
+
+def test_si_cambia_el_mensaje_el_aviso_vuelve_a_quedar_sin_leer(
+    db_session, persona_operadora
+):
+    hoy = date(2026, 6, 1)
+    _crear_documento(db_session, persona_operadora.id, "Carnet", hoy - timedelta(days=1))
+
+    aviso = avisos.generar_aviso_vencimientos(db_session, hoy=hoy)
+    avisos.marcar_leida(db_session, aviso.id)
+    assert aviso.leida is True
+
+    # Si no cambió el mensaje, permanece leído
+    mismo = avisos.generar_aviso_vencimientos(db_session, hoy=hoy)
+    assert mismo.leida is True
+
+    # Si aparece otro vencimiento y cambia el mensaje, vuelve a quedar sin leer
+    _crear_documento(db_session, persona_operadora.id, "Libreta", hoy + timedelta(days=2))
+    actualizado = avisos.generar_aviso_vencimientos(db_session, hoy=hoy)
+
+    assert actualizado.id == aviso.id
+    assert actualizado.leida is False
+
+
+def test_conteo_de_no_leidas(db_session):
+    db_session.add_all([
+        Notificacion(
+            clave="test-nl-1",
+            tipo=TipoNotificacion.VENCIMIENTO_DOCUMENTACION,
+            titulo="Aviso 1",
+            mensaje="Mensaje 1",
+            leida=False,
+        ),
+        Notificacion(
+            clave="test-nl-2",
+            tipo=TipoNotificacion.VENCIMIENTO_DOCUMENTACION,
+            titulo="Aviso 2",
+            mensaje="Mensaje 2",
+            leida=False,
+        ),
+        Notificacion(
+            clave="test-nl-3",
+            tipo=TipoNotificacion.VENCIMIENTO_DOCUMENTACION,
+            titulo="Aviso 3",
+            mensaje="Mensaje 3",
+            leida=True,
+        ),
+    ])
+    db_session.commit()
+
+    assert avisos.contar_no_leidas(db_session) == 2
+
+    primera = db_session.scalar(select(Notificacion).where(Notificacion.clave == "test-nl-1"))
+    avisos.marcar_leida(db_session, primera.id)
+    assert avisos.contar_no_leidas(db_session) == 1
+
+    marcadas = avisos.marcar_todas_leidas(db_session)
+    assert marcadas == 1
+    assert avisos.contar_no_leidas(db_session) == 0
