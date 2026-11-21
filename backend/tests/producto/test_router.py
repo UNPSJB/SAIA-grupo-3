@@ -1,18 +1,25 @@
 from datetime import date, timedelta
+
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from src.main import app as registered_app
+
 from src.auth.utils import create_access_token
 from src.database import get_db
+from src.insumos.constants import TipoInsumo
 from src.loteProduccion.router import router as lote_router
+from src.main import app as registered_app
 from src.models import ModeloBase
 from src.personal.models import Personal
 from src.producto.router import router as producto_router
+from src.receta.constants import EstadoVersionReceta
+from src.receta.models import Receta, RenglonReceta, VersionReceta
 from src.unidadMedida.models import TipoUnidadMedida, UnidadMedida
 from src.unidadMedida.router import router as unidad_router
+
 
 class Escenario:
 
@@ -55,7 +62,7 @@ class Escenario:
     def crear_lote(self, producto_id, persona=None, **extra):
         datos = {'producto_id': producto_id, 'fecha_produccion': date.today().isoformat(), 'cantidad': 12.5, **extra}
         return self.client.post('/lotes-produccion/', json=datos, headers=self.headers(persona or self.operario))
-import pytest
+
 
 @pytest.fixture
 def escenario():
@@ -66,6 +73,7 @@ def escenario():
     finally:
         caso.tearDown()
 
+
 def test_crear_producto(escenario):
     self = escenario
     respuesta = self.crear_producto(descripcion='  Pan del día  ')
@@ -75,16 +83,19 @@ def test_crear_producto(escenario):
     assert producto['unidad_medida']['sufijo'] == 'kg'
     assert producto['activo']
 
+
 def test_producto_nombre_duplicado_y_vacio(escenario):
     self = escenario
     self.crear_producto('Pan francés')
     assert self.crear_producto('pan FRANCÉS').status_code == 400
     assert self.crear_producto('   ').status_code == 422
 
+
 def test_producto_con_unidad_inexistente(escenario):
     self = escenario
     respuesta = self.client.post('/productos/', json={'nombre': 'X', 'unidad_medida_id': 999}, headers=self.headers(self.admin))
     assert respuesta.status_code == 404
+
 
 def test_operario_crea_producto_y_consulta_activos(escenario):
     self = escenario
@@ -95,6 +106,7 @@ def test_operario_crea_producto_y_consulta_activos(escenario):
     assert unidades.status_code == 200
     assert {u['sufijo'] for u in unidades.json()} == {'kg', 'un'}
 
+
 def test_operario_no_administra_productos(escenario):
     self = escenario
     producto_id = self.crear_producto().json()['id']
@@ -103,6 +115,7 @@ def test_operario_no_administra_productos(escenario):
     assert self.client.put(f'/productos/{producto_id}', json={'nombre': 'Otro'}, headers=operario).status_code == 403
     assert self.client.delete(f'/productos/{producto_id}', headers=operario).status_code == 403
     assert self.crear_producto('X', persona=self.sin_permisos).status_code == 403
+
 
 def test_baja_y_reactivacion_de_producto(escenario):
     self = escenario
@@ -114,6 +127,7 @@ def test_baja_y_reactivacion_de_producto(escenario):
     reactivado = self.client.put(f'/productos/{producto_id}', json={'activo': True}, headers=admin)
     assert reactivado.json()['activo']
 
+
 def test_listado_de_productos_con_busqueda_y_orden(escenario):
     self = escenario
     for nombre in ('Prepizza', 'Budín', 'Alfajores'):
@@ -122,3 +136,81 @@ def test_listado_de_productos_con_busqueda_y_orden(escenario):
     datos = self.client.get('/productos/?ordenar_por=nombre&orden=asc', headers=admin).json()
     assert [p['nombre'] for p in datos['items']] == ['Alfajores', 'Budín', 'Prepizza']
     assert self.client.get('/productos/?buscar=piz', headers=admin).json()['total'] == 1
+
+
+def test_detalle_producto_devuelve_receta_vigente(
+    client,
+    db_session,
+    headers_administradora,
+    persona_administradora,
+    producto,
+    unidad_medida,
+    insumo_activo,
+    otro_insumo_activo,
+):
+    receta = Receta(producto_id=producto.id)
+    db_session.add(receta)
+    db_session.flush()
+    version = VersionReceta(
+        receta_id=receta.id,
+        numero=1,
+        estado=EstadoVersionReceta.VIGENTE,
+        motivo="Versión inicial",
+        rendimiento_cantidad=15,
+        rendimiento_unidad_id=unidad_medida.id,
+        creado_por_id=persona_administradora.id,
+    )
+    db_session.add(version)
+    db_session.flush()
+    db_session.add_all([
+        RenglonReceta(
+            version_id=version.id,
+            orden=1,
+            insumo_id=insumo_activo.id,
+            tipo=TipoInsumo.INGREDIENTE,
+            cantidad=6,
+            unidad_medida_id=unidad_medida.id,
+        ),
+        RenglonReceta(
+            version_id=version.id,
+            orden=2,
+            insumo_id=otro_insumo_activo.id,
+            tipo=TipoInsumo.INGREDIENTE,
+            cantidad=1.5,
+            unidad_medida_id=unidad_medida.id,
+        ),
+    ])
+    db_session.commit()
+
+    respuesta = client.get(f"/productos/{producto.id}", headers=headers_administradora)
+
+    assert respuesta.status_code == 200, respuesta.text
+    datos = respuesta.json()
+    assert datos["nombre"] == producto.nombre
+    assert datos["activo"] is True
+    assert datos["receta"]["rendimiento_cantidad"] == 15
+    assert datos["receta"]["rendimiento_unidad"]["sufijo"] == "kg"
+    assert [
+        (i["insumo_nombre"], i["cantidad_requerida"], i["unidad_medida"]["sufijo"])
+        for i in datos["receta"]["insumos"]
+    ] == [
+        (insumo_activo.nombre, 6, "kg"),
+        (otro_insumo_activo.nombre, 1.5, "kg"),
+    ]
+
+
+def test_detalle_producto_sin_receta_devuelve_receta_nula(client, headers_administradora, producto):
+    respuesta = client.get(f"/productos/{producto.id}", headers=headers_administradora)
+
+    assert respuesta.status_code == 200, respuesta.text
+    datos = respuesta.json()
+    assert datos["id"] == producto.id
+    assert datos["receta"] is None
+
+
+def test_detalle_producto_conserva_permisos(
+    client, headers_operadora, headers_sin_permisos, producto
+):
+    assert client.get(f"/productos/{producto.id}").status_code == 401
+    assert client.get(f"/productos/{producto.id}", headers=headers_sin_permisos).status_code == 403
+    assert client.get(f"/productos/{producto.id}", headers=headers_operadora).status_code == 200

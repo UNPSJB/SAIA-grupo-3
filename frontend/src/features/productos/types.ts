@@ -1,5 +1,20 @@
 import type { UnidadMedida } from '../unidadMedida/types';
 
+export interface InsumoRecetaDetalle {
+  insumo_id: number;
+  insumo_nombre: string;
+  cantidad_requerida: number;
+  unidad_medida: UnidadMedida;
+}
+
+export interface RecetaProductoDetalle {
+  receta_id: number;
+  version_numero: number;
+  rendimiento_cantidad: number;
+  rendimiento_unidad: UnidadMedida;
+  insumos: InsumoRecetaDetalle[];
+}
+
 export interface Producto {
   id: number;
   nombre: string;
@@ -7,6 +22,7 @@ export interface Producto {
   unidad_medida_id: number;
   unidad_medida: UnidadMedida;
   activo: boolean;
+  receta?: RecetaProductoDetalle | null;
 }
 
 export interface ProductoCreate {
