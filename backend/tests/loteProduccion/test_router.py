@@ -7,7 +7,6 @@ from tests.abastecimiento.stock_trazable import identificar_stock
 from sqlalchemy import select
 
 from tests.database import (
-    client,
     headers_administradora,
     headers_operadora,
     headers_sin_permisos,

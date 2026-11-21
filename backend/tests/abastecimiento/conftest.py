@@ -2,13 +2,9 @@ from datetime import date, timedelta
 from uuid import uuid4
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 from src.abastecimiento import schemas, services
-from src.abastecimiento.router import router
 from src.auth.utils import create_access_token
-from src.database import get_db
 from src.documentacion.constants import DIAS_AVISO_VENCIMIENTO
 from tests.database import (  # noqa: F401 — fixtures compartidas del proyecto
     db_session,
@@ -17,22 +13,6 @@ from tests.database import (  # noqa: F401 — fixtures compartidas del proyecto
     producto,
     unidad_medida,
 )
-
-
-@pytest.fixture
-def client(db_session):
-    app = FastAPI()
-    app.include_router(router)
-
-    def override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = override_get_db
-    try:
-        with TestClient(app) as test_client:
-            yield test_client
-    finally:
-        app.dependency_overrides.clear()
 
 
 @pytest.fixture

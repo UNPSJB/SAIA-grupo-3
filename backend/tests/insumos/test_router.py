@@ -1,5 +1,4 @@
 from tests.database import (
-    client,
     db_session,
     headers_administradora,
     persona_administradora,
