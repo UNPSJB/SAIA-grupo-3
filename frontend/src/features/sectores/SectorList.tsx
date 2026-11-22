@@ -42,7 +42,7 @@ export function SectorList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina de Sectores">
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina de Sectores" placeholder="Buscar por nombre">
         <Form.Check
           type="switch"
           id="switch-inactivos-sectores"

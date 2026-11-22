@@ -44,7 +44,7 @@ export function EquipoList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Inventario de Equipos">
+      <ListControls placeholder="Buscar por nombre o N.º de serie" busqueda={busqueda} setBusqueda={setBusqueda} title="Inventario de Equipos">
         <Form.Check
           type="switch"
           id="switch-inactivos"

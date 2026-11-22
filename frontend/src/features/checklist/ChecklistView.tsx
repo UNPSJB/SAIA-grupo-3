@@ -118,7 +118,7 @@ export function ChecklistView({ personalId }: ChecklistViewProps) {
         </div>
       )}
 
-      <ListControls {...filters}>
+      <ListControls {...filters} placeholder="Buscar por tarea, plan, frecuencia o estado" >
         <Button
           variant="success"
           onClick={recargar}

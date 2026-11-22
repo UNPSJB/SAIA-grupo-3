@@ -37,7 +37,7 @@ export function AuditoriaList({ onViewClick }: AuditoriaListProps) {
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} />
+      <ListControls placeholder="Buscar por nombre o descripción" busqueda={busqueda} setBusqueda={setBusqueda} />
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <div className="d-flex flex-wrap align-items-end gap-3 p-3 border-bottom">

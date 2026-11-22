@@ -49,7 +49,7 @@ export function InsumoQuimicoList({
       <ListControls
         busqueda={busqueda}
         setBusqueda={setBusqueda}
-        title="Nómina de Insumos Químicos"
+        title="Nómina de Insumos Químicos" placeholder="Buscar por nombre"
       >
         <Form.Check
           type="switch"

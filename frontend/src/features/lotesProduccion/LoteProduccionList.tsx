@@ -39,6 +39,7 @@ export function LoteProduccionList({ onNuevoClick, onViewClick }: LoteProduccion
       {loading && <LoadingSpinner mensaje="Cargando lotes..." />}
       {error && <ErrorAlert mensaje={error} />}
       <ListControls
+        placeholder="Buscar por N.º de lote o producto"
         busqueda={busqueda}
         setBusqueda={setBusqueda}
         title={esAdministrador ? 'Lotes producidos' : 'Lotes que registraste'}

@@ -52,7 +52,8 @@ export function DocumentosVigentesPage() {
       <h2 className="mb-4 border-bottom pb-2 text-secondary">Documentos vigentes</h2>
       {!detalle && (
         <>
-          <ListControls
+          <ListControls 
+            placeholder="Buscar por nombre"
             busqueda={lista.busqueda}
             setBusqueda={lista.setBusqueda}
             title="Consultá la versión vigente antes de operar"

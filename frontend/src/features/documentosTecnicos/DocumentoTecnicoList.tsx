@@ -41,6 +41,7 @@ export function DocumentoTecnicoList({ onNuevo, onVer, onEditar }: DocumentoTecn
   return (
     <>
       <ListControls
+       placeholder="Buscar por nombre"
         busqueda={busqueda}
         setBusqueda={cambiarBusqueda}
         title="Manuales, procedimientos y recetas"

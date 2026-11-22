@@ -128,7 +128,7 @@ export function ReporteConsumosPage() {
         <h2 className="mb-4 border-bottom pb-2 text-secondary">Reporte de Consumo de Insumos</h2>
       </div>
 
-      <ListControls {...filters} />
+      <ListControls {...filters} placeholder="Buscar por insumo químico o unidad" />
       <Card className="shadow-sm border-0 mb-4 bg-body">
         <Card.Body>
           <Row className="g-3 align-items-end">

@@ -1,13 +1,23 @@
 import type { ReactNode } from 'react';
 import { Form } from 'react-bootstrap';
+
 interface Props {
   busqueda: string;
   setBusqueda: (value: string) => void;
   title?: ReactNode;
   children?: ReactNode;
   filters?: ReactNode;
+  placeholder?: string;
 }
-export function ListControls({ busqueda, setBusqueda, title, children, filters }: Props) {
+
+export function ListControls({
+  busqueda,
+  setBusqueda,
+  title,
+  children,
+  filters,
+  placeholder = 'Buscar...',
+}: Props) {
   return (
     <div className="mb-3">
       {title && <h4 className="text-secondary fw-normal mb-3">{title}</h4>}
@@ -15,11 +25,11 @@ export function ListControls({ busqueda, setBusqueda, title, children, filters }
         <div className="d-flex flex-wrap align-items-center gap-2">
           <Form.Control
             type="search"
-            aria-label="Buscar registros"
-            placeholder="Buscar..."
+            aria-label={placeholder}
+            placeholder={placeholder}
             value={busqueda}
             onChange={(event) => setBusqueda(event.target.value)}
-            style={{ width: 320, maxWidth: '100%' }}
+            style={{ width: 396, maxWidth: '100%' }}
           />
           {filters}
         </div>

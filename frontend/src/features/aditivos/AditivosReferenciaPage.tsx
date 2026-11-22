@@ -165,7 +165,7 @@ export function AditivosReferenciaPage() {
       {route.error && <ErrorAlert mensaje={route.error} />}
       {route.mode === 'listado' && (
         <>
-          <ListControls {...list} title="Lista de referencia de aditivos">
+          <ListControls {...list} title="Lista de referencia de aditivos" placeholder="Buscar por nombre, INS o clase funcional">
             <Form.Check
               id="aditivos-inactivos"
               type="switch"

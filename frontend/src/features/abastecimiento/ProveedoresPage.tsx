@@ -53,6 +53,7 @@ function ProveedoresListado({ onNuevo, onVer, onEditar, onEstado }: ListadoProps
   return (
     <>
       <ListControls
+        placeholder="Buscar por nombre o CUIT"
         title="Nómina de Proveedores"
         busqueda={params.get('buscar') ?? ''}
         setBusqueda={(valor) => filtrar('buscar', valor)}

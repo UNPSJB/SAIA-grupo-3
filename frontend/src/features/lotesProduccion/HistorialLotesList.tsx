@@ -49,7 +49,7 @@ export function HistorialLotesList({ onViewClick }: HistorialLotesListProps) {
       {loading && <LoadingSpinner mensaje="Cargando lotes..." />}
       {error && <ErrorAlert mensaje={error} />}
       {productos.error && <ErrorAlert mensaje={productos.error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} />
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} placeholder="Buscar por N.º de lote o producto" />
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <div className="d-flex flex-wrap align-items-end gap-3 p-3 border-bottom">

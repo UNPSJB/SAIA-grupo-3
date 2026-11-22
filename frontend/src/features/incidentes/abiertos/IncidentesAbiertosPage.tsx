@@ -90,7 +90,7 @@ export function IncidentesAbiertosPage() {
           <Form.Control
             type="search"
             aria-label="Buscar incidente abierto"
-            placeholder="Buscar..."
+            placeholder="Buscar por descripción o DNI"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             style={{ width: '220px', maxWidth: '100%' }}

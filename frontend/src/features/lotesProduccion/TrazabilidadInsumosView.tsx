@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { Button, Card, Col, Form, Pagination, Row, Spinner, Table } from 'react-bootstrap';
+import { Button, Card, Col, Form, Row, Spinner, Table } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
+import { ListPagination } from '../../shared/components/ListPagination';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ReporteImpresion, imprimirDocumento } from '../../shared/components/ReporteImpresion';
 import { useAuth } from '../../shared/hooks/useAuth';
@@ -10,6 +11,8 @@ import { formatearFecha } from '../../shared/libreria/fechas';
 import { formatearNumero } from '../../shared/libreria/formato';
 import type { ConsumoRecepcion, LoteRecepcion } from '../abastecimiento/types';
 import './TrazabilidadInsumosView.css';
+
+const USOS_POR_PAGINA = 10;
 
 interface TrazabilidadInsumosViewProps {
   busqueda: string;
@@ -48,6 +51,15 @@ export function TrazabilidadInsumosView({
 }: TrazabilidadInsumosViewProps) {
   const { currentUser } = useAuth();
   const [fechaImpresion, setFechaImpresion] = useState<string | null>(null);
+  const [paginaUsos, setPaginaUsos] = useState(1);
+
+  const totalUsos = usos?.length ?? 0;
+  const totalPaginasUsos = Math.max(1, Math.ceil(totalUsos / USOS_POR_PAGINA));
+  const paginaUsosActual = Math.min(paginaUsos, totalPaginasUsos);
+  const usosPaginados = (usos ?? []).slice(
+    (paginaUsosActual - 1) * USOS_POR_PAGINA,
+    paginaUsosActual * USOS_POR_PAGINA,
+  );
 
   const exportarPdf = () => {
     flushSync(() => setFechaImpresion(new Date().toISOString()));
@@ -90,7 +102,12 @@ export function TrazabilidadInsumosView({
                   <span className="traza-insumos-count">{total}</span>
                 )}
                 {loading && (
-                  <Spinner animation="border" size="sm" role="status" aria-label="Actualizando recepciones" />
+                  <Spinner
+                    animation="border"
+                    size="sm"
+                    role="status"
+                    aria-label="Actualizando recepciones"
+                  />
                 )}
               </div>
               <div className="traza-insumos-search">
@@ -102,7 +119,7 @@ export function TrazabilidadInsumosView({
                     aria-label="Buscar por número de lote, insumo o proveedor"
                     value={busqueda}
                     onChange={(evento) => onBusquedaChange(evento.target.value)}
-                    placeholder="Buscar lote, insumo o proveedor…"
+                    placeholder="Buscar por lote, insumo o proveedor"
                     autoComplete="off"
                     size="sm"
                   />
@@ -140,59 +157,54 @@ export function TrazabilidadInsumosView({
                       </td>
                     </tr>
                   )}
-                    {lotes.map((lote) => (
-                      <tr key={lote.id}>
-                        <td>{lote.numero_lote}</td>
-                        <td>
-                          {lote.insumo_nombre.endsWith(' · DEMO abastecimiento') ? (
-                            <>
-                              {lote.insumo_nombre.slice(0, -' · DEMO abastecimiento'.length)}
-                              <small className="d-block text-muted">DEMO abastecimiento</small>
-                            </>
-                          ) : lote.insumo_nombre}
-                        </td>
-                        <td>{lote.proveedor_nombre}</td>
-                        <td>{formatearFecha(lote.fecha_recepcion)}</td>
-                        <td className="text-end">
-                          {lote.cantidad_disponible.toLocaleString('es-AR')} {lote.unidad}
-                        </td>
-                        <td className="text-center">
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            className="text-nowrap"
-                            aria-label={`Ver detalle del lote ${lote.numero_lote}`}
-                            onClick={() => onVerDetalles(lote.id)}
-                          >
-                            <i className="bi bi-eye-fill me-1" aria-hidden="true"></i>
-                            Ver detalle
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                  {lotes.map((lote) => (
+                    <tr key={lote.id}>
+                      <td>{lote.numero_lote}</td>
+                      <td>
+                        {lote.insumo_nombre.endsWith(' · DEMO abastecimiento') ? (
+                          <>
+                            {lote.insumo_nombre.slice(0, -' · DEMO abastecimiento'.length)}
+                            <small className="d-block text-muted">DEMO abastecimiento</small>
+                          </>
+                        ) : (
+                          lote.insumo_nombre
+                        )}
+                      </td>
+                      <td>{lote.proveedor_nombre}</td>
+                      <td>{formatearFecha(lote.fecha_recepcion)}</td>
+                      <td className="text-end">
+                        {lote.cantidad_disponible.toLocaleString('es-AR')} {lote.unidad}
+                      </td>
+                      <td className="text-center">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          className="text-nowrap"
+                          aria-label={`Ver detalle del lote ${lote.numero_lote}`}
+                          onClick={() => {
+                            setPaginaUsos(1);
+                            onVerDetalles(lote.id);
+                          }}
+                        >
+                          <i className="bi bi-eye-fill me-1" aria-hidden="true"></i>
+                          Ver detalle
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </Table>
-              <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 p-3 border-top">
-                {total > 0 && (
-                  <small className="text-muted">
-                    Página {page} de {pages} ({total} registros)
-                  </small>
-                )}
-                {pages > 1 && (
-                  <Pagination className="mb-0 flex-wrap">
-                    {Array.from({ length: pages }, (_, indice) => indice + 1).map((numero) => (
-                      <Pagination.Item
-                        key={numero}
-                        active={numero === page}
-                        onClick={() => onPageChange(numero)}
-                      >
-                        {numero}
-                      </Pagination.Item>
-                    ))}
-                  </Pagination>
-                )}
-              </div>
             </Card.Body>
+            {pages > 0 && (
+              <Card.Footer className="d-flex flex-column flex-md-row justify-content-between align-items-center bg-body border-top">
+                <ListPagination
+                  page={page}
+                  totalPages={pages}
+                  total={total}
+                  changePage={onPageChange}
+                />
+              </Card.Footer>
+            )}
           </Card>
         </>
       )}
@@ -242,39 +254,55 @@ export function TrazabilidadInsumosView({
                     Este lote de insumo todavía no fue utilizado en producción.
                   </p>
                 ) : (
-                  <Table striped hover responsive className="align-middle mb-0">
-                    <thead className="table-theme">
-                      <tr>
-                        <th>Lote de producción</th>
-                        <th>Producto</th>
-                        <th>Fecha de producción</th>
-                        <th className="text-end">Cantidad utilizada</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {usos.map((uso) => (
-                        <tr key={uso.lote_produccion_id}>
-                          <td>
-                            <Link to={`/lotes-produccion/${uso.lote_produccion_id}`}>
-                              {uso.codigo}
-                            </Link>
-                          </td>
-                          <td>{uso.producto}</td>
-                          <td>{formatearFecha(uso.fecha_produccion)}</td>
-                          <td className="text-end">
-                            {uso.cantidad_utilizada.toLocaleString('es-AR')}{' '}
-                            {loteSeleccionado.unidad}
-                          </td>
+                  <>
+                    <Table striped hover responsive className="align-middle mb-0">
+                      <thead className="table-theme">
+                        <tr>
+                          <th>Lote de producción</th>
+                          <th>Producto</th>
+                          <th>Fecha de producción</th>
+                          <th className="text-end">Cantidad utilizada</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </Table>
+                      </thead>
+                      <tbody>
+                        {usosPaginados.map((uso) => (
+                          <tr key={uso.lote_produccion_id}>
+                            <td>
+                              <Link to={`/lotes-produccion/${uso.lote_produccion_id}`}>
+                                {uso.codigo}
+                              </Link>
+                            </td>
+                            <td>{uso.producto}</td>
+                            <td>{formatearFecha(uso.fecha_produccion)}</td>
+                            <td className="text-end">
+                              {uso.cantidad_utilizada.toLocaleString('es-AR')}{' '}
+                              {loteSeleccionado.unidad}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center pt-3 border-top mt-3">
+                      <ListPagination
+                        page={paginaUsosActual}
+                        totalPages={totalPaginasUsos}
+                        total={totalUsos}
+                        changePage={setPaginaUsos}
+                      />
+                    </div>
+                  </>
                 )}
               </>
             )}
           </Card.Body>
           <Card.Footer className="bg-body border-top-0 d-flex justify-content-end pb-4 px-4">
-            <Button variant="secondary" onClick={onVolver}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setPaginaUsos(1);
+                onVolver();
+              }}
+            >
               Volver al listado
             </Button>
           </Card.Footer>

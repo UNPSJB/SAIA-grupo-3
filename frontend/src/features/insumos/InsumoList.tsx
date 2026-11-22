@@ -44,7 +44,7 @@ export function InsumoList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina de Insumos">
+      <ListControls placeholder="Buscar por nombre" busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina de Insumos">
         <Form.Check
           type="switch"
           id="Insumo-solo-stock-bajo"

@@ -30,7 +30,7 @@ function RecetasAdministracion() {
   return (
     <Container className="py-2">
       <h2 className="mb-4 border-bottom pb-2 text-secondary">Recetas</h2>
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Recetas por producto">
+      <ListControls placeholder="Buscar por producto" busqueda={busqueda} setBusqueda={setBusqueda} title="Recetas por producto">
         <Form.Check
           id="recetas-productos-inactivos"
           type="switch"
