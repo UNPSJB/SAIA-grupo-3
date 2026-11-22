@@ -22,7 +22,10 @@ import type { InsumoCreate } from '../insumos/types';
 import { ProductoForm } from '../productos/ProductoForm';
 import { createProducto, getProductosActivos } from '../productos/productoApi';
 import type { Producto, ProductoCreate } from '../productos/types';
+import { listarRecetasVigentes } from '../recetas/recetaApi';
+import type { RecetaVigente } from '../recetas/types';
 import { getInsumosDisponibles, getLotesDisponibles } from './loteProduccionApi';
+import { PrecargaDesdeReceta } from './PrecargaDesdeReceta';
 import './LoteProduccionForm.css';
 import type {
   InsumoSeleccionable,
@@ -83,19 +86,25 @@ function calcularAsignacionAutomatica(
   return asignaciones;
 }
 
-export function LoteProduccionForm({ onGuardar, onCancelar, precarga }: LoteProduccionFormProps) {
+export function LoteProduccionForm({
+  onGuardar,
+  onCancelar,
+  precarga: precargaInicial,
+}: LoteProduccionFormProps) {
   const { currentUser } = useAuth();
   const esAdministrador = currentUser?.administrar === true;
   const hoy = fechaHoyIso();
   const form = useForm<ValoresLote>({
     defaultValues: {
-      productoId: precarga ? String(precarga.productoId) : '',
+      productoId: precargaInicial ? String(precargaInicial.productoId) : '',
       fechaProduccion: hoy,
-      cantidad: precarga?.cantidad ? String(precarga.cantidad) : '',
+      cantidad: precargaInicial?.cantidad ? String(precargaInicial.cantidad) : '',
       observaciones: '',
     },
   });
   const { errors, isSubmitting, submitCount } = form.formState;
+  const [precarga, setPrecarga] = useState(precargaInicial);
+  const [recetasVigentes, setRecetasVigentes] = useState<RecetaVigente[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [cargandoProductos, setCargandoProductos] = useState(true);
   const [errorProductos, setErrorProductos] = useState<string | null>(null);
@@ -136,11 +145,26 @@ export function LoteProduccionForm({ onGuardar, onCancelar, precarga }: LoteProd
 
   useEffect(() => {
     let activo = true;
+    listarRecetasVigentes()
+      .then((datos) => {
+        if (activo) setRecetasVigentes(datos);
+      })
+      .catch(() => {
+        if (activo) setRecetasVigentes([]);
+      });
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
     getInsumosDisponibles()
       .then((datos) => {
         if (!activo) return;
         setInsumos(datos);
-        if (precarga) setInsumosSeleccionados(seleccionDesdePrecarga(precarga, datos));
+        if (precargaInicial)
+          setInsumosSeleccionados(seleccionDesdePrecarga(precargaInicial, datos));
       })
       .catch((err: unknown) => {
         if (activo)
@@ -154,7 +178,7 @@ export function LoteProduccionForm({ onGuardar, onCancelar, precarga }: LoteProd
     return () => {
       activo = false;
     };
-  }, [precarga]);
+  }, [precargaInicial]);
 
   const productoId = useWatch({ control: form.control, name: 'productoId' });
   const cantidadProducida = useWatch({ control: form.control, name: 'cantidad' });
@@ -173,6 +197,17 @@ export function LoteProduccionForm({ onGuardar, onCancelar, precarga }: LoteProd
     Number(cantidadProducida) !== precarga.cantidad;
   const fechaProduccion = useWatch({ control: form.control, name: 'fechaProduccion' });
   const productoElegido = productos.find((producto) => String(producto.id) === productoId);
+  const recetaDelProducto = recetasVigentes.find(
+    (receta) => String(receta.producto.id) === productoId,
+  );
+
+  const aplicarPrecarga = (nueva: PrecargaLote) => {
+    setPrecarga(nueva);
+    setInsumosSeleccionados(seleccionDesdePrecarga(nueva, insumos));
+    if (nueva.cantidad !== null) form.setValue('cantidad', String(nueva.cantidad));
+    form.clearErrors('cantidad');
+    form.clearErrors('root');
+  };
   const idsInsumosSeleccionados = insumosSeleccionados
     .map(({ insumo }) => insumo.id)
     .join(',');
@@ -496,6 +531,14 @@ export function LoteProduccionForm({ onGuardar, onCancelar, precarga }: LoteProd
                 </Form.Text>
               )}
             </Form.Group>
+            {recetaDelProducto && !cargandoInsumos && (
+              <PrecargaDesdeReceta
+                key={recetaDelProducto.receta_id}
+                receta={recetaDelProducto}
+                aplicada={vinculadoAReceta}
+                onPrecargar={aplicarPrecarga}
+              />
+            )}
             <div className="row">
               <Form.Group controlId="LoteForm-fecha" className="col-sm-6 mb-3">
                 <Form.Label>Fecha de producción</Form.Label>
