@@ -29,6 +29,8 @@ export async function getLotesProduccion(
   if (filtros.productoId) params.set('producto_id', String(filtros.productoId));
   if (filtros.fechaDesde) params.set('fecha_desde', filtros.fechaDesde);
   if (filtros.fechaHasta) params.set('fecha_hasta', filtros.fechaHasta);
+  if (filtros.estado) params.set('estado', filtros.estado);
+  if (filtros.incluirAnulados) params.set('incluir_anulados', 'true');
   const response = await fetchWithAuth(`${API_URL}/?${params}`);
   if (!response.ok)
     throw new Error(
@@ -117,5 +119,16 @@ export async function cerrarLoteProduccion(
   });
   if (!response.ok)
     throw new Error(await mensajeDeRespuesta(response, 'Error al cerrar el lote de producción.'));
+  return response.json();
+}
+
+export async function anularLoteProduccion(id: number, motivo: string): Promise<LoteProduccion> {
+  const response = await fetchWithAuth(`${API_URL}/${id}/anular`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ motivo }),
+  });
+  if (!response.ok)
+    throw new Error(await mensajeDeRespuesta(response, 'Error al anular el lote de producción.'));
   return response.json();
 }

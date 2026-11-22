@@ -64,4 +64,5 @@ export interface ConsumoRecepcion {
   fecha_produccion: string;
   cantidad_utilizada: number;
   activo: boolean;
+  estado: string;
 }

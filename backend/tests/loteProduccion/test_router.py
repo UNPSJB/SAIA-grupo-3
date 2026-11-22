@@ -482,6 +482,7 @@ def test_endpoint_buscar_lote_y_consultar_trazabilidad_en_ambos_sentidos(
             "fecha_produccion": fecha_produccion,
             "cantidad_utilizada": 3,
             "activo": True,
+            "estado": "abierto",
         }
     ]
 

@@ -207,3 +207,17 @@ En bases creadas antes de E9-01, ejecutar **con el servidor detenido**:
 ```
 
 Guarda un respaldo `.bak`, crea las tablas nuevas y agrega `tipo` y `aditivo_referencia_id` a `insumos`; los insumos existentes quedan como ingredientes. Repetirla no vuelve a aplicar cambios. Después se puede correr el seed para cargar clases, aditivos y recetas de prueba.
+
+### Estados del lote de producción
+
+Un lote pasa por `abierto` → `en_produccion` → `finalizado` → `cerrado`. Las tres primeras transiciones son automáticas según los pasos de elaboración: al realizar el primero pasa a `en_produccion`, al realizarlos todos a `finalizado`, y si se anula un paso vuelve al estado que corresponda. Un lote sin pasos queda `abierto` hasta que un administrador lo cierra.
+
+Un administrador puede **anular** un lote en cualquier estado (`POST /lotes-produccion/{id}/anular` con `motivo`). La anulación registra fecha y responsable, deja el lote en solo lectura y lo excluye de producción del día, estadísticas y rótulos; no devuelve el stock consumido y conserva su trazabilidad. El listado oculta los anulados salvo que se filtre por `estado=anulado` o se pida `incluir_anulados=true`. La baja lógica (`DELETE`) queda solo para lotes `abierto` cargados por error.
+
+En bases creadas antes de este cambio, ejecutar **con el servidor detenido**:
+
+```bash
+.venv/bin/python -m scripts.migrate_estado_lote --database /ruta/absoluta/a/la/base.db
+```
+
+Guarda un respaldo `.bak`, agrega `fecha_anulacion`, `anulado_por_id` y `motivo_anulacion` a `lotes_produccion` y recalcula el estado de los lotes en curso según sus pasos. Repetirla no vuelve a aplicar cambios.

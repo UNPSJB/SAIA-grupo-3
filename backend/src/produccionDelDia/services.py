@@ -4,8 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.exceptions import PermissionDenied
-from src.loteProduccion.constants import EstadoLote
+from src.loteProduccion.constants import ESTADOS_EN_CURSO
 from src.loteProduccion.models import LoteProduccion
+from src.loteProduccion.services import actualizar_estado_produccion
 from src.personal.models import Personal
 from src.produccionDelDia import exceptions, schemas
 from src.produccionDelDia.constants import AccionPasoLote, EstadoPasoLote
@@ -19,7 +20,7 @@ def _validar_acceso(lote: LoteProduccion, persona: Personal) -> None:
 
 def _validar_operable(lote: LoteProduccion, persona: Personal) -> None:
     _validar_acceso(lote, persona)
-    if lote.estado != EstadoLote.ABIERTO or not lote.activo:
+    if lote.estado not in ESTADOS_EN_CURSO or not lote.activo:
         raise exceptions.LoteNoOperable()
 
 
@@ -52,7 +53,7 @@ def listar_produccion_del_dia(db: Session, persona: Personal) -> list[schemas.Lo
     query = (
         select(LoteProduccion)
         .where(
-            LoteProduccion.estado == EstadoLote.ABIERTO,
+            LoteProduccion.estado.in_(ESTADOS_EN_CURSO),
             LoteProduccion.activo.is_(True),
             LoteProduccion.pasos.any(),
         )
@@ -93,6 +94,7 @@ def realizar_paso(
             foto_path=foto_path,
         )
     )
+    actualizar_estado_produccion(paso.lote)
     db.commit()
     db.refresh(paso)
     return paso
@@ -117,6 +119,7 @@ def anular_paso(db: Session, paso_id: int, persona: Personal, datos: schemas.Anu
             motivo=datos.motivo,
         )
     )
+    actualizar_estado_produccion(paso.lote)
     db.commit()
     db.refresh(paso)
     return paso

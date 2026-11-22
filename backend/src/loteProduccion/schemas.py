@@ -73,6 +73,10 @@ class LoteProduccion(BaseModel):
     factor_receta: Optional[float] = None
     pasos_pendientes_al_cerrar: Optional[int] = None
     motivo_cierre_pendientes: Optional[str] = None
+    fecha_anulacion: Optional[datetime] = None
+    anulado_por_id: Optional[int] = None
+    anulado_por: Optional[PersonalResumen] = None
+    motivo_anulacion: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -87,6 +91,15 @@ class VersionRecetaResumen(BaseModel):
 
 class CierreLote(BaseModel):
     confirmar_pasos_pendientes: bool = False
+    motivo: Optional[str] = Field(default=None, max_length=500)
+
+    @field_validator("motivo", mode="before")
+    @classmethod
+    def validar_motivo(cls, valor: object) -> Optional[str]:
+        return _texto_opcional(valor)
+
+
+class AnulacionLote(BaseModel):
     motivo: Optional[str] = Field(default=None, max_length=500)
 
     @field_validator("motivo", mode="before")

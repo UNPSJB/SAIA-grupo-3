@@ -22,6 +22,22 @@ class LoteCerrado(BadRequest):
     DETAIL = ErrorCode.LOTE_CERRADO
 
 
+class LoteAnulado(BadRequest):
+    DETAIL = ErrorCode.LOTE_ANULADO
+
+
+class LoteDadoDeBaja(BadRequest):
+    DETAIL = ErrorCode.LOTE_DADO_DE_BAJA
+
+
+class BajaConProduccionIniciada(BadRequest):
+    DETAIL = ErrorCode.BAJA_CON_PRODUCCION_INICIADA
+
+
+class MotivoAnulacionObligatorio(BadRequest):
+    DETAIL = ErrorCode.MOTIVO_ANULACION_OBLIGATORIO
+
+
 class InsumoNoEncontrado(NotFound):
     DETAIL = ErrorCode.INSUMO_NO_ENCONTRADO
 

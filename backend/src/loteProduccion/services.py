@@ -37,9 +37,26 @@ def _validar_producto(db: Session, producto_id: int, producto_actual_id: int | N
         raise exceptions.ProductoInactivo()
 
 
-def _validar_abierto(db_lote: LoteProduccion) -> None:
+def _validar_editable(db_lote: LoteProduccion) -> None:
+    if db_lote.estado == EstadoLote.ANULADO:
+        raise exceptions.LoteAnulado()
     if db_lote.estado == EstadoLote.CERRADO:
         raise exceptions.LoteCerrado()
+
+
+def _validar_baja(db_lote: LoteProduccion) -> None:
+    if db_lote.estado != EstadoLote.ABIERTO:
+        raise exceptions.BajaConProduccionIniciada()
+
+
+def actualizar_estado_produccion(db_lote: LoteProduccion) -> None:
+    realizados = sum(1 for paso in db_lote.pasos if paso.estado == EstadoPasoLote.REALIZADO)
+    if realizados == 0:
+        db_lote.estado = EstadoLote.ABIERTO
+    elif realizados < len(db_lote.pasos):
+        db_lote.estado = EstadoLote.EN_PRODUCCION
+    else:
+        db_lote.estado = EstadoLote.FINALIZADO
 
 
 def _generar_codigo(db: Session, fecha: date) -> str:
@@ -182,12 +199,18 @@ def listar_lotes(
     fecha_desde: date | None = None,
     fecha_hasta: date | None = None,
     registrado_por_id: int | None = None,
+    estado: EstadoLote | None = None,
+    incluir_anulados: bool = False,
 ) -> Dict[str, Any]:
     if fecha_desde and fecha_hasta and fecha_desde > fecha_hasta:
         raise exceptions.RangoFechasInvalido()
     query = select(LoteProduccion).join(Producto, LoteProduccion.producto_id == Producto.id)
     if not mostrar_inactivos:
         query = query.where(LoteProduccion.activo.is_(True))
+    if estado is not None:
+        query = query.where(LoteProduccion.estado == estado)
+    elif not incluir_anulados:
+        query = query.where(LoteProduccion.estado != EstadoLote.ANULADO)
     if producto_id is not None:
         query = query.where(LoteProduccion.producto_id == producto_id)
     if fecha_desde is not None:
@@ -210,6 +233,7 @@ def listar_lotes(
             "fecha_produccion": LoteProduccion.fecha_produccion,
             "cantidad": LoteProduccion.cantidad,
             "fecha_registro": LoteProduccion.fecha_registro,
+            "estado": LoteProduccion.estado,
         },
     )
     total = db.scalar(select(func.count()).select_from(query.subquery()))
@@ -304,8 +328,10 @@ def trazabilidad_lote_produccion(
 
 def modificar_lote(db: Session, lote_id: int, lote: schemas.LoteProduccionUpdate) -> LoteProduccion:
     db_lote = leer_lote(db, lote_id)
-    _validar_abierto(db_lote)
+    _validar_editable(db_lote)
     datos = lote.model_dump(exclude_unset=True)
+    if datos.get("activo") is False:
+        _validar_baja(db_lote)
     if datos.get("producto_id") is not None:
         _validar_producto(db, datos["producto_id"], producto_actual_id=db_lote.producto_id)
     if datos.get("fecha_produccion") is not None:
@@ -330,19 +356,38 @@ def modificar_lote(db: Session, lote_id: int, lote: schemas.LoteProduccionUpdate
 
 def eliminar_lote(db: Session, lote_id: int) -> LoteProduccion:
     db_lote = leer_lote(db, lote_id)
-    _validar_abierto(db_lote)
+    _validar_editable(db_lote)
+    _validar_baja(db_lote)
     db_lote.activo = False
     db.commit()
     db.refresh(db_lote)
     return db_lote
 
 
+def anular_lote(
+    db: Session, lote_id: int, anulado_por_id: int, datos: schemas.AnulacionLote
+) -> LoteProduccion:
+    db_lote = leer_lote(db, lote_id)
+    if db_lote.estado == EstadoLote.ANULADO:
+        raise exceptions.LoteAnulado()
+    if not db_lote.activo:
+        raise exceptions.LoteDadoDeBaja()
+    if not datos.motivo:
+        raise exceptions.MotivoAnulacionObligatorio()
+    db_lote.estado = EstadoLote.ANULADO
+    db_lote.fecha_anulacion = datetime.now()
+    db_lote.anulado_por_id = anulado_por_id
+    db_lote.motivo_anulacion = datos.motivo
+    db.commit()
+    db.refresh(db_lote)
+    return db_lote
+
 
 def cerrar_lote(
     db: Session, lote_id: int, cerrado_por_id: int, datos: schemas.CierreLote | None = None
 ) -> LoteProduccion:
     db_lote = leer_lote(db, lote_id)
-    _validar_abierto(db_lote)
+    _validar_editable(db_lote)
     datos = datos or schemas.CierreLote()
     pendientes = sum(1 for paso in db_lote.pasos if paso.estado == EstadoPasoLote.PENDIENTE)
     if pendientes:

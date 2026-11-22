@@ -8,6 +8,7 @@ from src.auth.router_base import PermissionedRouter
 from src.database import get_db
 from src.exceptions import PermissionDenied
 from src.loteProduccion import schemas, services
+from src.loteProduccion.constants import EstadoLote
 from src.pagination import PaginatedResponse
 from src.personal.models import Personal
 
@@ -57,6 +58,8 @@ def read_lotes(
     producto_id: int | None = Query(None, ge=1),
     fecha_desde: date | None = Query(None),
     fecha_hasta: date | None = Query(None),
+    estado: EstadoLote | None = Query(None),
+    incluir_anulados: bool = Query(False),
     current_personal: Personal = Depends(puede_consultar_operacion),
 ):
     registrado_por_id = None if current_personal.administrar else current_personal.id
@@ -66,6 +69,8 @@ def read_lotes(
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
         registrado_por_id=registrado_por_id,
+        estado=estado,
+        incluir_anulados=incluir_anulados,
     )
 
 
@@ -77,6 +82,16 @@ def cerrar_lote(
     current_personal: Personal = Depends(tiene_permiso_administrar),
 ):
     return services.cerrar_lote(db, lote_id, current_personal.id, datos)
+
+
+@router.post("/{lote_id}/anular", response_model=schemas.LoteProduccion, dependencies=[Depends(tiene_permiso_administrar)])
+def anular_lote(
+    lote_id: int,
+    datos: schemas.AnulacionLote,
+    db: Session = Depends(get_db),
+    current_personal: Personal = Depends(tiene_permiso_administrar),
+):
+    return services.anular_lote(db, lote_id, current_personal.id, datos)
 
 
 @router.get("/{lote_id}", response_model=schemas.LoteProduccion, dependencies=[Depends(puede_consultar_operacion)])

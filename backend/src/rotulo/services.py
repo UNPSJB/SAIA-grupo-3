@@ -4,6 +4,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from src.loteProduccion.constants import EstadoLote
 from src.loteProduccion.models import LoteProduccion
 from src.nutricion.calculo import obtener_o_calcular
 from src.personal.models import Personal
@@ -69,7 +70,11 @@ def leer_borrador(db: Session, producto_id: int) -> BorradorRotulo:
 def ultimo_lote(db: Session, producto_id: int) -> Optional[LoteProduccion]:
     return db.scalar(
         select(LoteProduccion)
-        .where(LoteProduccion.producto_id == producto_id, LoteProduccion.activo.is_(True))
+        .where(
+            LoteProduccion.producto_id == producto_id,
+            LoteProduccion.activo.is_(True),
+            LoteProduccion.estado != EstadoLote.ANULADO,
+        )
         .order_by(LoteProduccion.fecha_produccion.desc(), LoteProduccion.id.desc())
         .limit(1)
     )

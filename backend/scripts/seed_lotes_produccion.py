@@ -15,6 +15,7 @@ from src.abastecimiento.models import (
 from src.loteProduccion.constants import EstadoLote
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
 
+LOTE_DEMO_ANULADO = 11
 
 RECETAS_LOTES_DEMO = {
     "Pan de molde blanco": [("Harina de trigo", 8.0), ("Azúcar", 0.6), ("Agua", 4.0), ("Levadura", 150.0), ("Aceite", 0.5), ("Sal", 0.12)],
@@ -154,15 +155,19 @@ def cargar_lotes_produccion(db, crear, productos, ingredientes_por_nombre, opera
     for i in range(CANTIDAD):
         fecha_lote = hoy - timedelta(days=[0, 1, 2, 3, 5, 7, 9, 12, 14, 17, 20, 23, 25, 28, 30][i])
         cerrado = i >= 8
+        anulado = i == LOTE_DEMO_ANULADO
         lote_demo, nuevo = crear(LoteProduccion, {"codigo": f"L-SEED-{i + 1:03d}"},
             producto_id=productos[i % len(productos)].id, fecha_produccion=fecha_lote,
             cantidad=float([24, 15, 60, 30, 20, 8, 40, 12, 6, 36, 10, 5, 48, 9, 7][i]),
             observaciones=None if i % 3 else "Lote de demostración del seed.",
             registrado_por_id=operadores[i % len(operadores)].id,
             fecha_registro=datetime.combine(fecha_lote, time(7 + i % 8, 30)), activo=True,
-            estado=EstadoLote.CERRADO if cerrado else EstadoLote.ABIERTO,
+            estado=EstadoLote.ANULADO if anulado else EstadoLote.CERRADO if cerrado else EstadoLote.ABIERTO,
             fecha_cierre=datetime.combine(fecha_lote + timedelta(days=1), time(18, 0)) if cerrado else None,
-            cerrado_por_id=admin.id if cerrado else None)
+            cerrado_por_id=admin.id if cerrado else None,
+            fecha_anulacion=datetime.combine(fecha_lote + timedelta(days=2), time(10, 0)) if anulado else None,
+            anulado_por_id=admin.id if anulado else None,
+            motivo_anulacion="Se detectó un insumo fuera de especificación después de producir." if anulado else None)
         if nuevo:
             asociar_ingredientes_demo(db, lote_demo, ingredientes_por_nombre, crear=crear)
         else:

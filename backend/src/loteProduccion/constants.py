@@ -5,7 +5,13 @@ PREFIJO_CODIGO = "L"
 
 class EstadoLote(StrEnum):
     ABIERTO = auto()
+    EN_PRODUCCION = auto()
+    FINALIZADO = auto()
     CERRADO = auto()
+    ANULADO = auto()
+
+
+ESTADOS_EN_CURSO = (EstadoLote.ABIERTO, EstadoLote.EN_PRODUCCION, EstadoLote.FINALIZADO)
 
 
 class ErrorCode:
@@ -14,6 +20,12 @@ class ErrorCode:
     PRODUCTO_INACTIVO = "El producto está dado de baja y no se le pueden registrar lotes."
     RANGO_FECHAS_INVALIDO = "La fecha desde no puede ser posterior a la fecha hasta."
     LOTE_CERRADO = "El lote está cerrado y no se puede modificar."
+    LOTE_ANULADO = "El lote está anulado: no se puede modificar ni utilizar."
+    LOTE_DADO_DE_BAJA = "El lote está dado de baja y no se puede anular."
+    BAJA_CON_PRODUCCION_INICIADA = (
+        "La producción del lote ya comenzó: no se puede dar de baja. Si hubo un problema, anulá el lote."
+    )
+    MOTIVO_ANULACION_OBLIGATORIO = "Indicá el motivo de la anulación."
     INSUMO_NO_ENCONTRADO = "Uno o más insumos seleccionados no existen."
     INSUMO_INACTIVO = "No se pueden asociar insumos dados de baja."
     INSUMO_DUPLICADO = "No se puede asociar el mismo insumo más de una vez al lote."

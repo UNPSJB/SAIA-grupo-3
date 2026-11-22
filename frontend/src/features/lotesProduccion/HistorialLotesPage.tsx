@@ -20,7 +20,7 @@ export function HistorialLotesPage() {
       )}
       {route.mode === 'listado' && <HistorialLotesList onViewClick={(lote) => route.open(lote)} />}
       {route.mode === 'ver' && route.item && (
-        <HistorialLoteView lote={route.item} onVolver={route.back} onCerrado={route.refresh} />
+        <HistorialLoteView lote={route.item} onVolver={route.back} onActualizado={route.refresh} />
       )}
     </Container>
   );

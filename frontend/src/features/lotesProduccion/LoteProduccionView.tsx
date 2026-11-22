@@ -1,6 +1,8 @@
 import { Badge, Button, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
+import { EstadoLoteBadge } from './EstadoLoteBadge';
+import { ESTADOS_EN_CURSO } from './estados';
 import { formatearCantidad } from './formato';
 import { TrazabilidadProduccionDetalle } from './TrazabilidadProduccionDetalle';
 import type { LoteProduccion } from './types';
@@ -22,8 +24,21 @@ export function LoteProduccionView({
         <i className="bi bi-box2 fs-5"></i>
         <h5 className="mb-0">Lote {lote.codigo}</h5>
         {!lote.activo && <Badge bg="danger">Dado de baja</Badge>}
+        <span className="ms-auto">
+          <EstadoLoteBadge estado={lote.estado} />
+        </span>
       </Card.Header>
       <Card.Body className="p-4">
+        {lote.estado === 'anulado' && (
+          <div className="alert alert-danger d-flex align-items-center gap-2" role="status">
+            <i className="bi bi-slash-circle"></i>
+            <span>
+              Este lote fue anulado
+              {lote.fecha_anulacion ? ` el ${formatearFechaHora(lote.fecha_anulacion)}` : ''}.
+              Motivo: {lote.motivo_anulacion ?? '—'}
+            </span>
+          </div>
+        )}
         {recienRegistrado && (
           <div className="alert alert-success d-flex align-items-center gap-2" role="status">
             <i className="bi bi-check-circle-fill"></i>
@@ -83,8 +98,8 @@ export function LoteProduccionView({
         <Button variant="secondary" onClick={onVolver}>
           Volver al listado
         </Button>
-        {lote.version_receta && lote.estado === 'abierto' && (
-          <Link to="/produccion-del-dia" className="btn btn-success">
+        {lote.version_receta && lote.activo && ESTADOS_EN_CURSO.includes(lote.estado) && (
+          <Link to={`/produccion-del-dia?lote=${lote.id}`} className="btn btn-success">
             <i className="bi bi-list-check me-1" aria-hidden="true" />
             Seguir los pasos en Producción del día
           </Link>

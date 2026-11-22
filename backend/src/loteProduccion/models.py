@@ -44,10 +44,14 @@ class LoteProduccion(ModeloBase):
     factor_receta: Mapped[Optional[float]] = mapped_column(nullable=True)
     pasos_pendientes_al_cerrar: Mapped[Optional[int]] = mapped_column(nullable=True)
     motivo_cierre_pendientes: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    fecha_anulacion: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    anulado_por_id: Mapped[Optional[int]] = mapped_column(ForeignKey("personal.id"), nullable=True)
+    motivo_anulacion: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     producto: Mapped[Producto] = relationship("Producto")
     registrado_por: Mapped[Personal] = relationship("Personal", foreign_keys=[registrado_por_id])
     cerrado_por: Mapped[Optional[Personal]] = relationship("Personal", foreign_keys=[cerrado_por_id])
+    anulado_por: Mapped[Optional[Personal]] = relationship("Personal", foreign_keys=[anulado_por_id])
     version_receta = relationship("src.receta.models.VersionReceta")
     pasos = relationship(
         "src.produccionDelDia.models.PasoLote",
