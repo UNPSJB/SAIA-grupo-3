@@ -3,6 +3,8 @@ import { FormErrors } from '../../shared/components/FormErrors';
 import { useEffect, useState } from 'react';
 import { Card, Form, Button } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
+import { useOptions } from '../../shared/hooks/useOptions';
+import type { Sector } from '../sectores/types';
 import type { Personal, PersonalCreateInput, PersonalUpdateInput } from './types';
 
 interface PersonalFormProps {
@@ -172,6 +174,13 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
     },
   } = useController({ name: 'administrar', control: form.control, rules: {} });
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
+  const sectores = useOptions<Sector>('sectores');
+  const [sectorIds, setSectorIds] = useState<number[]>(personalInicial?.sector_ids ?? []);
+
+  const alternarSector = (id: number) =>
+    setSectorIds((actuales) =>
+      actuales.includes(id) ? actuales.filter((s) => s !== id) : [...actuales, id],
+    );
 
   useEffect(() => {
     if (!personalInicial) return;
@@ -212,6 +221,7 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
         username: username.trim(),
         operar,
         administrar,
+        sector_ids: sectorIds,
       };
 
       if (esEdicion) {
@@ -388,6 +398,25 @@ export function PersonalForm({ personalInicial, onGuardar, onCancelar }: Persona
             <Form.Text className="text-muted">
               Podés habilitar ambos permisos para la misma persona.
             </Form.Text>
+          </fieldset>
+
+          <fieldset className="mb-4">
+            <legend className="fs-6">Sectores en los que trabaja</legend>
+            {sectores.error && <ErrorAlert mensaje={sectores.error} />}
+            {sectores.loading && <div className="small text-muted">Cargando sectores...</div>}
+            <div className="row">
+              {sectores.items.map((sector) => (
+                <div key={sector.id} className="col-md-6">
+                  <Form.Check
+                    type="checkbox"
+                    id={`PersonalForm-sector-${sector.id}`}
+                    label={sector.nombre}
+                    checked={sector.id !== undefined && sectorIds.includes(sector.id)}
+                    onChange={() => sector.id !== undefined && alternarSector(sector.id)}
+                  />
+                </div>
+              ))}
+            </div>
           </fieldset>
 
           <div className="d-flex justify-content-end gap-2">

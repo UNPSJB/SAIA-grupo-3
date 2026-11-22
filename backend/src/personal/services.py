@@ -5,6 +5,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 from src.personal.models import Personal
 from src.personal import schemas, exceptions
+from src.sector.models import Sector
 from src.auth.utils import get_password_hash # CORRECCIÓN 1: Faltaba esta importación
 from src.documentacion.vencimientos import ids_con_vencimientos
 
@@ -35,14 +36,25 @@ def _validar_duplicados(
     if db.scalar(query_username) is not None:
         raise exceptions.UsernameDuplicado()
 
+def _leer_sectores(db: Session, sector_ids: list[int]) -> list[Sector]:
+    ids = set(sector_ids)
+    if not ids:
+        return []
+    sectores = db.scalars(select(Sector).where(Sector.id.in_(ids), Sector.activo.is_(True))).all()
+    if len(sectores) != len(ids):
+        raise exceptions.SectorInvalido()
+    return list(sectores)
+
+
 def crear_personal(db: Session, personal: schemas.PersonalCreate) -> Personal:
     _validar_duplicados(db, personal) # CORRECCIÓN: Código simplificado llamando a la función
 
     datos = personal.model_dump()
     password = datos.pop("password")
+    sectores = _leer_sectores(db, datos.pop("sector_ids"))
     hashed_password = get_password_hash(password)
 
-    _personal = Personal(**datos, hashed_password=hashed_password, activo=True)
+    _personal = Personal(**datos, hashed_password=hashed_password, activo=True, sectores=sectores)
     db.add(_personal)
     db.commit()
     db.refresh(_personal)
@@ -119,12 +131,16 @@ def modificar_personal(
         password = valores.pop("password")
         if password and password.strip():
             valores["hashed_password"] = get_password_hash(password)
+    sector_ids = valores.pop("sector_ids", None)
+    if sector_ids is not None:
+        db_persona.sectores = _leer_sectores(db, sector_ids)
 
-    db.execute(
-        update(Personal)
-        .where(Personal.id == personal_id) # CORRECCIÓN 4: Acá decía Personal.dni, iba a explotar
-        .values(**valores)
-    )
+    if valores:
+        db.execute(
+            update(Personal)
+            .where(Personal.id == personal_id) # CORRECCIÓN 4: Acá decía Personal.dni, iba a explotar
+            .values(**valores)
+        )
     db.commit()
     db.refresh(db_persona)
     return db_persona

@@ -61,10 +61,25 @@ const puedeOperar = capacidades.includes('operar');
             <span className="col-8">{personal.email}</span>
           </div>
 
-          <div className="row">
+          <div className="row mb-2">
             <span className="col-4 text-muted fw-semibold">Rol:</span>
             <span className="col-8">
               <Badge bg="primary">{rol}</Badge>
+            </span>
+          </div>
+
+          <div className="row">
+            <span className="col-4 text-muted fw-semibold">Sectores:</span>
+            <span className="col-8 d-flex flex-wrap gap-1">
+              {personal.sectores?.length ? (
+                personal.sectores.map((sector) => (
+                  <Badge key={sector.id} bg="info" text="dark">
+                    {sector.nombre}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-muted">Sin sectores asignados</span>
+              )}
             </span>
           </div>
         </div>   

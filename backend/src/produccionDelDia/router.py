@@ -35,7 +35,7 @@ def realizar_paso(
         raise HTTPException(status_code=422, detail=error.errors(include_context=False)) from error
     foto_path = guardar_archivo(foto, EXTENSIONES_IMAGEN)
     try:
-        return services.realizar_paso(db, paso_id, persona, datos, foto_path)
+        return services.paso_para(services.realizar_paso(db, paso_id, persona, datos, foto_path), persona)
     except Exception:
         borrar_archivo(foto_path)
         raise
@@ -48,7 +48,7 @@ def anular_paso(
     db: Session = Depends(get_db),
     persona: Personal = Depends(tiene_permiso_operar),
 ):
-    return services.anular_paso(db, paso_id, persona, datos)
+    return services.paso_para(services.anular_paso(db, paso_id, persona, datos), persona)
 
 
 @router.get(

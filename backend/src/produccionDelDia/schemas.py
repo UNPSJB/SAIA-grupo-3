@@ -67,6 +67,13 @@ class EquipoResumen(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class SectorResumen(BaseModel):
+    id: int
+    nombre: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class Movimiento(BaseModel):
     id: int
     accion: AccionPasoLote
@@ -96,6 +103,8 @@ class PasoLote(BaseModel):
     valor_medido: Optional[float] = None
     observacion: Optional[str] = None
     foto_path: Optional[str] = None
+    sector: Optional[SectorResumen] = None
+    puede_operar: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

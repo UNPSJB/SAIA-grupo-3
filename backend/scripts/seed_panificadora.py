@@ -47,6 +47,7 @@ def cargar(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             admin = personas["admin"]
             unidades = maestros.cargar_unidades(crear)
             sectores = maestros.cargar_sectores(crear)
+            maestros.asignar_sectores(personas, sectores)
             equipos = maestros.cargar_equipos(crear, sectores)
             calidad.cargar_temperaturas(crear, equipos, operadores, hoy)
             calidad.cargar_calibraciones(crear, equipos, hoy, UPLOADS_DIR)

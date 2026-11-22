@@ -23,6 +23,8 @@ export interface PasoLote {
   valor_medido: number | null;
   observacion: string | null;
   foto_path: string | null;
+  sector: { id: number; nombre: string } | null;
+  puede_operar: boolean;
 }
 
 export interface MovimientoPaso {

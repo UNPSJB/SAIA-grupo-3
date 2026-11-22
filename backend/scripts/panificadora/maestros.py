@@ -37,6 +37,11 @@ def cargar_sectores(crear):
     return sectores
 
 
+def asignar_sectores(personas, sectores):
+    for usuario, claves in datos.SECTORES_PERSONAL.items():
+        personas[usuario].sectores = [sectores[c] for c in claves]
+
+
 def cargar_equipos(crear, sectores):
     equipos = {}
     for i, (clave, nombre, tipo, sector, periodicidad, rango) in enumerate(datos.EQUIPOS, start=1):

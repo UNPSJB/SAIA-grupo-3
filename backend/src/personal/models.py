@@ -1,10 +1,18 @@
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Boolean
+from sqlalchemy import Boolean, Column, ForeignKey, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models import ModeloBase
 
 if TYPE_CHECKING:
     from src.documentacion.models import Documentacion
+    from src.sector.models import Sector
+
+personal_sector = Table(
+    "personal_sector",
+    ModeloBase.metadata,
+    Column("personal_id", ForeignKey("personal.id", ondelete="CASCADE"), primary_key=True),
+    Column("sector_id", ForeignKey("sectores.id", ondelete="CASCADE"), primary_key=True),
+)
 
 class Personal(ModeloBase):
     __tablename__ = "personal"
@@ -24,6 +32,13 @@ class Personal(ModeloBase):
     activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     documentos: Mapped[list["Documentacion"]] = relationship("Documentacion", back_populates="personal")
+    sectores: Mapped[list["Sector"]] = relationship(
+        "src.sector.models.Sector", secondary=personal_sector, lazy="selectin", order_by="Sector.nombre"
+    )
+
+    @property
+    def sector_ids(self) -> list[int]:
+        return [sector.id for sector in self.sectores]
 
     @property
     def capacidades(self) -> set[str]:

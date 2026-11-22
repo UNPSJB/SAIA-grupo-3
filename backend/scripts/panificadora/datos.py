@@ -23,6 +23,17 @@ PERSONAL = [
     ("inactivo.demo", "Hernán", "Paz", "26985412", True, False, False, "opera"),
 ]
 
+SECTORES_PERSONAL = {
+    "opera": ["AMA", "FER", "HOR"],
+    "sebastian.luna": ["AMA", "FER"],
+    "jorge.medina": ["HOR"],
+    "claudia.sosa": ["FRI", "FER", "LAV"],
+    "romina.vera": ["ENF", "ENV"],
+    "patricia.ibarra": ["FAC"],
+    "lucas.molina": ["REC", "SEC", "EXP", "RES", "LIM"],
+    "inactivo.demo": ["AMA"],
+}
+
 SECTORES = {
     "REC": "Recepción de materias primas",
     "SEC": "Depósito de materias primas secas",

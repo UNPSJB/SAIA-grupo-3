@@ -85,12 +85,22 @@ def _valor(rng, paso):
     return None
 
 
+def _puede_marcar(paso_receta, ejecutor, lote):
+    if ejecutor.administrar or ejecutor.id == lote.registrado_por_id:
+        return True
+    return paso_receta.equipo is not None and paso_receta.equipo.sector_id in ejecutor.sector_ids
+
+
 def _crear_pasos(crear, rng, lote, plan, personas, realizados, con_anulacion):
     momento = plan["inicio"]
     for paso_receta in sorted(plan["version"].pasos, key=lambda p: p.orden):
         momento += timedelta(minutes=paso_receta.tiempo_minutos or 15)
         hecho = paso_receta.orden <= realizados
         ejecutor = _ejecutor(paso_receta, plan, personas)
+        if hecho and not _puede_marcar(paso_receta, ejecutor, lote):
+            raise RuntimeError(
+                f"{ejecutor.username} no puede marcar '{paso_receta.nombre}' del lote {lote.codigo}: "
+                "revisá los sectores asignados.")
         valor = _valor(rng, paso_receta) if hecho else None
         observacion = "Peso neto y rótulo verificados." if hecho and paso_receta.punto_control and valor is None else None
         paso, _ = crear(PasoLote, {"lote_id": lote.id, "orden": paso_receta.orden},

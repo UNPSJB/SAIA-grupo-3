@@ -10,6 +10,13 @@ class PersonalBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     operar: bool = False
     administrar: bool = False
+    sector_ids: list[int] = Field(default_factory=list)
+
+class SectorResumen(BaseModel):
+    id: int
+    nombre: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 class PersonalCreate(PersonalBase):
     password: str = Field(..., min_length=4)
@@ -25,6 +32,7 @@ class PersonalUpdate(BaseModel):
     administrar: Optional[bool] = None
     activo: Optional[bool] = None
     password: Optional[str] = Field(None, min_length=4)
+    sector_ids: Optional[list[int]] = None
 
 class Personal(PersonalBase):
     # Los registros existentes pueden contener dominios de prueba o históricos.
@@ -35,5 +43,6 @@ class Personal(PersonalBase):
     role_name: str
     role_id: int
     capacidades: Set[str]
-    
+    sectores: list[SectorResumen] = Field(default_factory=list)
+
     model_config = ConfigDict(from_attributes=True)
