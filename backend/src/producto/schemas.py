@@ -62,3 +62,26 @@ class Producto(ProductoBase):
     unidad_medida: UnidadMedida
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class InsumoRecetaDetalle(BaseModel):
+    insumo_id: int
+    insumo_nombre: str
+    cantidad_requerida: float
+    unidad_medida: UnidadMedida
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RecetaProductoDetalle(BaseModel):
+    receta_id: int
+    version_numero: int
+    rendimiento_cantidad: float
+    rendimiento_unidad: UnidadMedida
+    insumos: list[InsumoRecetaDetalle] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProductoDetalle(Producto):
+    receta: Optional[RecetaProductoDetalle] = None

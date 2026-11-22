@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-
+from src.receta.models import Receta
 from src.pagination import filtrar_ordenar
 from src.producto import exceptions, schemas
 from src.producto.models import Producto
@@ -71,6 +71,38 @@ def leer_producto(db: Session, producto_id: int, incluir_inactivos: bool = False
         raise exceptions.ProductoNoEncontrado()
     return db_producto
 
+def leer_producto_detalle(db: Session, producto_id: int, incluir_inactivos: bool = False) -> schemas.ProductoDetalle:
+    db_producto = leer_producto(db, producto_id, incluir_inactivos=incluir_inactivos)
+    receta = db.scalar(select(Receta).where(Receta.producto_id == db_producto.id))
+
+    receta_detalle = None
+    if receta is not None and receta.version_vigente is not None:
+        version = receta.version_vigente
+        receta_detalle = schemas.RecetaProductoDetalle(
+            receta_id=receta.id,
+            version_numero=version.numero,
+            rendimiento_cantidad=version.rendimiento_cantidad,
+            rendimiento_unidad=version.rendimiento_unidad,
+            insumos=[
+                schemas.InsumoRecetaDetalle(
+                    insumo_id=renglon.insumo_id,
+                    insumo_nombre=renglon.insumo.nombre,
+                    cantidad_requerida=renglon.cantidad,
+                    unidad_medida=renglon.unidad_medida,
+                )
+                for renglon in version.renglones
+            ],
+        )
+
+    return schemas.ProductoDetalle(
+        id=db_producto.id,
+        nombre=db_producto.nombre,
+        descripcion=db_producto.descripcion,
+        unidad_medida_id=db_producto.unidad_medida_id,
+        activo=db_producto.activo,
+        unidad_medida=db_producto.unidad_medida,
+        receta=receta_detalle,
+    )
 
 def modificar_producto(db: Session, producto_id: int, producto: schemas.ProductoUpdate) -> Producto:
     db_producto = leer_producto(db, producto_id, incluir_inactivos=True)

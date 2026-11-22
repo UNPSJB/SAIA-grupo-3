@@ -33,9 +33,9 @@ def read_productos_activos(db: Session = Depends(get_db)):
     return services.listar_productos_activos(db)
 
 
-@router.get("/{producto_id}", response_model=schemas.Producto, dependencies=[Depends(puede_consultar_operacion)])
+@router.get("/{producto_id}", response_model=schemas.ProductoDetalle, dependencies=[Depends(puede_consultar_operacion)])
 def read_producto(producto_id: int, db: Session = Depends(get_db)):
-    return services.leer_producto(db, producto_id, incluir_inactivos=True)
+    return services.leer_producto_detalle(db, producto_id, incluir_inactivos=True)
 
 
 @router.put("/{producto_id}", response_model=schemas.Producto)
