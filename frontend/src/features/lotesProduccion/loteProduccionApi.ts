@@ -1,4 +1,5 @@
 import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
+import type { ExpedienteLote } from './expedienteTypes';
 import type {
   FiltrosLotesProduccion,
   InsumoSeleccionable,
@@ -130,5 +131,22 @@ export async function anularLoteProduccion(id: number, motivo: string): Promise<
   });
   if (!response.ok)
     throw new Error(await mensajeDeRespuesta(response, 'Error al anular el lote de producción.'));
+  return response.json();
+}
+
+export async function buscarLotePorCodigo(codigo: string): Promise<LoteProduccion> {
+  const params = new URLSearchParams({ codigo });
+  const response = await fetchWithAuth(`${API_URL}/buscar?${params}`);
+  if (!response.ok)
+    throw new Error(await mensajeDeRespuesta(response, 'No se pudo buscar el lote.'));
+  return response.json();
+}
+
+export async function getExpedienteLote(id: number): Promise<ExpedienteLote> {
+  const response = await fetchWithAuth(`${API_URL}/${id}/expediente`);
+  if (!response.ok)
+    throw new Error(
+      await mensajeDeRespuesta(response, 'No se pudo obtener el expediente del lote.'),
+    );
   return response.json();
 }

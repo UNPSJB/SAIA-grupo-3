@@ -23,6 +23,7 @@ const rutasNavegacion = [
   { ruta: '/lotes-produccion', titulo: 'Lotes de producción', seccion: 'Producción' },
   { ruta: '/recepciones-insumos', titulo: 'Recepción de insumos', seccion: 'Producción' },
   { ruta: '/lotes', titulo: 'Historial de lotes', seccion: 'Producción' },
+  { ruta: '/buscar-lote', titulo: 'Buscar lote por código', seccion: 'Producción' },
   { ruta: '/trazabilidad-insumos', titulo: 'Trazabilidad de insumos', seccion: 'Producción' },
   { ruta: '/checklist', titulo: 'Checklist del día', seccion: 'Limpieza' },
   { ruta: '/planes', titulo: 'Planes de limpieza', seccion: 'Limpieza' },
@@ -62,7 +63,7 @@ const etiquetasAccion: Record<string, string> = {
   nuevo: 'Nuevo', editar: 'Editar', edit: 'Editar', modificar: 'Modificar',
   eliminar: 'Dar de baja', delete: 'Dar de baja', baja: 'Dar de baja',
   reactivar: 'Reactivar', ver: 'Detalle', view: 'Detalle',
-  nueva: 'Nueva', 'nueva-version': 'Nueva versión',
+  nueva: 'Nueva', 'nueva-version': 'Nueva versión', expediente: 'Expediente',
 };
 
 export function TopHeader({ onToggleSidebar }: TopHeaderProps) {

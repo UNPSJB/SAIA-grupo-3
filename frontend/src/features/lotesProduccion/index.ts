@@ -3,3 +3,5 @@ export * from './loteProduccionApi';
 export * from './useLotesProduccion';
 export * from './LoteProduccionPage';
 export * from './HistorialLotesPage';
+export * from './BuscarLotePage';
+export * from './ExpedienteLotePage';

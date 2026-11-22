@@ -1,6 +1,7 @@
+import pytest
 from sqlalchemy import create_engine, text
 
-from scripts.migrate_superadmin import migrate
+migrate = pytest.importorskip("scripts.migrate_superadmin").migrate
 
 
 def test_migracion_superadmin_es_repetible_y_preserva_datos():

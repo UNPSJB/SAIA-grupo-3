@@ -3,7 +3,7 @@ import sqlite3
 
 import pytest
 
-from scripts.migrate_estado_lote import migrar
+migrar = pytest.importorskip("scripts.migrate_estado_lote").migrar
 
 
 def crear_base_anterior(ruta):

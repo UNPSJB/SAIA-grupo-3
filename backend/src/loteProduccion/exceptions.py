@@ -73,3 +73,21 @@ class PasosPendientes(BadRequest):
 
 class MotivoCierreObligatorio(BadRequest):
     DETAIL = ErrorCode.MOTIVO_CIERRE_OBLIGATORIO
+
+
+class CodigoFormatoInvalido(BadRequest):
+    DETAIL = ErrorCode.CODIGO_FORMATO_INVALIDO
+
+
+class CodigoPrefijoInvalido(BadRequest):
+    DETAIL = ErrorCode.CODIGO_PREFIJO_INVALIDO
+
+
+class CodigoControlInvalido(BadRequest):
+    def __init__(self, leido: int, esperado: int) -> None:
+        super().__init__(ErrorCode.CODIGO_CONTROL_INVALIDO.format(leido=leido, esperado=esperado))
+
+
+class LoteInexistente(NotFound):
+    def __init__(self, codigo: str) -> None:
+        super().__init__(ErrorCode.LOTE_INEXISTENTE.format(codigo=codigo))

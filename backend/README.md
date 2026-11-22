@@ -221,3 +221,15 @@ En bases creadas antes de este cambio, ejecutar **con el servidor detenido**:
 ```
 
 Guarda un respaldo `.bak`, agrega `fecha_anulacion`, `anulado_por_id` y `motivo_anulacion` a `lotes_produccion` y recalcula el estado de los lotes en curso según sus pasos. Repetirla no vuelve a aplicar cambios.
+
+### Código de barras del lote
+
+Al registrar un lote se genera su código de barras EAN-13 de uso interno: prefijo `20`, fecha de producción `AAMMDD`, número del lote en el día (4 dígitos) y dígito verificador. Por ejemplo, `L-20261122-001` corresponde a `2026112200013`. El código es único y no cambia aunque se edite el lote.
+
+En bases creadas antes de este cambio, ejecutar **con el servidor detenido**:
+
+```bash
+.venv/bin/python -m scripts.migrate_codigo_barras --database /ruta/absoluta/a/la/base.db
+```
+
+Guarda un respaldo `.bak`, agrega la columna `codigo_barras` con índice único y la completa en los lotes existentes. Los lotes con código `L-AAAAMMDD-NNN` toman esa fecha y ese número; los demás, como los del seed, usan la fecha de producción y un número desde 9001 para no coincidir con lotes reales. Repetirla solo completa los lotes que todavía no tienen código.

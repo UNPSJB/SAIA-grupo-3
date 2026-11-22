@@ -1,9 +1,11 @@
 import { Badge, Button, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../shared/hooks/useAuth';
 import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
 import { EstadoLoteBadge } from './EstadoLoteBadge';
 import { ESTADOS_EN_CURSO } from './estados';
 import { formatearCantidad } from './formato';
+import { IdentificacionLote } from './IdentificacionLote';
 import { TrazabilidadProduccionDetalle } from './TrazabilidadProduccionDetalle';
 import type { LoteProduccion } from './types';
 
@@ -18,6 +20,7 @@ export function LoteProduccionView({
   onVolver,
   recienRegistrado = false,
 }: LoteProduccionViewProps) {
+  const { currentUser } = useAuth();
   return (
     <Card className="shadow-sm border-0 mx-auto w-100" style={{ maxWidth: '1100px' }}>
       <Card.Header className="bg-body-tertiary text-secondary d-flex flex-wrap align-items-center gap-2 py-3">
@@ -92,12 +95,21 @@ export function LoteProduccionView({
             </span>
           </div>
         </div>
+        <div className="mt-4">
+          <IdentificacionLote lote={lote} />
+        </div>
         <TrazabilidadProduccionDetalle loteId={lote.id} />
       </Card.Body>
-      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex flex-wrap justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>
           Volver al listado
         </Button>
+        {currentUser?.administrar && (
+          <Link to={`/lotes/${lote.id}/expediente`} className="btn btn-primary">
+            <i className="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i> Expediente de
+            trazabilidad
+          </Link>
+        )}
         {lote.version_receta && lote.activo && ESTADOS_EN_CURSO.includes(lote.estado) && (
           <Link to={`/produccion-del-dia?lote=${lote.id}`} className="btn btn-success">
             <i className="bi bi-list-check me-1" aria-hidden="true" />

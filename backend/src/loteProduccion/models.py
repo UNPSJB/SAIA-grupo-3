@@ -29,6 +29,7 @@ class LoteProduccion(ModeloBase):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     codigo: Mapped[str] = mapped_column(String(30), unique=True, nullable=False, index=True)
+    codigo_barras: Mapped[Optional[str]] = mapped_column(String(13), unique=True, nullable=True, index=True)
     producto_id: Mapped[int] = mapped_column(ForeignKey("productos.id"), nullable=False, index=True)
     fecha_produccion: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     cantidad: Mapped[float] = mapped_column(nullable=False)

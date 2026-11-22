@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Alert, Button, Card, Form, Modal } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import { useConsulta } from '../../shared/hooks/useConsulta';
 import { getPasosDelLote, PasosLoteHistorial } from '../produccionDelDia';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
 import { EstadoLoteBadge } from './EstadoLoteBadge';
 import { ESTADOS_EN_CURSO } from './estados';
+import { IdentificacionLote } from './IdentificacionLote';
 import { anularLoteProduccion, cerrarLoteProduccion } from './loteProduccionApi';
 import { TrazabilidadProduccionDetalle } from './TrazabilidadProduccionDetalle';
 import type { LoteProduccion } from './types';
@@ -139,6 +141,8 @@ export function HistorialLoteView({ lote, onVolver, onActualizado }: HistorialLo
           ))}
         </div>
 
+        <IdentificacionLote lote={lote} />
+
         <h6 className="fw-bold border-bottom pb-2">Insumos utilizados</h6>
         {lote.insumos_asociados.length === 0 ? (
           <p className="text-muted small py-3 text-center border rounded bg-body-tertiary">
@@ -170,10 +174,13 @@ export function HistorialLoteView({ lote, onVolver, onActualizado }: HistorialLo
         {pasos.datos && pasos.datos.length > 0 && <PasosLoteHistorial pasos={pasos.datos} />}
         <TrazabilidadProduccionDetalle loteId={lote.id} />
       </Card.Body>
-      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex flex-wrap justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>
           Volver al listado
         </Button>
+        <Link to={`/lotes/${lote.id}/expediente`} className="btn btn-primary">
+          <i className="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i> Expediente de trazabilidad
+        </Link>
         {!anulado && lote.activo && (
           <Button variant="outline-danger" onClick={() => setAnulando(true)}>
             <i className="bi bi-slash-circle me-1"></i> Anular lote

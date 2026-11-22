@@ -248,14 +248,16 @@
   body.imprimiendo-rotulo > #root,
   body.imprimiendo-exportacion > #root,
   body.imprimiendo-tabla-nutricional > #root,
-  body.imprimiendo-trazabilidad > #root {
+  body.imprimiendo-trazabilidad > #root,
+  body.imprimiendo-expediente > #root {
     display: none !important;
   }
 
   body.imprimiendo-rotulo > .rep-portal-rotulo,
   body.imprimiendo-exportacion > .rep-portal-exportacion,
   body.imprimiendo-tabla-nutricional > .rep-portal-nutricion,
-  body.imprimiendo-trazabilidad > .rep-portal-trazabilidad {
+  body.imprimiendo-trazabilidad > .rep-portal-trazabilidad,
+  body.imprimiendo-expediente > .rep-portal-expediente {
     display: block !important;
   }
 

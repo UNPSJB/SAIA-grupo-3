@@ -42,6 +42,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     { to: '/planes', label: 'Planes de Limpieza', icono: 'bi bi-clipboard2-check' },
     { to: '/auditoria', label: 'Historial Checklist', icono: 'bi bi-clock-history' },
     { to: '/lotes', label: 'Historial de lotes', icono: 'bi bi-box-seam' },
+    { to: '/buscar-lote', label: 'Buscar lote por código', icono: 'bi bi-upc', permiso: 'consultarOperacion' },
     { to: '/trazabilidad-insumos', label: 'Trazabilidad de insumos', icono: 'bi bi-upc-scan', permiso: 'administrar' },
     { to: '/checklist', label: 'Checklist del Día', icono: 'bi bi-check2-square', permiso: 'operar' },
     { to: '/registro-temperatura', label: 'Control de Frío', icono: 'bi bi-thermometer-half', permiso: 'operar' },
@@ -126,7 +127,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const instanceId = useId();
   const secciones = [
     { id: 'gestion', label: 'Gestión', icono: 'bi bi-graph-up', rutas: ['/tablero', '/vista-publica/configuracion'] },
-    { id: 'produccion', label: 'Producción', icono: 'bi bi-basket2', rutas: ['/produccion-del-dia', '/recetas', '/lotes-produccion', '/rotulado', '/recepciones-insumos', '/lotes', '/trazabilidad-insumos'] },
+    { id: 'produccion', label: 'Producción', icono: 'bi bi-basket2', rutas: ['/produccion-del-dia', '/recetas', '/lotes-produccion', '/rotulado', '/recepciones-insumos', '/lotes', '/buscar-lote', '/trazabilidad-insumos'] },
     { id: 'limpieza', label: 'Limpieza', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/planes', '/auditoria', '/consumos', '/reportes/consumos'] },
     { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/registro-temperatura', '/vencimientos', '/incidentes'] },
     { id: 'documentacion', label: 'Documentación', icono: 'bi bi-files', rutas: ['/documentos-vigentes', '/documentos-tecnicos'] },

@@ -1,6 +1,8 @@
 from enum import StrEnum, auto
 
 PREFIJO_CODIGO = "L"
+PREFIJO_CODIGO_BARRAS = "20"
+PRIMER_NUMERO_SIN_CODIGO = 9001
 
 
 class EstadoLote(StrEnum):
@@ -12,6 +14,18 @@ class EstadoLote(StrEnum):
 
 
 ESTADOS_EN_CURSO = (EstadoLote.ABIERTO, EstadoLote.EN_PRODUCCION, EstadoLote.FINALIZADO)
+
+TOLERANCIA_PUNTO_CONTROL_CELSIUS = 2.0
+
+
+class TipoAlerta(StrEnum):
+    PUNTO_CONTROL_FUERA_DE_RANGO = auto()
+    CALIBRACION_VENCIDA = auto()
+    INSUMO_VENCIDO = auto()
+    INSUMO_RECIBIDO_DESPUES = auto()
+    INSUMO_SIN_ORIGEN = auto()
+    CIERRE_CON_PASOS_PENDIENTES = auto()
+    LOTE_ANULADO = auto()
 
 
 class ErrorCode:
@@ -40,3 +54,13 @@ class ErrorCode:
     )
     MOTIVO_CIERRE_OBLIGATORIO = "Indicá el motivo para cerrar el lote con pasos sin realizar."
     STOCK_INSUFICIENTE = "Uno o más insumos no tienen stock suficiente para las cantidades indicadas."
+    CODIGO_FORMATO_INVALIDO = (
+        "El código no es válido: ingresá los 13 dígitos del código de barras "
+        "o el código del lote (L-AAAAMMDD-NNN)."
+    )
+    CODIGO_PREFIJO_INVALIDO = "El código de barras no corresponde a un lote: debe empezar con 20."
+    CODIGO_CONTROL_INVALIDO = (
+        "El dígito verificador no es válido: se leyó {leido} y se esperaba {esperado}. "
+        "Revisá el código en la etiqueta."
+    )
+    LOTE_INEXISTENTE = "No hay ningún lote con el código {codigo}."

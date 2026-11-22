@@ -17,7 +17,6 @@ from src.notificaciones import services as avisos
 from src.consumoQuimico import services as consumos
 from src.consumoQuimico.schemas import ConsumoQuimicoCreate, ConsumoQuimicoUpdate
 from src.consumoQuimico.models import ConsumoQuimico
-from scripts.migrate_stock_minimo import migrar
 from src.notificaciones.constants import ErrorCode
 from src.notificaciones.models import TipoNotificacion
 

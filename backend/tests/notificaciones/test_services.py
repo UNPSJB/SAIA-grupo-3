@@ -17,7 +17,6 @@ from src.notificaciones import services as avisos
 from src.consumoQuimico import services as consumos
 from src.consumoQuimico.schemas import ConsumoQuimicoCreate, ConsumoQuimicoUpdate
 from src.consumoQuimico.models import ConsumoQuimico
-from scripts.migrate_stock_minimo import migrar
 from src.documentacion.models import Documentacion
 from src.documentacion.vencimientos import DIAS_AVISO_VENCIMIENTO
 from src.notificaciones.constants import ENLACE_VENCIMIENTOS

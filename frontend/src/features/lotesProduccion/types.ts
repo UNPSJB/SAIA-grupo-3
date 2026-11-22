@@ -51,6 +51,7 @@ export interface PersonalResumen {
 export interface LoteProduccion {
   id: number;
   codigo: string;
+  codigo_barras: string | null;
   producto_id: number;
   producto: Producto;
   fecha_produccion: string;

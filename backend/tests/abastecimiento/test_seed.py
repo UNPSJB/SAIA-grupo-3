@@ -11,6 +11,7 @@ from src.abastecimiento.models import (
 )
 from src.documentacion.vencimientos import calcular_estado
 from src.insumos.models import Insumo
+from src.loteProduccion.codigo_barras import validar_codigo_barras
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
 from src.loteProduccion.schemas import (
     ConsumoRecepcionCreate,
@@ -369,3 +370,14 @@ def test_seed_no_sobrescribe_codigo_demo_reutilizado(db_session, ejecutar_seed):
     assert conteos(db_session) == antes
     assert saldos(db_session) == saldos_antes
     assert db_session.get(LoteProduccion, lote.id).producto_id == producto_id
+
+
+def test_los_lotes_demo_tienen_codigo_de_barras_valido_y_unico(db_session, ejecutar_seed):
+    ejecutar_seed()
+
+    codigos = db_session.scalars(
+        select(LoteProduccion.codigo_barras).where(LoteProduccion.codigo.like("L-SEED-%"))
+    ).all()
+    assert codigos
+    assert len(set(codigos)) == len(codigos)
+    assert all(validar_codigo_barras(codigo) == codigo for codigo in codigos)

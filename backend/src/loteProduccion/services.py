@@ -3,10 +3,11 @@ from datetime import date, datetime
 from typing import Any, Dict
 from fastapi import HTTPException
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from src.loteProduccion import exceptions, schemas
+from src.loteProduccion.codigo_barras import generar_codigo_barras, validar_codigo_barras
 from src.loteProduccion.constants import PREFIJO_CODIGO, EstadoLote
 from src.loteProduccion.models import LoteProduccion, LoteInsumo
 from src.insumos.models import Insumo
@@ -59,15 +60,22 @@ def actualizar_estado_produccion(db_lote: LoteProduccion) -> None:
         db_lote.estado = EstadoLote.FINALIZADO
 
 
-def _generar_codigo(db: Session, fecha: date) -> str:
+def _generar_codigos(db: Session, fecha: date) -> tuple[str, str]:
     prefijo = f"{PREFIJO_CODIGO}-{fecha:%Y%m%d}-"
     existentes = db.scalar(
         select(func.count()).select_from(LoteProduccion).where(LoteProduccion.codigo.like(f"{prefijo}%"))
     )
     numero = existentes + 1
-    while db.scalar(select(LoteProduccion.id).where(LoteProduccion.codigo == f"{prefijo}{numero:03d}")):
+    while db.scalar(
+        select(LoteProduccion.id).where(
+            or_(
+                LoteProduccion.codigo == f"{prefijo}{numero:03d}",
+                LoteProduccion.codigo_barras == generar_codigo_barras(fecha, numero),
+            )
+        )
+    ):
         numero += 1
-    return f"{prefijo}{numero:03d}"
+    return f"{prefijo}{numero:03d}", generar_codigo_barras(fecha, numero)
 
 
 def _validar_version_receta(db: Session, lote: schemas.LoteProduccionCreate) -> VersionReceta | None:
@@ -106,9 +114,11 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_i
             for item in lote.insumos
         ):
             raise exceptions.StockInsuficiente()
+    codigo, codigo_barras = _generar_codigos(db, lote.fecha_produccion)
     db_lote = LoteProduccion(
         **lote.model_dump(exclude={"insumos"}),
-        codigo=_generar_codigo(db, lote.fecha_produccion),
+        codigo=codigo,
+        codigo_barras=codigo_barras,
         registrado_por_id=registrado_por_id,
         pasos=pasos_desde_version(version) if version else [],
         insumos_asociados=[
@@ -246,6 +256,23 @@ def leer_lote(db: Session, lote_id: int) -> LoteProduccion:
     db_lote = db.scalar(select(LoteProduccion).where(LoteProduccion.id == lote_id))
     if db_lote is None:
         raise exceptions.LoteNoEncontrado()
+    return db_lote
+
+
+def buscar_lote_por_codigo(
+    db: Session, codigo: str, registrado_por_id: int | None = None
+) -> LoteProduccion:
+    texto = "".join(codigo.split()).upper()
+    if texto.startswith(f"{PREFIJO_CODIGO}-"):
+        condicion = LoteProduccion.codigo == texto
+    else:
+        condicion = LoteProduccion.codigo_barras == validar_codigo_barras(texto)
+    query = select(LoteProduccion).where(condicion)
+    if registrado_por_id is not None:
+        query = query.where(LoteProduccion.registrado_por_id == registrado_por_id)
+    db_lote = db.scalar(query)
+    if db_lote is None:
+        raise exceptions.LoteInexistente(texto)
     return db_lote
 
 

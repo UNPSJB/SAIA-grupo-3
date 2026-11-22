@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from src.checklist.schemas import PersonalResumen
 from src.unidadMedida.schemas import UnidadMedida
 from src.producto.schemas import Producto
-from src.loteProduccion.constants import ErrorCode, EstadoLote
+from src.loteProduccion.constants import ErrorCode, EstadoLote, TipoAlerta
 
 
 def _texto_opcional(valor: object) -> Optional[str]:
@@ -54,6 +54,7 @@ class LoteProduccionUpdate(BaseModel):
 class LoteProduccion(BaseModel):
     id: int
     codigo: str
+    codigo_barras: Optional[str] = None
     producto_id: int
     producto: Producto
     fecha_produccion: date
@@ -195,6 +196,71 @@ class LoteProduccionTrazabilidad(BaseModel):
     producto_nombre: str
     fecha_produccion: date
     insumos: list[InsumoTrazabilidad]
+
+
+class AlertaExpediente(BaseModel):
+    tipo: TipoAlerta
+    mensaje: str
+
+
+class MovimientoExpediente(BaseModel):
+    accion: str
+    fecha_hora: datetime
+    personal: str
+    valor_medido: Optional[float] = None
+    observacion: Optional[str] = None
+    motivo: Optional[str] = None
+    con_foto: bool
+
+
+class PasoExpediente(BaseModel):
+    orden: int
+    nombre: str
+    equipo: Optional[str] = None
+    punto_control: bool
+    temperatura_esperada: Optional[float] = None
+    valor_medido: Optional[float] = None
+    estado: str
+    realizado_por: Optional[str] = None
+    realizado_en: Optional[datetime] = None
+    fuera_de_rango: bool
+    movimientos: list[MovimientoExpediente]
+
+
+class TemperaturaExpediente(BaseModel):
+    fecha_hora: datetime
+    temperatura: float
+    fuera_de_rango: bool
+    operario: str
+
+
+class EquipoExpediente(BaseModel):
+    equipo_id: int
+    nombre: str
+    pasos: list[int]
+    requiere_calibracion: bool
+    fecha_calibracion: Optional[date] = None
+    fecha_vencimiento: Optional[date] = None
+    calibracion_vigente: Optional[bool] = None
+    temperaturas: list[TemperaturaExpediente]
+
+
+class IncidenteExpediente(BaseModel):
+    id: int
+    fecha_hora: datetime
+    tipo: str
+    descripcion: str
+    estado: str
+    reportado_por: str
+
+
+class ExpedienteLote(BaseModel):
+    lote: LoteProduccion
+    insumos: list[InsumoTrazabilidad]
+    pasos: list[PasoExpediente]
+    equipos: list[EquipoExpediente]
+    incidentes: list[IncidenteExpediente]
+    alertas: list[AlertaExpediente]
 
 
 LoteProduccionCreate.model_rebuild()

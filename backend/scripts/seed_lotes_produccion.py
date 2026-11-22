@@ -12,7 +12,8 @@ from src.abastecimiento.models import (
     ConsumoStockAnterior,
     LoteRecepcionInsumo,
 )
-from src.loteProduccion.constants import EstadoLote
+from src.loteProduccion.codigo_barras import generar_codigo_barras
+from src.loteProduccion.constants import PRIMER_NUMERO_SIN_CODIGO, EstadoLote
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
 
 LOTE_DEMO_ANULADO = 11
@@ -157,6 +158,7 @@ def cargar_lotes_produccion(db, crear, productos, ingredientes_por_nombre, opera
         cerrado = i >= 8
         anulado = i == LOTE_DEMO_ANULADO
         lote_demo, nuevo = crear(LoteProduccion, {"codigo": f"L-SEED-{i + 1:03d}"},
+            codigo_barras=generar_codigo_barras(fecha_lote, PRIMER_NUMERO_SIN_CODIGO + i),
             producto_id=productos[i % len(productos)].id, fecha_produccion=fecha_lote,
             cantidad=float([24, 15, 60, 30, 20, 8, 40, 12, 6, 36, 10, 5, 48, 9, 7][i]),
             observaciones=None if i % 3 else "Lote de demostración del seed.",
