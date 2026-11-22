@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { Badge, Button, ButtonGroup, Card, Form, Table } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { ReporteImpresion, imprimirDocumento } from '../../shared/components/ReporteImpresion';
+import { useAuth } from '../../shared/hooks/useAuth';
 import { useConsulta } from '../../shared/hooks/useConsulta';
 import { formatearFechaHora } from '../../shared/libreria/fechas';
 import { AvisoFaltantes } from './AvisoFaltantes';
@@ -47,17 +49,6 @@ function Celda({
   );
 }
 
-function imprimir() {
-  const clase = 'imprimiendo-tabla-nutricional';
-  const quitar = () => {
-    document.body.classList.remove(clase);
-    window.removeEventListener('afterprint', quitar);
-  };
-  document.body.classList.add(clase);
-  window.addEventListener('afterprint', quitar);
-  window.print();
-}
-
 interface Props {
   versionId: number;
   onVerComposicion?: () => void;
@@ -71,6 +62,7 @@ export function InformacionNutricionalVersion({
   rutaNuevaVersion,
   onActualizada,
 }: Props) {
+  const { currentUser } = useAuth();
   const [revision, setRevision] = useState(0);
   const consulta = useConsulta(async () => {
     const info = await getInformacionVersion(versionId);
@@ -80,6 +72,12 @@ export function InformacionNutricionalVersion({
   const [verCalculado, setVerCalculado] = useState(false);
   const [completando, setCompletando] = useState<{ id: number; nombre: string } | null>(null);
   const [vista, setVista] = useState<'calculo' | 'rotulo'>('calculo');
+  const [fechaImpresion, setFechaImpresion] = useState<string | null>(null);
+
+  const imprimir = () => {
+    flushSync(() => setFechaImpresion(new Date().toISOString()));
+    imprimirDocumento('imprimiendo-tabla-nutricional');
+  };
 
   if (consulta.error) return <ErrorAlert mensaje={consulta.error} />;
   if (!consulta.datos) return <LoadingSpinner mensaje="Calculando información nutricional..." />;
@@ -239,15 +237,18 @@ export function InformacionNutricionalVersion({
           <>
             <TablaNutricional info={info} />
             {createPortal(
-              <div className="tabla-nutricional-impresion">
-                <div className="tabla-nutricional-encabezado">
-                  <h4 className="mb-1">{info.producto}</h4>
-                  <div className="small">
-                    Receta versión {info.numero} ({info.estado}) · calculada{' '}
-                    {formatearFechaHora(info.calculada_en)}
-                  </div>
-                </div>
-                <TablaNutricional info={info} />
+              <div className="rep-portal rep-portal-nutricion tabla-nutricional-impresion">
+                <ReporteImpresion
+                  titulo={`Información nutricional · ${info.producto}`}
+                  fechaEmision={fechaImpresion ?? info.calculada_en}
+                  usuario={currentUser}
+                  metadatos={[
+                    { etiqueta: 'Receta', valor: `Versión ${info.numero} (${info.estado})` },
+                    { etiqueta: 'Calculada', valor: formatearFechaHora(info.calculada_en) },
+                  ]}
+                >
+                  <TablaNutricional info={info} />
+                </ReporteImpresion>
               </div>,
               document.body,
             )}

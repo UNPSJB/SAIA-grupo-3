@@ -4,6 +4,8 @@ import { Alert, Badge, Button, Card, Container, Table } from 'react-bootstrap';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { ReporteImpresion, imprimirDocumento } from '../../shared/components/ReporteImpresion';
+import { useAuth } from '../../shared/hooks/useAuth';
 import { useConsulta } from '../../shared/hooks/useConsulta';
 import { formatearFechaHora } from '../../shared/libreria/fechas';
 import { DocumentoExportacion } from './DocumentoExportacion';
@@ -14,16 +16,6 @@ import './VistaPreviaRotulo.css';
 
 const CLASE_IMPRESION = 'imprimiendo-rotulo';
 const CLASE_EXPORTACION = 'imprimiendo-exportacion';
-
-function imprimir(clase: string) {
-  const quitar = () => {
-    document.body.classList.remove(clase);
-    window.removeEventListener('afterprint', quitar);
-  };
-  document.body.classList.add(clase);
-  window.addEventListener('afterprint', quitar);
-  window.print();
-}
 
 function Advertencias({ vista, enlaces }: { vista: VistaPrevia; enlaces: boolean }) {
   if (vista.advertencias.length === 0) return null;
@@ -67,6 +59,7 @@ export function VistaPreviaRotuloPage() {
   const { productoId } = useParams();
   const id = Number(productoId);
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const { datos: vista, error, cargando, recargar } = useConsulta(() => getVistaPrevia(id), [id]);
   const historial = useConsulta(() => listarExportaciones(id), [id]);
   const [exportacion, setExportacion] = useState<Exportacion | null>(null);
@@ -80,7 +73,7 @@ export function VistaPreviaRotuloPage() {
       return;
     }
     flushSync(() => setExportacion(datos));
-    imprimir(CLASE_EXPORTACION);
+    imprimirDocumento(CLASE_EXPORTACION);
   };
 
   const exportar = async () => {
@@ -140,7 +133,7 @@ export function VistaPreviaRotuloPage() {
           </Button>
           <Button
             variant="outline-primary"
-            onClick={() => imprimir(CLASE_IMPRESION)}
+            onClick={() => imprimirDocumento(CLASE_IMPRESION)}
             disabled={!puedeImprimir}
           >
             <i className="bi bi-printer me-1" aria-hidden="true" />
@@ -246,20 +239,23 @@ export function VistaPreviaRotuloPage() {
 
       {puedeImprimir &&
         createPortal(
-          <div className="vp-impresion">
-            <div className="vp-impresion-leyenda">{vista.leyenda_borrador}</div>
-            <h4 className="mb-1">Rótulo · {vista.borrador.producto.nombre}</h4>
-            <div className="small mb-3">
-              Vista previa del {formatearFechaHora(vista.generada_en)}
-            </div>
-            <Advertencias vista={vista} enlaces={false} />
-            <EtiquetaRotulo vista={vista} />
+          <div className="rep-portal rep-portal-rotulo vp-impresion">
+            <ReporteImpresion
+              titulo={`Vista previa de rótulo · ${vista.borrador.producto.nombre}`}
+              establecimiento={vista.borrador.razon_social}
+              fechaEmision={vista.generada_en}
+              usuario={vista.generado_por ?? currentUser}
+              leyendaSuperior={vista.leyenda_borrador}
+            >
+              <Advertencias vista={vista} enlaces={false} />
+              <EtiquetaRotulo vista={vista} />
+            </ReporteImpresion>
           </div>,
           document.body,
         )}
       {exportacion &&
         createPortal(
-          <div className="exp-impresion">
+          <div className="rep-portal rep-portal-exportacion exp-impresion">
             <DocumentoExportacion exportacion={exportacion} />
           </div>,
           document.body,

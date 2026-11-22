@@ -1,8 +1,13 @@
+import { useState } from 'react';
+import { createPortal, flushSync } from 'react-dom';
 import { Button, Card, Col, Form, Pagination, Row, Spinner, Table } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
+import { ReporteImpresion, imprimirDocumento } from '../../shared/components/ReporteImpresion';
+import { useAuth } from '../../shared/hooks/useAuth';
 import { formatearFecha } from '../../shared/libreria/fechas';
+import { formatearNumero } from '../../shared/libreria/formato';
 import type { ConsumoRecepcion, LoteRecepcion } from '../abastecimiento/types';
 import './TrazabilidadInsumosView.css';
 
@@ -41,6 +46,14 @@ export function TrazabilidadInsumosView({
   loadingDetalle,
   errorDetalle,
 }: TrazabilidadInsumosViewProps) {
+  const { currentUser } = useAuth();
+  const [fechaImpresion, setFechaImpresion] = useState<string | null>(null);
+
+  const exportarPdf = () => {
+    flushSync(() => setFechaImpresion(new Date().toISOString()));
+    imprimirDocumento('imprimiendo-trazabilidad');
+  };
+
   return (
     <div>
       <div className="d-flex align-items-center justify-content-between gap-3 mb-4">
@@ -51,10 +64,10 @@ export function TrazabilidadInsumosView({
           <Button
             variant="primary"
             className="d-print-none flex-shrink-0"
-            onClick={() => window.print()}
+            onClick={exportarPdf}
           >
-            <i className="bi bi-printer-fill me-1" aria-hidden="true"></i>
-            Imprimir
+            <i className="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>
+            Exportar PDF
           </Button>
         )}
       </div>
@@ -267,6 +280,78 @@ export function TrazabilidadInsumosView({
           </Card.Footer>
         </Card>
       )}
+
+      {loteSeleccionado &&
+        usos &&
+        createPortal(
+          <div className="rep-portal rep-portal-trazabilidad">
+            <ReporteImpresion
+              titulo={`Trazabilidad de insumo · Lote ${loteSeleccionado.numero_lote}`}
+              fechaEmision={fechaImpresion}
+              usuario={currentUser}
+              metadatos={[
+                { etiqueta: 'Insumo', valor: loteSeleccionado.insumo_nombre },
+                { etiqueta: 'Proveedor', valor: loteSeleccionado.proveedor_nombre },
+                {
+                  etiqueta: 'Recepción',
+                  valor: formatearFecha(loteSeleccionado.fecha_recepcion),
+                },
+                {
+                  etiqueta: 'Vencimiento',
+                  valor: formatearFecha(loteSeleccionado.fecha_vencimiento),
+                },
+                {
+                  etiqueta: 'Cantidad recibida',
+                  valor: `${formatearNumero(loteSeleccionado.cantidad)} ${loteSeleccionado.unidad}`,
+                },
+                {
+                  etiqueta: 'Saldo disponible',
+                  valor: `${formatearNumero(loteSeleccionado.cantidad_disponible)} ${loteSeleccionado.unidad}`,
+                },
+                ...(busqueda.trim()
+                  ? [{ etiqueta: 'Filtro aplicado', valor: busqueda.trim() }]
+                  : []),
+              ]}
+            >
+              <section className="rep-seccion">
+                <h3>Lotes de producción asociados ({usos.length})</h3>
+                {usos.length === 0 ? (
+                  <p className="rep-texto">
+                    Este lote de insumo todavía no fue utilizado en producción.
+                  </p>
+                ) : (
+                  <table className="rep-tabla">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '24%' }}>Lote de producción</th>
+                        <th style={{ width: '38%' }}>Producto</th>
+                        <th style={{ width: '18%' }}>Fecha de producción</th>
+                        <th className="rep-num" style={{ width: '20%' }}>
+                          Cantidad utilizada
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {usos.map((uso) => (
+                        <tr key={uso.lote_produccion_id}>
+                          <td>{uso.codigo}</td>
+                          <td>{uso.producto}</td>
+                          <td className="text-nowrap">
+                            {formatearFecha(uso.fecha_produccion)}
+                          </td>
+                          <td className="rep-num">
+                            {formatearNumero(uso.cantidad_utilizada)} {loteSeleccionado.unidad}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            </ReporteImpresion>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
