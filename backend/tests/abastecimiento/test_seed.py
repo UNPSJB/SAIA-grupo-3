@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from sqlalchemy import func, select
@@ -10,6 +10,8 @@ from src.abastecimiento.models import (
     Proveedor, LoteRecepcionInsumo, ConsumoLoteRecepcion, ConsumoStockAnterior,
 )
 from src.documentacion.vencimientos import calcular_estado
+from scripts.seed_elementos import ELEMENTOS
+from src.elementos.models import Elemento
 from src.insumos.models import Insumo
 from src.loteProduccion.codigo_barras import validar_codigo_barras
 from src.loteProduccion.models import LoteInsumo, LoteProduccion
@@ -22,6 +24,7 @@ from src.loteProduccion.services import crear_lote
 from src.models import ModeloBase
 from src.personal.models import Personal
 from src.producto.models import Producto
+from src.produccionDelDia.models import PasoLote
 from scripts.seed_productos import PRODUCTOS
 from tests.database import db_session  # noqa: F401
 
@@ -57,6 +60,34 @@ def saldos(db):
             for r in db.scalars(select(LoteRecepcionInsumo))
         },
     }
+
+
+def test_elementos_de_limpieza_se_cargan_solo_como_elementos(db_session, ejecutar_seed):
+    ejecutar_seed()
+
+    nombres_elementos = set(ELEMENTOS)
+    elementos_cargados = set(db_session.scalars(select(Elemento.nombre)))
+    insumos_cargados = set(db_session.scalars(select(Insumo.nombre)))
+
+    assert nombres_elementos
+    assert nombres_elementos <= elementos_cargados
+    assert nombres_elementos.isdisjoint(insumos_cargados)
+
+
+def test_pasos_demo_se_generan_un_dia_antes_de_hoy(db_session, ejecutar_seed):
+    ejecutar_seed()
+
+    lote = db_session.scalar(select(LoteProduccion).where(LoteProduccion.codigo == "L-SEED-001"))
+    assert lote is not None
+    assert lote.fecha_produccion == date.today() - timedelta(days=1)
+
+    pasos = db_session.scalars(select(PasoLote).where(PasoLote.lote_id == lote.id)).all()
+    assert pasos
+    assert all(
+        movimiento.fecha_hora.date() == lote.fecha_produccion
+        for paso in pasos
+        for movimiento in paso.movimientos
+    )
 
 
 def test_seed_carga_todas_las_tablas_y_escenarios_de_abastecimiento(db_session, ejecutar_seed):
