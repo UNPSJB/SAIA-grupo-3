@@ -8,6 +8,7 @@ import { formatearFecha, textoDiasRestantes } from '../../shared/libreria/fechas
 import { etiquetaDe } from '../../shared/libreria/etiquetas';
 import type {
   EstadoVencimiento,
+  VencimientoAbastecimiento,
   VencimientoConsolidado,
 } from './types';
 import { TIPOS_EQUIPOS } from '../equipos/types';
@@ -34,6 +35,7 @@ interface VencimientosListProps {
   orden: string;
   cambiarOrden: (column: string) => void;
   onActualizar: () => void;
+  onAbrirAbastecimiento?: (vencimiento: VencimientoAbastecimiento) => void;
 }
 
 const estadosDisponibles: { value: EstadoVencimiento; label: string }[] = [
@@ -73,6 +75,7 @@ export function VencimientosList({
   orden,
   cambiarOrden,
   onActualizar,
+  onAbrirAbastecimiento,
 }: VencimientosListProps) {
   return (
     <>
@@ -197,27 +200,57 @@ export function VencimientosList({
                           <td>{formatearFecha(vencimiento.fecha_vencimiento)}<small className="d-block text-body-secondary">{textoDiasRestantes(vencimiento.dias_restantes)}</small></td>
                           <td><Badge bg={estado.variante} text={vencimiento.estado === 'por_vencer' ? 'dark' : undefined}>{estado.etiqueta}</Badge></td>
                           <td className="text-center">
-                            <Link
-                              to={vencimiento.enlace}
-                              className="btn btn-success btn-sm text-white py-1 px-2 shadow-sm text-nowrap"
-                              style={{ width: '140px' }}
-                              title={
-                                vencimiento.origen === 'lote_insumo'
-                                  ? 'Ver detalle del lote'
-                                  : 'Ver detalle del proveedor'
-                              }
-                              aria-label={
-                                vencimiento.origen === 'lote_insumo'
+                            {onAbrirAbastecimiento ? (
+                              <Button
+                                variant="success"
+                                size="sm"
+                                className="text-white py-1 px-2 shadow-sm text-nowrap"
+                                style={{ width: '140px' }}
+                                title={
+                                  vencimiento.origen === 'lote_insumo'
+                                    ? 'Ver detalle del lote'
+                                    : 'Ver detalle del proveedor'
+                                }
+                                aria-label={
+                                  vencimiento.origen === 'lote_insumo'
+                                    ? 'Ir al lote'
+                                    : 'Ir al proveedor'
+                                }
+                                onClick={() => onAbrirAbastecimiento(vencimiento)}
+                              >
+                                <i
+                                  className={`bi ${vencimiento.origen === 'lote_insumo' ? 'bi-box-seam' : 'bi-truck'} me-1`}
+                                  aria-hidden="true"
+                                ></i>
+                                {vencimiento.origen === 'lote_insumo'
                                   ? 'Ir al lote'
-                                  : 'Ir al proveedor'
-                              }
-                            >
-                              <i
-                                className={`bi ${vencimiento.origen === 'lote_insumo' ? 'bi-box-seam' : 'bi-truck'} me-1`}
-                                aria-hidden="true"
-                              ></i>
-                              {vencimiento.origen === 'lote_insumo' ? 'Ir al lote' : 'Ir al proveedor'}
-                            </Link>
+                                  : 'Ir al proveedor'}
+                              </Button>
+                            ) : (
+                              <Link
+                                to={vencimiento.enlace}
+                                className="btn btn-success btn-sm text-white py-1 px-2 shadow-sm text-nowrap"
+                                style={{ width: '140px' }}
+                                title={
+                                  vencimiento.origen === 'lote_insumo'
+                                    ? 'Ver detalle del lote'
+                                    : 'Ver detalle del proveedor'
+                                }
+                                aria-label={
+                                  vencimiento.origen === 'lote_insumo'
+                                    ? 'Ir al lote'
+                                    : 'Ir al proveedor'
+                                }
+                              >
+                                <i
+                                  className={`bi ${vencimiento.origen === 'lote_insumo' ? 'bi-box-seam' : 'bi-truck'} me-1`}
+                                  aria-hidden="true"
+                                ></i>
+                                {vencimiento.origen === 'lote_insumo'
+                                  ? 'Ir al lote'
+                                  : 'Ir al proveedor'}
+                              </Link>
+                            )}
                           </td>
                         </tr>
                       );
