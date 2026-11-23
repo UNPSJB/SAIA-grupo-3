@@ -142,36 +142,42 @@ export function AlimentosReferenciaPage() {
             <p className="text-body-secondary p-3 mb-0">No hay alimentos para mostrar.</p>
           )}
           {alimentos.datos && alimentos.datos.length > 0 && (
-            <Table responsive hover size="sm" className="mb-0 small align-middle">
-              <thead>
-                <tr>
-                  <th className="ps-3">Alimento</th>
-                  {NUTRIENTES_TODOS.map((n) => (
-                    <th key={n.nutriente} className="text-end text-nowrap">
-                      {n.etiqueta} ({n.unidad})
-                    </th>
+        <Table responsive hover size="sm" className="mb-0 small align-middle">
+            <thead>
+              <tr>
+                <th className="ps-3">Alimento</th>
+                {NUTRIENTES_TODOS.map((n, indice) => (
+                  <th
+                    key={n.nutriente}
+                    className={`text-end text-nowrap ${indice === NUTRIENTES_TODOS.length - 1 ? 'pe-4' : ''}`}
+                  >
+                    {n.etiqueta} ({n.unidad})
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {alimentos.datos.map((alimento) => (
+                <tr key={alimento.id}>
+                  <td className="ps-3" style={{ minWidth: '18rem' }}>
+                    <div className="fw-semibold">{alimento.nombre}</div>
+                    <div className="text-body-secondary">
+                      {alimento.fuente} · {alimento.codigo}
+                      {alimento.grupo ? ` · ${alimento.grupo}` : ''}
+                    </div>
+                  </td>
+                  {NUTRIENTES_TODOS.map((n, indice) => (
+                    <td
+                      key={n.nutriente}
+                      className={`text-end ${indice === NUTRIENTES_TODOS.length - 1 ? 'pe-4' : ''}`}
+                    >
+                      {formatearValor(alimento[CAMPO_DE_NUTRIENTE[n.nutriente]] as number | null)}
+                    </td>
                   ))}
                 </tr>
-              </thead>
-              <tbody>
-                {alimentos.datos.map((alimento) => (
-                  <tr key={alimento.id}>
-                    <td className="ps-3" style={{ minWidth: '14rem' }}>
-                      <div className="fw-semibold">{alimento.nombre}</div>
-                      <div className="text-body-secondary">
-                        {alimento.fuente} · {alimento.codigo}
-                        {alimento.grupo ? ` · ${alimento.grupo}` : ''}
-                      </div>
-                    </td>
-                    {NUTRIENTES_TODOS.map((n) => (
-                      <td key={n.nutriente} className="text-end">
-                        {formatearValor(alimento[CAMPO_DE_NUTRIENTE[n.nutriente]] as number | null)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+              ))}
+            </tbody>
+          </Table>
           )}
         </Card.Body>
       </Card>

@@ -24,15 +24,25 @@ export function LotesDeInsumo({ insumoId }: { insumoId: number }) {
       {(lotes.error || stock.error) && <Alert variant="danger">{lotes.error || stock.error}</Alert>}
       {stock.datos && (
         <div className="bg-body-tertiary border rounded p-3 mb-3">
-          <div>
-            Stock total: <strong>{stock.datos.stock_total}</strong>
+          <div className="row mb-2">
+            <span className="col-7 text-muted fw-semibold">Stock total:</span>
+            <span className="col-5 fw-bold">{stock.datos.stock_total}</span>
           </div>
-          <div>Identificado por lote: {stock.datos.stock_identificado}</div>
-          <div>Saldo de lotes sin vencer: {stock.datos.stock_utilizable}</div>
-          <div>Saldo vencido: {stock.datos.stock_vencido}</div>
-          <small className="text-body-secondary">
+          <div className="row mb-2">
+            <span className="col-7 text-muted fw-semibold">Identificado por lote:</span>
+            <span className="col-5">{stock.datos.stock_identificado}</span>
+          </div>
+          <div className="row mb-2">
+            <span className="col-7 text-muted fw-semibold">Saldo de lotes sin vencer:</span>
+            <span className="col-5">{stock.datos.stock_utilizable}</span>
+          </div>
+          <div className="row mb-2">
+            <span className="col-7 text-muted fw-semibold">Saldo vencido:</span>
+            <span className="col-5">{stock.datos.stock_vencido}</span>
+          </div>
+          <div className="small text-body-secondary mt-2 mb-0">
             Cantidades expresadas en la unidad del insumo.
-          </small>
+          </div>
         </div>
       )}
       {lotes.cargando && <p role="status">Cargando lotes...</p>}

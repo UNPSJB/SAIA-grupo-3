@@ -3,11 +3,14 @@ import { useForm } from 'react-hook-form';
 import { Alert, Badge, Button, Card, Container, Form, Modal, Table } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { FormErrors } from '../../shared/components/FormErrors';
+import { ListPagination } from '../../shared/components/ListPagination';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { useConsulta } from '../../shared/hooks/useConsulta';
 import { MaestroAcciones } from '../aditivos/MaestroAcciones';
 import { bajaAlergeno, guardarAlergeno, listarAlergenos } from './alergenosApi';
 import type { Alergeno, AlergenoDatos } from './types';
+
+const PAGE_SIZE = 10;
 
 const VACIO: AlergenoDatos = {
   nombre: '',
@@ -139,6 +142,8 @@ function EstadoBadge({ activo }: { activo: boolean }) {
 
 export function AlergenosPage() {
   const [mostrarInactivos, setMostrarInactivos] = useState(false);
+  const [soloGluten, setSoloGluten] = useState(false);
+  const [page, setPage] = useState(1);
   const { datos, error, cargando, recargar } = useConsulta(
     () => listarAlergenos(mostrarInactivos),
     [mostrarInactivos],
@@ -188,6 +193,13 @@ export function AlergenosPage() {
     />
   );
 
+  const filtrados = datos ? datos.filter((a) => !soloGluten || a.implica_gluten) : [];
+  const total = filtrados.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const paginaSegura = Math.min(page, totalPages);
+  const inicio = (paginaSegura - 1) * PAGE_SIZE;
+  const visibles = filtrados.slice(inicio, inicio + PAGE_SIZE);
+
   return (
     <Container className="py-2">
       <h2 className="mb-3 border-bottom pb-2 text-secondary">Alérgenos</h2>
@@ -197,13 +209,28 @@ export function AlergenosPage() {
         receta vigente.
       </Alert>
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <Form.Check
-          id="alergenos-inactivos"
-          type="switch"
-          label="Ver dados de baja"
-          checked={mostrarInactivos}
-          onChange={(e) => setMostrarInactivos(e.target.checked)}
-        />
+        <div className="d-flex flex-wrap align-items-center gap-3">
+          <Form.Check
+            id="alergenos-inactivos"
+            type="switch"
+            label="Ver dados de baja"
+            checked={mostrarInactivos}
+            onChange={(e) => {
+              setMostrarInactivos(e.target.checked);
+              setPage(1);
+            }}
+          />
+          <Form.Check
+            id="alergenos-gluten-filtro"
+            type="switch"
+            label="Solo gluten (Sí)"
+            checked={soloGluten}
+            onChange={(e) => {
+              setSoloGluten(e.target.checked);
+              setPage(1);
+            }}
+          />
+        </div>
         <Button variant="success" onClick={() => setEditando(null)}>
           <i className="bi bi-plus-lg me-1" aria-hidden="true" />
           Nuevo alérgeno
@@ -230,7 +257,7 @@ export function AlergenosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {datos.map((alergeno) => (
+                  {visibles.map((alergeno) => (
                     <tr key={alergeno.id}>
                       <td className="fw-semibold">{alergeno.nombre}</td>
                       <td>{alergeno.grupo}</td>
@@ -255,7 +282,7 @@ export function AlergenosPage() {
             </Card.Body>
           </Card>
           <div className="d-md-none d-flex flex-column gap-2">
-            {datos.map((alergeno) => (
+            {visibles.map((alergeno) => (
               <Card key={alergeno.id} className="shadow-sm border-0">
                 <Card.Body className="py-2">
                   <div className="d-flex justify-content-between align-items-start gap-2">
@@ -277,8 +304,22 @@ export function AlergenosPage() {
               </Card>
             ))}
           </div>
-          {datos.length === 0 && (
-            <p className="text-center text-muted py-4">No hay alérgenos cargados.</p>
+          {filtrados.length === 0 && (
+            <p className="text-center text-muted py-4">
+              {soloGluten
+                ? 'No hay alérgenos con gluten para mostrar.'
+                : 'No hay alérgenos cargados.'}
+            </p>
+          )}
+          {total > PAGE_SIZE && (
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3">
+              <ListPagination
+                page={paginaSegura}
+                totalPages={totalPages}
+                total={total}
+                changePage={setPage}
+              />
+            </div>
           )}
         </>
       )}

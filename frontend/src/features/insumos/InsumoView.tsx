@@ -1,6 +1,7 @@
-import { Card, Button, Badge } from 'react-bootstrap';
+import { Card, Button, Badge, Tab, Tabs } from 'react-bootstrap';
 import type { Insumo } from './types';
 import { LotesDeInsumo } from '../abastecimiento/LotesDeInsumo';
+import { NutricionInsumo } from '../nutricion';
 
 interface InsumoViewProps {
   insumo: Insumo;
@@ -10,53 +11,75 @@ interface InsumoViewProps {
 
 export function InsumoView({ insumo, onEditar, onVolver }: InsumoViewProps) {
   return (
-    <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '650px' }}>
+    <Card className="shadow-sm border-0 mx-auto" style={{ maxWidth: '790px' }}>
       <Card.Header className="bg-body-tertiary text-secondary d-flex align-items-center gap-2 py-3">
         <i className="bi bi-box-seam fs-5"></i>
         <h5 className="mb-0">Detalle del Insumo</h5>
       </Card.Header>
       <Card.Body className="p-4">
-        <div className="bg-body-tertiary p-3 rounded border mb-2">
-          <div className="row mb-2">
-            <span className="col-4 text-muted fw-semibold">Stock mínimo:</span>
-            <span className="col-8">
-              {insumo.stock_minimo == null ? 'Sin definir' : `${insumo.stock_minimo.toLocaleString('es-AR')} ${insumo.unidadMedidaObj?.sufijo ?? ''}`}
-              {insumo.activo && insumo.stock_bajo && <Badge bg="warning" text="dark" className="ms-2">Stock bajo</Badge>}
-            </span>
-          </div>
-          <div className="row mb-2">
-            <span className="col-4 text-muted fw-semibold">ID / Código:</span>
-            <span className="col-8"><Badge bg="secondary">#{insumo.id}</Badge></span>
-          </div>
-          <div className="row mb-2">
-            <span className="col-4 text-muted fw-semibold">Nombre:</span>
-            <span className="col-8 fw-bold">{insumo.nombre}</span>
-          </div>
-          <div className="row mb-2">
-            <span className="col-4 text-muted fw-semibold">Stock actual:</span>
-            <span className="col-8">{insumo.cantidad}</span>
-          </div>
-          <div className="row">
-            <span className="col-4 text-muted fw-semibold">Unidad de Medida:</span>
-            <span className="col-8">
-              {insumo.unidadMedidaObj 
-                ? `${insumo.unidadMedidaObj.sufijo}` 
-                : `ID: ${insumo.unidad_medida_id}`}
-            </span>
-          </div>
-          <div className="row">
-            <span className="col-4 text-muted fw-semibold">Estado:</span>
-            <span className="col-8">
-               {insumo.activo ? <Badge bg="success">Activo</Badge> 
-                : <Badge bg="danger">Inactivo</Badge>}
-            </span>
-          </div>
-        </div>
-        <LotesDeInsumo key={insumo.id} insumoId={insumo.id} />
+        <Tabs defaultActiveKey="datos" id="insumo-detalle-pestanas" className="mb-3" mountOnEnter>
+          <Tab eventKey="datos" title="Datos">
+            <div className="bg-body-tertiary p-3 rounded border mb-2">
+              <div className="row mb-2">
+                <span className="col-4 text-muted fw-semibold">Stock mínimo:</span>
+                <span className="col-8">
+                  {insumo.stock_minimo == null
+                    ? 'Sin definir'
+                    : `${insumo.stock_minimo.toLocaleString('es-AR')} ${insumo.unidadMedidaObj?.sufijo ?? ''}`}
+                  {insumo.activo && insumo.stock_bajo && (
+                    <Badge bg="warning" text="dark" className="ms-2">
+                      Stock bajo
+                    </Badge>
+                  )}
+                </span>
+              </div>
+              <div className="row mb-2">
+                <span className="col-4 text-muted fw-semibold">ID / Código:</span>
+                <span className="col-8">
+                  <Badge bg="secondary">#{insumo.id}</Badge>
+                </span>
+              </div>
+              <div className="row mb-2">
+                <span className="col-4 text-muted fw-semibold">Nombre:</span>
+                <span className="col-8 fw-bold">{insumo.nombre}</span>
+              </div>
+              <div className="row mb-2">
+                <span className="col-4 text-muted fw-semibold">Stock actual:</span>
+                <span className="col-8">{insumo.cantidad}</span>
+              </div>
+              <div className="row">
+                <span className="col-4 text-muted fw-semibold">Unidad de Medida:</span>
+                <span className="col-8">
+                  {insumo.unidadMedidaObj
+                    ? `${insumo.unidadMedidaObj.sufijo}`
+                    : `ID: ${insumo.unidad_medida_id}`}
+                </span>
+              </div>
+              <div className="row">
+                <span className="col-4 text-muted fw-semibold">Estado:</span>
+                <span className="col-8">
+                  {insumo.activo ? (
+                    <Badge bg="success">Activo</Badge>
+                  ) : (
+                    <Badge bg="danger">Inactivo</Badge>
+                  )}
+                </span>
+              </div>
+            </div>
+            <LotesDeInsumo key={insumo.id} insumoId={insumo.id} />
+          </Tab>
+          <Tab eventKey="nutricion" title="Información nutricional">
+            <NutricionInsumo key={insumo.id} insumoId={insumo.id} />
+          </Tab>
+        </Tabs>
       </Card.Body>
       <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
-        <Button variant="secondary" onClick={onVolver}>Volver</Button>
-        <Button variant="warning" onClick={onEditar} className="text-white">Editar</Button>
+        <Button variant="secondary" onClick={onVolver}>
+          Volver
+        </Button>
+        <Button variant="warning" onClick={onEditar} className="text-white">
+          Editar
+        </Button>
       </Card.Footer>
     </Card>
   );

@@ -63,9 +63,8 @@ function Resultado({ calculo }: { calculo: CalculoSellos }) {
           </ul>
         </Alert>
       )}
-      <div
-        className="d-flex flex-wrap gap-3 align-items-center p-3 rounded mb-3"
-        style={{ background: '#f3f3f3' }}
+     <div
+        className="d-flex flex-wrap gap-3 align-items-center p-3 rounded border bg-body-tertiary mb-3"
         aria-label="Sellos que corresponden"
       >
         {calculo.leyendas.length === 0 && calculo.advertencias.length === 0 && (
@@ -200,7 +199,7 @@ export function SellosProducto({
           >
             <span>{actual.motivo_no_calcula}</span>
             {onIrAAplicabilidad && (
-              <Button size="sm" variant="outline-dark" onClick={onIrAAplicabilidad}>
+              <Button size="sm" variant="outline-secondary" onClick={onIrAAplicabilidad}>
                 Ir a Rotulado frontal
               </Button>
             )}

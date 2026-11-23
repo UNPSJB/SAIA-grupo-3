@@ -239,7 +239,7 @@ export function InicioAdminPage() {
             </Card>
           </Col>
 
-          <Col>
+         <Col>
             <Card className="h-100 shadow-sm">
               <Card.Body className="p-4">
                 <h3 className="h6 text-body-secondary mb-0">
@@ -257,6 +257,10 @@ export function InicioAdminPage() {
                   {textoVencimientos}
                 </p>
 
+                <p className="small text-body-secondary mb-2">
+                  Registros vencidos o próximos a vencer (documentación y calibración · estado actual)
+                </p>
+
                 <Link
                   to="/vencimientos"
                   className="small text-decoration-none"
@@ -267,10 +271,6 @@ export function InicioAdminPage() {
                     aria-hidden="true"
                   />
                 </Link>
-
-                <p className="small text-body-secondary mt-2 mb-0">
-                  Registros vencidos o próximos a vencer (documentación y calibración · estado actual)
-                </p>
               </Card.Body>
             </Card>
           </Col>

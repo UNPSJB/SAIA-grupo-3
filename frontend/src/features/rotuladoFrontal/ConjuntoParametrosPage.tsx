@@ -176,7 +176,7 @@ export function ConjuntoParametrosPage() {
       )}
       {error && <ErrorAlert mensaje={error} />}
       {aviso && (
-        <Alert variant="success" className="py-2" dismissible onClose={() => setAviso(null)}>
+        <Alert variant="success" className="d-flex align-items-center" dismissible onClose={() => setAviso(null)}>
           {aviso}
         </Alert>
       )}

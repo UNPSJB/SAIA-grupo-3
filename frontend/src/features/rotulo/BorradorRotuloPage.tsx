@@ -314,7 +314,7 @@ export function BorradorRotuloPage() {
         </div>
       </div>
 
-      <Card className="shadow-sm border-0 mb-3 sticky-top" style={{ top: '0.5rem', zIndex: 5 }}>
+      <Card className="shadow-sm border-0 mb-3 sticky-top" style={{ top: '62px', zIndex: 1 }}>
         <Card.Body className="py-3">
           <div className="d-flex flex-wrap gap-3 align-items-center">
             <div className="flex-grow-1" style={{ minWidth: '12rem' }}>

@@ -193,9 +193,9 @@ export function ReporteConsumosPage() {
                   <SortableHeader column="nombre_insumo" {...filters}>
                     Producto Químico
                   </SortableHeader>
-                  <SortableHeader column="cantidad_total" {...filters}>
-                    Total Consumido
-                  </SortableHeader>
+                <SortableHeader column="cantidad_total" {...filters} className="text-center" >
+                  Total Consumido
+                </SortableHeader>
                   <SortableHeader column="unidad_medida" {...filters}>
                     Unidad
                   </SortableHeader>
@@ -205,9 +205,9 @@ export function ReporteConsumosPage() {
                 {reporte.map((item) => (
                   <tr key={item.insumo_id}>
                     <td className="fw-medium text-body">{item.nombre_insumo}</td>
-                    <td className="text-end fw-bold text-primary fs-5">
-                      {item.cantidad_total.toLocaleString('es-AR')}
-                    </td>
+                <td className="fw-bold text-center text-primary fs-5">
+                    {item.cantidad_total.toLocaleString('es-AR')}
+                  </td>
                     <td className="px-4 text-muted">{item.unidad_medida}</td>
                   </tr>
                 ))}

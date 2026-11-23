@@ -382,8 +382,13 @@ export function ValoresDiariosPage() {
           </li>
         </ul>
         {error && <ErrorAlert mensaje={error} />}
-        {guardado && (
-          <Alert variant="success" className="py-2" dismissible onClose={() => setGuardado(false)}>
+       {guardado && (
+          <Alert
+            variant="success"
+            className="d-flex align-items-center"
+            dismissible
+            onClose={() => setGuardado(false)}
+          >
             Configuración guardada.
           </Alert>
         )}

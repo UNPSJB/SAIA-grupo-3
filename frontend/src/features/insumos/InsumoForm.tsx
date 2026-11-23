@@ -18,9 +18,15 @@ interface InsumoFormProps {
   insumoInicial?: Insumo | null;
   onGuardar: (datos: InsumoCreate) => Promise<void>;
   onCancelar: () => void;
+  etiquetaGuardar?: string;
 }
 
-export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormProps) {
+export function InsumoForm({
+  insumoInicial,
+  onGuardar,
+  onCancelar,
+  etiquetaGuardar,
+}: InsumoFormProps) {
   const esEdicion = Boolean(insumoInicial);
   const insumoId = insumoInicial?.id;
   const cargarHistorial = useCallback(
@@ -95,7 +101,12 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
   const { field: minimo } = useController({
     name: 'stockMinimo',
     control: form.control,
-    rules: { validate: (v) => v === '' || (Number.isFinite(v) && v >= 0) || 'Ingresá un mínimo válido, igual o mayor que cero.' },
+    rules: {
+      validate: (v) =>
+        v === '' ||
+        (Number.isFinite(v) && v >= 0) ||
+        'Ingresá un mínimo válido, igual o mayor que cero.',
+    },
   });
   const { setValue } = form;
   useEffect(() => {
@@ -259,10 +270,14 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               <Form.Label>Denominación para rótulo — opcional</Form.Label>
               <Form.Control
                 maxLength={150}
-                placeholder={nombre ? `Si queda vacío se usa "${nombre}"` : 'Ej.: harina de trigo enriquecida'}
+                placeholder={
+                  nombre ? `Si queda vacío se usa "${nombre}"` : 'Ej.: harina de trigo enriquecida'
+                }
                 {...form.register('denominacion')}
               />
-              <Form.Text>Es el nombre con el que aparece en la lista de ingredientes del rótulo.</Form.Text>
+              <Form.Text>
+                Es el nombre con el que aparece en la lista de ingredientes del rótulo.
+              </Form.Text>
             </Form.Group>
           )}
 
@@ -312,25 +327,49 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               <Form.Check
                 type="checkbox"
                 id="InsumoForm-esAzucarAnadido"
-                label={<>Es azúcar añadido <span className="text-body-secondary small">(azúcar, miel, jarabes)</span></>}
+                label={
+                  <>
+                    Es azúcar añadido{' '}
+                    <span className="text-body-secondary small">(azúcar, miel, jarabes)</span>
+                  </>
+                }
                 {...form.register('esAzucarAnadido')}
               />
               <Form.Check
                 type="checkbox"
                 id="InsumoForm-esGrasaAnadida"
-                label={<>Es grasa añadida <span className="text-body-secondary small">(aceites, manteca, margarina, crema)</span></>}
+                label={
+                  <>
+                    Es grasa añadida{' '}
+                    <span className="text-body-secondary small">
+                      (aceites, manteca, margarina, crema)
+                    </span>
+                  </>
+                }
                 {...form.register('esGrasaAnadida')}
               />
               <Form.Check
                 type="checkbox"
                 id="InsumoForm-aportaSodioAnadido"
-                label={<>Aporta sodio añadido <span className="text-body-secondary small">(sal, bicarbonato de sodio, caldos)</span></>}
+                label={
+                  <>
+                    Aporta sodio añadido{' '}
+                    <span className="text-body-secondary small">
+                      (sal, bicarbonato de sodio, caldos)
+                    </span>
+                  </>
+                }
                 {...form.register('aportaSodioAnadido')}
               />
               <Form.Check
                 type="checkbox"
                 id="InsumoForm-contieneCafeina"
-                label={<>Contiene cafeína <span className="text-body-secondary small">(café, té, guaraná)</span></>}
+                label={
+                  <>
+                    Contiene cafeína{' '}
+                    <span className="text-body-secondary small">(café, té, guaraná)</span>
+                  </>
+                }
                 {...form.register('contieneCafeina')}
               />
               <Form.Text>
@@ -342,7 +381,11 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
 
           <fieldset className="mb-4">
             <legend className="fs-6 mb-1">Alérgenos y gluten</legend>
-            {alergenos.error && <div role="alert" className="text-danger small">{alergenos.error}</div>}
+            {alergenos.error && (
+              <div role="alert" className="text-danger small">
+                {alergenos.error}
+              </div>
+            )}
             {gruposAlergeno.map((grupo) => (
               <div key={grupo} className="mb-2">
                 <div className="small text-body-secondary">{grupo}</div>
@@ -373,12 +416,20 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               <Form.Check
                 type="checkbox"
                 id="InsumoForm-contieneGluten"
-                label={<>Contiene gluten (TACC) <span className="text-body-secondary small">(trigo, avena, cebada, centeno o derivados)</span></>}
+                label={
+                  <>
+                    Contiene gluten (TACC){' '}
+                    <span className="text-body-secondary small">
+                      (trigo, avena, cebada, centeno o derivados)
+                    </span>
+                  </>
+                }
                 {...form.register('contieneGluten')}
               />
             )}
             <Form.Text>
-              Con estas marcas el rótulo propone la declaración «CONTIENE …» de cada producto que use este insumo.
+              Con estas marcas el rótulo propone la declaración «CONTIENE …» de cada producto que use
+              este insumo.
             </Form.Text>
           </fieldset>
 
@@ -417,8 +468,11 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               onChange={(e) => minimo.onChange(e.target.value === '' ? '' : Number(e.target.value))}
             />
             <Form.Text>
-              En {unidades.find((u) => u.id === Number(unidadMedidaId))?.sufijo ?? 'la unidad seleccionada'}.
-              Avisamos al llegar a este valor o quedar por debajo. Dejalo vacío para desactivar el aviso.
+              En{' '}
+              {unidades.find((u) => u.id === Number(unidadMedidaId))?.sufijo ??
+                'la unidad seleccionada'}
+              . Avisamos al llegar a este valor o quedar por debajo. Dejalo vacío para desactivar el
+              aviso.
             </Form.Text>
           </Form.Group>
 
@@ -471,7 +525,18 @@ export function InsumoForm({ insumoInicial, onGuardar, onCancelar }: InsumoFormP
               type="submit"
               disabled={enviando || (esEdicion && (historial.cargando || Boolean(historial.error)))}
             >
-              {enviando ? 'Guardando...' : esEdicion ? 'Actualizar Cambios' : 'Guardar'}
+              {enviando ? (
+                'Guardando...'
+              ) : esEdicion ? (
+                'Actualizar Cambios'
+              ) : (
+                <>
+                  {etiquetaGuardar ?? 'Guardar'}
+                  {etiquetaGuardar === 'Siguiente' && (
+                    <i className="bi bi-arrow-right ms-1" aria-hidden="true" />
+                  )}
+                </>
+              )}
             </Button>
           </div>
         </Form>
