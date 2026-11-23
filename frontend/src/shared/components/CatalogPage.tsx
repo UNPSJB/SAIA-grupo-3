@@ -10,6 +10,8 @@ import { FormErrors } from './FormErrors';
 import { ErrorAlert } from './ErrorAlert';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ListPagination } from './ListPagination';
+import { BotonExportarPdf } from './BotonExportarPdf';
+
 type RecordItem = {
   id: number;
   activo: boolean;
@@ -134,6 +136,36 @@ export function CatalogPage({
               label="Ver dados de baja"
               checked={list.mostrarInactivos}
               onChange={(e) => list.setMostrarInactivos(e.target.checked)}
+            />
+            <BotonExportarPdf<RecordItem>
+              modulo={endpoint}
+              titulo={title}
+              endpoint={endpoint}
+              parametros={{
+                buscar: list.busqueda,
+                ordenar_por: list.ordenarPor,
+                orden: list.orden,
+                mostrar_inactivos: list.mostrarInactivos,
+              }}
+              subtitulo={
+                [
+                  list.busqueda ? `Búsqueda: "${list.busqueda}"` : null,
+                  list.mostrarInactivos ? 'Incluye dados de baja' : 'Solo activos',
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
+              }
+              columnas={[
+                ...columnasVisibles.map(([key, label]) => ({
+                  titulo: label,
+                  valor: (item: RecordItem) =>
+                    String(item[key as keyof RecordItem] ?? '—'),
+                })),
+                {
+                  titulo: 'Estado',
+                  valor: (item: RecordItem) => (item.activo ? 'Activo' : 'Inactivo'),
+                },
+              ]}
             />
             <Button variant="success" onClick={() => route.open()}>
               <i className="bi bi-plus-lg me-1" aria-hidden="true" />

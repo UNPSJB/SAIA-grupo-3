@@ -1,5 +1,6 @@
 import { formatearFechaHora } from '../../shared/libreria/fechas';
 import { etiquetaDe, textoBadge } from '../../shared/libreria/etiquetas';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { ListControls } from '../../shared/components/ListControls';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { SortableHeader } from '../../shared/components/SortableHeader';
@@ -41,7 +42,7 @@ export function DocumentoTecnicoList({ onNuevo, onVer, onEditar }: DocumentoTecn
   return (
     <>
       <ListControls
-       placeholder="Buscar por nombre"
+        placeholder="Buscar por nombre"
         busqueda={busqueda}
         setBusqueda={cambiarBusqueda}
         title="Manuales, procedimientos y recetas"
@@ -61,6 +62,38 @@ export function DocumentoTecnicoList({ onNuevo, onVer, onEditar }: DocumentoTecn
           </Form.Select>
         }
       >
+        <BotonExportarPdf<DocumentoTecnicoResumen>
+          modulo="documentos-tecnicos"
+          titulo="Listado de Documentos Técnicos"
+          endpoint="documentos-tecnicos"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            tipo,
+          }}
+          subtitulo={
+            [
+              busqueda ? `Búsqueda: "${busqueda}"` : null,
+              tipo ? `Tipo: ${etiquetaDe(TIPOS_DOCUMENTO_TECNICO, tipo)}` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ') || undefined
+          }
+          columnas={[
+            { titulo: 'Nombre', valor: (d) => d.nombre },
+            { titulo: 'Tipo', valor: (d) => etiquetaDe(TIPOS_DOCUMENTO_TECNICO, d.tipo) },
+            {
+              titulo: 'Versión vigente',
+              valor: (d) => (d.version_vigente ? `v${d.version_vigente.numero}` : '—'),
+            },
+            {
+              titulo: 'Última actualización',
+              valor: (d) =>
+                d.version_vigente ? formatearFechaHora(d.version_vigente.fecha_subida) : '—',
+            },
+          ]}
+        />
         <Button
           variant="success"
           onClick={onNuevo}

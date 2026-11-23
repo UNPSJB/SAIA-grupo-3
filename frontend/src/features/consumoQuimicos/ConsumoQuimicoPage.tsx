@@ -6,6 +6,7 @@ import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { useSearchParams } from 'react-router-dom';
 import { useListState, useDebouncedValue } from '../../shared/hooks/useListState';
 import { ListControls } from '../../shared/components/ListControls';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { useState, useEffect } from 'react';
 import { Container } from 'react-bootstrap';
 import { ConsumoQuimicoList } from './ConsumoQuimicoList';
@@ -128,7 +129,38 @@ export function ReporteConsumosPage() {
         <h2 className="mb-4 border-bottom pb-2 text-secondary">Reporte de Consumo de Insumos</h2>
       </div>
 
-      <ListControls {...filters} placeholder="Buscar por insumo químico o unidad" />
+      <ListControls {...filters} placeholder="Buscar por insumo químico o unidad">
+        <BotonExportarPdf<ConsumoAcumulado>
+          modulo="reporte-consumos"
+          titulo="Reporte Acumulado de Consumo de Insumos Químicos"
+          endpoint="reporte-consumos"
+          parametros={{
+            fecha_desde: fechaDesde,
+            fecha_hasta: fechaHasta,
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+          }}
+          subtitulo={
+            [
+              fechaDesde ? `Desde: ${fechaDesde}` : null,
+              fechaHasta ? `Hasta: ${fechaHasta}` : null,
+              busqueda ? `Búsqueda: "${busqueda}"` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ') || undefined
+          }
+          columnas={[
+            { titulo: 'Producto Químico', valor: (c) => c.nombre_insumo },
+            {
+              titulo: 'Total Consumido',
+              valor: (c) => c.cantidad_total.toLocaleString('es-AR'),
+              numerica: true,
+            },
+            { titulo: 'Unidad', valor: (c) => c.unidad_medida },
+          ]}
+        />
+      </ListControls>
       <Card className="shadow-sm border-0 mb-4 bg-body">
         <Card.Body>
           <Row className="g-3 align-items-end">

@@ -30,7 +30,7 @@ def client(db_session):
                    'accionCorrectiva','documentacion', 'documentoTecnico', 'vistaPublica', 'notificaciones',
                    'consumoQuimico', 'checklist', 'archivos', 'equipos', 'registroCalibracion', 'registroTemperatura',
                    'tarea', 'plan', 'receta', 'claseFuncional', 'aditivoReferencia', 'produccionDelDia',
-                   'configuracionProduccion', 'nutricion', 'rotuladoFrontal', 'rotulo', 'alergeno'):
+                   'configuracionProduccion', 'nutricion', 'rotuladoFrontal', 'rotulo', 'alergeno', 'exportacion'):
         modulo = importlib.import_module(f'src.{nombre}.router')
         api.include_router(modulo.router)
         api.include_router(documentos_vigentes_router)
@@ -88,7 +88,7 @@ MODULOS_ENTREGA = {
     'unidadMedida', 'insumos', 'insumosQuimicos', 'tablero', 'incidente',
     'documentacion', 'documentoTecnico', 'vistaPublica', 'producto', 'loteProduccion',
     'notificaciones', 'consumoQuimico', 'checklist', 'equipos',
-    'registroTemperatura', 'abastecimiento', 'tarea', 'plan', 'accionCorrectiva', 'registroCalibracion', 'tipoDocumento'
+    'registroTemperatura', 'abastecimiento', 'tarea', 'plan', 'accionCorrectiva', 'registroCalibracion', 'tipoDocumento', 'exportacion'
 }
 
 

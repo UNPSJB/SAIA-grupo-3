@@ -25,9 +25,16 @@ interface ReporteImpresionProps {
   children: ReactNode;
 }
 
-export function imprimirDocumento(claseBody: string): void {
+export function imprimirDocumento(claseBody: string, tituloDocumento?: string): void {
+  const tituloAnterior = document.title;
+  if (tituloDocumento) {
+    document.title = tituloDocumento;
+  }
   const quitar = () => {
     document.body.classList.remove(claseBody);
+    if (tituloDocumento) {
+      document.title = tituloAnterior;
+    }
     window.removeEventListener('afterprint', quitar);
   };
   document.body.classList.add(claseBody);

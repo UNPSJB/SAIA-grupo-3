@@ -1,6 +1,7 @@
 import { SortableHeader } from '../../shared/components/SortableHeader';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { ListControls } from '../../shared/components/ListControls';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
 import { useEquipo } from './useEquipo';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -44,7 +45,12 @@ export function EquipoList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls placeholder="Buscar por nombre o N.º de serie" busqueda={busqueda} setBusqueda={setBusqueda} title="Inventario de Equipos">
+      <ListControls
+        placeholder="Buscar por nombre o N.º de serie"
+        busqueda={busqueda}
+        setBusqueda={setBusqueda}
+        title="Inventario de Equipos"
+      >
         <Form.Check
           type="switch"
           id="switch-inactivos"
@@ -52,6 +58,37 @@ export function EquipoList({
           checked={mostrarInactivos}
           onChange={(e) => setMostrarInactivos(e.target.checked)}
           className="text-secondary mb-0"
+        />
+        <BotonExportarPdf<Equipo>
+          modulo="equipos"
+          titulo="Inventario de Equipos e Instrumentos"
+          endpoint="equipos"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            mostrar_inactivos: mostrarInactivos,
+          }}
+          subtitulo={[
+            busqueda ? `Búsqueda: "${busqueda}"` : null,
+            mostrarInactivos ? 'Incluye dados de baja' : 'Solo activos',
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          columnas={[
+            { titulo: 'N° de Serie', valor: (e) => e.numero_serie },
+            { titulo: 'Nombre', valor: (e) => e.nombre },
+            { titulo: 'Tipo', valor: (e) => etiquetaDe(TIPOS_EQUIPOS, e.tipo) },
+            { titulo: 'Sector', valor: (e) => e.sector?.nombre ?? 'No disponible' },
+            {
+              titulo: 'Control de frío',
+              valor: (e) =>
+                e.controla_temperatura
+                  ? `${e.temperatura_minima ?? '—'}°C a ${e.temperatura_maxima ?? '—'}°C`
+                  : 'No',
+            },
+            { titulo: 'Estado', valor: (e) => (e.activo ? 'Activo' : 'Inactivo') },
+          ]}
         />
         <Button
           variant="success"
@@ -97,7 +134,6 @@ export function EquipoList({
                   orden={orden}
                   cambiarOrden={cambiarOrden}
                 >
-
                   Sector
                 </SortableHeader>
                 <th>Estado</th>
@@ -145,13 +181,12 @@ export function EquipoList({
                       )}
 
                       {e.activo && e.controla_temperatura && (
-                         <i
-                         className="bi bi-snow text-info ms-5"
-                         title="Control de Frío"
-                         style={{ fontSize: '1.5rem' }}
-                         />
-                        )}
-
+                        <i
+                          className="bi bi-snow text-info ms-5"
+                          title="Control de Frío"
+                          style={{ fontSize: '1.5rem' }}
+                        />
+                      )}
                     </td>
 
                     <td className="text-center">

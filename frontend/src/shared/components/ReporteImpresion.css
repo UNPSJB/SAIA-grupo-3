@@ -249,7 +249,8 @@
   body.imprimiendo-exportacion > #root,
   body.imprimiendo-tabla-nutricional > #root,
   body.imprimiendo-trazabilidad > #root,
-  body.imprimiendo-expediente > #root {
+  body.imprimiendo-expediente > #root,
+  body.imprimiendo-listado > #root {
     display: none !important;
   }
 
@@ -257,7 +258,8 @@
   body.imprimiendo-exportacion > .rep-portal-exportacion,
   body.imprimiendo-tabla-nutricional > .rep-portal-nutricion,
   body.imprimiendo-trazabilidad > .rep-portal-trazabilidad,
-  body.imprimiendo-expediente > .rep-portal-expediente {
+  body.imprimiendo-expediente > .rep-portal-expediente,
+  body.imprimiendo-listado > .rep-portal-listado {
     display: block !important;
   }
 

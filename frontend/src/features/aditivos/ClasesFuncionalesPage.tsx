@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Badge, Button, Card, Container, Form, Table } from 'react-bootstrap';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { FormErrors } from '../../shared/components/FormErrors';
 import { ListControls } from '../../shared/components/ListControls';
@@ -138,6 +139,35 @@ export function ClasesFuncionalesPage() {
               label="Ver dadas de baja"
               checked={list.mostrarInactivos}
               onChange={(e) => list.setMostrarInactivos(e.target.checked)}
+            />
+            <BotonExportarPdf<ClaseFuncional>
+              modulo="clases-funcionales"
+              titulo="Clases Funcionales de Aditivos"
+              endpoint="clases-funcionales"
+              parametros={{
+                buscar: list.busqueda,
+                ordenar_por: list.ordenarPor,
+                orden: list.orden,
+                mostrar_inactivos: list.mostrarInactivos,
+              }}
+              subtitulo={[
+                list.busqueda ? `Búsqueda: "${list.busqueda}"` : null,
+                list.mostrarInactivos ? 'Incluye dadas de baja' : 'Solo activas',
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              columnas={[
+                { titulo: 'Nombre', valor: (c) => c.nombre },
+                { titulo: 'Número INS', valor: (c) => (c.ins_opcional ? 'Opcional' : 'Obligatorio') },
+                {
+                  titulo: 'Rótulo',
+                  valor: (c) =>
+                    `${c.declarar_solo_funcion ? 'Solo función' : 'Función y aditivo'}${
+                      c.es_edulcorante ? ' · Edulcorante' : ''
+                    }`,
+                },
+                { titulo: 'Estado', valor: (c) => (c.activo ? 'Activa' : 'Inactiva') },
+              ]}
             />
             <Button variant="success" onClick={() => route.open()}>
               <i className="bi bi-plus-lg me-1" aria-hidden="true" />

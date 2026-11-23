@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Alert, Badge, Button, Card, Container, Form, Modal, Table } from 'react-bootstrap';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { FormErrors } from '../../shared/components/FormErrors';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -204,10 +205,28 @@ export function AlergenosPage() {
           checked={mostrarInactivos}
           onChange={(e) => setMostrarInactivos(e.target.checked)}
         />
-        <Button variant="success" onClick={() => setEditando(null)}>
-          <i className="bi bi-plus-lg me-1" aria-hidden="true" />
-          Nuevo alérgeno
-        </Button>
+        <div className="d-flex flex-wrap align-items-center gap-2">
+          <BotonExportarPdf<Alergeno>
+            modulo="alergenos"
+            titulo="Catálogo de Alérgenos (CAA)"
+            endpoint="alergenos"
+            parametros={{
+              mostrar_inactivos: mostrarInactivos,
+            }}
+            subtitulo={mostrarInactivos ? 'Incluye dados de baja' : 'Solo activos'}
+            columnas={[
+              { titulo: 'Nombre', valor: (a) => a.nombre },
+              { titulo: 'Grupo', valor: (a) => a.grupo },
+              { titulo: 'En el rótulo', valor: (a) => a.texto_declaracion.toUpperCase() },
+              { titulo: 'Gluten (TACC)', valor: (a) => (a.implica_gluten ? 'Sí' : '—') },
+              { titulo: 'Estado', valor: (a) => (a.activo ? 'Activo' : 'Inactivo') },
+            ]}
+          />
+          <Button variant="success" onClick={() => setEditando(null)}>
+            <i className="bi bi-plus-lg me-1" aria-hidden="true" />
+            Nuevo alérgeno
+          </Button>
+        </div>
       </div>
       {error && <ErrorAlert mensaje={error} />}
       {errorAccion && <ErrorAlert mensaje={errorAccion} />}

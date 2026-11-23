@@ -1,7 +1,8 @@
 import { lazy, Suspense, useRef } from 'react';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { SortableHeader } from '../../shared/components/SortableHeader';
-import { formatearFechaHora, type RangoFechas } from '../../shared/libreria/fechas';
+import { formatearFecha, formatearFechaHora, type RangoFechas } from '../../shared/libreria/fechas';
 import './incidentes.css';
 import { Badge, Button, Card, Form, Table } from 'react-bootstrap';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -13,7 +14,6 @@ import type { EstadoIncidente, Incidente, TipoIncidente } from './types';
 import { ESTADOS_INCIDENTE } from './types';
 import { textoBadge } from '../../shared/libreria/etiquetas';
 
-// Los gráficos (Recharts) se descargan solo cuando un administrador abre el listado.
 const PanelEstadisticasIncidentes = lazy(() =>
   import('./estadisticas/PanelEstadisticasIncidentes').then((modulo) => ({
     default: modulo.PanelEstadisticasIncidentes,
@@ -74,7 +74,6 @@ export function IncidenteList({
     filtrarPorTipo(String(tipo.id), rango.desde, rango.hasta);
     listadoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
-  // Un tipo dado de baja elegido desde el gráfico no está entre las opciones del filtro.
   const tipoFiltradoInactivo = tipoId !== '' && !tiposActivos.some((t) => String(t.id) === tipoId);
 
   const getEstado = (valor: EstadoIncidente) =>
@@ -156,6 +155,41 @@ export function IncidenteList({
             </Button>
           </div>
           <div className="d-flex flex-wrap align-items-center justify-content-end gap-3 ms-auto">
+            <BotonExportarPdf<Incidente>
+              modulo="incidentes"
+              titulo="Registro de Incidentes"
+              endpoint="incidentes"
+              parametros={{
+                buscar: busqueda,
+                ordenar_por: ordenarPor,
+                orden,
+                estado,
+                tipo_id: tipoId,
+                fecha_desde: fechaDesde,
+                fecha_hasta: fechaHasta,
+              }}
+              subtitulo={
+                [
+                  busqueda ? `Búsqueda: "${busqueda}"` : null,
+                  estado ? `Estado: ${getEstado(estado).label}` : null,
+                  fechaDesde ? `Desde: ${formatearFecha(fechaDesde)}` : null,
+                  fechaHasta ? `Hasta: ${formatearFecha(fechaHasta)}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || undefined
+              }
+              columnas={[
+                { titulo: 'Fecha y hora', valor: (i) => formatearFechaHora(i.fecha_hora) },
+                { titulo: 'Tipo', valor: (i) => i.tipo.nombre },
+                { titulo: 'Descripción', valor: (i) => i.descripcion },
+                {
+                  titulo: 'Reportado por',
+                  valor: (i) =>
+                    `${i.reportado_por.apellido}, ${i.reportado_por.nombre} (DNI ${i.reportado_por_dni})`,
+                },
+                { titulo: 'Estado', valor: (i) => getEstado(i.estado).label },
+              ]}
+            />
             {currentUser?.operar && (
               <Button
                 variant="success"

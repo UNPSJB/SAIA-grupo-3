@@ -1,6 +1,7 @@
 import { SortableHeader } from '../../shared/components/SortableHeader';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { ListControls } from '../../shared/components/ListControls';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
 import { useSector } from './useSector';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -42,7 +43,12 @@ export function SectorList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina de Sectores" placeholder="Buscar por nombre">
+      <ListControls
+        busqueda={busqueda}
+        setBusqueda={setBusqueda}
+        title="Nómina de Sectores"
+        placeholder="Buscar por nombre"
+      >
         <Form.Check
           type="switch"
           id="switch-inactivos-sectores"
@@ -50,6 +56,27 @@ export function SectorList({
           checked={mostrarInactivos}
           onChange={(e) => setMostrarInactivos(e.target.checked)}
           className="text-secondary mb-0"
+        />
+        <BotonExportarPdf<Sector>
+          modulo="sectores"
+          titulo="Nómina de Sectores"
+          endpoint="sectores"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            mostrar_inactivos: mostrarInactivos,
+          }}
+          subtitulo={[
+            busqueda ? `Búsqueda: "${busqueda}"` : null,
+            mostrarInactivos ? 'Incluye dados de baja' : 'Solo activos',
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          columnas={[
+            { titulo: 'Nombre del Sector', valor: (s) => s.nombre },
+            { titulo: 'Estado', valor: (s) => (s.activo ? 'Activo' : 'Inactivo') },
+          ]}
         />
         <Button
           variant="success"

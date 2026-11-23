@@ -1,4 +1,5 @@
 import { SortableHeader } from '../../shared/components/SortableHeader';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
 import { useVencimientos } from './useVencimientos';
@@ -40,72 +41,109 @@ export function VencimientosList({ onVerLegajo }: VencimientosListProps) {
   return (
     <>
       <h4 className="text-secondary fw-normal mb-3">Documentación del Personal</h4>
-      
+
       <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
-  <Form.Control
-    type="search"
-    placeholder="Buscar empleado, DNI o documento..."
-    aria-label="Buscar vencimiento"
-    value={busqueda}
-    onChange={(e) => setBusqueda(e.target.value)}
-    style={{
-      flex: '1 1 240px',
-      width: 'auto',
-      minWidth: 0,
-    }}
-  />
+        <Form.Control
+          type="search"
+          placeholder="Buscar empleado, DNI o documento..."
+          aria-label="Buscar vencimiento"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          style={{
+            flex: '1 1 240px',
+            width: 'auto',
+            minWidth: 0,
+          }}
+        />
 
-  <Form.Select
-    aria-label="Filtrar por estado"
-    value={estado}
-    onChange={(e) =>
-      setEstado(e.target.value as EstadoVencimiento | '')
-    }
-    style={{
-      flex: '0 1 180px',
-      width: 'auto',
-      maxWidth: '100%',
-    }}
-  >
-    <option value="">Todos los estados</option>
-    {ESTADOS_VENCIMIENTO.map((e) => (
-      <option key={e.value} value={e.value}>
-        {e.label}
-      </option>
-    ))}
-  </Form.Select>
+        <Form.Select
+          aria-label="Filtrar por estado"
+          value={estado}
+          onChange={(e) =>
+            setEstado(e.target.value as EstadoVencimiento | '')
+          }
+          style={{
+            flex: '0 1 180px',
+            width: 'auto',
+            maxWidth: '100%',
+          }}
+        >
+          <option value="">Todos los estados</option>
+          {ESTADOS_VENCIMIENTO.map((e) => (
+            <option key={e.value} value={e.value}>
+              {e.label}
+            </option>
+          ))}
+        </Form.Select>
 
-  <Form.Check
-    type="switch"
-    id="solo-alertas-documentacion"
-    label="Solo vencidos y próximos"
-    checked={soloAlertas}
-    onChange={(e) => setSoloAlertas(e.target.checked)}
-    className="mb-0 text-nowrap"
-  />
+        <Form.Check
+          type="switch"
+          id="solo-alertas-documentacion"
+          label="Solo vencidos y próximos"
+          checked={soloAlertas}
+          onChange={(e) => setSoloAlertas(e.target.checked)}
+          className="mb-0 text-nowrap"
+        />
 
-  <div className="d-flex flex-wrap align-items-center gap-2 ms-auto">
-    <Button
-      variant="success"
-      onClick={limpiarFiltros}
-      disabled={!estado && !busqueda && !soloAlertas}
-      className="d-flex align-items-center gap-1"
-    >
-      <i className="bi bi-x-lg" aria-hidden="true"></i>
-      <span>Limpiar</span>
-    </Button>
+        <div className="d-flex flex-wrap align-items-center gap-2 ms-auto">
+          <BotonExportarPdf<Vencimiento>
+            modulo="vencimientos-personal"
+            titulo="Vencimientos de Documentación del Personal"
+            endpoint="vencimientos"
+            parametros={{
+              origen: 'documentacion',
+              buscar: busqueda,
+              ordenar_por: ordenarPor === 'elemento' ? 'elemento' : 'fecha_vencimiento',
+              orden,
+              estado,
+              solo_alertas: soloAlertas,
+            }}
+            subtitulo={
+              [
+                busqueda ? `Búsqueda: "${busqueda}"` : null,
+                estado ? `Estado: ${getEstado(estado).label}` : null,
+                soloAlertas ? 'Solo vencidos y próximos' : null,
+              ]
+                .filter(Boolean)
+                .join(' · ') || undefined
+            }
+            columnas={[
+              {
+                titulo: 'Empleado',
+                valor: (v) =>
+                  `${v.personal.apellido}, ${v.personal.nombre} (DNI ${v.personal.dni} · Legajo #${v.personal.nroLegajo})`,
+              },
+              { titulo: 'Documento', valor: (v) => v.tipo_documento.nombre },
+              {
+                titulo: 'Vencimiento',
+                valor: (v) =>
+                  `${formatearFecha(v.fecha_vencimiento)} (${textoDiasRestantes(v.dias_restantes)})`,
+              },
+              { titulo: 'Estado', valor: (v) => getEstado(v.estado).label },
+            ]}
+          />
 
-    <Button
-      variant="success"
-      onClick={recargar}
-      disabled={loading}
-      className="d-flex align-items-center gap-1 shadow-sm"
-    >
-      <i className="bi bi-arrow-clockwise" aria-hidden="true"></i>
-      <span>Actualizar</span>
-    </Button>
-  </div>
-</div>
+          <Button
+            variant="success"
+            onClick={limpiarFiltros}
+            disabled={!estado && !busqueda && !soloAlertas}
+            className="d-flex align-items-center gap-1"
+          >
+            <i className="bi bi-x-lg" aria-hidden="true"></i>
+            <span>Limpiar</span>
+          </Button>
+
+          <Button
+            variant="success"
+            onClick={recargar}
+            disabled={loading}
+            className="d-flex align-items-center gap-1 shadow-sm"
+          >
+            <i className="bi bi-arrow-clockwise" aria-hidden="true"></i>
+            <span>Actualizar</span>
+          </Button>
+        </div>
+      </div>
 
       {error && <ErrorAlert mensaje={error} />}
 

@@ -1,4 +1,5 @@
 import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { useVencimientosCalibracion } from './useVencimientosCalibracion';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
@@ -91,6 +92,48 @@ export function VencimientosCalibracionList({ onVerEquipo }: VencimientosCalibra
         />
 
         <div className="d-flex flex-wrap align-items-center gap-2 ms-auto">
+          <BotonExportarPdf<VencimientoCalibracion>
+            modulo="vencimientos-calibracion"
+            titulo="Vencimientos de Calibración de Equipos"
+            endpoint="vencimientos"
+            parametros={{
+              origen: 'calibracion',
+              buscar: busqueda,
+              ordenar_por: ordenarPor === 'elemento' ? 'elemento' : 'fecha_vencimiento',
+              orden,
+              estado,
+              solo_alertas: soloAlertas,
+            }}
+            subtitulo={
+              [
+                busqueda ? `Búsqueda: "${busqueda}"` : null,
+                estado ? `Estado: ${getEstado(estado).label}` : null,
+                soloAlertas ? 'Solo vencidos y próximos' : null,
+              ]
+                .filter(Boolean)
+                .join(' · ') || undefined
+            }
+            columnas={[
+              {
+                titulo: 'Equipo',
+                valor: (v) =>
+                  `${v.equipo.nombre} (N° serie ${v.equipo.numero_serie} · ${getTipo(v.equipo.tipo)})`,
+              },
+              { titulo: 'Sector', valor: (v) => v.sector?.nombre ?? 'Sin sector' },
+              {
+                titulo: 'Última calibración',
+                valor: (v) =>
+                  `${formatearFecha(v.fecha_ultima_calibracion)} (Cada ${v.periodicidad_dias} días)`,
+              },
+              {
+                titulo: 'Vencimiento',
+                valor: (v) =>
+                  `${formatearFecha(v.fecha_vencimiento)} (${textoDiasRestantes(v.dias_restantes)})`,
+              },
+              { titulo: 'Estado', valor: (v) => getEstado(v.estado).label },
+            ]}
+          />
+
           <Button
             variant="success"
             onClick={limpiarFiltros}

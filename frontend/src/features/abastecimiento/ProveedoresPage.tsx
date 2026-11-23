@@ -20,6 +20,7 @@ import { ProveedorForm } from './ProveedorForm';
 import { ProveedorLotes } from './ProveedorLotes';
 import type { Proveedor, ProveedorInput } from './types';
 import { useConsulta } from './useConsulta';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 
 interface ListadoProps {
   onNuevo: () => void;
@@ -64,6 +65,37 @@ function ProveedoresListado({ onNuevo, onVer, onEditar, onEstado }: ListadoProps
           label="Ver dados de baja"
           checked={params.get('mostrar_inactivos') === 'true'}
           onChange={(e) => filtrar('mostrar_inactivos', String(e.target.checked))}
+        />
+        <BotonExportarPdf<Proveedor>
+          modulo="proveedores"
+          titulo="Nómina de Proveedores"
+          endpoint="proveedores"
+          parametros={{
+            buscar: params.get('buscar') ?? '',
+            mostrar_inactivos: params.get('mostrar_inactivos') === 'true',
+          }}
+          subtitulo={
+            [
+              params.get('buscar') ? `Búsqueda: "${params.get('buscar')}"` : null,
+              params.get('mostrar_inactivos') === 'true' ? 'Incluye dados de baja' : 'Solo activos',
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          }
+          columnas={[
+            { titulo: 'Proveedor', valor: (p) => p.nombre },
+            { titulo: 'CUIT', valor: (p) => p.cuit },
+            { titulo: 'Teléfono', valor: (p) => p.telefono || 'Sin teléfono' },
+            { titulo: 'Email', valor: (p) => p.email || 'Sin email' },
+            {
+              titulo: 'Habilitación',
+              valor: (p) =>
+                p.numero_habilitacion
+                  ? `${p.numero_habilitacion}${p.vencimiento_habilitacion ? ` (vence ${formatearFecha(p.vencimiento_habilitacion)})` : ''}`
+                  : 'Sin registrar',
+            },
+            { titulo: 'Estado', valor: (p) => (p.activo ? 'Activo' : 'Inactivo') },
+          ]}
         />
         <Button
           variant="success"

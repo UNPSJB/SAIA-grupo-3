@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Badge, Button, Card, Form, Table } from 'react-bootstrap';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -52,6 +53,32 @@ const estados: Record<
   por_vencer: { etiqueta: 'Por vencer', variante: 'warning' },
   vigente: { etiqueta: 'Vigente', variante: 'success' },
 };
+
+function descripcionPdfVencimiento(v: VencimientoConsolidado): {
+  tipo: string;
+  elemento: string;
+  detalle: string;
+} {
+  if ('elemento' in v) {
+    return {
+      tipo: v.origen === 'lote_insumo' ? 'Lote de insumo' : 'Habilitación de proveedor',
+      elemento: v.elemento,
+      detalle: v.descripcion,
+    };
+  }
+  if (v.origen === 'documentacion') {
+    return {
+      tipo: 'Documentación',
+      elemento: `${v.personal.apellido}, ${v.personal.nombre}`,
+      detalle: `DNI ${v.personal.dni} · Legajo #${v.personal.nroLegajo} · ${v.tipo_documento.nombre}`,
+    };
+  }
+  return {
+    tipo: 'Calibración',
+    elemento: v.equipo.nombre,
+    detalle: `N° serie ${v.equipo.numero_serie} · Sector: ${v.sector?.nombre ?? 'Sin sector'}`,
+  };
+}
 
 export function VencimientosList({
   titulo,
@@ -123,6 +150,38 @@ export function VencimientosList({
           className="mb-0 text-nowrap"
         />
         <div className="d-flex flex-wrap align-items-center gap-2 ms-auto">
+          <BotonExportarPdf<VencimientoConsolidado>
+            modulo="vencimientos"
+            titulo={titulo ?? 'Control de Vencimientos'}
+            endpoint="vencimientos"
+            parametros={{
+              buscar: busqueda,
+              ordenar_por: ordenarPor === 'elemento' ? 'elemento' : 'fecha_vencimiento',
+              orden,
+              estado: estadoSeleccionado,
+              solo_alertas: soloAlertas,
+            }}
+            subtitulo={
+              [
+                busqueda ? `Búsqueda: "${busqueda}"` : null,
+                estadoSeleccionado ? `Estado: ${estados[estadoSeleccionado].etiqueta}` : null,
+                soloAlertas ? 'Solo vencidos y próximos' : null,
+              ]
+                .filter(Boolean)
+                .join(' · ') || undefined
+            }
+            columnas={[
+              { titulo: 'Tipo', valor: (v) => descripcionPdfVencimiento(v).tipo },
+              { titulo: columnaElemento, valor: (v) => descripcionPdfVencimiento(v).elemento },
+              { titulo: 'Detalle', valor: (v) => descripcionPdfVencimiento(v).detalle },
+              {
+                titulo: 'Vencimiento',
+                valor: (v) =>
+                  `${formatearFecha(v.fecha_vencimiento)} (${textoDiasRestantes(v.dias_restantes)})`,
+              },
+              { titulo: 'Estado', valor: (v) => estados[v.estado].etiqueta },
+            ]}
+          />
           <Button
             variant="success"
             onClick={limpiarFiltros}

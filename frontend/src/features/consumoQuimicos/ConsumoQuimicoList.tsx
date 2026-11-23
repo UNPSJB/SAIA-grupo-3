@@ -7,6 +7,7 @@ import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { ConsumoQuimico } from './types';
 import { formatearFecha } from '../../shared/libreria/fechas';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 
 interface ConsumoQuimicoListProps {
   onNuevoClick: () => void;
@@ -51,6 +52,36 @@ export function ConsumoQuimicoList({
           checked={mostrarInactivos}
           onChange={(e) => setMostrarInactivos(e.target.checked)}
           className="text-secondary mb-0"
+        />
+        <BotonExportarPdf<ConsumoQuimico>
+          modulo="consumos-quimicos"
+          titulo="Listado de Consumos de Insumos Químicos"
+          endpoint="consumo-quimico"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            mostrar_inactivos: mostrarInactivos,
+          }}
+          subtitulo={
+            [
+              busqueda ? `Búsqueda: "${busqueda}"` : null,
+              mostrarInactivos ? 'Incluye dados de baja' : 'Solo activos',
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          }
+          columnas={[
+            { titulo: 'Fecha', valor: (c) => formatearFecha(c.fecha) },
+            { titulo: 'Producto Químico', valor: (c) => c.insumo?.nombre ?? 'No disponible' },
+            {
+              titulo: 'Cantidad',
+              valor: (c) => c.cantidad_utilizada.toLocaleString('es-AR'),
+              numerica: true,
+            },
+            { titulo: 'Tarea de Limpieza', valor: (c) => c.tarea_limpieza },
+            { titulo: 'Estado', valor: (c) => (c.activo ? 'Activo' : 'Inactivo') },
+          ]}
         />
         <Button
           variant="success"

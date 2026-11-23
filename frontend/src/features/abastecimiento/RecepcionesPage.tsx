@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import './RecepcionesPage.css';
 import { Alert, Badge, Button, Card, Container, Form, InputGroup, Table } from 'react-bootstrap';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
 import { formatearFecha, textoDiasRestantes } from '../../shared/libreria/fechas';
@@ -17,6 +18,7 @@ import { RecepcionForm } from './RecepcionForm';
 import { ConfirmacionAbastecimiento } from './ConfirmacionAbastecimiento';
 import type { LoteRecepcion } from './types';
 import { useConsulta } from './useConsulta';
+
 function Trazabilidad({ lote }: { lote: LoteRecepcion }) {
   const cargar = useCallback(
     (signal: AbortSignal) => obtenerTrazabilidad(lote.id, signal),
@@ -137,15 +139,60 @@ function RecepcionesListado({
               </span>
             )}
           </div>
-          <Button
-            variant="outline-secondary"
-            size="sm"
-            onClick={listado.recargar}
-            disabled={listado.cargando}
-          >
-            <i className="bi bi-arrow-clockwise me-2" aria-hidden="true" />
-            Actualizar
-          </Button>
+          <div className="d-flex align-items-center gap-2">
+            <BotonExportarPdf<LoteRecepcion>
+              modulo="recepciones-insumos"
+              titulo="Listado de Recepciones de Insumos"
+              endpoint="lotes-insumo"
+              size="sm"
+              parametros={{
+                buscar: params.get('buscar') ?? '',
+                insumo_id: params.get('insumo_id') ?? '',
+                proveedor_id: params.get('proveedor_id') ?? '',
+                estado: params.get('estado') ?? '',
+                fecha_desde: params.get('fecha_desde') ?? '',
+                fecha_hasta: params.get('fecha_hasta') ?? '',
+                mostrar_inactivos: params.get('mostrar_inactivos') === 'true',
+              }}
+              columnas={[
+                { titulo: 'Insumo', valor: (l) => l.insumo_nombre },
+                { titulo: 'Lote', valor: (l) => l.numero_lote },
+                { titulo: 'Proveedor', valor: (l) => l.proveedor_nombre },
+                {
+                  titulo: 'Recibido',
+                  valor: (l) => `${l.cantidad.toLocaleString('es-AR')} ${l.unidad}`,
+                  numerica: true,
+                },
+                {
+                  titulo: 'Disponible',
+                  valor: (l) => `${l.cantidad_disponible.toLocaleString('es-AR')} ${l.unidad}`,
+                  numerica: true,
+                },
+                { titulo: 'Recepción', valor: (l) => formatearFecha(l.fecha_recepcion) },
+                { titulo: 'Vencimiento', valor: (l) => formatearFecha(l.fecha_vencimiento) },
+                {
+                  titulo: 'Estado',
+                  valor: (l) =>
+                    !l.activo
+                      ? 'Anulada'
+                      : l.estado_vencimiento === 'vencido'
+                        ? 'Vencido'
+                        : l.estado_vencimiento === 'por_vencer'
+                          ? 'Próximo a vencer'
+                          : 'Vigente',
+                },
+              ]}
+            />
+            <Button
+              variant="outline-secondary"
+              size="sm"
+              onClick={listado.recargar}
+              disabled={listado.cargando}
+            >
+              <i className="bi bi-arrow-clockwise me-2" aria-hidden="true" />
+              Actualizar
+            </Button>
+          </div>
         </Card.Header>
         <div className="recepciones-filtros">
           <Form.Group controlId="filtro-buscar-recepcion" className="recepciones-buscador">

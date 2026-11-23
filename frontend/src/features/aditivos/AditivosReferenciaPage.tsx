@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Badge, Button, Card, Container, Form, Table } from 'react-bootstrap';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { FormErrors } from '../../shared/components/FormErrors';
 import { ListControls } from '../../shared/components/ListControls';
@@ -165,13 +166,40 @@ export function AditivosReferenciaPage() {
       {route.error && <ErrorAlert mensaje={route.error} />}
       {route.mode === 'listado' && (
         <>
-          <ListControls {...list} title="Lista de referencia de aditivos" placeholder="Buscar por nombre, INS o clase funcional">
+          <ListControls
+            {...list}
+            title="Lista de referencia de aditivos"
+            placeholder="Buscar por nombre, INS o clase funcional"
+          >
             <Form.Check
               id="aditivos-inactivos"
               type="switch"
               label="Ver dados de baja"
               checked={list.mostrarInactivos}
               onChange={(e) => list.setMostrarInactivos(e.target.checked)}
+            />
+            <BotonExportarPdf<AditivoReferencia>
+              modulo="aditivos-referencia"
+              titulo="Lista de Referencia de Aditivos"
+              endpoint="aditivos-referencia"
+              parametros={{
+                buscar: list.busqueda,
+                ordenar_por: list.ordenarPor,
+                orden: list.orden,
+                mostrar_inactivos: list.mostrarInactivos,
+              }}
+              subtitulo={[
+                list.busqueda ? `Búsqueda: "${list.busqueda}"` : null,
+                list.mostrarInactivos ? 'Incluye dados de baja' : 'Solo activos',
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              columnas={[
+                { titulo: 'Clase funcional', valor: (a) => a.clase_funcional.nombre },
+                { titulo: 'Nombre completo', valor: (a) => a.nombre },
+                { titulo: 'INS', valor: (a) => a.ins ?? '—' },
+                { titulo: 'Estado', valor: (a) => (a.activo ? 'Activo' : 'Inactivo') },
+              ]}
             />
             <Button variant="success" onClick={() => route.open()}>
               <i className="bi bi-plus-lg me-1" aria-hidden="true" />

@@ -54,6 +54,7 @@ from src.alergeno.router import router as alergeno_router
 from src.produccionDelDia.router import router as produccion_del_dia_router
 from src.claseFuncional.router import router as clase_funcional_router
 from src.aditivoReferencia.router import router as aditivo_referencia_router
+from src.exportacion.router import router as exportacion_router
 from src.vistaPublica import models as vista_publica_models
 from src.vistaPublica.router import (
     router as vista_publica_router,
@@ -135,3 +136,4 @@ app.include_router(clase_funcional_router)
 app.include_router(aditivo_referencia_router)
 app.include_router(abastecimiento_router)
 app.include_router(temperatura_router)
+app.include_router(exportacion_router)

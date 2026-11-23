@@ -6,6 +6,7 @@ import { useInsumo } from './useInsumo';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { Insumo } from './types';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 
 interface InsumoListProps {
   onNuevoClick: () => void;
@@ -60,6 +61,52 @@ export function InsumoList({
           checked={mostrarInactivos}
           onChange={(e) => setMostrarInactivos(e.target.checked)}
           className="text-secondary mb-0"
+        />
+        <BotonExportarPdf<Insumo>
+          modulo="insumos"
+          titulo="Listado de Insumos / Ingredientes"
+          endpoint="insumos"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            mostrar_inactivos: mostrarInactivos,
+            solo_stock_bajo: soloStockBajo,
+          }}
+          subtitulo={
+            [
+              busqueda ? `Búsqueda: "${busqueda}"` : null,
+              soloStockBajo ? 'Solo stock bajo' : null,
+              mostrarInactivos ? 'Incluye dados de baja' : 'Solo activos',
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          }
+          columnas={[
+            {
+              titulo: 'Nombre',
+              valor: (i) => `${i.nombre}${i.tipo === 'aditivo' ? ' (Aditivo)' : ''}`,
+            },
+            {
+              titulo: 'Stock actual',
+              valor: (i) => i.cantidad.toLocaleString('es-AR'),
+              numerica: true,
+            },
+            {
+              titulo: 'Unidad',
+              valor: (i) => i.unidadMedidaObj?.sufijo ?? '—',
+            },
+            {
+              titulo: 'Stock mínimo',
+              valor: (i) =>
+                i.stock_minimo == null ? 'Sin definir' : i.stock_minimo.toLocaleString('es-AR'),
+              numerica: true,
+            },
+            {
+              titulo: 'Estado',
+              valor: (i) => (i.activo ? 'Activo' : 'Inactivo'),
+            },
+          ]}
         />
         <Button
           variant="success"
