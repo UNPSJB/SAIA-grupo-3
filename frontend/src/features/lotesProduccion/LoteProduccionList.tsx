@@ -1,4 +1,5 @@
 import { Badge, Button, Card, Table } from 'react-bootstrap';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { ListControls } from '../../shared/components/ListControls';
 import { ListPagination } from '../../shared/components/ListPagination';
@@ -7,6 +8,7 @@ import { SortableHeader } from '../../shared/components/SortableHeader';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { formatearFecha } from '../../shared/libreria/fechas';
 import { EstadoLoteBadge } from './EstadoLoteBadge';
+import { ESTADOS_LOTE } from './estados';
 import { formatearCantidad } from './formato';
 import type { LoteProduccion } from './types';
 import { useLotesProduccion } from './useLotesProduccion';
@@ -44,6 +46,32 @@ export function LoteProduccionList({ onNuevoClick, onViewClick }: LoteProduccion
         setBusqueda={setBusqueda}
         title={esAdministrador ? 'Lotes producidos' : 'Lotes que registraste'}
       >
+        <BotonExportarPdf<LoteProduccion>
+          modulo="lotes-produccion"
+          titulo="Listado de Lotes de Producción"
+          endpoint="lotes-produccion"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+          }}
+          subtitulo={busqueda ? `Búsqueda: "${busqueda}"` : undefined}
+          columnas={[
+            { titulo: 'Lote', valor: (l) => l.codigo },
+            { titulo: 'Producto', valor: (l) => l.producto.nombre },
+            { titulo: 'Fecha de producción', valor: (l) => formatearFecha(l.fecha_produccion) },
+            {
+              titulo: 'Cantidad',
+              valor: (l) => `${formatearCantidad(l.cantidad)} ${l.producto.unidad_medida.sufijo}`,
+              numerica: true,
+            },
+            {
+              titulo: 'Registrado por',
+              valor: (l) => `${l.registrado_por.apellido}, ${l.registrado_por.nombre}`,
+            },
+            { titulo: 'Estado', valor: (l) => ESTADOS_LOTE[l.estado].etiqueta },
+          ]}
+        />
         {currentUser?.operar && (
           <Button
             variant="success"

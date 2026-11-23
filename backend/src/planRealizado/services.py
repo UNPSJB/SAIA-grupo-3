@@ -1,7 +1,7 @@
 from src.pagination import filtrar_ordenar
 from datetime import date
 from typing import Dict, Any
-from sqlalchemy import select, func, delete
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 from src.planRealizado.models import PlanRealizado
 from src.tareaRealizada.models import TareaRealizada
@@ -66,7 +66,7 @@ def leer_plan_realizado(db: Session, plan_realizado_id: int) -> PlanRealizado:
 
 def eliminar_plan_realizado(db: Session, plan_realizado_id: int) -> PlanRealizado:
     db_plan = leer_plan_realizado(db, plan_realizado_id)
-    # Se borrarán en cascada las tareas_realizadas asociadas gracias a "delete-orphan"
-    db.execute(delete(PlanRealizado).where(PlanRealizado.id == plan_realizado_id))
+    respuesta = schemas.PlanRealizado.model_validate(db_plan)
+    db.delete(db_plan)
     db.commit()
-    return db_plan
+    return respuesta

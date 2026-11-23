@@ -66,13 +66,9 @@ class RecetaDesactualizada(BadRequest):
     DETAIL = ErrorCode.RECETA_DESACTUALIZADA
 
 
-class PasosPendientes(BadRequest):
+class LoteNoFinalizado(BadRequest):
     def __init__(self, cantidad: int) -> None:
-        super().__init__(ErrorCode.PASOS_PENDIENTES.format(cantidad=cantidad))
-
-
-class MotivoCierreObligatorio(BadRequest):
-    DETAIL = ErrorCode.MOTIVO_CIERRE_OBLIGATORIO
+        super().__init__(ErrorCode.LOTE_NO_FINALIZADO.format(cantidad=cantidad))
 
 
 class CodigoFormatoInvalido(BadRequest):

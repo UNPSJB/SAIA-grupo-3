@@ -50,7 +50,6 @@ def cargar_abastecimiento_demo(
     unidades_por_sufijo,
     registrado_por_id,
     hoy,
-    insumos_maestros,
 ):
     """Escenarios identificados como DEMO; no reescribe registros ni reinicia saldos."""
     proveedores = []
@@ -71,20 +70,6 @@ def cargar_abastecimiento_demo(
             vencimiento_habilitacion=hoy + timedelta(days=[-7, 0, 7, 60, 180][i % 5]),
             activo=i < CANTIDAD - 2)
         proveedores.append(proveedor)
-
-    for i, insumo in enumerate(insumos_maestros):
-        recibir_demo(
-            db,
-            crear,
-            insumo,
-            proveedores[i % (CANTIDAD - 2)],
-            150.0 + i * 10,
-            f"saia:seed:insumos:recepcion:{insumo.nombre}",
-            f"DEMO-INS-{i + 1:03d}",
-            registrado_por_id,
-            hoy - timedelta(days=45),
-            hoy + timedelta(days=90),
-        )
 
     definiciones = [
         ("Harina de trigo", "kg", 50.0), ("Azúcar", "kg", 20.0),

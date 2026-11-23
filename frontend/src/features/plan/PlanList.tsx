@@ -1,6 +1,7 @@
 import { SortableHeader } from '../../shared/components/SortableHeader';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { ListControls } from '../../shared/components/ListControls';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
 import { usePlan } from './usePlan';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -43,7 +44,12 @@ export function PlanList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Planes de Limpieza" placeholder="Buscar por nombre o descripción">
+      <ListControls
+        busqueda={busqueda}
+        setBusqueda={setBusqueda}
+        title="Planes de Limpieza"
+        placeholder="Buscar por nombre o descripción"
+      >
         <Form.Check
           type="switch"
           id="switch-inactivos-planes"
@@ -51,6 +57,30 @@ export function PlanList({
           checked={mostrarInactivos}
           onChange={(e) => setMostrarInactivos(e.target.checked)}
           className="text-secondary mb-0"
+        />
+        <BotonExportarPdf<Plan>
+          modulo="planes"
+          titulo="Listado de Planes de Limpieza"
+          endpoint="planes"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            mostrar_inactivos: mostrarInactivos,
+          }}
+          subtitulo={[
+            busqueda ? `Búsqueda: "${busqueda}"` : null,
+            mostrarInactivos ? 'Incluye finalizados/inactivos' : 'Solo activos',
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          columnas={[
+            { titulo: 'Nombre', valor: (p) => p.nombre },
+            { titulo: 'Descripción', valor: (p) => p.descripcion },
+            { titulo: 'Inicio', valor: (p) => formatearFecha(p.fecha_inicio, 'N/A') },
+            { titulo: 'Fin', valor: (p) => formatearFecha(p.fecha_fin, 'N/A') },
+            { titulo: 'Estado', valor: (p) => (p.activo ? 'Activo' : 'Inactivo') },
+          ]}
         />
         <Button
           variant="success"

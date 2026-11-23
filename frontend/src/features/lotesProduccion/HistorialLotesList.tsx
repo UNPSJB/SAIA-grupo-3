@@ -1,4 +1,5 @@
 import { Button, Card, Form, Table } from 'react-bootstrap';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { ListControls } from '../../shared/components/ListControls';
 import { ListPagination } from '../../shared/components/ListPagination';
@@ -49,7 +50,52 @@ export function HistorialLotesList({ onViewClick }: HistorialLotesListProps) {
       {loading && <LoadingSpinner mensaje="Cargando lotes..." />}
       {error && <ErrorAlert mensaje={error} />}
       {productos.error && <ErrorAlert mensaje={productos.error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} placeholder="Buscar por N.º de lote o producto" />
+      <ListControls
+        busqueda={busqueda}
+        setBusqueda={setBusqueda}
+        placeholder="Buscar por N.º de lote o producto"
+      >
+        <BotonExportarPdf<LoteProduccion>
+          modulo="historial-lotes"
+          titulo="Historial de Lotes de Producción"
+          endpoint="lotes-produccion"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            producto_id: productoId,
+            fecha_desde: desde,
+            fecha_hasta: hasta,
+            estado: estado === FILTRO_TODOS ? '' : estado,
+            incluir_anulados: estado === FILTRO_TODOS,
+          }}
+          subtitulo={
+            [
+              busqueda ? `Búsqueda: "${busqueda}"` : null,
+              desde ? `Desde: ${formatearFecha(desde)}` : null,
+              hasta ? `Hasta: ${formatearFecha(hasta)}` : null,
+              estado === FILTRO_TODOS
+                ? 'Incluye anulados'
+                : estado
+                  ? `Estado: ${ESTADOS_LOTE[estado as EstadoLote]?.etiqueta ?? estado}`
+                  : 'Solo vigentes',
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          }
+          columnas={[
+            { titulo: 'Código', valor: (l) => l.codigo },
+            { titulo: 'Fecha de producción', valor: (l) => formatearFecha(l.fecha_produccion) },
+            { titulo: 'Producto', valor: (l) => l.producto.nombre },
+            {
+              titulo: 'Cantidad',
+              valor: (l) => `${l.cantidad.toLocaleString('es-AR')} ${l.producto.unidad_medida.sufijo}`,
+              numerica: true,
+            },
+            { titulo: 'Estado', valor: (l) => ESTADOS_LOTE[l.estado].etiqueta },
+          ]}
+        />
+      </ListControls>
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <div className="d-flex flex-wrap align-items-end gap-3 p-3 border-bottom">

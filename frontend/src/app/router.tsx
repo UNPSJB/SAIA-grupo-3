@@ -1,6 +1,6 @@
 import { useAuth } from '../shared/hooks/useAuth';
 import { homeFor } from '../shared/libreria/permissions';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import App from './App';
 
 // Importamos la seguridad
@@ -29,11 +29,9 @@ import {
   ConsumoQuimicoPage,
   ReporteConsumosPage,
 } from '../features/consumoQuimicos/ConsumoQuimicoPage';
-import { VencimientosPage } from '../features/personal';
 import { DocumentoTecnicoPage } from '../features/documentosTecnicos';
 import { DocumentosVigentesPage } from '../features/documentosTecnicos/DocumentosVigentesPage';
 import { IncidentePage, IncidentesAbiertosPage } from '../features/incidentes';
-import { VencimientosCalibracionPage } from '../features/equipos';
 import { VencimientosPage as VencimientosConsolidadosPage } from '../features/vencimientos';
 import { TableroPage } from '../features/tablero';
 import { BuscarLotePage, ExpedienteLotePage, HistorialLotesPage } from '../features/lotesProduccion';
@@ -57,6 +55,11 @@ import { RegistroTemperaturaOperario } from '../features/registroTemperatura/Reg
 function HomeRedirect() {
   const { currentUser } = useAuth();
   return <Navigate to={homeFor(currentUser)} replace />;
+}
+
+function RedirectVencimientos() {
+  const { search } = useLocation();
+  return <Navigate to={`/vencimientos${search}`} replace />;
 }
 
 export function AppRouter() {
@@ -149,11 +152,11 @@ export function AppRouter() {
               <Route path="personal/nuevo" element={<PersonalPage />} />
               <Route path="personal/:id" element={<PersonalPage />} />
               <Route path="personal/:id/:action" element={<PersonalPage />} />
-              <Route path="personal/vencimientos" element={<VencimientosPage />} />
+              <Route path="personal/vencimientos" element={<RedirectVencimientos />} />
 
-              <Route path="vencimientos/calibracion" element={<VencimientosCalibracionPage />} />
-              <Route path="vencimientos/calibracion/:id" element={<VencimientosCalibracionPage />} />
-              <Route path="vencimientos/calibracion/:id/:action" element={<VencimientosCalibracionPage />} />
+              <Route path="vencimientos/calibracion" element={<RedirectVencimientos />} />
+              <Route path="vencimientos/calibracion/:id" element={<RedirectVencimientos />} />
+              <Route path="vencimientos/calibracion/:id/:action" element={<RedirectVencimientos />} />
 
               <Route path="tipos-documento" element={<TipoDocumentoPage />} />
               <Route path="tipos-documento/nuevo" element={<TipoDocumentoPage />} />

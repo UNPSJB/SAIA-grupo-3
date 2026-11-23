@@ -30,7 +30,11 @@ export function ModalRealizarPaso({ paso, onCerrar, onRealizado }: ModalRealizar
   const enviar = form.handleSubmit(async (valores) => {
     if (!paso) return;
     try {
-      await realizarPaso(paso.id, { ...valores, foto });
+      await realizarPaso(paso.id, {
+        ...valores,
+        valorMedido: paso.punto_control ? valores.valorMedido : '',
+        foto,
+      });
       form.reset();
       setFoto(null);
       onRealizado();
@@ -64,32 +68,34 @@ export function ModalRealizarPaso({ paso, onCerrar, onRealizado }: ModalRealizar
                   Registrá el valor medido para poder marcar el paso.
                 </Alert>
               )}
-              <Form.Group controlId="paso-valor-medido" className="mb-3">
-                <Form.Label>
-                  Valor medido{paso.punto_control ? '' : ' — opcional'}
-                  {paso.temperatura_celsius !== null && (
-                    <span className="text-body-secondary">
-                      {' '}
-                      (referencia: {paso.temperatura_celsius} °C)
-                    </span>
-                  )}
-                </Form.Label>
-                <Form.Control
-                  inputMode="decimal"
-                  size="lg"
-                  autoFocus={paso.punto_control}
-                  isInvalid={!!errors.valorMedido}
-                  {...form.register('valorMedido', {
-                    validate: (valor) => {
-                      if (!valor.trim()) return !paso.punto_control || 'Indicá el valor medido.';
-                      return (
-                        Number.isFinite(Number(valor.trim().replace(',', '.'))) ||
-                        'El valor medido debe ser un número.'
-                      );
-                    },
-                  })}
-                />
-              </Form.Group>
+              {paso.punto_control && (
+                <Form.Group controlId="paso-valor-medido" className="mb-3">
+                  <Form.Label>
+                    Valor medido
+                    {paso.temperatura_celsius !== null && (
+                      <span className="text-body-secondary">
+                        {' '}
+                        (referencia: {paso.temperatura_celsius} °C)
+                      </span>
+                    )}
+                  </Form.Label>
+                  <Form.Control
+                    inputMode="decimal"
+                    size="lg"
+                    autoFocus
+                    isInvalid={!!errors.valorMedido}
+                    {...form.register('valorMedido', {
+                      validate: (valor) => {
+                        if (!valor.trim()) return 'Indicá el valor medido.';
+                        return (
+                          Number.isFinite(Number(valor.trim().replace(',', '.'))) ||
+                          'El valor medido debe ser un número.'
+                        );
+                      },
+                    })}
+                  />
+                </Form.Group>
+              )}
               <Form.Group controlId="paso-observacion" className="mb-3">
                 <Form.Label>Observación — opcional</Form.Label>
                 <Form.Control

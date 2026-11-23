@@ -1,13 +1,7 @@
-"""Insumos generales e ingredientes de producción."""
+"""Ingredientes de producción (insumos alimentarios para recetas)."""
 
-from scripts.seed_common import CANTIDAD
 from src.insumos.models import Insumo
 
-
-INSUMOS = ["Guantes de nitrilo", "Cofias descartables", "Barbijos tricapa", "Delantales descartables",
-    "Bolsas para residuos", "Papel para secado de manos", "Paños descartables", "Film alimentario",
-    "Bolsas de envasado al vacío", "Etiquetas de trazabilidad", "Precintos de seguridad",
-    "Esponjas no abrasivas", "Cepillos de uñas", "Fundas para calzado", "Papel absorbente industrial"]
 
 DENSIDADES = {"Agua": 1.0, "Aceite": 0.92, "Leche": 1.03}
 
@@ -37,12 +31,6 @@ INGREDIENTES = [
 
 
 def cargar_insumos(crear, unidades, unidades_por_sufijo):
-    insumos = []
-    unidad = unidades[0]
-    for i in range(CANTIDAD):
-        insumo, _ = crear(Insumo, {"nombre": INSUMOS[i]},
-            unidad_medida_id=unidad.id, activo=True)
-        insumos.append(insumo)
     ingredientes_por_nombre = {}
     for nombre, sufijo, _ in INGREDIENTES:
         ingrediente, _ = crear(
@@ -58,4 +46,4 @@ def cargar_insumos(crear, unidades, unidades_por_sufijo):
             ingrediente.denominacion_rotulo = DENOMINACIONES[nombre]
         ingredientes_por_nombre[nombre] = ingrediente
 
-    return insumos, ingredientes_por_nombre
+    return ingredientes_por_nombre

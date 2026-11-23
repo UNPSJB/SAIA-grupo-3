@@ -5,6 +5,8 @@ from src.archivos import exceptions
 from src.checklist.models import ItemChecklist, MovimientoItemChecklist
 from src.incidente.models import Incidente
 from src.personal.models import Personal
+from src.produccionDelDia.models import MovimientoPasoLote, PasoLote
+from src.produccionDelDia.services import puede_ver_lote
 from src.registroCalibracion.models import RegistroCalibracion
 from src.tareaRealizada.models import TareaRealizada
 
@@ -27,5 +29,13 @@ def puede_ver_archivo(db: Session, ruta: str, personal: Personal) -> bool:
 
     if db.scalar(select(TareaRealizada.id).where(TareaRealizada.foto_path == ruta)) is not None:
         return personal.administrar
+
+    paso = db.scalar(select(PasoLote).where(PasoLote.foto_path == ruta))
+    if paso is not None:
+        return puede_ver_lote(paso.lote, personal)
+
+    movimiento = db.scalar(select(MovimientoPasoLote).where(MovimientoPasoLote.foto_path == ruta))
+    if movimiento is not None:
+        return puede_ver_lote(movimiento.paso.lote, personal)
 
     raise exceptions.ArchivoNoEncontrado()

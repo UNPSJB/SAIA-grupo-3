@@ -644,7 +644,7 @@ def vencimientos_abastecimiento(db: Session, hoy: date):
                     f"Saldo: {lote.cantidad_disponible:g} "
                     f"{lote.insumo.unidadMedidaObj.sufijo}"
                 ),
-                "enlace": f"/recepciones-insumos?insumo_id={lote.insumo_id}",
+                "enlace": f"/recepciones-insumos/{lote.id}",
             }
         )
 
@@ -670,7 +670,7 @@ def vencimientos_abastecimiento(db: Session, hoy: date):
                 "descripcion": (
                     f"Habilitación: {proveedor.numero_habilitacion or 'Sin número'}"
                 ),
-                "enlace": "/proveedores",
+                "enlace": f"/proveedores/{proveedor.id}",
             }
         )
 

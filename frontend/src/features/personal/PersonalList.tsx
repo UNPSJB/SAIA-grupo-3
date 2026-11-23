@@ -1,6 +1,7 @@
 import { SortableHeader } from '../../shared/components/SortableHeader';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { ListControls } from '../../shared/components/ListControls';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
 import { usePersonal } from './usePersonal';
@@ -75,7 +76,12 @@ export function PersonalList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina del Personal" placeholder="Buscar por nombre, apellido, DNI, legajo o usuario">
+      <ListControls
+        busqueda={busqueda}
+        setBusqueda={setBusqueda}
+        title="Nómina del Personal"
+        placeholder="Buscar por nombre, apellido, DNI, legajo o usuario"
+      >
         <Form.Check
           type="switch"
           id="switch-vencimientos-personal"
@@ -96,7 +102,33 @@ export function PersonalList({
           onChange={(e) => setMostrarInactivos(e.target.checked)}
           className="text-secondary mb-0"
         />
-
+        <BotonExportarPdf<Personal>
+          modulo="personal"
+          titulo="Nómina del Personal"
+          endpoint="personal"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            mostrar_inactivos: mostrarInactivos,
+            proximos_a_vencer: proximosAVencer,
+          }}
+          subtitulo={[
+            busqueda ? `Búsqueda: "${busqueda}"` : null,
+            proximosAVencer ? 'Solo próximos a vencer' : null,
+            mostrarInactivos ? 'Incluye dados de baja' : 'Solo activos',
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          columnas={[
+            { titulo: 'Legajo', valor: (p) => `#${p.nroLegajo}` },
+            { titulo: 'DNI', valor: (p) => p.dni },
+            { titulo: 'Apellido y Nombre', valor: (p) => `${p.apellido}, ${p.nombre}` },
+            { titulo: 'Email', valor: (p) => p.email },
+            { titulo: 'Permisos', valor: (p) => getCapacidad(p).label },
+            { titulo: 'Estado', valor: (p) => (p.activo === false ? 'Inactivo' : 'Activo') },
+          ]}
+        />
         <Button
           variant="success"
           onClick={onNuevoClick}
@@ -173,7 +205,7 @@ export function PersonalList({
                         <strong>
                           {p.apellido}, {p.nombre}
                         </strong>
-                      </td>   
+                      </td>
                       <td>
                         <Badge bg={capacidad.variant}>{capacidad.label}</Badge>
                       </td>

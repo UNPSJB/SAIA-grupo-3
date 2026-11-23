@@ -1,4 +1,5 @@
 import { Badge, Button, Card, Form, Table } from 'react-bootstrap';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { ListControls } from '../../shared/components/ListControls';
 import { ListPagination } from '../../shared/components/ListPagination';
@@ -51,7 +52,12 @@ export function ProductoList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Catálogo de Productos" placeholder="Buscar por nombre o descripción">
+      <ListControls
+        busqueda={busqueda}
+        setBusqueda={setBusqueda}
+        title="Catálogo de Productos"
+        placeholder="Buscar por nombre o descripción"
+      >
         <Form.Check
           type="switch"
           id="productos-inactivos"
@@ -59,6 +65,29 @@ export function ProductoList({
           checked={mostrarInactivos}
           onChange={(e) => setMostrarInactivos(e.target.checked)}
           className="text-secondary mb-0"
+        />
+        <BotonExportarPdf<Producto>
+          modulo="productos"
+          titulo="Catálogo de Productos"
+          endpoint="productos"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            mostrar_inactivos: mostrarInactivos,
+          }}
+          subtitulo={[
+            busqueda ? `Búsqueda: "${busqueda}"` : null,
+            mostrarInactivos ? 'Incluye dados de baja' : 'Solo activos',
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          columnas={[
+            { titulo: 'Nombre', valor: (p) => p.nombre },
+            { titulo: 'Descripción', valor: (p) => p.descripcion ?? '—' },
+            { titulo: 'Unidad', valor: (p) => p.unidad_medida.sufijo },
+            { titulo: 'Estado', valor: (p) => (p.activo ? 'Activo' : 'Inactivo') },
+          ]}
         />
         <Button
           variant="success"

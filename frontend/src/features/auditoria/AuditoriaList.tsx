@@ -1,6 +1,7 @@
 import { SortableHeader } from '../../shared/components/SortableHeader';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { ListControls } from '../../shared/components/ListControls';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { Table, Card, Button, Form } from 'react-bootstrap';
 import { useAuditoria } from './useAuditoria';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -37,7 +38,46 @@ export function AuditoriaList({ onViewClick }: AuditoriaListProps) {
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls placeholder="Buscar por nombre o descripción" busqueda={busqueda} setBusqueda={setBusqueda} />
+      <ListControls
+        placeholder="Buscar por nombre o descripción"
+        busqueda={busqueda}
+        setBusqueda={setBusqueda}
+      >
+        <BotonExportarPdf<PlanRealizado>
+          modulo="auditoria-checklist"
+          titulo="Historial de Planes Realizados (Auditoría)"
+          endpoint="planes-realizados"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            desde,
+            hasta,
+          }}
+          subtitulo={
+            [
+              busqueda ? `Búsqueda: "${busqueda}"` : null,
+              desde ? `Desde: ${formatearFecha(desde)}` : null,
+              hasta ? `Hasta: ${formatearFecha(hasta)}` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ') || undefined
+          }
+          columnas={[
+            { titulo: 'Fecha de Ejecución', valor: (p) => formatearFecha(p.fecha_ejecucion) },
+            { titulo: 'Plan Original', valor: (p) => p.nombre },
+            {
+              titulo: 'Responsable',
+              valor: (p) => `${p.responsable.apellido}, ${p.responsable.nombre} (DNI ${p.responsable.dni})`,
+            },
+            {
+              titulo: 'Tareas Realizadas',
+              valor: (p) => String(p.tareas_realizadas?.length ?? 0),
+              numerica: true,
+            },
+          ]}
+        />
+      </ListControls>
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <div className="d-flex flex-wrap align-items-end gap-3 p-3 border-bottom">

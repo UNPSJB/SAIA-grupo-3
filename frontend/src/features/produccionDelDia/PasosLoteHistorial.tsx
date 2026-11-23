@@ -40,7 +40,7 @@ export function PasosLoteHistorial({ pasos }: PasosLoteHistorialProps) {
               <div className="small text-body-secondary">Sin movimientos.</div>
             ) : (
               <ul className="small mb-0 ps-3">
-                {paso.movimientos.map((movimiento) => (
+                {[...paso.movimientos].reverse().map((movimiento) => (
                   <li
                     key={movimiento.id}
                     className={movimiento.accion === 'anulado' ? 'text-danger' : undefined}

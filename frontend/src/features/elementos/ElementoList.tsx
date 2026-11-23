@@ -2,6 +2,7 @@ import { SortableHeader } from '../../shared/components/SortableHeader';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { permissions } from '../../shared/libreria/permissions';
 import { ListControls } from '../../shared/components/ListControls';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { Table, Card, Button, Badge, Form } from 'react-bootstrap';
 import { useElemento } from './useElemento';
 import { useAuth } from '../../shared/hooks/useAuth';
@@ -23,10 +24,8 @@ export function ElementoList({
   onEditarClick,
   onEliminarClick,
 }: ElementoListProps) {
-  // 1. Extraemos el usuario actual
   const { currentUser } = useAuth();
 
-  // 2. Extraemos las herramientas de los elementos
   const {
     elementos,
     loading,
@@ -46,12 +45,11 @@ export function ElementoList({
     setBusqueda,
   } = useElemento();
 
-  // Función Semáforo para evaluar la fecha
   const getEstadoAlerta = (fechaProximo: string | null | undefined) => {
     if (!fechaProximo) return null;
 
     const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0); // Normalizamos a las 00:00
+    hoy.setHours(0, 0, 0, 0);
 
     const proximo = parsearFecha(fechaProximo);
 
@@ -68,7 +66,12 @@ export function ElementoList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Inventario de Elementos" placeholder="Buscar por nombre">
+      <ListControls
+        busqueda={busqueda}
+        setBusqueda={setBusqueda}
+        title="Inventario de Elementos"
+        placeholder="Buscar por nombre"
+      >
         <Form.Check
           type="switch"
           id="switch-inactivos"
@@ -77,8 +80,41 @@ export function ElementoList({
           onChange={(e) => setMostrarInactivos(e.target.checked)}
           className="text-secondary mb-0"
         />
+        <BotonExportarPdf<Elemento>
+          modulo="elementos"
+          titulo="Inventario de Elementos de Limpieza"
+          endpoint="elementos"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            mostrar_inactivos: mostrarInactivos,
+          }}
+          subtitulo={[
+            busqueda ? `Búsqueda: "${busqueda}"` : null,
+            mostrarInactivos ? 'Incluye dados de baja' : 'Solo activos',
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          columnas={[
+            { titulo: 'Nombre', valor: (e) => e.nombre },
+            {
+              titulo: 'Frecuencia',
+              valor: (e) =>
+                e.frecuencia_recambio ? `${e.frecuencia_recambio} días` : 'No definida',
+            },
+            {
+              titulo: 'Próximo recambio',
+              valor: (e) => {
+                const alerta = getEstadoAlerta(e.fecha_proximo_recambio);
+                if (!alerta) return 'Sin seguimiento';
+                return `${formatearFecha(e.fecha_proximo_recambio)} (${alerta.texto})`;
+              },
+            },
+            { titulo: 'Estado', valor: (e) => (e.activo ? 'Activo' : 'Inactivo') },
+          ]}
+        />
 
-        {/* Ocultamos el botón "Nuevo" si no es administrador */}
         {permissions(currentUser).canAdmin && (
           <Button
             variant="success"
@@ -155,7 +191,6 @@ export function ElementoList({
                         )}
                       </td>
 
-                      {/* COLUMNA ALERTA (SEMÁFORO) */}
                       <td>
                         {alerta ? (
                           <div>
@@ -166,7 +201,9 @@ export function ElementoList({
                               {alerta.texto}
                             </Badge>
                             <br />
-                            <small className="text-muted">Vence: {formatearFecha(e.fecha_proximo_recambio)}</small>
+                            <small className="text-muted">
+                              Vence: {formatearFecha(e.fecha_proximo_recambio)}
+                            </small>
                           </div>
                         ) : (
                           <span className="text-muted small">Sin seguimiento</span>
@@ -185,7 +222,6 @@ export function ElementoList({
                         <div className="d-flex justify-content-center gap-2">
                           {e.activo ? (
                             <>
-                              {/* Botones PÚBLICOS (Ver y Recambio) */}
                               <Button
                                 variant="info"
                                 size="sm"
@@ -217,7 +253,6 @@ export function ElementoList({
                                 <i className="bi bi-eye-fill"></i>
                               </Button>
 
-                              {/* Botones RESTRINGIDOS (Editar y Eliminar, solo Admins) */}
                               {permissions(currentUser).canAdmin && (
                                 <>
                                   <Button
@@ -242,7 +277,6 @@ export function ElementoList({
                               )}
                             </>
                           ) : (
-                            // Si está inactivo, solo el admin puede reactivarlo
                             <>
                               {permissions(currentUser).canAdmin && (
                                 <Button

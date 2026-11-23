@@ -154,7 +154,7 @@ def asociar_ingredientes_demo(db, lote, ingredientes_por_nombre, *, receta=None,
 def cargar_lotes_produccion(db, crear, productos, ingredientes_por_nombre, operadores, admin, hoy,
                            proveedores, *, autores_demo):
     for i in range(CANTIDAD):
-        fecha_lote = hoy - timedelta(days=[0, 1, 2, 3, 5, 7, 9, 12, 14, 17, 20, 23, 25, 28, 30][i])
+        fecha_lote = hoy - timedelta(days=1 + [0, 1, 2, 3, 5, 7, 9, 12, 14, 17, 20, 23, 25, 28, 30][i])
         cerrado = i >= 8
         anulado = i == LOTE_DEMO_ANULADO
         lote_demo, nuevo = crear(LoteProduccion, {"codigo": f"L-SEED-{i + 1:03d}"},

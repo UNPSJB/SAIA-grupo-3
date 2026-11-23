@@ -8,6 +8,7 @@ import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import type { InsumoQuimico } from './types';
 import { COLORES_QUIMICO, TIPOS_QUIMICOS } from './types';
 import { etiquetaDe, textoBadge } from '../../shared/libreria/etiquetas';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 
 interface InsumoQuimicoListProps {
   onNuevoClick: () => void;
@@ -66,6 +67,44 @@ export function InsumoQuimicoList({
           checked={mostrarInactivos}
           onChange={(e) => setMostrarInactivos(e.target.checked)}
           className="text-secondary mb-0"
+        />
+        <BotonExportarPdf<InsumoQuimico>
+          modulo="insumos-quimicos"
+          titulo="Listado de Insumos Químicos"
+          endpoint="insumos-quimicos"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+            mostrar_inactivos: mostrarInactivos,
+            solo_stock_bajo: soloStockBajo,
+          }}
+          subtitulo={
+            [
+              busqueda ? `Búsqueda: "${busqueda}"` : null,
+              soloStockBajo ? 'Solo stock bajo' : null,
+              mostrarInactivos ? 'Incluye dados de baja' : 'Solo activos',
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          }
+          columnas={[
+            { titulo: 'Nombre', valor: (i) => i.nombre },
+            { titulo: 'Tipo', valor: (i) => etiquetaDe(TIPOS_QUIMICOS, i.tipo_quimico) },
+            {
+              titulo: 'Cantidad',
+              valor: (i) => i.cantidad.toLocaleString('es-AR'),
+              numerica: true,
+            },
+            { titulo: 'Unidad', valor: (i) => i.unidadMedidaObj?.sufijo ?? '—' },
+            {
+              titulo: 'Stock mínimo',
+              valor: (i) =>
+                i.stock_minimo == null ? 'Sin definir' : i.stock_minimo.toLocaleString('es-AR'),
+              numerica: true,
+            },
+            { titulo: 'Estado', valor: (i) => (i.activo ? 'Activo' : 'Inactivo') },
+          ]}
         />
         <Button
           variant="success"

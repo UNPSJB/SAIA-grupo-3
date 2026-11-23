@@ -1,3 +1,4 @@
+import { BotonExportarPdf } from '../../../shared/components/BotonExportarPdf';
 import { ListPagination } from '../../../shared/components/ListPagination';
 import { SortableHeader } from '../../../shared/components/SortableHeader';
 import { formatearFechaHora, textoAntiguedad } from '../../../shared/libreria/fechas';
@@ -6,11 +7,11 @@ import { Badge, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
 import { ErrorAlert } from '../../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../../shared/components/LoadingSpinner';
 import { useIncidentesAbiertos } from './useIncidentesAbiertos';
+import type { IncidenteAbierto } from '../types';
 import { textoBadge } from '../../../shared/libreria/etiquetas';
 
-// Umbrales del resaltado: a partir de cuántos días abierto se pinta la fila
-const DIAS_ALERTA = 7; // amarillo
-const DIAS_CRITICO = 15; // rojo
+const DIAS_ALERTA = 7;
+const DIAS_CRITICO = 15;
 
 function nivelAntiguedad(dias: number) {
   if (dias >= DIAS_CRITICO) return { fila: 'incidente-critico', badge: 'danger' };
@@ -121,7 +122,38 @@ export function IncidentesAbiertosPage() {
             <option value={DIAS_CRITICO}>{DIAS_CRITICO} días o más</option>
           </Form.Select>
         </div>
-        <div className="d-flex gap-2 small text-muted align-items-center">
+        <div className="d-flex flex-wrap gap-2 small text-muted align-items-center">
+          <BotonExportarPdf<IncidenteAbierto>
+            modulo="incidentes-abiertos"
+            titulo="Listado de Incidentes Abiertos"
+            endpoint="incidentes-abiertos"
+            parametros={{
+              buscar: busqueda,
+              ordenar_por: ordenarPor,
+              orden,
+              tipo_id: tipoId,
+              dias_minimos: diasMinimos,
+            }}
+            subtitulo={
+              [
+                busqueda ? `Búsqueda: "${busqueda}"` : null,
+                diasMinimos !== '' ? `Antigüedad: ${diasMinimos}+ días` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ') || undefined
+            }
+            columnas={[
+              { titulo: 'Antigüedad', valor: (i) => textoAntiguedad(i.dias_abierto) },
+              { titulo: 'Reportado el', valor: (i) => formatearFechaHora(i.fecha_hora) },
+              { titulo: 'Tipo', valor: (i) => i.tipo.nombre },
+              { titulo: 'Descripción', valor: (i) => i.descripcion },
+              {
+                titulo: 'Reportado por',
+                valor: (i) =>
+                  `${i.reportado_por.apellido}, ${i.reportado_por.nombre} (DNI ${i.reportado_por_dni})`,
+              },
+            ]}
+          />
           <Badge bg="secondary">Reciente</Badge>
           <Badge bg="warning">{DIAS_ALERTA}+ días</Badge>
           <Badge bg="danger">{DIAS_CRITICO}+ días</Badge>

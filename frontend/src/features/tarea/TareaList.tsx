@@ -1,6 +1,7 @@
 import { SortableHeader } from '../../shared/components/SortableHeader';
 import { ListPagination } from '../../shared/components/ListPagination';
 import { ListControls } from '../../shared/components/ListControls';
+import { BotonExportarPdf } from '../../shared/components/BotonExportarPdf';
 import { Table, Card, Button } from 'react-bootstrap';
 import { useTarea } from './useTarea';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
@@ -39,10 +40,31 @@ export function TareaList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina de Tareas" placeholder="Buscar por nombre o procedimiento">
+      <ListControls
+        busqueda={busqueda}
+        setBusqueda={setBusqueda}
+        title="Nómina de Tareas"
+        placeholder="Buscar por nombre o procedimiento"
+      >
+        <BotonExportarPdf<Tarea>
+          modulo="tareas"
+          titulo="Nómina de Tareas"
+          endpoint="tareas"
+          parametros={{
+            buscar: busqueda,
+            ordenar_por: ordenarPor,
+            orden,
+          }}
+          subtitulo={busqueda ? `Búsqueda: "${busqueda}"` : undefined}
+          columnas={[
+            { titulo: 'Nombre', valor: (t) => t.nombre },
+            { titulo: 'Frecuencia', valor: (t) => t.frecuencia },
+            { titulo: 'Equipo', valor: (t) => t.equipo?.nombre ?? 'N/A' },
+            { titulo: 'Procedimiento', valor: (t) => t.procedimiento },
+          ]}
+        />
         <Button
           variant="success"
-
           onClick={onNuevoClick}
           className="d-flex align-items-center gap-1 shadow-sm"
         >

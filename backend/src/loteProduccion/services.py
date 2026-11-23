@@ -410,20 +410,12 @@ def anular_lote(
     return db_lote
 
 
-def cerrar_lote(
-    db: Session, lote_id: int, cerrado_por_id: int, datos: schemas.CierreLote | None = None
-) -> LoteProduccion:
+def cerrar_lote(db: Session, lote_id: int, cerrado_por_id: int) -> LoteProduccion:
     db_lote = leer_lote(db, lote_id)
     _validar_editable(db_lote)
-    datos = datos or schemas.CierreLote()
     pendientes = sum(1 for paso in db_lote.pasos if paso.estado == EstadoPasoLote.PENDIENTE)
     if pendientes:
-        if not datos.confirmar_pasos_pendientes:
-            raise exceptions.PasosPendientes(pendientes)
-        if not datos.motivo:
-            raise exceptions.MotivoCierreObligatorio()
-        db_lote.pasos_pendientes_al_cerrar = pendientes
-        db_lote.motivo_cierre_pendientes = datos.motivo
+        raise exceptions.LoteNoFinalizado(pendientes)
     db_lote.estado = EstadoLote.CERRADO
     db_lote.fecha_cierre = datetime.now()
     db_lote.cerrado_por_id = cerrado_por_id
