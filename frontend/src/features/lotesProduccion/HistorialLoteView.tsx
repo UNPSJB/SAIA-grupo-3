@@ -6,7 +6,6 @@ import { getPasosDelLote, PasosLoteHistorial } from '../produccionDelDia';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
 import { EstadoLoteBadge } from './EstadoLoteBadge';
-import { ESTADOS_EN_CURSO } from './estados';
 import { IdentificacionLote } from './IdentificacionLote';
 import { anularLoteProduccion, cerrarLoteProduccion } from './loteProduccionApi';
 import { TrazabilidadProduccionDetalle } from './TrazabilidadProduccionDetalle';
@@ -22,28 +21,20 @@ export function HistorialLoteView({ lote, onVolver, onActualizado }: HistorialLo
   const [confirmando, setConfirmando] = useState(false);
   const [cerrando, setCerrando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [motivo, setMotivo] = useState('');
   const [anulando, setAnulando] = useState(false);
   const [enviandoAnulacion, setEnviandoAnulacion] = useState(false);
   const [errorAnulacion, setErrorAnulacion] = useState<string | null>(null);
   const [motivoAnulacion, setMotivoAnulacion] = useState('');
   const pasos = useConsulta(() => getPasosDelLote(lote.id), [lote.id, lote.estado]);
-  const pendientes = (pasos.datos ?? []).filter((paso) => paso.estado === 'pendiente').length;
-  const enCurso = ESTADOS_EN_CURSO.includes(lote.estado);
+  const sinPasos = !pasos.cargando && pasos.datos?.length === 0;
+  const puedeCerrar = lote.estado === 'finalizado' || (lote.estado === 'abierto' && sinPasos);
   const anulado = lote.estado === 'anulado';
 
   const cerrar = async () => {
-    if (pendientes > 0 && !motivo.trim()) {
-      setError('Indicá el motivo para cerrar el lote con pasos sin realizar.');
-      return;
-    }
     setCerrando(true);
     setError(null);
     try {
-      await cerrarLoteProduccion(
-        lote.id,
-        pendientes > 0 ? { confirmar_pasos_pendientes: true, motivo: motivo.trim() } : undefined,
-      );
+      await cerrarLoteProduccion(lote.id);
       setConfirmando(false);
       await onActualizado();
     } catch (err) {
@@ -186,7 +177,7 @@ export function HistorialLoteView({ lote, onVolver, onActualizado }: HistorialLo
             <i className="bi bi-slash-circle me-1"></i> Anular lote
           </Button>
         )}
-        {enCurso && (
+        {puedeCerrar && (
           <Button variant="danger" onClick={() => setConfirmando(true)}>
             <i className="bi bi-lock-fill me-1"></i> Cerrar lote
           </Button>
@@ -199,39 +190,17 @@ export function HistorialLoteView({ lote, onVolver, onActualizado }: HistorialLo
         </Modal.Header>
         <Modal.Body>
           {error && <ErrorAlert mensaje={error} />}
-          {pendientes > 0 && (
-            <Alert variant="warning">
-              <i className="bi bi-exclamation-triangle me-2" aria-hidden="true" />
-              El lote tiene <strong>{pendientes}</strong> paso{pendientes > 1 ? 's' : ''} de la
-              receta sin realizar. Si lo cerrás igual, la decisión y el motivo quedan registrados.
-            </Alert>
-          )}
-          <p>
+          <p className="mb-0">
             Una vez cerrado, el lote queda de solo lectura: no se podrá modificar ni dar de baja.
             ¿Querés continuar?
           </p>
-          {pendientes > 0 && (
-            <Form.Group controlId="cierre-motivo">
-              <Form.Label>Motivo para cerrar con pasos pendientes</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={2}
-                maxLength={500}
-                value={motivo}
-                onChange={(evento) => {
-                  setMotivo(evento.target.value);
-                  setError(null);
-                }}
-              />
-            </Form.Group>
-          )}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setConfirmando(false)} disabled={cerrando}>
             Cancelar
           </Button>
           <Button variant="danger" onClick={cerrar} disabled={cerrando}>
-            {cerrando ? 'Cerrando...' : pendientes > 0 ? 'Cerrar igual' : 'Cerrar lote'}
+            {cerrando ? 'Cerrando...' : 'Cerrar lote'}
           </Button>
         </Modal.Footer>
       </Modal>

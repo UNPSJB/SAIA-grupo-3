@@ -138,16 +138,14 @@ def test_no_se_anula_un_paso_pendiente(client, headers_operadora, crear_lote):
     assert anular(client, headers_operadora, paso["id"], "Motivo").status_code == 400
 
 
-def test_un_lote_cerrado_no_permite_marcar_pasos(client, headers_operadora, headers_administradora, crear_lote):
+def test_un_lote_cerrado_no_permite_modificar_pasos(client, headers_operadora, headers_administradora, crear_lote):
     lote = crear_lote()
-    paso = pasos(client, headers_operadora, lote["id"])[0]
-    client.post(
-        f"/lotes-produccion/{lote['id']}/cerrar",
-        headers=headers_administradora,
-        json={"confirmar_pasos_pendientes": True, "motivo": "Fin de turno"},
-    )
+    mezclar, hornear = pasos(client, headers_operadora, lote["id"])
+    realizar(client, headers_operadora, mezclar["id"])
+    realizar(client, headers_operadora, hornear["id"], valor_medido="220")
+    client.post(f"/lotes-produccion/{lote['id']}/cerrar", headers=headers_administradora)
 
-    respuesta = realizar(client, headers_operadora, paso["id"])
+    respuesta = anular(client, headers_operadora, mezclar["id"], "Lo marqué por error")
 
     assert respuesta.status_code == 400
     assert "cerrado" in respuesta.json()["detail"]
@@ -177,27 +175,27 @@ def test_cambiar_la_receta_despues_no_altera_los_pasos_del_lote(
     assert [p["nombre"] for p in pasos(client, headers_operadora, lote["id"])] == ["Mezclar", "Hornear"]
 
 
-def test_cerrar_con_pasos_pendientes_pide_confirmacion_y_motivo(
-    client, headers_administradora, crear_lote
+def test_no_se_puede_cerrar_un_lote_con_pasos_pendientes(
+    client, headers_operadora, headers_administradora, crear_lote
 ):
     lote = crear_lote()
+    mezclar, _ = pasos(client, headers_operadora, lote["id"])
+    realizar(client, headers_operadora, mezclar["id"])
     url = f"/lotes-produccion/{lote['id']}/cerrar"
 
-    sin_confirmar = client.post(url, headers=headers_administradora)
-    sin_motivo = client.post(url, headers=headers_administradora, json={"confirmar_pasos_pendientes": True})
-    confirmado = client.post(
+    sin_datos = client.post(url, headers=headers_administradora)
+    con_motivo = client.post(
         url,
         headers=headers_administradora,
         json={"confirmar_pasos_pendientes": True, "motivo": "Se cortó la luz"},
     )
 
-    assert sin_confirmar.status_code == 400
-    assert "2 paso(s) sin realizar" in sin_confirmar.json()["detail"]
-    assert sin_motivo.status_code == 400
-    assert confirmado.status_code == 200, confirmado.text
-    cerrado = confirmado.json()
-    assert cerrado["estado"] == "cerrado"
-    assert (cerrado["pasos_pendientes_al_cerrar"], cerrado["motivo_cierre_pendientes"]) == (2, "Se cortó la luz")
+    assert sin_datos.status_code == 400
+    assert "1 paso(s) sin realizar" in sin_datos.json()["detail"]
+    assert con_motivo.status_code == 400
+    actual = client.get(f"/lotes-produccion/{lote['id']}", headers=headers_administradora).json()
+    assert actual["estado"] == "en_produccion"
+    assert actual["pasos_pendientes_al_cerrar"] is None
 
 
 def test_cerrar_con_todos_los_pasos_hechos_no_pide_confirmacion(

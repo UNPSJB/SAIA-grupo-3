@@ -49,10 +49,9 @@ class ErrorCode:
         "La receta cambió desde que la escalaste. Volvé a calcular las cantidades con la versión vigente."
     )
     FACTOR_RECETA_INCOMPLETO = "Para vincular el lote a una receta indicá la versión y el factor aplicado."
-    PASOS_PENDIENTES = (
-        "El lote tiene {cantidad} paso(s) sin realizar. Para cerrarlo igual, confirmá el cierre e indicá el motivo."
+    LOTE_NO_FINALIZADO = (
+        "El lote tiene {cantidad} paso(s) sin realizar: se puede cerrar cuando estén todos realizados."
     )
-    MOTIVO_CIERRE_OBLIGATORIO = "Indicá el motivo para cerrar el lote con pasos sin realizar."
     STOCK_INSUFICIENTE = "Uno o más insumos no tienen stock suficiente para las cantidades indicadas."
     CODIGO_FORMATO_INVALIDO = (
         "El código no es válido: ingresá los 13 dígitos del código de barras "
