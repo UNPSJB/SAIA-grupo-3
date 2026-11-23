@@ -13,6 +13,9 @@ import type {
 import { TIPOS_EQUIPOS } from '../equipos/types';
 
 interface VencimientosListProps {
+  titulo?: string;
+  mostrarTipo?: boolean;
+  columnaElemento?: string;
   items: VencimientoConsolidado[];
   page: number;
   totalPages: number;
@@ -49,6 +52,9 @@ const estados: Record<
 };
 
 export function VencimientosList({
+  titulo,
+  mostrarTipo = true,
+  columnaElemento = 'Elemento',
   items,
   page,
   totalPages,
@@ -71,7 +77,7 @@ export function VencimientosList({
   return (
     <>
       <h4 className="text-secondary fw-normal mb-3">
-        Documentación, calibraciones, lotes de insumos y habilitaciones
+        {titulo ?? 'Documentación, calibraciones, lotes de insumos y habilitaciones'}
       </h4>
       <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
         <Form.Control
@@ -113,24 +119,26 @@ export function VencimientosList({
           onChange={(event) => setSoloAlertas(event.target.checked)}
           className="mb-0 text-nowrap"
         />
-        <Button
-          variant="success"
-          onClick={limpiarFiltros}
-          disabled={!estadoSeleccionado && !busqueda && !soloAlertas}
-          className="d-flex align-items-center gap-1"
-        >
-          <i className="bi bi-x-lg" aria-hidden="true"></i>
-          <span>Limpiar</span>
-        </Button>
-        <Button
-          variant="success"
-          onClick={onActualizar}
-          disabled={loading}
-          className="d-flex align-items-center gap-1 shadow-sm"
-        >
-          <i className="bi bi-arrow-clockwise" aria-hidden="true"></i>
-          <span>Actualizar</span>
-        </Button>
+        <div className="d-flex flex-wrap align-items-center gap-2 ms-auto">
+          <Button
+            variant="success"
+            onClick={limpiarFiltros}
+            disabled={!estadoSeleccionado && !busqueda && !soloAlertas}
+            className="d-flex align-items-center gap-1"
+          >
+            <i className="bi bi-x-lg" aria-hidden="true"></i>
+            <span>Limpiar</span>
+          </Button>
+          <Button
+            variant="success"
+            onClick={onActualizar}
+            disabled={loading}
+            className="d-flex align-items-center gap-1 shadow-sm"
+          >
+            <i className="bi bi-arrow-clockwise" aria-hidden="true"></i>
+            <span>Actualizar</span>
+          </Button>
+        </div>
       </div>
       {error && <ErrorAlert mensaje={error} />}
       <Card className="shadow-sm border-0">
@@ -146,14 +154,14 @@ export function VencimientosList({
             >
               <thead className="table-theme">
                 <tr>
-                  <th>Tipo</th>
+                  {mostrarTipo && <th>Tipo</th>}
                   <SortableHeader
                     column="elemento"
                     ordenarPor={ordenarPor}
                     orden={orden}
                     cambiarOrden={cambiarOrden}
                   >
-                    Elemento
+                    {columnaElemento}
                   </SortableHeader>
                   <SortableHeader
                     column="fecha_vencimiento"
@@ -164,13 +172,13 @@ export function VencimientosList({
                     Vencimiento
                   </SortableHeader>
                   <th>Estado</th>
-                  <th className="text-center">Acciones</th>
+                  <th className="text-center" style={{ width: '160px' }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {items.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-4 text-muted">
+                    <td colSpan={mostrarTipo ? 5 : 4} className="text-center py-4 text-muted">
                       {estadoSeleccionado || busqueda || soloAlertas
                         ? 'No hay vencimientos para los filtros actuales.'
                         : 'No hay vencimientos para mostrar.'}
@@ -182,11 +190,35 @@ export function VencimientosList({
                     if ('elemento' in vencimiento) {
                       return (
                         <tr key={`${vencimiento.origen}-${vencimiento.id}`}>
-                          <td>{vencimiento.origen === 'lote_insumo' ? 'Lote de insumo' : 'Habilitación de proveedor'}</td>
+                          {mostrarTipo && (
+                            <td>{vencimiento.origen === 'lote_insumo' ? 'Lote de insumo' : 'Habilitación de proveedor'}</td>
+                          )}
                           <td><strong>{vencimiento.elemento}</strong><small className="d-block text-body-secondary">{vencimiento.descripcion}</small></td>
                           <td>{formatearFecha(vencimiento.fecha_vencimiento)}<small className="d-block text-body-secondary">{textoDiasRestantes(vencimiento.dias_restantes)}</small></td>
                           <td><Badge bg={estado.variante} text={vencimiento.estado === 'por_vencer' ? 'dark' : undefined}>{estado.etiqueta}</Badge></td>
-                          <td className="text-center"><Link to={vencimiento.enlace} className="btn btn-success btn-sm text-white text-nowrap">{vencimiento.origen === 'lote_insumo' ? 'Ver recepciones' : 'Ver proveedores'}</Link></td>
+                          <td className="text-center">
+                            <Link
+                              to={vencimiento.enlace}
+                              className="btn btn-success btn-sm text-white py-1 px-2 shadow-sm text-nowrap"
+                              style={{ width: '140px' }}
+                              title={
+                                vencimiento.origen === 'lote_insumo'
+                                  ? 'Ver detalle del lote'
+                                  : 'Ver detalle del proveedor'
+                              }
+                              aria-label={
+                                vencimiento.origen === 'lote_insumo'
+                                  ? 'Ir al lote'
+                                  : 'Ir al proveedor'
+                              }
+                            >
+                              <i
+                                className={`bi ${vencimiento.origen === 'lote_insumo' ? 'bi-box-seam' : 'bi-truck'} me-1`}
+                                aria-hidden="true"
+                              ></i>
+                              {vencimiento.origen === 'lote_insumo' ? 'Ir al lote' : 'Ir al proveedor'}
+                            </Link>
+                          </td>
                         </tr>
                       );
                     }
@@ -205,9 +237,11 @@ export function VencimientosList({
 
                     return (
                       <tr key={`${vencimiento.origen}-${vencimiento.id}`}>
-                        <td>
-                          {documentacion ? 'Documentación' : 'Calibración'}
-                        </td>
+                        {mostrarTipo && (
+                          <td>
+                            {documentacion ? 'Documentación' : 'Calibración'}
+                          </td>
+                        )}
                         <td>
                           <strong>{nombre}</strong>
                           <br />
@@ -277,7 +311,7 @@ export function VencimientosList({
                           <Link
                             to={detalle}
                             className="btn btn-success btn-sm text-white py-1 px-2 shadow-sm text-nowrap"
-                            style={{ width: '150px' }}
+                            style={{ width: '140px' }}
                             title={
                               documentacion
                                 ? 'Ver legajo del empleado'

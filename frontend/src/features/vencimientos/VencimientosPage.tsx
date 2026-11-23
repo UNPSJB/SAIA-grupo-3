@@ -21,37 +21,41 @@ import { useVencimientos } from './useVencimientos';
 import { VencimientosList } from './VencimientosList';
 import type { OrigenVencimiento } from './types';
 
+const ORIGENES: OrigenVencimiento[] = [
+  'todos',
+  'documentacion',
+  'calibracion',
+  'lote_insumo',
+  'habilitacion_proveedor',
+];
+
 export function VencimientosPage() {
   const [, setSearchParams] = useSearchParams();
   const [origen, setOrigen] = useState<OrigenVencimiento>('todos');
   const vencimientos = useVencimientos('todos', origen === 'todos');
 
   const cambiarOrigen = (valor: string | null) => {
-    if (
-      valor === 'todos' ||
-      valor === 'documentacion' ||
-      valor === 'calibracion'
-    ) {
-      if (valor === origen) return;
-      setSearchParams(
-        (anteriores) => {
-          const nuevos = new URLSearchParams(anteriores);
-          [
-            'page',
-            'buscar',
-            'ordenar_por',
-            'orden',
-            'estado',
-            'solo_alertas',
-            'mostrar_inactivos',
-          ].forEach((parametro) => nuevos.delete(parametro));
-          return nuevos;
-        },
-        { replace: true },
-      );
-      vencimientos.reiniciarFiltros();
-      setOrigen(valor);
-    }
+    if (!valor || !ORIGENES.includes(valor as OrigenVencimiento)) return;
+    const nuevoOrigen = valor as OrigenVencimiento;
+    if (nuevoOrigen === origen) return;
+    setSearchParams(
+      (anteriores) => {
+        const nuevos = new URLSearchParams(anteriores);
+        [
+          'page',
+          'buscar',
+          'ordenar_por',
+          'orden',
+          'estado',
+          'solo_alertas',
+          'mostrar_inactivos',
+        ].forEach((parametro) => nuevos.delete(parametro));
+        return nuevos;
+      },
+      { replace: true },
+    );
+    vencimientos.reiniciarFiltros();
+    setOrigen(nuevoOrigen);
   };
 
   return (
@@ -80,6 +84,12 @@ export function VencimientosPage() {
         <Nav.Item>
           <Nav.Link eventKey="calibracion">Calibración</Nav.Link>
         </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="lote_insumo">Lotes de Insumos</Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="habilitacion_proveedor">Habilitación de Proveedores</Nav.Link>
+        </Nav.Item>
       </Nav>
 
       {origen === 'todos' && (
@@ -106,7 +116,59 @@ export function VencimientosPage() {
       )}
       {origen === 'documentacion' && <PestanaPersonal />}
       {origen === 'calibracion' && <PestanaCalibracion />}
+      {origen === 'lote_insumo' && (
+        <PestanaAbastecimiento
+          origen="lote_insumo"
+          titulo="Lotes de insumos"
+          columnaElemento="Lote de insumo"
+        />
+      )}
+      {origen === 'habilitacion_proveedor' && (
+        <PestanaAbastecimiento
+          origen="habilitacion_proveedor"
+          titulo="Habilitación de proveedores"
+          columnaElemento="Habilitación de proveedor"
+        />
+      )}
     </Container>
+  );
+}
+
+function PestanaAbastecimiento({
+  origen,
+  titulo,
+  columnaElemento,
+}: {
+  origen: 'lote_insumo' | 'habilitacion_proveedor';
+  titulo: string;
+  columnaElemento?: string;
+}) {
+  const vencimientos = useVencimientos(origen);
+
+  return (
+    <VencimientosList
+      titulo={titulo}
+      mostrarTipo={false}
+      columnaElemento={columnaElemento}
+      items={vencimientos.items}
+      page={vencimientos.page}
+      totalPages={vencimientos.totalPages}
+      total={vencimientos.total}
+      loading={vencimientos.loading}
+      error={vencimientos.error}
+      changePage={vencimientos.changePage}
+      busqueda={vencimientos.busqueda}
+      setBusqueda={vencimientos.setBusqueda}
+      estado={vencimientos.estado}
+      setEstado={vencimientos.setEstado}
+      soloAlertas={vencimientos.soloAlertas}
+      setSoloAlertas={vencimientos.setSoloAlertas}
+      limpiarFiltros={vencimientos.limpiarFiltros}
+      ordenarPor={vencimientos.ordenarPor}
+      orden={vencimientos.orden}
+      cambiarOrden={vencimientos.cambiarOrden}
+      onActualizar={vencimientos.refrescar}
+    />
   );
 }
 

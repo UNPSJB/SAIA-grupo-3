@@ -216,3 +216,31 @@ def test_endpoint_buscar_recepciones(client, auth_headers, lote, buscar, total):
     assert respuesta.status_code == 200, respuesta.text
     assert respuesta.json()['total'] == total
     assert [r['id'] for r in respuesta.json()['items']] == ([lote['id']] if total else [])
+
+
+def test_endpoint_consolidado_filtra_lotes_y_proveedores(
+    client, auth_headers, lote, proveedor
+):
+    lotes = client.get(
+        '/vencimientos/consolidados?origen=lote_insumo',
+        headers=auth_headers,
+    )
+    assert lotes.status_code == 200, lotes.text
+    datos_lotes = lotes.json()
+    assert datos_lotes['total'] == 1
+    fila_lote = datos_lotes['items'][0]
+    assert fila_lote['origen'] == 'lote_insumo'
+    assert fila_lote['detalle_id'] == lote['id']
+    assert fila_lote['enlace'] == f"/recepciones-insumos/{lote['id']}"
+
+    proveedores = client.get(
+        '/vencimientos/consolidados?origen=habilitacion_proveedor',
+        headers=auth_headers,
+    )
+    assert proveedores.status_code == 200, proveedores.text
+    datos_proveedores = proveedores.json()
+    assert datos_proveedores['total'] == 1
+    fila_proveedor = datos_proveedores['items'][0]
+    assert fila_proveedor['origen'] == 'habilitacion_proveedor'
+    assert fila_proveedor['detalle_id'] == proveedor['id']
+    assert fila_proveedor['enlace'] == f"/proveedores/{proveedor['id']}"

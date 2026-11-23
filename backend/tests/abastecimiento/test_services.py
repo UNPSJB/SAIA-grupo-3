@@ -416,12 +416,16 @@ def test_insumo_con_historial_no_admite_cambios_manuales_de_stock(db_session, in
 
 
 def test_filtros_y_vencimientos_incluyen_lotes_y_habilitaciones(db_session, insumo_activo, proveedor, persona_operadora):
-    recibir(db_session, insumo_activo, proveedor, persona_operadora)
+    lote, _ = recibir(db_session, insumo_activo, proveedor, persona_operadora)
     assert services.listar_recepciones(db_session, insumo_id=insumo_activo.id, proveedor_id=proveedor["id"], fecha_desde=date.today()-timedelta(days=2), fecha_hasta=date.today(), estado="por_vencer")["total"] == 1
     assert services.listar_recepciones(db_session, proveedor_id=999)["total"] == 0
     for orden in ["elemento", "fecha_vencimiento"]:
         filas = listar_vencimientos_consolidados(db_session, solo_alertas=True, ordenar_por=orden)["items"]
         assert {fila["origen"] for fila in filas} == {"lote_insumo", "habilitacion_proveedor"}
+    filas = listar_vencimientos_consolidados(db_session, solo_alertas=True, ordenar_por="elemento")["items"]
+    por_origen = {fila["origen"]: fila for fila in filas}
+    assert por_origen["lote_insumo"]["enlace"] == f"/recepciones-insumos/{lote['id']}"
+    assert por_origen["habilitacion_proveedor"]["enlace"] == f"/proveedores/{proveedor['id']}"
     assert listar_vencimientos_consolidados(db_session, origen="lote_insumo", buscar="HAR-001")["total"] == 1
 
 

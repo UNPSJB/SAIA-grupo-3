@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useListState, useDebouncedValue } from '../../shared/hooks/useListState';
 import { getVencimientosConsolidados } from './vencimientosApi';
 import type {
@@ -18,8 +19,9 @@ export function useVencimientos(origen: OrigenVencimiento, enabled = true) {
     update,
   } = lista;
   const buscar = useDebouncedValue(busqueda);
+  const [searchParams] = useSearchParams();
   const [estado, setEstadoInterno] = useState<EstadoVencimiento | ''>('');
-  const [soloAlertas, setSoloAlertasInterno] = useState(false);
+  const soloAlertas = searchParams.get('solo_alertas') === 'true';
   const [items, setItems] = useState<VencimientoConsolidado[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
@@ -107,17 +109,14 @@ export function useVencimientos(origen: OrigenVencimiento, enabled = true) {
     setEstado: cambiarEstado,
     soloAlertas,
     setSoloAlertas: (valor: boolean) => {
-      setSoloAlertasInterno(valor);
-      setPage(1);
+      update({ solo_alertas: valor ? 'true' : '' });
     },
     limpiarFiltros: () => {
       setEstadoInterno('');
-      setSoloAlertasInterno(false);
-      update({ buscar: '' });
+      update({ buscar: '', solo_alertas: '' });
     },
     reiniciarFiltros: () => {
       setEstadoInterno('');
-      setSoloAlertasInterno(false);
     },
   };
 }
