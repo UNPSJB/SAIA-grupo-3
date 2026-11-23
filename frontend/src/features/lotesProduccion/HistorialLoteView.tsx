@@ -1,46 +1,64 @@
 import { useState } from 'react';
 import { Alert, Button, Card, Form, Modal } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import { useConsulta } from '../../shared/hooks/useConsulta';
 import { getPasosDelLote, PasosLoteHistorial } from '../produccionDelDia';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
 import { EstadoLoteBadge } from './EstadoLoteBadge';
-import { cerrarLoteProduccion } from './loteProduccionApi';
+import { IdentificacionLote } from './IdentificacionLote';
+import { anularLoteProduccion, cerrarLoteProduccion } from './loteProduccionApi';
 import { TrazabilidadProduccionDetalle } from './TrazabilidadProduccionDetalle';
 import type { LoteProduccion } from './types';
 
 interface HistorialLoteViewProps {
   lote: LoteProduccion;
   onVolver: () => void;
-  onCerrado: () => Promise<void>;
+  onActualizado: () => Promise<void>;
 }
 
-export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteViewProps) {
+export function HistorialLoteView({ lote, onVolver, onActualizado }: HistorialLoteViewProps) {
   const [confirmando, setConfirmando] = useState(false);
   const [cerrando, setCerrando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [motivo, setMotivo] = useState('');
+  const [anulando, setAnulando] = useState(false);
+  const [enviandoAnulacion, setEnviandoAnulacion] = useState(false);
+  const [errorAnulacion, setErrorAnulacion] = useState<string | null>(null);
+  const [motivoAnulacion, setMotivoAnulacion] = useState('');
   const pasos = useConsulta(() => getPasosDelLote(lote.id), [lote.id, lote.estado]);
-  const pendientes = (pasos.datos ?? []).filter((paso) => paso.estado === 'pendiente').length;
+  const sinPasos = !pasos.cargando && pasos.datos?.length === 0;
+  const puedeCerrar = lote.estado === 'finalizado' || (lote.estado === 'abierto' && sinPasos);
+  const anulado = lote.estado === 'anulado';
 
   const cerrar = async () => {
-    if (pendientes > 0 && !motivo.trim()) {
-      setError('Indicá el motivo para cerrar el lote con pasos sin realizar.');
-      return;
-    }
     setCerrando(true);
     setError(null);
     try {
-      await cerrarLoteProduccion(
-        lote.id,
-        pendientes > 0 ? { confirmar_pasos_pendientes: true, motivo: motivo.trim() } : undefined,
-      );
+      await cerrarLoteProduccion(lote.id);
       setConfirmando(false);
-      await onCerrado();
+      await onActualizado();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo cerrar el lote.');
     } finally {
       setCerrando(false);
+    }
+  };
+
+  const anular = async () => {
+    if (!motivoAnulacion.trim()) {
+      setErrorAnulacion('Indicá el motivo de la anulación.');
+      return;
+    }
+    setEnviandoAnulacion(true);
+    setErrorAnulacion(null);
+    try {
+      await anularLoteProduccion(lote.id, motivoAnulacion.trim());
+      setAnulando(false);
+      await onActualizado();
+    } catch (err) {
+      setErrorAnulacion(err instanceof Error ? err.message : 'No se pudo anular el lote.');
+    } finally {
+      setEnviandoAnulacion(false);
     }
   };
 
@@ -63,7 +81,7 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
       valor: `Versión ${lote.version_receta.numero}${lote.factor_receta !== null ? ` · factor ×${lote.factor_receta.toLocaleString('es-AR')}` : ''}`,
     });
   }
-  if (lote.estado === 'cerrado' && lote.cerrado_por) {
+  if (lote.cerrado_por) {
     filas.push({
       titulo: 'Cerrado por',
       valor: `${lote.cerrado_por.apellido}, ${lote.cerrado_por.nombre} (${formatearFechaHora(lote.fecha_cierre)})`,
@@ -74,6 +92,15 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
       titulo: 'Cerrado con pasos pendientes',
       valor: `${lote.pasos_pendientes_al_cerrar} paso(s) sin realizar. Motivo: ${lote.motivo_cierre_pendientes ?? '—'}`,
     });
+  }
+  if (anulado && lote.anulado_por) {
+    filas.push(
+      {
+        titulo: 'Anulado por',
+        valor: `${lote.anulado_por.apellido}, ${lote.anulado_por.nombre} (${formatearFechaHora(lote.fecha_anulacion)})`,
+      },
+      { titulo: 'Motivo de anulación', valor: lote.motivo_anulacion ?? '—' },
+    );
   }
 
   return (
@@ -87,6 +114,13 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
       </Card.Header>
       <Card.Body className="p-4">
         {error && <ErrorAlert mensaje={error} />}
+        {anulado && (
+          <Alert variant="danger">
+            <i className="bi bi-slash-circle me-2" aria-hidden="true" />
+            Este lote está anulado: es de solo lectura y no cuenta en las estadísticas de producción.
+            Sus consumos se conservan para la trazabilidad.
+          </Alert>
+        )}
         <div className="bg-body-tertiary p-3 rounded border mb-4">
           {filas.map((fila) => (
             <div className="row mb-2" key={fila.titulo}>
@@ -97,6 +131,8 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
             </div>
           ))}
         </div>
+
+        <IdentificacionLote lote={lote} />
 
         <h6 className="fw-bold border-bottom pb-2">Insumos utilizados</h6>
         {lote.insumos_asociados.length === 0 ? (
@@ -129,11 +165,19 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
         {pasos.datos && pasos.datos.length > 0 && <PasosLoteHistorial pasos={pasos.datos} />}
         <TrazabilidadProduccionDetalle loteId={lote.id} />
       </Card.Body>
-      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex flex-wrap justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>
           Volver al listado
         </Button>
-        {lote.estado === 'abierto' && (
+        <Link to={`/lotes/${lote.id}/expediente`} className="btn btn-primary">
+          <i className="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i> Expediente de trazabilidad
+        </Link>
+        {!anulado && lote.activo && (
+          <Button variant="outline-danger" onClick={() => setAnulando(true)}>
+            <i className="bi bi-slash-circle me-1"></i> Anular lote
+          </Button>
+        )}
+        {puedeCerrar && (
           <Button variant="danger" onClick={() => setConfirmando(true)}>
             <i className="bi bi-lock-fill me-1"></i> Cerrar lote
           </Button>
@@ -146,39 +190,52 @@ export function HistorialLoteView({ lote, onVolver, onCerrado }: HistorialLoteVi
         </Modal.Header>
         <Modal.Body>
           {error && <ErrorAlert mensaje={error} />}
-          {pendientes > 0 && (
-            <Alert variant="warning">
-              <i className="bi bi-exclamation-triangle me-2" aria-hidden="true" />
-              El lote tiene <strong>{pendientes}</strong> paso{pendientes > 1 ? 's' : ''} de la
-              receta sin realizar. Si lo cerrás igual, la decisión y el motivo quedan registrados.
-            </Alert>
-          )}
-          <p>
+          <p className="mb-0">
             Una vez cerrado, el lote queda de solo lectura: no se podrá modificar ni dar de baja.
             ¿Querés continuar?
           </p>
-          {pendientes > 0 && (
-            <Form.Group controlId="cierre-motivo">
-              <Form.Label>Motivo para cerrar con pasos pendientes</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={2}
-                maxLength={500}
-                value={motivo}
-                onChange={(evento) => {
-                  setMotivo(evento.target.value);
-                  setError(null);
-                }}
-              />
-            </Form.Group>
-          )}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setConfirmando(false)} disabled={cerrando}>
             Cancelar
           </Button>
           <Button variant="danger" onClick={cerrar} disabled={cerrando}>
-            {cerrando ? 'Cerrando...' : pendientes > 0 ? 'Cerrar igual' : 'Cerrar lote'}
+            {cerrando ? 'Cerrando...' : 'Cerrar lote'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={anulando} onHide={() => setAnulando(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title className="fs-5">Anular lote {lote.codigo}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {errorAnulacion && <ErrorAlert mensaje={errorAnulacion} />}
+          <p>
+            El lote quedará anulado y de solo lectura: no se podrá modificar, reactivar ni usar en
+            procesos posteriores, y dejará de contar en las estadísticas de producción. Lo consumido
+            no vuelve al stock y su trazabilidad se conserva.
+          </p>
+          <Form.Group controlId="anulacion-motivo">
+            <Form.Label>Motivo de la anulación</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              maxLength={500}
+              value={motivoAnulacion}
+              onChange={(evento) => {
+                setMotivoAnulacion(evento.target.value);
+                setErrorAnulacion(null);
+              }}
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setAnulando(false)} disabled={enviandoAnulacion}>
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={anular} disabled={enviandoAnulacion}>
+            {enviandoAnulacion ? 'Anulando...' : 'Anular lote'}
           </Button>
         </Modal.Footer>
       </Modal>

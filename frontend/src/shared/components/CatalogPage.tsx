@@ -115,7 +115,18 @@ export function CatalogPage({
         <>
           <ListControls
             {...list}
-            title={endpoint === 'tipos-documento' ? 'Catálogo de tipos' : endpoint === 'tipos-incidente' ? 'Catálogo de tipos de incidente' : 'Nómina de Unidades'}
+            title={
+              endpoint === 'tipos-documento'
+                ? 'Catálogo de tipos'
+                : endpoint === 'tipos-incidente'
+                  ? 'Catálogo de tipos de incidente'
+                  : 'Nómina de Unidades'
+            }
+            placeholder={
+              endpoint === 'unidades-medida'
+                ? 'Buscar por tipo o sufijo'
+                : 'Buscar por nombre'
+            }
           >
             <Form.Check
               id={`inactivos-${endpoint}`}

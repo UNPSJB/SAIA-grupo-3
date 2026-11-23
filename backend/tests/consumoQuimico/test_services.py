@@ -17,7 +17,6 @@ from src.notificaciones import services as avisos
 from src.consumoQuimico import services as consumos
 from src.consumoQuimico.schemas import ConsumoQuimicoCreate, ConsumoQuimicoUpdate
 from src.consumoQuimico.models import ConsumoQuimico
-from scripts.migrate_stock_minimo import migrar
 from src.consumoQuimico import exceptions
 from src.consumoQuimico.services import eliminar_consumo, modificar_consumo, obtener_consumo_acumulado
 from tests.consumoQuimico.utilidades import HACE_5_DIAS, HACE_10_DIAS, HOY, MANANA, registrar, stock

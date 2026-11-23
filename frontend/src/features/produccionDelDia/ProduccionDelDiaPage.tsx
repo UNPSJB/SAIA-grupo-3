@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Container } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { useConsulta } from '../../shared/hooks/useConsulta';
@@ -14,6 +14,11 @@ export function ProduccionDelDiaPage() {
   const lotes = useConsulta(getProduccionDelDia, []);
   const [aRealizar, setARealizar] = useState<PasoLote | null>(null);
   const [aAnular, setAAnular] = useState<PasoLote | null>(null);
+  const [params] = useSearchParams();
+  const loteElegido = Number(params.get('lote')) || null;
+  const visibles = loteElegido
+    ? lotes.datos?.filter((lote) => lote.id === loteElegido)
+    : lotes.datos;
 
   const alTerminar = () => {
     setARealizar(null);
@@ -33,6 +38,14 @@ export function ProduccionDelDiaPage() {
       <p className="text-body-secondary mb-4 border-bottom pb-3">
         Marcá cada paso de la receta a medida que lo hacés.
       </p>
+      {loteElegido && (
+        <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <span className="small text-body-secondary">Mostrando solo el lote seleccionado.</span>
+          <Link to="/produccion-del-dia" className="small">
+            Ver todos los lotes
+          </Link>
+        </div>
+      )}
       {lotes.error && <ErrorAlert mensaje={lotes.error} />}
       {!lotes.datos && !lotes.error && <LoadingSpinner mensaje="Cargando lotes..." />}
       {lotes.datos?.length === 0 && (
@@ -43,8 +56,13 @@ export function ProduccionDelDiaPage() {
           </p>
         </div>
       )}
+      {loteElegido && lotes.datos && lotes.datos.length > 0 && visibles?.length === 0 && (
+        <div className="text-center text-body-secondary py-5">
+          <p className="mb-0">Este lote no tiene pasos pendientes para seguir.</p>
+        </div>
+      )}
       <div className="d-flex flex-column gap-4">
-        {lotes.datos?.map((lote) => (
+        {visibles?.map((lote) => (
           <TarjetaLote key={lote.id} lote={lote} onRealizar={setARealizar} onAnular={setAAnular} />
         ))}
       </div>

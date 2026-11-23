@@ -184,7 +184,7 @@ export function InicioAdminPage() {
                     className="bi bi-graph-up me-2"
                     aria-hidden="true"
                   />
-                  Cumplimiento
+                  Cumplimiento del checklist
                 </h3>
 
                 <p
@@ -192,6 +192,10 @@ export function InicioAdminPage() {
                   aria-live="polite"
                 >
                   {textoCumplimiento}
+                </p>
+
+                <p className="small text-body-secondary mb-2">
+                  Porcentaje de tareas de limpieza realizadas en los últimos 30 días completos
                 </p>
 
                 <Link
@@ -216,7 +220,7 @@ export function InicioAdminPage() {
                     className="bi bi-clipboard-check me-2"
                     aria-hidden="true"
                   />
-                  Tareas realizadas
+                  Tareas de limpieza realizadas
                 </h3>
 
                 <p
@@ -227,7 +231,9 @@ export function InicioAdminPage() {
                 </p>
 
                 <span className="small text-body-secondary">
-                  En los últimos 30 días completos
+                  {cumplimiento.datos
+                    ? `De ${formatearNumero(cumplimiento.datos.total)} tareas programadas en los últimos 30 días completos`
+                    : 'En los últimos 30 días completos'}
                 </span>
               </Card.Body>
             </Card>
@@ -263,7 +269,7 @@ export function InicioAdminPage() {
                 </Link>
 
                 <p className="small text-body-secondary mt-2 mb-0">
-                  Documentación y calibración · Estado actual
+                  Registros vencidos o próximos a vencer (documentación y calibración · estado actual)
                 </p>
               </Card.Body>
             </Card>

@@ -610,6 +610,7 @@ def trazabilidad(db: Session, lote_id: int):
             "fecha_produccion": produccion.fecha_produccion,
             "cantidad_utilizada": consumo.cantidad,
             "activo": produccion.activo,
+            "estado": produccion.estado,
         }
         for consumo, produccion, nombre in filas
     ]

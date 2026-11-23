@@ -27,6 +27,13 @@ export interface Personal {
   role_name: string;
   role_id: number;
   capacidades: string[];
+  sectores: SectorAsignado[];
+  sector_ids: number[];
+}
+
+export interface SectorAsignado {
+  id: number;
+  nombre: string;
 }
 
 export interface PersonalCreateInput {
@@ -39,6 +46,7 @@ export interface PersonalCreateInput {
   password: string;
   operar: boolean;
   administrar: boolean;
+  sector_ids: number[];
 }
 
 export type PersonalUpdateInput = Partial<PersonalCreateInput> & {

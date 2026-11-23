@@ -1,5 +1,6 @@
 """Recursos comunes: SQLite en memoria y aplicación sin lifespan ni scheduler."""
 import os
+from src.documentoTecnico.consulta_router import router as documentos_vigentes_router
 
 # Antes de importar src: nunca conectar al archivo configurado para desarrollo.
 os.environ['DB_URL'] = 'sqlite://'
@@ -23,15 +24,16 @@ from tests.database import (
 @pytest.fixture
 def client(db_session):
     api = FastAPI()
-    for nombre in ('auth', 'personal', 'perfil', 'sector',
+    for nombre in ('auth', 'personal', 'perfil', 'sector', 'tipoDocumento',
                    'unidadMedida', 'insumos', 'insumosQuimicos', 'producto',
                    'loteProduccion', 'abastecimiento', 'tablero', 'incidente',
-                   'documentacion', 'vistaPublica', 'notificaciones',
-                   'consumoQuimico', 'checklist', 'equipos', 'registroTemperatura',
-                   'tarea', 'receta', 'claseFuncional', 'aditivoReferencia', 'produccionDelDia',
+                   'accionCorrectiva','documentacion', 'documentoTecnico', 'vistaPublica', 'notificaciones',
+                   'consumoQuimico', 'checklist', 'equipos', 'registroCalibracion', 'registroTemperatura',
+                   'tarea', 'plan', 'receta', 'claseFuncional', 'aditivoReferencia', 'produccionDelDia',
                    'configuracionProduccion', 'nutricion', 'rotuladoFrontal', 'rotulo', 'alergeno'):
         modulo = importlib.import_module(f'src.{nombre}.router')
         api.include_router(modulo.router)
+        api.include_router(documentos_vigentes_router)
         for extra in ('publico_router', 'vencimientos_router'):
             if hasattr(modulo, extra):
                 api.include_router(getattr(modulo, extra))
@@ -84,9 +86,9 @@ def item_checklist(db_session, persona_operadora, unidad_medida):
 
 MODULOS_ENTREGA = {
     'unidadMedida', 'insumos', 'insumosQuimicos', 'tablero', 'incidente',
-    'documentacion', 'vistaPublica', 'producto', 'loteProduccion',
+    'documentacion', 'documentoTecnico', 'vistaPublica', 'producto', 'loteProduccion',
     'notificaciones', 'consumoQuimico', 'checklist', 'equipos',
-    'registroTemperatura', 'abastecimiento',
+    'registroTemperatura', 'abastecimiento', 'tarea', 'plan', 'accionCorrectiva', 'registroCalibracion', 'tipoDocumento'
 }
 
 

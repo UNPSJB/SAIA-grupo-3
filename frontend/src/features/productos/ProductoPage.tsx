@@ -1,15 +1,16 @@
+import { useState } from 'react';
 import { Button, Container, Tab, Tabs } from 'react-bootstrap';
 import { ErrorAlert } from '../../shared/components/ErrorAlert';
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { useCrudRoute } from '../../shared/hooks/useCrudRoute';
-import { useState } from 'react';
 import { AplicabilidadProducto } from '../rotuladoFrontal/AplicabilidadProducto';
 import { SellosProducto } from '../rotuladoFrontal/SellosProducto';
 import { useRotuladoFrontalActivo } from '../rotuladoFrontal/useRotuladoFrontalActivo';
 import { ProductoDeleteView } from './ProductoDeleteView';
 import { ProductoForm } from './ProductoForm';
 import { ProductoList } from './ProductoList';
+import { ProductoRecetaTab } from './ProductoRecetaTab';
 import { ProductoView } from './ProductoView';
 import { getProductoById } from './productoApi';
 import type { Producto, ProductoCreate } from './types';
@@ -53,10 +54,7 @@ export function ProductoPage() {
           onEliminarClick={(producto) => open(producto, 'eliminar')}
         />
       )}
-      {mode === 'ver' && item && !rotuladoActivo && (
-        <ProductoView producto={item} onEditar={() => open(item, 'editar')} onVolver={back} />
-      )}
-      {mode === 'ver' && item && rotuladoActivo && (
+      {mode === 'ver' && item && (
         <Tabs
           activeKey={pestanaActiva}
           onSelect={(clave) => irA(clave ?? 'datos')}
@@ -67,20 +65,27 @@ export function ProductoPage() {
           <Tab eventKey="datos" title="Datos">
             <ProductoView producto={item} onEditar={() => open(item, 'editar')} onVolver={back} />
           </Tab>
-          <Tab eventKey="rotulado" title="Rotulado frontal">
-            <AplicabilidadProducto
-              key={item.id}
-              productoId={item.id}
-              onIrASellos={() => irA('sellos')}
-            />
+          <Tab eventKey="receta" title="Receta">
+            <ProductoRecetaTab key={item.id} producto={item} onVolver={back} />
           </Tab>
-          <Tab eventKey="sellos" title="Sellos">
-            <SellosProducto
-              key={`${item.id}-${pestanaActiva}`}
-              productoId={item.id}
-              onIrAAplicabilidad={() => irA('rotulado')}
-            />
-          </Tab>
+          {rotuladoActivo && (
+            <Tab eventKey="rotulado" title="Rotulado frontal">
+              <AplicabilidadProducto
+                key={item.id}
+                productoId={item.id}
+                onIrASellos={() => irA('sellos')}
+              />
+            </Tab>
+          )}
+          {rotuladoActivo && (
+            <Tab eventKey="sellos" title="Sellos">
+              <SellosProducto
+                key={`${item.id}-${pestanaActiva}`}
+                productoId={item.id}
+                onIrAAplicabilidad={() => irA('rotulado')}
+              />
+            </Tab>
+          )}
         </Tabs>
       )}
       {(mode === 'crear' || (mode === 'editar' && item)) && (

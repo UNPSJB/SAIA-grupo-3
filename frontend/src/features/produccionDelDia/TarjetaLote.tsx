@@ -74,6 +74,11 @@ export function TarjetaLote({ lote, onRealizar, onAnular }: TarjetaLoteProps) {
                   <span className="visually-hidden">Paso {paso.orden}:</span>
                   {paso.nombre}
                   {paso.punto_control && <Badge bg="danger">Punto de control</Badge>}
+                  {paso.sector && (
+                    <Badge bg="info" text="dark">
+                      {paso.sector.nombre}
+                    </Badge>
+                  )}
                 </div>
                 <div className="small">{paso.procedimiento}</div>
                 <DatosDelPaso paso={paso} />
@@ -98,7 +103,14 @@ export function TarjetaLote({ lote, onRealizar, onAnular }: TarjetaLoteProps) {
                 )}
               </div>
               <div className="flex-shrink-0 align-self-sm-center">
-                {hecho ? (
+                {!paso.puede_operar ? (
+                  !hecho && (
+                    <span className="small text-body-secondary">
+                      <i className="bi bi-person-gear me-1" aria-hidden="true" />
+                      {paso.sector ? `A cargo de ${paso.sector.nombre}` : 'A cargo de quien registró el lote'}
+                    </span>
+                  )
+                ) : hecho ? (
                   <Button variant="outline-danger" size="sm" onClick={() => onAnular(paso)}>
                     Anular
                   </Button>

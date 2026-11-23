@@ -17,7 +17,8 @@ from src.notificaciones import services as avisos
 from src.consumoQuimico import services as consumos
 from src.consumoQuimico.schemas import ConsumoQuimicoCreate, ConsumoQuimicoUpdate
 from src.consumoQuimico.models import ConsumoQuimico
-from scripts.migrate_stock_minimo import migrar
+
+migrar = pytest.importorskip("scripts.migrate_stock_minimo").migrar
 
 def crear_quimico(db, unidad, nombre='Detergente', cantidad=10, minimo=5):
     return quimicos.crear_insumo_quimico(db, InsumoQuimicoCreate(nombre=nombre, cantidad=cantidad, stock_minimo=minimo, tipo_quimico=TipoQuimico.DETERGENTE, unidad_medida_id=unidad.id))

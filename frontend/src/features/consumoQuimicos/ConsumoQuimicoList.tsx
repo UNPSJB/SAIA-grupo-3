@@ -43,7 +43,7 @@ export function ConsumoQuimicoList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina de Consumos (POES)">
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina de Consumos (POES)" placeholder="Buscar por tarea de limpieza o insumo químico">
         <Form.Check
           type="switch"
           id="switch-inactivos"

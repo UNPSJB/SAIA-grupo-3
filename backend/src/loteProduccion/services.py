@@ -3,10 +3,11 @@ from datetime import date, datetime
 from typing import Any, Dict
 from fastapi import HTTPException
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from src.loteProduccion import exceptions, schemas
+from src.loteProduccion.codigo_barras import generar_codigo_barras, validar_codigo_barras
 from src.loteProduccion.constants import PREFIJO_CODIGO, EstadoLote
 from src.loteProduccion.models import LoteProduccion, LoteInsumo
 from src.insumos.models import Insumo
@@ -37,20 +38,44 @@ def _validar_producto(db: Session, producto_id: int, producto_actual_id: int | N
         raise exceptions.ProductoInactivo()
 
 
-def _validar_abierto(db_lote: LoteProduccion) -> None:
+def _validar_editable(db_lote: LoteProduccion) -> None:
+    if db_lote.estado == EstadoLote.ANULADO:
+        raise exceptions.LoteAnulado()
     if db_lote.estado == EstadoLote.CERRADO:
         raise exceptions.LoteCerrado()
 
 
-def _generar_codigo(db: Session, fecha: date) -> str:
+def _validar_baja(db_lote: LoteProduccion) -> None:
+    if db_lote.estado != EstadoLote.ABIERTO:
+        raise exceptions.BajaConProduccionIniciada()
+
+
+def actualizar_estado_produccion(db_lote: LoteProduccion) -> None:
+    realizados = sum(1 for paso in db_lote.pasos if paso.estado == EstadoPasoLote.REALIZADO)
+    if realizados == 0:
+        db_lote.estado = EstadoLote.ABIERTO
+    elif realizados < len(db_lote.pasos):
+        db_lote.estado = EstadoLote.EN_PRODUCCION
+    else:
+        db_lote.estado = EstadoLote.FINALIZADO
+
+
+def _generar_codigos(db: Session, fecha: date) -> tuple[str, str]:
     prefijo = f"{PREFIJO_CODIGO}-{fecha:%Y%m%d}-"
     existentes = db.scalar(
         select(func.count()).select_from(LoteProduccion).where(LoteProduccion.codigo.like(f"{prefijo}%"))
     )
     numero = existentes + 1
-    while db.scalar(select(LoteProduccion.id).where(LoteProduccion.codigo == f"{prefijo}{numero:03d}")):
+    while db.scalar(
+        select(LoteProduccion.id).where(
+            or_(
+                LoteProduccion.codigo == f"{prefijo}{numero:03d}",
+                LoteProduccion.codigo_barras == generar_codigo_barras(fecha, numero),
+            )
+        )
+    ):
         numero += 1
-    return f"{prefijo}{numero:03d}"
+    return f"{prefijo}{numero:03d}", generar_codigo_barras(fecha, numero)
 
 
 def _validar_version_receta(db: Session, lote: schemas.LoteProduccionCreate) -> VersionReceta | None:
@@ -89,9 +114,11 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_i
             for item in lote.insumos
         ):
             raise exceptions.StockInsuficiente()
+    codigo, codigo_barras = _generar_codigos(db, lote.fecha_produccion)
     db_lote = LoteProduccion(
         **lote.model_dump(exclude={"insumos"}),
-        codigo=_generar_codigo(db, lote.fecha_produccion),
+        codigo=codigo,
+        codigo_barras=codigo_barras,
         registrado_por_id=registrado_por_id,
         pasos=pasos_desde_version(version) if version else [],
         insumos_asociados=[
@@ -182,12 +209,18 @@ def listar_lotes(
     fecha_desde: date | None = None,
     fecha_hasta: date | None = None,
     registrado_por_id: int | None = None,
+    estado: EstadoLote | None = None,
+    incluir_anulados: bool = False,
 ) -> Dict[str, Any]:
     if fecha_desde and fecha_hasta and fecha_desde > fecha_hasta:
         raise exceptions.RangoFechasInvalido()
     query = select(LoteProduccion).join(Producto, LoteProduccion.producto_id == Producto.id)
     if not mostrar_inactivos:
         query = query.where(LoteProduccion.activo.is_(True))
+    if estado is not None:
+        query = query.where(LoteProduccion.estado == estado)
+    elif not incluir_anulados:
+        query = query.where(LoteProduccion.estado != EstadoLote.ANULADO)
     if producto_id is not None:
         query = query.where(LoteProduccion.producto_id == producto_id)
     if fecha_desde is not None:
@@ -210,6 +243,7 @@ def listar_lotes(
             "fecha_produccion": LoteProduccion.fecha_produccion,
             "cantidad": LoteProduccion.cantidad,
             "fecha_registro": LoteProduccion.fecha_registro,
+            "estado": LoteProduccion.estado,
         },
     )
     total = db.scalar(select(func.count()).select_from(query.subquery()))
@@ -222,6 +256,23 @@ def leer_lote(db: Session, lote_id: int) -> LoteProduccion:
     db_lote = db.scalar(select(LoteProduccion).where(LoteProduccion.id == lote_id))
     if db_lote is None:
         raise exceptions.LoteNoEncontrado()
+    return db_lote
+
+
+def buscar_lote_por_codigo(
+    db: Session, codigo: str, registrado_por_id: int | None = None
+) -> LoteProduccion:
+    texto = "".join(codigo.split()).upper()
+    if texto.startswith(f"{PREFIJO_CODIGO}-"):
+        condicion = LoteProduccion.codigo == texto
+    else:
+        condicion = LoteProduccion.codigo_barras == validar_codigo_barras(texto)
+    query = select(LoteProduccion).where(condicion)
+    if registrado_por_id is not None:
+        query = query.where(LoteProduccion.registrado_por_id == registrado_por_id)
+    db_lote = db.scalar(query)
+    if db_lote is None:
+        raise exceptions.LoteInexistente(texto)
     return db_lote
 
 
@@ -304,8 +355,10 @@ def trazabilidad_lote_produccion(
 
 def modificar_lote(db: Session, lote_id: int, lote: schemas.LoteProduccionUpdate) -> LoteProduccion:
     db_lote = leer_lote(db, lote_id)
-    _validar_abierto(db_lote)
+    _validar_editable(db_lote)
     datos = lote.model_dump(exclude_unset=True)
+    if datos.get("activo") is False:
+        _validar_baja(db_lote)
     if datos.get("producto_id") is not None:
         _validar_producto(db, datos["producto_id"], producto_actual_id=db_lote.producto_id)
     if datos.get("fecha_produccion") is not None:
@@ -330,28 +383,39 @@ def modificar_lote(db: Session, lote_id: int, lote: schemas.LoteProduccionUpdate
 
 def eliminar_lote(db: Session, lote_id: int) -> LoteProduccion:
     db_lote = leer_lote(db, lote_id)
-    _validar_abierto(db_lote)
+    _validar_editable(db_lote)
+    _validar_baja(db_lote)
     db_lote.activo = False
     db.commit()
     db.refresh(db_lote)
     return db_lote
 
 
-
-def cerrar_lote(
-    db: Session, lote_id: int, cerrado_por_id: int, datos: schemas.CierreLote | None = None
+def anular_lote(
+    db: Session, lote_id: int, anulado_por_id: int, datos: schemas.AnulacionLote
 ) -> LoteProduccion:
     db_lote = leer_lote(db, lote_id)
-    _validar_abierto(db_lote)
-    datos = datos or schemas.CierreLote()
+    if db_lote.estado == EstadoLote.ANULADO:
+        raise exceptions.LoteAnulado()
+    if not db_lote.activo:
+        raise exceptions.LoteDadoDeBaja()
+    if not datos.motivo:
+        raise exceptions.MotivoAnulacionObligatorio()
+    db_lote.estado = EstadoLote.ANULADO
+    db_lote.fecha_anulacion = datetime.now()
+    db_lote.anulado_por_id = anulado_por_id
+    db_lote.motivo_anulacion = datos.motivo
+    db.commit()
+    db.refresh(db_lote)
+    return db_lote
+
+
+def cerrar_lote(db: Session, lote_id: int, cerrado_por_id: int) -> LoteProduccion:
+    db_lote = leer_lote(db, lote_id)
+    _validar_editable(db_lote)
     pendientes = sum(1 for paso in db_lote.pasos if paso.estado == EstadoPasoLote.PENDIENTE)
     if pendientes:
-        if not datos.confirmar_pasos_pendientes:
-            raise exceptions.PasosPendientes(pendientes)
-        if not datos.motivo:
-            raise exceptions.MotivoCierreObligatorio()
-        db_lote.pasos_pendientes_al_cerrar = pendientes
-        db_lote.motivo_cierre_pendientes = datos.motivo
+        raise exceptions.LoteNoFinalizado(pendientes)
     db_lote.estado = EstadoLote.CERRADO
     db_lote.fecha_cierre = datetime.now()
     db_lote.cerrado_por_id = cerrado_por_id

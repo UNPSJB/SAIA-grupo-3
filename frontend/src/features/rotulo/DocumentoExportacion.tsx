@@ -1,76 +1,54 @@
+import { ReporteImpresion } from '../../shared/components/ReporteImpresion';
 import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
+import { formatearNumero } from '../../shared/libreria/formato';
 import { TablaNutricional } from '../nutricion';
 import { HECHOS, NUTRIENTES, RESULTADOS, SELLOS } from '../rotuladoFrontal/etiquetas';
 import { EtiquetaRotulo } from './EtiquetaRotulo';
 import type { Exportacion } from './types';
 
-const numero = (valor: number | null | undefined, decimales = 1) =>
-  valor === null || valor === undefined
-    ? '—'
-    : valor.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: decimales });
-
-function Encabezado({ exportacion, titulo }: { exportacion: Exportacion; titulo: string }) {
+function metadatosExportacion(exportacion: Exportacion) {
   const conjunto = exportacion.anexo.rotulado_frontal?.calculo?.conjunto;
-  return (
-    <header className="exp-encabezado">
-      <div className="exp-titulo">{titulo}</div>
-      <dl className="exp-datos">
-        <div>
-          <dt>Producto</dt>
-          <dd>{exportacion.producto.nombre}</dd>
-        </div>
-        <div>
-          <dt>Exportación</dt>
-          <dd>N° {exportacion.numero}</dd>
-        </div>
-        <div>
-          <dt>Versión de receta</dt>
-          <dd>v{exportacion.version_receta_numero}</dd>
-        </div>
-        <div>
-          <dt>Parámetros de rotulado frontal</dt>
-          <dd>
-            {conjunto
-              ? `v${conjunto.numero}${conjunto.fecha_vigencia ? ` (vigencia ${formatearFecha(conjunto.fecha_vigencia)})` : ''}`
-              : 'No aplica'}
-          </dd>
-        </div>
-        <div>
-          <dt>Generado</dt>
-          <dd>
-            {formatearFechaHora(exportacion.generado_en)} por {exportacion.generado_por.nombre}{' '}
-            {exportacion.generado_por.apellido}
-          </dd>
-        </div>
-      </dl>
-    </header>
-  );
+  return [
+    { etiqueta: 'Producto', valor: exportacion.producto.nombre },
+    { etiqueta: 'Exportación', valor: `N° ${exportacion.numero}` },
+    { etiqueta: 'Versión de receta', valor: `v${exportacion.version_receta_numero}` },
+    {
+      etiqueta: 'Parámetros de rotulado frontal',
+      valor: conjunto
+        ? `v${conjunto.numero}${conjunto.fecha_vigencia ? ` (vigencia ${formatearFecha(conjunto.fecha_vigencia)})` : ''}`
+        : 'No aplica',
+    },
+  ];
 }
 
 function Receta({ exportacion }: { exportacion: Exportacion }) {
   const { receta } = exportacion.anexo;
   return (
-    <section className="exp-seccion">
+    <section className="rep-seccion">
       <h3>A. Receta (versión {receta.numero})</h3>
-      <p className="exp-texto">
+      <p className="rep-texto">
         Estado: {receta.estado} · creada el {formatearFechaHora(receta.fecha_creacion)} · motivo:{' '}
         {receta.motivo}
         <br />
-        Rendimiento: {numero(receta.rendimiento_cantidad, 2)} {receta.rendimiento_unidad.sufijo}
-        {receta.rendimiento_peso_g !== null && ` (${numero(receta.rendimiento_peso_g, 0)} g)`} ·
-        Porción:{' '}
+        Rendimiento: {formatearNumero(receta.rendimiento_cantidad, 2)}{' '}
+        {receta.rendimiento_unidad.sufijo}
+        {receta.rendimiento_peso_g !== null &&
+          ` (${formatearNumero(receta.rendimiento_peso_g, 0)} g)`}{' '}
+        · Porción:{' '}
         {receta.porcion_cantidad !== null && receta.porcion_unidad
-          ? `${numero(receta.porcion_cantidad, 2)} ${receta.porcion_unidad.sufijo}`
+          ? `${formatearNumero(receta.porcion_cantidad, 2)} ${receta.porcion_unidad.sufijo}`
           : 'no declarada'}
         {receta.porcion_medida_casera && ` (${receta.porcion_medida_casera})`}
       </p>
-      <table className="exp-tabla">
+      <table className="rep-tabla">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Insumo</th>
-            <th>Tipo</th>
-            <th className="exp-num">Cantidad</th>
+            <th style={{ width: '6%' }}>#</th>
+            <th style={{ width: '54%' }}>Insumo</th>
+            <th style={{ width: '18%' }}>Tipo</th>
+            <th className="rep-num" style={{ width: '22%' }}>
+              Cantidad
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -88,8 +66,8 @@ function Receta({ exportacion }: { exportacion: Exportacion }) {
                 )}
               </td>
               <td>{renglon.tipo === 'aditivo' ? 'Aditivo' : 'Ingrediente'}</td>
-              <td className="exp-num">
-                {numero(renglon.cantidad, 3)} {renglon.unidad_medida.sufijo}
+              <td className="rep-num">
+                {formatearNumero(renglon.cantidad, 3)} {renglon.unidad_medida.sufijo}
               </td>
             </tr>
           ))}
@@ -106,25 +84,29 @@ function ComposicionPorcentual({ exportacion }: { exportacion: Exportacion }) {
     ['Aditivos', composicion.aditivos],
   ] as const;
   return (
-    <section className="exp-seccion">
+    <section className="rep-seccion">
       <h3>B. Composición porcentual</h3>
       {!composicion.completa && (
-        <p className="exp-alerta">
+        <p className="rep-alerta">
           Composición incompleta: hay insumos sin equivalencia en gramos.
         </p>
       )}
-      <table className="exp-tabla">
+      <table className="rep-tabla">
         <thead>
           <tr>
-            <th>Insumo</th>
-            <th className="exp-num">Gramos</th>
-            <th className="exp-num">% del total</th>
+            <th style={{ width: '58%' }}>Insumo</th>
+            <th className="rep-num" style={{ width: '21%' }}>
+              Gramos
+            </th>
+            <th className="rep-num" style={{ width: '21%' }}>
+              % del total
+            </th>
           </tr>
         </thead>
         {grupos.map(([titulo, grupo]) =>
           grupo.renglones.length === 0 ? null : (
             <tbody key={titulo}>
-              <tr className="exp-subtitulo">
+              <tr className="rep-subtitulo-fila">
                 <td colSpan={3}>{titulo}</td>
               </tr>
               {[...grupo.renglones]
@@ -132,23 +114,23 @@ function ComposicionPorcentual({ exportacion }: { exportacion: Exportacion }) {
                 .map((renglon) => (
                   <tr key={renglon.renglon_id}>
                     <td>{renglon.insumo.nombre}</td>
-                    <td className="exp-num">{numero(renglon.gramos, 2)}</td>
-                    <td className="exp-num">{numero(renglon.porcentaje, 2)} %</td>
+                    <td className="rep-num">{formatearNumero(renglon.gramos, 2)}</td>
+                    <td className="rep-num">{formatearNumero(renglon.porcentaje, 2)} %</td>
                   </tr>
                 ))}
-              <tr className="exp-total">
+              <tr className="rep-total">
                 <td>Subtotal</td>
-                <td className="exp-num">{numero(grupo.subtotal_gramos, 2)}</td>
-                <td className="exp-num">{numero(grupo.subtotal_porcentaje, 2)} %</td>
+                <td className="rep-num">{formatearNumero(grupo.subtotal_gramos, 2)}</td>
+                <td className="rep-num">{formatearNumero(grupo.subtotal_porcentaje, 2)} %</td>
               </tr>
             </tbody>
           ),
         )}
         <tfoot>
-          <tr className="exp-total">
+          <tr className="rep-total">
             <td>Total</td>
-            <td className="exp-num">{numero(composicion.total_gramos, 2)}</td>
-            <td className="exp-num">{numero(composicion.suma_porcentajes, 2)} %</td>
+            <td className="rep-num">{formatearNumero(composicion.total_gramos, 2)}</td>
+            <td className="rep-num">{formatearNumero(composicion.suma_porcentajes, 2)} %</td>
           </tr>
         </tfoot>
       </table>
@@ -159,16 +141,16 @@ function ComposicionPorcentual({ exportacion }: { exportacion: Exportacion }) {
 function Nutricional({ exportacion }: { exportacion: Exportacion }) {
   const { informacion_nutricional: info, fuentes } = exportacion.anexo;
   return (
-    <section className="exp-seccion">
+    <section className="rep-seccion">
       <h3>C. Información nutricional y fuentes de datos</h3>
-      <p className="exp-texto">
+      <p className="rep-texto">
         Calculada el {formatearFechaHora(info.calculada_en)} a partir de la receta v{info.numero}.
       </p>
       <div className="exp-tabla-nutricional">
         <TablaNutricional info={info} />
       </div>
       {info.faltantes.length > 0 && (
-        <div className="exp-alerta">
+        <div className="rep-alerta">
           Datos faltantes:
           <ul className="mb-0">
             {info.faltantes.map((faltante, indice) => (
@@ -178,21 +160,23 @@ function Nutricional({ exportacion }: { exportacion: Exportacion }) {
         </div>
       )}
       <h4>Fuente de los valores de cada insumo</h4>
-      <table className="exp-tabla">
+      <table className="rep-tabla">
         <thead>
           <tr>
-            <th>Insumo</th>
-            <th className="exp-num">%</th>
-            <th>Fuente</th>
-            <th>Detalle / referencia</th>
-            <th>Actualizado</th>
+            <th style={{ width: '22%' }}>Insumo</th>
+            <th className="rep-num" style={{ width: '9%' }}>
+              %
+            </th>
+            <th style={{ width: '24%' }}>Fuente</th>
+            <th style={{ width: '32%' }}>Detalle / referencia</th>
+            <th style={{ width: '13%' }}>Actualizado</th>
           </tr>
         </thead>
         <tbody>
           {fuentes.map((fuente) => (
             <tr key={fuente.insumo_id}>
               <td>{fuente.insumo}</td>
-              <td className="exp-num">{numero(fuente.porcentaje, 2)}</td>
+              <td className="rep-num">{formatearNumero(fuente.porcentaje, 2)}</td>
               <td>
                 {fuente.fuentes.length ? (
                   fuente.fuentes.join(', ')
@@ -219,13 +203,13 @@ function Sellos({ exportacion }: { exportacion: Exportacion }) {
   const frontal = exportacion.anexo.rotulado_frontal;
   const calculo = frontal?.calculo;
   return (
-    <section className="exp-seccion">
+    <section className="rep-seccion">
       <h3>D. Rotulado frontal: cálculo de sellos</h3>
       {!frontal ? (
-        <p className="exp-texto">El módulo de rotulado frontal no está activo en el sistema.</p>
+        <p className="rep-texto">El módulo de rotulado frontal no está activo en el sistema.</p>
       ) : (
         <>
-          <p className="exp-texto">
+          <p className="rep-texto">
             Aplicabilidad:{' '}
             {frontal.aplicabilidad
               ? `${RESULTADOS[frontal.aplicabilidad.resultado].etiqueta}. ${frontal.aplicabilidad.mensaje}`
@@ -233,7 +217,7 @@ function Sellos({ exportacion }: { exportacion: Exportacion }) {
           </p>
           {calculo ? (
             <>
-              <p className="exp-texto">
+              <p className="rep-texto">
                 Parámetros v{calculo.conjunto.numero} «{calculo.conjunto.nombre}»
                 {calculo.conjunto.fecha_vigencia &&
                   `, vigencia ${formatearFecha(calculo.conjunto.fecha_vigencia)}`}
@@ -252,7 +236,7 @@ function Sellos({ exportacion }: { exportacion: Exportacion }) {
                 )}
               </p>
               {frontal.avisos.length > 0 && (
-                <div className="exp-alerta">
+                <div className="rep-alerta">
                   <ul className="mb-0">
                     {frontal.avisos.map((aviso) => (
                       <li key={aviso}>{aviso}</li>
@@ -260,14 +244,16 @@ function Sellos({ exportacion }: { exportacion: Exportacion }) {
                   </ul>
                 </div>
               )}
-              <table className="exp-tabla">
+              <table className="rep-tabla">
                 <thead>
                   <tr>
-                    <th>Sello</th>
-                    <th>Nutriente</th>
-                    <th>Cálculo</th>
-                    <th className="exp-num">Límite</th>
-                    <th>Resultado</th>
+                    <th style={{ width: '18%' }}>Sello</th>
+                    <th style={{ width: '18%' }}>Nutriente</th>
+                    <th style={{ width: '30%' }}>Cálculo</th>
+                    <th className="rep-num" style={{ width: '20%' }}>
+                      Límite
+                    </th>
+                    <th style={{ width: '14%' }}>Resultado</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -277,11 +263,11 @@ function Sellos({ exportacion }: { exportacion: Exportacion }) {
                       <td>{NUTRIENTES[detalle.nutriente]}</td>
                       <td>
                         {detalle.evaluado
-                          ? (detalle.operacion ?? numero(detalle.valor, 2))
+                          ? (detalle.operacion ?? formatearNumero(detalle.valor, 2))
                           : detalle.motivo}
                       </td>
-                      <td className="exp-num">
-                        {detalle.simbolo} {numero(detalle.limite, 2)} {detalle.unidad}
+                      <td className="rep-num">
+                        {detalle.simbolo} {formatearNumero(detalle.limite, 2)} {detalle.unidad}
                       </td>
                       <td>
                         {!detalle.evaluado
@@ -294,7 +280,7 @@ function Sellos({ exportacion }: { exportacion: Exportacion }) {
                   ))}
                 </tbody>
               </table>
-              <p className="exp-texto">
+              <p className="rep-texto">
                 Sellos resultantes:{' '}
                 {calculo.leyendas.length ? calculo.leyendas.join(' · ') : 'ninguno'}
                 {calculo.advertencias.length > 0 && (
@@ -306,7 +292,7 @@ function Sellos({ exportacion }: { exportacion: Exportacion }) {
               </p>
             </>
           ) : (
-            <p className="exp-texto">No hay sellos calculados para el producto.</p>
+            <p className="rep-texto">No hay sellos calculados para el producto.</p>
           )}
         </>
       )}
@@ -314,41 +300,23 @@ function Sellos({ exportacion }: { exportacion: Exportacion }) {
   );
 }
 
-function Hoja({
-  leyenda,
-  className = '',
-  children,
-}: {
-  leyenda: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <table className={`exp-hoja ${className}`}>
-      <thead>
-        <tr>
-          <td>
-            <div className="exp-leyenda-pagina">{leyenda}</div>
-          </td>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{children}</td>
-        </tr>
-      </tbody>
-    </table>
-  );
-}
-
 export function DocumentoExportacion({ exportacion }: { exportacion: Exportacion }) {
   const leyenda = exportacion.vista_previa.leyenda_borrador;
+  const establecimiento = exportacion.vista_previa.borrador.razon_social;
+  const metadatos = metadatosExportacion(exportacion);
+
   return (
     <div className="exp-documento">
-      <Hoja leyenda={leyenda}>
-        <Encabezado exportacion={exportacion} titulo="Borrador de rótulo" />
+      <ReporteImpresion
+        titulo="Borrador de rótulo"
+        establecimiento={establecimiento}
+        fechaEmision={exportacion.generado_en}
+        usuario={exportacion.generado_por}
+        metadatos={metadatos}
+        leyendaSuperior={leyenda}
+      >
         {exportacion.vista_previa.advertencias.length > 0 && (
-          <div className="exp-alerta">
+          <div className="rep-alerta">
             <strong>El rótulo no está listo para revisión:</strong>
             <ul className="mb-0">
               {exportacion.vista_previa.advertencias.map((advertencia) => (
@@ -358,14 +326,22 @@ export function DocumentoExportacion({ exportacion }: { exportacion: Exportacion
           </div>
         )}
         <EtiquetaRotulo vista={exportacion.vista_previa} />
-      </Hoja>
-      <Hoja leyenda={leyenda} className="exp-anexo">
-        <Encabezado exportacion={exportacion} titulo="Anexo: respaldo de los cálculos" />
+      </ReporteImpresion>
+
+      <ReporteImpresion
+        titulo="Anexo: respaldo de los cálculos"
+        establecimiento={establecimiento}
+        fechaEmision={exportacion.generado_en}
+        usuario={exportacion.generado_por}
+        metadatos={metadatos}
+        leyendaSuperior={leyenda}
+        saltoDePagina
+      >
         <Receta exportacion={exportacion} />
         <ComposicionPorcentual exportacion={exportacion} />
         <Nutricional exportacion={exportacion} />
         <Sellos exportacion={exportacion} />
-      </Hoja>
+      </ReporteImpresion>
     </div>
   );
 }

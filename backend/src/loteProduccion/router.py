@@ -7,7 +7,8 @@ from src.auth.dependencies import puede_consultar_operacion, tiene_permiso_admin
 from src.auth.router_base import PermissionedRouter
 from src.database import get_db
 from src.exceptions import PermissionDenied
-from src.loteProduccion import schemas, services
+from src.loteProduccion import expediente, schemas, services
+from src.loteProduccion.constants import EstadoLote
 from src.pagination import PaginatedResponse
 from src.personal.models import Personal
 
@@ -57,6 +58,8 @@ def read_lotes(
     producto_id: int | None = Query(None, ge=1),
     fecha_desde: date | None = Query(None),
     fecha_hasta: date | None = Query(None),
+    estado: EstadoLote | None = Query(None),
+    incluir_anulados: bool = Query(False),
     current_personal: Personal = Depends(puede_consultar_operacion),
 ):
     registrado_por_id = None if current_personal.administrar else current_personal.id
@@ -66,17 +69,38 @@ def read_lotes(
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
         registrado_por_id=registrado_por_id,
+        estado=estado,
+        incluir_anulados=incluir_anulados,
     )
+
+
+@router.get("/buscar", response_model=schemas.LoteProduccion, dependencies=[Depends(puede_consultar_operacion)])
+def buscar_lote(
+    codigo: str = Query(..., min_length=1, max_length=40),
+    db: Session = Depends(get_db),
+    current_personal: Personal = Depends(puede_consultar_operacion),
+):
+    registrado_por_id = None if current_personal.administrar else current_personal.id
+    return services.buscar_lote_por_codigo(db, codigo, registrado_por_id)
 
 
 @router.post("/{lote_id}/cerrar", response_model=schemas.LoteProduccion, dependencies=[Depends(tiene_permiso_administrar)])
 def cerrar_lote(
     lote_id: int,
-    datos: schemas.CierreLote | None = None,
     db: Session = Depends(get_db),
     current_personal: Personal = Depends(tiene_permiso_administrar),
 ):
-    return services.cerrar_lote(db, lote_id, current_personal.id, datos)
+    return services.cerrar_lote(db, lote_id, current_personal.id)
+
+
+@router.post("/{lote_id}/anular", response_model=schemas.LoteProduccion, dependencies=[Depends(tiene_permiso_administrar)])
+def anular_lote(
+    lote_id: int,
+    datos: schemas.AnulacionLote,
+    db: Session = Depends(get_db),
+    current_personal: Personal = Depends(tiene_permiso_administrar),
+):
+    return services.anular_lote(db, lote_id, current_personal.id, datos)
 
 
 @router.get("/{lote_id}", response_model=schemas.LoteProduccion, dependencies=[Depends(puede_consultar_operacion)])
@@ -98,6 +122,15 @@ def read_lote(
 )
 def read_trazabilidad_lote(lote_id: int, db: Session = Depends(get_db)):
     return services.trazabilidad_lote_produccion(db, lote_id)
+
+
+@router.get(
+    "/{lote_id}/expediente",
+    response_model=schemas.ExpedienteLote,
+    dependencies=[Depends(tiene_permiso_administrar)],
+)
+def read_expediente_lote(lote_id: int, db: Session = Depends(get_db)):
+    return expediente.expediente_lote(db, lote_id)
 
 
 @router.put("/{lote_id}", response_model=schemas.LoteProduccion)

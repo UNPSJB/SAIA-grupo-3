@@ -8,7 +8,7 @@ const API_LOTES_PRODUCCION = `${API_BASE_URL}/lotes-produccion`;
 export async function buscarLotesRecepcion(
   busqueda: string,
   page = 1,
-  size = 100,
+  size = 10,
 ): Promise<Pagina<LoteRecepcion>> {
   const params = new URLSearchParams({
     buscar: busqueda,

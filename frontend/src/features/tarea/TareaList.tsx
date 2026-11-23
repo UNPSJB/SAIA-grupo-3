@@ -39,7 +39,7 @@ export function TareaList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina de Tareas">
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina de Tareas" placeholder="Buscar por nombre o procedimiento">
         <Button
           variant="success"
 

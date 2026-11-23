@@ -104,3 +104,15 @@ def test_la_fecha_de_duracion_suma_dias_o_meses():
     assert fecha_de_duracion(date(2026, 11, 1), 5, "dias") == date(2026, 11, 6)
     assert fecha_de_duracion(date(2026, 1, 31), 1, "meses") == date(2026, 2, 28)
     assert sumar_meses(date(2026, 11, 30), 3) == date(2027, 2, 28)
+
+def test_la_vista_previa_incluye_datos_de_emision_y_usuario_autenticado(
+    client, headers_administradora, persona_administradora, producto_id
+):
+    crear(client, headers_administradora, producto_id)
+
+    vista = vista_previa(client, headers_administradora, producto_id)
+
+    assert vista["generada_en"] is not None
+    assert vista["generado_por"]["id"] == persona_administradora.id
+    assert vista["generado_por"]["nombre"] == persona_administradora.nombre
+    assert vista["generado_por"]["apellido"] == persona_administradora.apellido

@@ -4,8 +4,9 @@ from datetime import datetime, time, timedelta
 
 from sqlalchemy import select
 
-from src.loteProduccion.constants import EstadoLote
+from src.loteProduccion.constants import ESTADOS_EN_CURSO, EstadoLote
 from src.loteProduccion.models import LoteProduccion
+from src.loteProduccion.services import actualizar_estado_produccion
 from src.produccionDelDia.constants import AccionPasoLote, EstadoPasoLote
 from src.produccionDelDia.models import MovimientoPasoLote, PasoLote
 from src.receta.models import Receta
@@ -67,6 +68,10 @@ def cargar_pasos_lotes(db, crear):
                       motivo="Se marcó antes de terminar de pesar.")
             crear(MovimientoPasoLote, {"paso_id": paso.id, "fecha_hora": momento},
                   accion=AccionPasoLote.REALIZADO, personal_id=lote.registrado_por_id, valor_medido=valor)
+        if lote.estado in ESTADOS_EN_CURSO:
+            db.flush()
+            db.expire(lote, ["pasos"])
+            actualizar_estado_produccion(lote)
         if lote.codigo == LOTE_CERRADO_CON_PENDIENTES and lote.pasos_pendientes_al_cerrar is None:
             lote.pasos_pendientes_al_cerrar = total - hechos
             lote.motivo_cierre_pendientes = "Corte de luz: el último paso se completó fuera del sistema."

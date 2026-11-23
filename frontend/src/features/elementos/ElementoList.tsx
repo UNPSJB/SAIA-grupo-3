@@ -68,7 +68,7 @@ export function ElementoList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Inventario de Elementos">
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Inventario de Elementos" placeholder="Buscar por nombre">
         <Form.Check
           type="switch"
           id="switch-inactivos"

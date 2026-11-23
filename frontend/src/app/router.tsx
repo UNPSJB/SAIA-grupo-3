@@ -34,7 +34,7 @@ import { DocumentosVigentesPage } from '../features/documentosTecnicos/Documento
 import { IncidentePage, IncidentesAbiertosPage } from '../features/incidentes';
 import { VencimientosPage as VencimientosConsolidadosPage } from '../features/vencimientos';
 import { TableroPage } from '../features/tablero';
-import { HistorialLotesPage } from '../features/lotesProduccion';
+import { BuscarLotePage, ExpedienteLotePage, HistorialLotesPage } from '../features/lotesProduccion';
 import { ConfiguracionVistaPublicaPage } from '../features/vistaPublica/ConfiguracionVistaPublicaPage';
 import { VistaPublicaPage } from '../features/vistaPublica/VistaPublicaPage';
 import { PerfilPage } from '../features/perfil';
@@ -106,6 +106,7 @@ export function AppRouter() {
               <Route path="incidentes/:id" element={<IncidentePage />} />
               <Route path="lotes-produccion" element={<LoteProduccionPage />} />
               <Route path="lotes-produccion/:id" element={<LoteProduccionPage />} />
+              <Route path="buscar-lote" element={<BuscarLotePage />} />
               <Route path="recetas" element={<RecetasPage />} />
               <Route path="recetas/:id" element={<RecetaDetallePage />} />
               <Route path="recetas/:id/versiones/:versionId" element={<RecetaDetallePage />} />
@@ -206,6 +207,7 @@ export function AppRouter() {
               <Route path="tablero" element={<TableroPage />} />
               <Route path="lotes" element={<HistorialLotesPage />} />
               <Route path="lotes/:id" element={<HistorialLotesPage />} />
+              <Route path="lotes/:id/expediente" element={<ExpedienteLotePage />} />
               <Route path="consumos" element={<ConsumoQuimicoPage />} />
               <Route path="consumos/nuevo" element={<ConsumoQuimicoPage />} />
               <Route path="consumos/:id" element={<ConsumoQuimicoPage />} />

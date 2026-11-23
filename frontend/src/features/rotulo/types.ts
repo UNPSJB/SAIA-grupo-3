@@ -146,6 +146,7 @@ export interface RotuloListado {
 export interface VistaPrevia {
   leyenda_borrador: string;
   generada_en: string;
+  generado_por?: PersonaResumen | null;
   borrador: Borrador;
   contenido_neto_texto: string | null;
   fecha_duracion: {

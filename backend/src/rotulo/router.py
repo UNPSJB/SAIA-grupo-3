@@ -26,10 +26,13 @@ def read_borrador(producto_id: int, db: Session = Depends(get_db)):
 @router.get(
     "/productos/{producto_id}/vista-previa",
     response_model=schemas.VistaPrevia,
-    dependencies=[Depends(tiene_permiso_administrar)],
 )
-def read_vista_previa(producto_id: int, db: Session = Depends(get_db)):
-    return vista_previa.obtener_vista_previa(db, producto_id)
+def read_vista_previa(
+    producto_id: int,
+    db: Session = Depends(get_db),
+    persona: Personal = Depends(tiene_permiso_administrar),
+):
+    return vista_previa.obtener_vista_previa(db, producto_id, persona)
 
 
 @router.post("/productos/{producto_id}", response_model=schemas.Borrador)

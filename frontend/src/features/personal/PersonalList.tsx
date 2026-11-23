@@ -75,7 +75,7 @@ export function PersonalList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina del Personal">
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Nómina del Personal" placeholder="Buscar por nombre, apellido, DNI, legajo o usuario">
         <Form.Check
           type="switch"
           id="switch-vencimientos-personal"

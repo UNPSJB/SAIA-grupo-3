@@ -5,3 +5,4 @@ class ErrorCode:
     DNI_DUPLICADO = "El DNI ya existe."
     USERNAME_DUPLICADO = "El nombre de usuario ya existe."
     PERSONAL_TIENE_DOCUMENTACION = "El personal tiene documentación a cargo. No puede ser eliminado."
+    SECTOR_INVALIDO = "Alguno de los sectores elegidos no existe o está dado de baja."

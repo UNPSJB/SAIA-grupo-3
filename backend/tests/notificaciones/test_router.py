@@ -1,5 +1,5 @@
 """Aceptación de stock mínimo; toda la persistencia se hace en SQLite aislado."""
-from datetime import date
+from datetime import date, datetime, timedelta
 import sqlite3
 from pathlib import Path
 import pytest
@@ -17,7 +17,8 @@ from src.notificaciones import services as avisos
 from src.consumoQuimico import services as consumos
 from src.consumoQuimico.schemas import ConsumoQuimicoCreate, ConsumoQuimicoUpdate
 from src.consumoQuimico.models import ConsumoQuimico
-from scripts.migrate_stock_minimo import migrar
+from src.notificaciones.constants import ErrorCode
+from src.notificaciones.models import TipoNotificacion
 
 def crear_quimico(db, unidad, nombre='Detergente', cantidad=10, minimo=5):
     return quimicos.crear_insumo_quimico(db, InsumoQuimicoCreate(nombre=nombre, cantidad=cantidad, stock_minimo=minimo, tipo_quimico=TipoQuimico.DETERGENTE, unidad_medida_id=unidad.id))
@@ -86,3 +87,93 @@ def test_stock_bajo_aparece_en_campana_y_no_se_repite(client,db_session,unidad_m
     assert client.patch(f'/notificaciones/{id_}/leer',headers=admin_headers).status_code==200
     revisar_stock_todos(db_session)
     assert client.get('/notificaciones/no-leidas/cantidad',headers=admin_headers).json()['cantidad']==0
+
+def _crear_notificaciones_prueba(db_session):
+    ahora = datetime.now()
+    n1 = Notificacion(
+        clave="router-n1",
+        tipo=TipoNotificacion.VENCIMIENTO_DOCUMENTACION,
+        titulo="Aviso antiguo",
+        mensaje="Mensaje 1",
+        fecha_creacion=ahora - timedelta(hours=2),
+        leida=False,
+    )
+    n2 = Notificacion(
+        clave="router-n2",
+        tipo=TipoNotificacion.VENCIMIENTO_DOCUMENTACION,
+        titulo="Aviso leído",
+        mensaje="Mensaje 2",
+        fecha_creacion=ahora - timedelta(hours=1),
+        leida=True,
+    )
+    n3 = Notificacion(
+        clave="router-n3",
+        tipo=TipoNotificacion.VENCIMIENTO_DOCUMENTACION,
+        titulo="Aviso reciente",
+        mensaje="Mensaje 3",
+        fecha_creacion=ahora,
+        leida=False,
+    )
+    db_session.add_all([n1, n2, n3])
+    db_session.commit()
+    return n1, n2, n3
+
+
+def test_listado_de_notificaciones_y_filtro_solo_no_leidas(
+    client, db_session, admin_headers
+):
+    n1, n2, n3 = _crear_notificaciones_prueba(db_session)
+
+    todas = client.get("/notificaciones/", headers=admin_headers)
+    assert todas.status_code == 200
+    assert [n["id"] for n in todas.json()] == [n3.id, n2.id, n1.id]
+
+    no_leidas = client.get(
+        "/notificaciones/",
+        headers=admin_headers,
+        params={"solo_no_leidas": True},
+    )
+    assert no_leidas.status_code == 200
+    assert [n["id"] for n in no_leidas.json()] == [n3.id, n1.id]
+
+
+def test_marcar_una_como_leida_y_marcar_todas(client, db_session, admin_headers):
+    n1, _, n3 = _crear_notificaciones_prueba(db_session)
+
+    assert (
+        client.get("/notificaciones/no-leidas/cantidad", headers=admin_headers).json()
+        == {"cantidad": 2}
+    )
+
+    una = client.patch(f"/notificaciones/{n1.id}/leer", headers=admin_headers)
+    assert una.status_code == 200
+    assert una.json()["leida"] is True
+
+    assert (
+        client.get("/notificaciones/no-leidas/cantidad", headers=admin_headers).json()
+        == {"cantidad": 1}
+    )
+
+    todas = client.patch("/notificaciones/leer-todas", headers=admin_headers)
+    assert todas.status_code == 200
+    assert todas.json() == {"cantidad": 1}
+
+    assert (
+        client.get("/notificaciones/no-leidas/cantidad", headers=admin_headers).json()
+        == {"cantidad": 0}
+    )
+    assert (
+        client.get(
+            "/notificaciones/",
+            headers=admin_headers,
+            params={"solo_no_leidas": True},
+        ).json()
+        == []
+    )
+
+
+def test_notificacion_inexistente_devuelve_404(client, admin_headers):
+    respuesta = client.patch("/notificaciones/999999/leer", headers=admin_headers)
+
+    assert respuesta.status_code == 404
+    assert respuesta.json()["detail"] == ErrorCode.NOTIFICACION_NO_ENCONTRADA

@@ -18,3 +18,6 @@ class UsernameDuplicado(BadRequest):
 
 class PersonalTieneDocumentacion(BadRequest):
     DETAIL = ErrorCode.PERSONAL_TIENE_DOCUMENTACION
+
+class SectorInvalido(BadRequest):
+    DETAIL = ErrorCode.SECTOR_INVALIDO

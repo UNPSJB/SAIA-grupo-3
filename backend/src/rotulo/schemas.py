@@ -267,6 +267,7 @@ class FaltanteVistaPrevia(BaseModel):
 class VistaPrevia(BaseModel):
     leyenda_borrador: str
     generada_en: datetime
+    generado_por: Optional[PersonaResumen] = None
     borrador: Borrador
     contenido_neto_texto: Optional[str] = None
     fecha_duracion: FechaDuracionVistaPrevia

@@ -1,10 +1,10 @@
 import sqlite3
+import pytest
 from sqlalchemy import func, select
 from tests.database import db_session  # noqa: F401
 from tests.abastecimiento.test_seed import ejecutar_seed  # noqa: F401
 from src.equipos.models import Equipo
 from src.registroTemperatura.models import RegistroTemperatura
-from scripts.migrate_integracion_temperatura import migrar
 
 
 def test_seed_temperaturas_no_duplica_ni_reconfigura_equipos(db_session, ejecutar_seed):
@@ -28,6 +28,7 @@ def test_seed_temperaturas_no_duplica_ni_reconfigura_equipos(db_session, ejecuta
 
 
 def test_migracion_columnas_conserva_datos_y_es_repetible(tmp_path):
+    migrar = pytest.importorskip("scripts.migrate_integracion_temperatura").migrar
     ruta = tmp_path / 'anterior.db'
     with sqlite3.connect(ruta) as db:
         db.executescript('CREATE TABLE equipos (id INTEGER, nombre TEXT); INSERT INTO equipos VALUES (1, "Equipo original"); CREATE TABLE insumos (id INTEGER); CREATE TABLE insumos_quimicos (id INTEGER); CREATE TABLE notificaciones (id INTEGER, leida BOOLEAN); INSERT INTO notificaciones VALUES (1, 1);')

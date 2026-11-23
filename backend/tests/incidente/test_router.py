@@ -14,6 +14,7 @@ from src.incidente.router import router
 from src.models import ModeloBase
 from src.personal.models import Personal
 from src.tipoIncidente.models import TipoIncidente
+from src.archivos import services as archivos_services
 
 class Escenario:
 
@@ -147,3 +148,105 @@ def test_coincide_con_el_listado_filtrado_por_tipo(escenario):
     headers = {'Authorization': 'Bearer ' + create_access_token(self.admin)}
     listado = self.client.get('/incidentes/', params={'tipo_id': self.plagas.id, 'fecha_desde': desde, 'fecha_hasta': self.hoy.isoformat()}, headers=headers)
     assert listado.json()['total'] == self.por_nombre(self.get().json())['Plagas']['total']
+
+def test_operario_solo_ve_los_incidentes_que_reporto(
+    client,
+    headers_operadora,
+    headers_otra_operadora,
+    headers_administradora,
+    tipo_plagas,
+):
+    propio = client.post(
+        "/incidentes/",
+        headers=headers_operadora,
+        data={"descripcion": "Incidente propio", "tipo_id": str(tipo_plagas.id)},
+    )
+    assert propio.status_code == 200, propio.text
+    propio_id = propio.json()["id"]
+
+    ajeno = client.post(
+        "/incidentes/",
+        headers=headers_otra_operadora,
+        data={"descripcion": "Incidente ajeno", "tipo_id": str(tipo_plagas.id)},
+    )
+    assert ajeno.status_code == 200, ajeno.text
+    ajeno_id = ajeno.json()["id"]
+
+    # Operario solo lista y consulta los suyos
+    listado_operario = client.get("/incidentes/", headers=headers_operadora)
+    assert listado_operario.status_code == 200
+    assert [i["id"] for i in listado_operario.json()["items"]] == [propio_id]
+
+    assert client.get(f"/incidentes/{propio_id}", headers=headers_operadora).status_code == 200
+    assert client.get(f"/incidentes/{ajeno_id}", headers=headers_operadora).status_code == 403
+
+    # Administración ve todos
+    listado_admin = client.get("/incidentes/", headers=headers_administradora)
+    assert listado_admin.status_code == 200
+    assert listado_admin.json()["total"] == 2
+
+
+def test_operario_no_puede_editar_ni_eliminar_incidentes(
+    client, headers_operadora, tipo_plagas
+):
+    creado = client.post(
+        "/incidentes/",
+        headers=headers_operadora,
+        data={"descripcion": "Incidente original", "tipo_id": str(tipo_plagas.id)},
+    )
+    assert creado.status_code == 200, creado.text
+    incidente_id = creado.json()["id"]
+
+    edicion = client.put(
+        f"/incidentes/{incidente_id}",
+        headers=headers_operadora,
+        data={"descripcion": "Intento editar", "tipo_id": str(tipo_plagas.id)},
+    )
+    eliminacion = client.delete(
+        f"/incidentes/{incidente_id}",
+        headers=headers_operadora,
+    )
+
+    assert edicion.status_code == 403
+    assert eliminacion.status_code == 403
+
+
+def test_reportar_con_foto_guarda_archivo_y_rechaza_no_imagen(
+    client, headers_operadora, tipo_plagas, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(archivos_services, "UPLOADS_DIR", tmp_path)
+
+    # Archivo válido (.png)
+    ok = client.post(
+        "/incidentes/",
+        headers=headers_operadora,
+        data={"descripcion": "Con foto válida", "tipo_id": str(tipo_plagas.id)},
+        files={"foto": ("evidencia.png", b"\x89PNG\r\n\x1a\n", "image/png")},
+    )
+    assert ok.status_code == 200, ok.text
+    imagen_path = ok.json()["imagen_path"]
+    assert imagen_path is not None and imagen_path.endswith(".png")
+    assert len(list(tmp_path.iterdir())) == 1
+
+    # Archivo no permitido (.txt)
+    rechazado = client.post(
+        "/incidentes/",
+        headers=headers_operadora,
+        data={"descripcion": "Con archivo inválido", "tipo_id": str(tipo_plagas.id)},
+        files={"foto": ("documento.txt", b"texto plano", "text/plain")},
+    )
+    assert rechazado.status_code == 400
+    assert len(list(tmp_path.iterdir())) == 1
+
+
+@pytest.mark.parametrize("descripcion", ["", "   "])
+def test_reportar_incidente_con_descripcion_vacia_devuelve_422(
+    client, headers_operadora, tipo_plagas, descripcion
+):
+    respuesta = client.post(
+        "/incidentes/",
+        headers=headers_operadora,
+        data={"descripcion": descripcion, "tipo_id": str(tipo_plagas.id)},
+    )
+
+    assert respuesta.status_code == 422

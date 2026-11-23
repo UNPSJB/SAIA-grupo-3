@@ -6,6 +6,7 @@ import { LoadingSpinner } from '../../shared/components/LoadingSpinner';
 import { SortableHeader } from '../../shared/components/SortableHeader';
 import { useAuth } from '../../shared/hooks/useAuth';
 import { formatearFecha } from '../../shared/libreria/fechas';
+import { EstadoLoteBadge } from './EstadoLoteBadge';
 import { formatearCantidad } from './formato';
 import type { LoteProduccion } from './types';
 import { useLotesProduccion } from './useLotesProduccion';
@@ -38,6 +39,7 @@ export function LoteProduccionList({ onNuevoClick, onViewClick }: LoteProduccion
       {loading && <LoadingSpinner mensaje="Cargando lotes..." />}
       {error && <ErrorAlert mensaje={error} />}
       <ListControls
+        placeholder="Buscar por N.º de lote o producto"
         busqueda={busqueda}
         setBusqueda={setBusqueda}
         title={esAdministrador ? 'Lotes producidos' : 'Lotes que registraste'}
@@ -91,6 +93,7 @@ export function LoteProduccionList({ onNuevoClick, onViewClick }: LoteProduccion
                   Cantidad
                 </SortableHeader>
                 {esAdministrador && <th>Registrado por</th>}
+                <th>Estado</th>
                 <th className="text-center" style={{ width: '90px' }}>
                   Acciones
                 </th>
@@ -99,7 +102,7 @@ export function LoteProduccionList({ onNuevoClick, onViewClick }: LoteProduccion
             <tbody>
               {lotes.length === 0 ? (
                 <tr>
-                  <td colSpan={esAdministrador ? 6 : 5} className="text-center py-4 text-muted">
+                  <td colSpan={esAdministrador ? 7 : 6} className="text-center py-4 text-muted">
                     {busqueda
                       ? 'No hay lotes para la búsqueda.'
                       : 'Todavía no hay lotes registrados.'}
@@ -125,6 +128,9 @@ export function LoteProduccionList({ onNuevoClick, onViewClick }: LoteProduccion
                         {lote.registrado_por.apellido}, {lote.registrado_por.nombre}
                       </td>
                     )}
+                    <td>
+                      <EstadoLoteBadge estado={lote.estado} />
+                    </td>
                     <td className="text-center">
                       <Button
                         variant="primary"

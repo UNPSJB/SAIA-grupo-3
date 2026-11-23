@@ -1,5 +1,5 @@
 import type { Producto } from '../productos/types';
-export type EstadoLote = 'abierto' | 'cerrado';
+export type EstadoLote = 'abierto' | 'en_produccion' | 'finalizado' | 'cerrado' | 'anulado';
 
 export interface InsumoResumen {
   id: number;
@@ -51,6 +51,7 @@ export interface PersonalResumen {
 export interface LoteProduccion {
   id: number;
   codigo: string;
+  codigo_barras: string | null;
   producto_id: number;
   producto: Producto;
   fecha_produccion: string;
@@ -69,6 +70,10 @@ export interface LoteProduccion {
   factor_receta: number | null;
   pasos_pendientes_al_cerrar: number | null;
   motivo_cierre_pendientes: string | null;
+  fecha_anulacion: string | null;
+  anulado_por_id: number | null;
+  anulado_por: PersonalResumen | null;
+  motivo_anulacion: string | null;
 }
 
 export interface PrecargaLote {
@@ -105,6 +110,8 @@ export interface FiltrosLotesProduccion {
   productoId?: number | '';
   fechaDesde?: string;
   fechaHasta?: string;
+  estado?: EstadoLote | '';
+  incluirAnulados?: boolean;
 }
 
 export interface PaginatedLotesProduccion {

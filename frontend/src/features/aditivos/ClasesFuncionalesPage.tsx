@@ -131,7 +131,7 @@ export function ClasesFuncionalesPage() {
       {route.error && <ErrorAlert mensaje={route.error} />}
       {route.mode === 'listado' && (
         <>
-          <ListControls {...list} title="Lista de referencia">
+          <ListControls {...list} title="Lista de referencia" placeholder="Buscar por nombre">
             <Form.Check
               id="clases-inactivas"
               type="switch"

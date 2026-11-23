@@ -51,7 +51,7 @@ export function ProductoList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Catálogo de Productos">
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Catálogo de Productos" placeholder="Buscar por nombre o descripción">
         <Form.Check
           type="switch"
           id="productos-inactivos"

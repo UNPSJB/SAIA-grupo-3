@@ -5,6 +5,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from src.nutricion.informacion import obtener_informacion
+from src.personal.models import Personal
 from src.rotuladoFrontal.aplicabilidad import version_vigente
 from src.rotulo import schemas
 from src.rotulo.constants import LEYENDA_BORRADOR, AdvertenciaVistaPrevia, UnidadVidaUtil
@@ -42,7 +43,9 @@ def armar_fecha_duracion(db: Session, borrador: schemas.Borrador) -> schemas.Fec
     return resultado
 
 
-def obtener_vista_previa(db: Session, producto_id: int) -> schemas.VistaPrevia:
+def obtener_vista_previa(
+    db: Session, producto_id: int, persona: Optional[Personal] = None
+) -> schemas.VistaPrevia:
     borrador = obtener_borrador(db, producto_id)
     version = version_vigente(db, producto_id)
     informacion = obtener_informacion(db, version.id) if version is not None else None
@@ -72,6 +75,7 @@ def obtener_vista_previa(db: Session, producto_id: int) -> schemas.VistaPrevia:
     return schemas.VistaPrevia(
         leyenda_borrador=LEYENDA_BORRADOR,
         generada_en=datetime.now(),
+        generado_por=persona,
         borrador=borrador,
         contenido_neto_texto=texto_contenido(borrador),
         fecha_duracion=armar_fecha_duracion(db, borrador),

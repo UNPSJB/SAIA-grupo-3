@@ -131,7 +131,7 @@ def a_schema(exportacion: ExportacionRotulo) -> schemas.Exportacion:
 def registrar_exportacion(db: Session, producto_id: int, persona: Personal) -> ExportacionRotulo:
     borrador = leer_borrador(db, producto_id)
     anexo = armar_anexo(db, producto_id)
-    vista = obtener_vista_previa(db, producto_id)
+    vista = obtener_vista_previa(db, producto_id, persona)
     contenido = {
         "vista_previa": vista.model_dump(mode="json"),
         "anexo": anexo.model_dump(mode="json"),

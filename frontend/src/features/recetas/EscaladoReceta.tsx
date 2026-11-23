@@ -3,7 +3,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { Alert, Badge, Button, Card, Col, Form, InputGroup, Row, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/hooks/useAuth';
-import type { PrecargaLote } from '../lotesProduccion/types';
+import { precargaDesde } from '../lotesProduccion/precarga';
 import { cantidadConUnidad, numeroDesdeTexto } from './formato';
 import { escalarReceta } from './recetaApi';
 import type { Escalado, ModoEscalado, RenglonEscalado, Version } from './types';
@@ -27,28 +27,6 @@ function EstadoStock({ renglon }: { renglon: RenglonEscalado }) {
   ) : (
     <Badge bg="danger">No alcanza</Badge>
   );
-}
-
-function precargaDesde(escalado: Escalado): PrecargaLote {
-  const precargables = escalado.renglones.filter(
-    (renglon) => renglon.insumo.activo && renglon.cantidad_en_unidad_stock !== null,
-  );
-  return {
-    recetaId: escalado.receta_id,
-    versionId: escalado.version_id,
-    versionNumero: escalado.version_numero,
-    factor: escalado.factor,
-    productoId: escalado.producto.id,
-    productoNombre: escalado.producto.nombre,
-    cantidad: escalado.cantidad_lote,
-    insumos: precargables.map((renglon) => ({
-      insumoId: renglon.insumo.id,
-      cantidad: renglon.cantidad_en_unidad_stock ?? 0,
-    })),
-    sinPrecargar: escalado.renglones
-      .filter((renglon) => !precargables.includes(renglon))
-      .map((renglon) => renglon.insumo.nombre),
-  };
 }
 
 export function EscaladoReceta({ recetaId, version }: EscaladoRecetaProps) {

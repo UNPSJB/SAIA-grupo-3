@@ -1,4 +1,5 @@
 import { API_BASE_URL, fetchWithAuth, mensajeDeRespuesta } from '../../shared/libreria/api';
+import type { ExpedienteLote } from './expedienteTypes';
 import type {
   FiltrosLotesProduccion,
   InsumoSeleccionable,
@@ -29,6 +30,8 @@ export async function getLotesProduccion(
   if (filtros.productoId) params.set('producto_id', String(filtros.productoId));
   if (filtros.fechaDesde) params.set('fecha_desde', filtros.fechaDesde);
   if (filtros.fechaHasta) params.set('fecha_hasta', filtros.fechaHasta);
+  if (filtros.estado) params.set('estado', filtros.estado);
+  if (filtros.incluirAnulados) params.set('incluir_anulados', 'true');
   const response = await fetchWithAuth(`${API_URL}/?${params}`);
   if (!response.ok)
     throw new Error(
@@ -107,15 +110,37 @@ export async function deleteLoteProduccion(id: number): Promise<LoteProduccion> 
 }
 
 
-export async function cerrarLoteProduccion(
-  id: number,
-  cierre?: { confirmar_pasos_pendientes: boolean; motivo: string | null },
-): Promise<LoteProduccion> {
-  const response = await fetchWithAuth(`${API_URL}/${id}/cerrar`, {
-    method: 'POST',
-    body: cierre ? JSON.stringify(cierre) : undefined,
-  });
+export async function cerrarLoteProduccion(id: number): Promise<LoteProduccion> {
+  const response = await fetchWithAuth(`${API_URL}/${id}/cerrar`, { method: 'POST' });
   if (!response.ok)
     throw new Error(await mensajeDeRespuesta(response, 'Error al cerrar el lote de producción.'));
+  return response.json();
+}
+
+export async function anularLoteProduccion(id: number, motivo: string): Promise<LoteProduccion> {
+  const response = await fetchWithAuth(`${API_URL}/${id}/anular`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ motivo }),
+  });
+  if (!response.ok)
+    throw new Error(await mensajeDeRespuesta(response, 'Error al anular el lote de producción.'));
+  return response.json();
+}
+
+export async function buscarLotePorCodigo(codigo: string): Promise<LoteProduccion> {
+  const params = new URLSearchParams({ codigo });
+  const response = await fetchWithAuth(`${API_URL}/buscar?${params}`);
+  if (!response.ok)
+    throw new Error(await mensajeDeRespuesta(response, 'No se pudo buscar el lote.'));
+  return response.json();
+}
+
+export async function getExpedienteLote(id: number): Promise<ExpedienteLote> {
+  const response = await fetchWithAuth(`${API_URL}/${id}/expediente`);
+  if (!response.ok)
+    throw new Error(
+      await mensajeDeRespuesta(response, 'No se pudo obtener el expediente del lote.'),
+    );
   return response.json();
 }

@@ -43,7 +43,7 @@ export function PlanList({
     <>
       {loading && <LoadingSpinner mensaje="Cargando listado..." />}
       {error && <ErrorAlert mensaje={error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Planes de Limpieza">
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} title="Planes de Limpieza" placeholder="Buscar por nombre o descripción">
         <Form.Check
           type="switch"
           id="switch-inactivos-planes"

@@ -56,6 +56,11 @@ function Trazabilidad({ lote }: { lote: LoteRecepcion }) {
                         Dada de baja
                       </Badge>
                     )}
+                    {c.estado === 'anulado' && (
+                      <Badge bg="danger" className="ms-2">
+                        Anulada
+                      </Badge>
+                    )}
                   </td>
                   <td>{c.producto}</td>
                   <td>{formatearFecha(c.fecha_produccion)}</td>

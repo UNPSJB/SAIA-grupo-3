@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from src.loteProduccion.constants import EstadoLote
 from src.loteProduccion.models import LoteProduccion
 from src.producto.models import Producto
 from src.unidadMedida.models import UnidadMedida
@@ -63,6 +64,7 @@ def calcular_produccion(
         select(LoteProduccion.producto_id, LoteProduccion.fecha_produccion,
                func.sum(LoteProduccion.cantidad))
         .where(LoteProduccion.activo.is_(True),
+               LoteProduccion.estado != EstadoLote.ANULADO,
                LoteProduccion.fecha_produccion >= desde,
                LoteProduccion.fecha_produccion <= hasta)
         .group_by(LoteProduccion.producto_id, LoteProduccion.fecha_produccion)

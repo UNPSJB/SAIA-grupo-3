@@ -1,0 +1,279 @@
+.rep-portal {
+  display: none;
+}
+
+.rep-documento {
+  color: #111;
+  background: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.35;
+}
+
+.rep-hoja {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.rep-hoja > thead > tr > td,
+.rep-hoja > tbody > tr > td {
+  padding: 0;
+  vertical-align: top;
+}
+
+.rep-salto-pagina {
+  break-before: page;
+  page-break-before: always;
+}
+
+.rep-leyenda-pagina {
+  color: #b91c1c;
+  border-bottom: 2px solid #b91c1c;
+  font-weight: 700;
+  font-size: 8.5pt;
+  text-align: center;
+  padding: 0.1cm 0.3cm 0.15cm;
+  margin-bottom: 0.35cm;
+}
+
+.rep-membrete {
+  border-bottom: 2px solid #1b3552;
+  padding-bottom: 0.25cm;
+  margin-bottom: 0.45cm;
+}
+
+.rep-membrete-superior {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5cm;
+  margin-bottom: 0.12cm;
+}
+
+.rep-sistema {
+  font-size: 9pt;
+  font-weight: 800;
+  color: #1b3552;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.rep-establecimiento {
+  font-size: 8.5pt;
+  font-weight: 600;
+  color: #444;
+  text-align: right;
+}
+
+.rep-titulo {
+  font-size: 14.5pt;
+  font-weight: 800;
+  color: #111;
+  margin: 0 0 0.08cm;
+  overflow-wrap: anywhere;
+}
+
+.rep-subtitulo {
+  font-size: 9.5pt;
+  color: #444;
+  margin: 0 0 0.2cm;
+}
+
+.rep-metadatos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.12cm 0.65cm;
+  margin: 0.15cm 0 0;
+  padding-top: 0.15cm;
+  border-top: 1px solid #d1d5db;
+  font-size: 8.5pt;
+}
+
+.rep-metadatos > div {
+  min-width: 0;
+}
+
+.rep-metadatos dt {
+  display: inline;
+  font-weight: 400;
+  color: #555;
+}
+
+.rep-metadatos dt::after {
+  content: ': ';
+}
+
+.rep-metadatos dd {
+  display: inline;
+  margin: 0;
+  font-weight: 700;
+  color: #111;
+  overflow-wrap: anywhere;
+}
+
+.rep-seccion {
+  margin-bottom: 0.45cm;
+}
+
+.rep-seccion h3 {
+  font-size: 11.5pt;
+  font-weight: 800;
+  color: #1b3552;
+  border-bottom: 1px solid #1b3552;
+  padding-bottom: 0.06cm;
+  margin: 0.3cm 0 0.2cm;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.rep-seccion h4 {
+  font-size: 9.5pt;
+  font-weight: 700;
+  margin: 0.28cm 0 0.14cm;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.rep-texto {
+  font-size: 9pt;
+  margin-bottom: 0.2cm;
+  overflow-wrap: anywhere;
+}
+
+.rep-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 8.5pt;
+  margin-bottom: 0.25cm;
+}
+
+.rep-tabla thead {
+  display: table-header-group;
+}
+
+.rep-tabla tfoot {
+  display: table-footer-group;
+}
+
+.rep-tabla th,
+.rep-tabla td {
+  border: 1px solid #9ca3af;
+  padding: 0.1cm 0.14cm;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.rep-tabla th {
+  background: #edf2f7;
+  color: #111;
+  font-weight: 700;
+  text-align: left;
+}
+
+.rep-tabla tbody tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.rep-tabla .rep-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.rep-tabla .rep-subtitulo-fila td {
+  font-weight: 700;
+  background: #f3f4f6;
+}
+
+.rep-tabla .rep-total td {
+  font-weight: 700;
+  background: #f9fafb;
+}
+
+.rep-alerta {
+  border: 1.5px solid #b91c1c;
+  background: #fef2f2;
+  color: #7f1d1d;
+  padding: 0.16cm 0.25cm;
+  font-size: 8.8pt;
+  margin-bottom: 0.3cm;
+  break-inside: avoid;
+}
+
+.rep-pie-nota {
+  margin-top: 0.4cm;
+  padding-top: 0.15cm;
+  border-top: 1px solid #d1d5db;
+  font-size: 8pt;
+  color: #555;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 1.4cm 1.3cm 1.8cm 1.3cm;
+
+  @bottom-left {
+    content: 'SAIA · Sistema de Apoyo a la Inocuidad Alimentaria';
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 7.5pt;
+    color: #555;
+    border-top: 1px solid #cbd5e1;
+    padding-top: 4pt;
+    vertical-align: top;
+  }
+
+  @bottom-right {
+    content: 'Página ' counter(page) ' de ' counter(pages);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: #1b3552;
+    border-top: 1px solid #cbd5e1;
+    padding-top: 4pt;
+    vertical-align: top;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  body.imprimiendo-rotulo > #root,
+  body.imprimiendo-exportacion > #root,
+  body.imprimiendo-tabla-nutricional > #root,
+  body.imprimiendo-trazabilidad > #root,
+  body.imprimiendo-expediente > #root {
+    display: none !important;
+  }
+
+  body.imprimiendo-rotulo > .rep-portal-rotulo,
+  body.imprimiendo-exportacion > .rep-portal-exportacion,
+  body.imprimiendo-tabla-nutricional > .rep-portal-nutricion,
+  body.imprimiendo-trazabilidad > .rep-portal-trazabilidad,
+  body.imprimiendo-expediente > .rep-portal-expediente {
+    display: block !important;
+  }
+
+  .rep-portal,
+  .rep-documento,
+  .rep-tabla th,
+  .rep-tabla .rep-subtitulo-fila td,
+  .rep-tabla .rep-total td,
+  .rep-alerta,
+  .rep-leyenda-pagina {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .rep-documento .alert-danger {
+  background-color: #fef2f2 !important;
+  color: #7f1d1d !important;
+  border-color: #b91c1c !important;
+}
+}

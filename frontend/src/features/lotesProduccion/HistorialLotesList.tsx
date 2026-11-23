@@ -8,8 +8,9 @@ import { useConsulta } from '../../shared/hooks/useConsulta';
 import { fechaHoyIso, formatearFecha } from '../../shared/libreria/fechas';
 import { getProductosActivos } from '../productos/productoApi';
 import { EstadoLoteBadge } from './EstadoLoteBadge';
-import type { LoteProduccion } from './types';
-import { useHistorialLotes } from './useHistorialLotes';
+import { ESTADOS_LOTE } from './estados';
+import type { EstadoLote, LoteProduccion } from './types';
+import { FILTRO_TODOS, useHistorialLotes } from './useHistorialLotes';
 
 interface HistorialLotesListProps {
   onViewClick: (lote: LoteProduccion) => void;
@@ -30,6 +31,8 @@ export function HistorialLotesList({ onViewClick }: HistorialLotesListProps) {
     setDesde,
     hasta,
     setHasta,
+    estado,
+    setEstado,
     limpiarFiltros,
     busqueda,
     setBusqueda,
@@ -39,14 +42,14 @@ export function HistorialLotesList({ onViewClick }: HistorialLotesListProps) {
   } = useHistorialLotes();
   const productos = useConsulta(getProductosActivos, []);
   const hoy = fechaHoyIso();
-  const hayFiltros = !!productoId || !!desde || !!hasta;
+  const hayFiltros = !!productoId || !!desde || !!hasta || !!estado;
 
   return (
     <>
       {loading && <LoadingSpinner mensaje="Cargando lotes..." />}
       {error && <ErrorAlert mensaje={error} />}
       {productos.error && <ErrorAlert mensaje={productos.error} />}
-      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} />
+      <ListControls busqueda={busqueda} setBusqueda={setBusqueda} placeholder="Buscar por N.º de lote o producto" />
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
           <div className="d-flex flex-wrap align-items-end gap-3 p-3 border-bottom">
@@ -95,6 +98,25 @@ export function HistorialLotesList({ onViewClick }: HistorialLotesListProps) {
                 style={{ maxWidth: '170px' }}
               />
             </div>
+            <div>
+              <Form.Label htmlFor="lotes-estado" className="small text-muted mb-1">
+                Estado
+              </Form.Label>
+              <Form.Select
+                id="lotes-estado"
+                value={estado}
+                onChange={(e) => setEstado(e.target.value)}
+                style={{ minWidth: '180px' }}
+              >
+                <option value="">Vigentes</option>
+                {(Object.keys(ESTADOS_LOTE) as EstadoLote[]).map((valor) => (
+                  <option key={valor} value={valor}>
+                    {ESTADOS_LOTE[valor].etiqueta}
+                  </option>
+                ))}
+                <option value={FILTRO_TODOS}>Todos (incluye anulados)</option>
+              </Form.Select>
+            </div>
             <Button
               variant="success"
               onClick={limpiarFiltros}
@@ -120,7 +142,9 @@ export function HistorialLotesList({ onViewClick }: HistorialLotesListProps) {
                 <SortableHeader column="cantidad" ordenarPor={ordenarPor} orden={orden} cambiarOrden={cambiarOrden} className="text-end">
                   Cantidad
                 </SortableHeader>
-                <th>Estado</th>
+                <SortableHeader column="estado" ordenarPor={ordenarPor} orden={orden} cambiarOrden={cambiarOrden}>
+                  Estado
+                </SortableHeader>
                 <th className="text-center">Acción</th>
               </tr>
             </thead>
@@ -135,7 +159,7 @@ export function HistorialLotesList({ onViewClick }: HistorialLotesListProps) {
                 </tr>
               ) : (
                 lotes.map((lote) => (
-                  <tr key={lote.id}>
+                  <tr key={lote.id} className={lote.estado === 'anulado' ? 'text-body-secondary' : undefined}>
                     <td>
                       <strong>{lote.codigo}</strong>
                     </td>

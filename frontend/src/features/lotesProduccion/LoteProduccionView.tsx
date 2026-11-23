@@ -1,7 +1,11 @@
 import { Badge, Button, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../shared/hooks/useAuth';
 import { formatearFecha, formatearFechaHora } from '../../shared/libreria/fechas';
+import { EstadoLoteBadge } from './EstadoLoteBadge';
+import { ESTADOS_EN_CURSO } from './estados';
 import { formatearCantidad } from './formato';
+import { IdentificacionLote } from './IdentificacionLote';
 import { TrazabilidadProduccionDetalle } from './TrazabilidadProduccionDetalle';
 import type { LoteProduccion } from './types';
 
@@ -16,14 +20,28 @@ export function LoteProduccionView({
   onVolver,
   recienRegistrado = false,
 }: LoteProduccionViewProps) {
+  const { currentUser } = useAuth();
   return (
     <Card className="shadow-sm border-0 mx-auto w-100" style={{ maxWidth: '1100px' }}>
       <Card.Header className="bg-body-tertiary text-secondary d-flex flex-wrap align-items-center gap-2 py-3">
         <i className="bi bi-box2 fs-5"></i>
         <h5 className="mb-0">Lote {lote.codigo}</h5>
         {!lote.activo && <Badge bg="danger">Dado de baja</Badge>}
+        <span className="ms-auto">
+          <EstadoLoteBadge estado={lote.estado} />
+        </span>
       </Card.Header>
       <Card.Body className="p-4">
+        {lote.estado === 'anulado' && (
+          <div className="alert alert-danger d-flex align-items-center gap-2" role="status">
+            <i className="bi bi-slash-circle"></i>
+            <span>
+              Este lote fue anulado
+              {lote.fecha_anulacion ? ` el ${formatearFechaHora(lote.fecha_anulacion)}` : ''}.
+              Motivo: {lote.motivo_anulacion ?? '—'}
+            </span>
+          </div>
+        )}
         {recienRegistrado && (
           <div className="alert alert-success d-flex align-items-center gap-2" role="status">
             <i className="bi bi-check-circle-fill"></i>
@@ -77,14 +95,23 @@ export function LoteProduccionView({
             </span>
           </div>
         </div>
+        <div className="mt-4">
+          <IdentificacionLote lote={lote} />
+        </div>
         <TrazabilidadProduccionDetalle loteId={lote.id} />
       </Card.Body>
-      <Card.Footer className="bg-body border-top-0 d-flex justify-content-end gap-2 pb-4 px-4">
+      <Card.Footer className="bg-body border-top-0 d-flex flex-wrap justify-content-end gap-2 pb-4 px-4">
         <Button variant="secondary" onClick={onVolver}>
           Volver al listado
         </Button>
-        {lote.version_receta && lote.estado === 'abierto' && (
-          <Link to="/produccion-del-dia" className="btn btn-success">
+        {currentUser?.administrar && (
+          <Link to={`/lotes/${lote.id}/expediente`} className="btn btn-primary">
+            <i className="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i> Expediente de
+            trazabilidad
+          </Link>
+        )}
+        {lote.version_receta && lote.activo && ESTADOS_EN_CURSO.includes(lote.estado) && (
+          <Link to={`/produccion-del-dia?lote=${lote.id}`} className="btn btn-success">
             <i className="bi bi-list-check me-1" aria-hidden="true" />
             Seguir los pasos en Producción del día
           </Link>
