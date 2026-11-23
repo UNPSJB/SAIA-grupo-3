@@ -23,6 +23,7 @@ from scripts.seed_equipos import cargar_equipos
 from scripts.seed_temperaturas import cargar_temperaturas
 from scripts.seed_incidentes import cargar_incidentes
 from scripts.seed_insumos import cargar_insumos
+from scripts.seed_insumos_limpieza import cargar_insumos_limpieza
 from scripts.seed_insumos_quimicos import cargar_insumos_quimicos
 from scripts.seed_lotes_produccion import cargar_lotes_produccion
 from scripts.seed_personal import cargar_personal
@@ -70,6 +71,7 @@ def cargar_seed(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             equipos = cargar_equipos(crear, sectores)
             cargar_temperaturas(db, crear, sectores, operadores, hoy)
             insumos_maestros, ingredientes = cargar_insumos(crear, unidades, unidades_por_sufijo)
+            insumos_limpieza = cargar_insumos_limpieza(crear, unidades)
             quimicos = cargar_insumos_quimicos(crear, unidades_por_sufijo)
             elementos = cargar_elementos(crear, hoy)
             tareas = cargar_tareas(crear, equipos, elementos, quimicos)
