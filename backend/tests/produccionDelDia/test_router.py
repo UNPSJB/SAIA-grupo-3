@@ -105,6 +105,30 @@ def test_se_puede_adjuntar_una_foto(client, headers_operadora, crear_lote, tmp_p
     assert len(list(tmp_path.iterdir())) == 1
 
 
+def test_se_puede_ver_la_foto_historica_del_paso_sin_abrirla_a_otros_lotes(
+    client, headers_operadora, otra_operadora, crear_lote, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(archivos, "UPLOADS_DIR", tmp_path)
+    paso = pasos(client, headers_operadora, crear_lote()["id"])[0]
+    respuesta = client.post(
+        f"/produccion-del-dia/pasos/{paso['id']}/realizar",
+        headers=headers_operadora,
+        files={"foto": ("masa.png", b"\x89PNG\r\n\x1a\n", "image/png")},
+    )
+    assert respuesta.status_code == 200, respuesta.text
+    nombre_archivo = respuesta.json()["foto_path"].rsplit("/", 1)[-1]
+
+    anulacion = anular(client, headers_operadora, paso["id"], "Prueba de historial")
+    assert anulacion.status_code == 200, anulacion.text
+
+    foto = client.get(f"/archivos/{nombre_archivo}", headers=headers_operadora)
+    acceso_ajeno = client.get(f"/archivos/{nombre_archivo}", headers=otra_operadora)
+
+    assert foto.status_code == 200, foto.text
+    assert foto.content == b"\x89PNG\r\n\x1a\n"
+    assert acceso_ajeno.status_code == 403
+
+
 @pytest.mark.parametrize("motivo", ["", "   "])
 def test_anular_sin_motivo_da_error(client, headers_operadora, crear_lote, motivo):
     paso = pasos(client, headers_operadora, crear_lote()["id"])[0]
