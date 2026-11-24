@@ -57,7 +57,7 @@ def _cantidad(consumo, desde, dias, paquete):
     return max(paquete, ceil(necesidad * MARGEN / paquete) * paquete)
 
 
-def cargar_recepciones(crear, proveedores, generales, ingredientes, aditivos, planificados, actor, hoy):
+def cargar_recepciones(crear, proveedores, ingredientes, aditivos, planificados, actor, hoy):
     consumo = _necesidades(planificados)
     inicio = hoy - timedelta(days=DIAS_PREVIOS)
     for numero, (nombre, _, _, _, vida, frecuencia, paquete, clave) in enumerate(datos.INGREDIENTES, start=1):
@@ -75,11 +75,6 @@ def cargar_recepciones(crear, proveedores, generales, ingredientes, aditivos, pl
             _recibir(crear, aditivos[nombre], proveedores["aditivos"], datos.PROVEEDORES["aditivos"][1],
                 cantidad, fecha, fecha + timedelta(days=vida), actor, numero)
             fecha += timedelta(days=FRECUENCIA_ADITIVOS)
-    for numero, (nombre, _, cantidad, _, dias) in enumerate(datos.INSUMOS_GENERALES, start=60):
-        proveedor = proveedores["higiene"] if numero >= 68 else proveedores["envases"]
-        fecha = hoy - timedelta(days=dias)
-        _recibir(crear, generales[nombre], proveedor, datos.PROVEEDORES["higiene" if numero >= 68 else "envases"][1],
-            cantidad, fecha, fecha + timedelta(days=720), actor, numero)
     rechazo = hoy - timedelta(days=25)
     _recibir(crear, ingredientes["Huevo líquido pasteurizado"], proveedores["granja"], datos.PROVEEDORES["granja"][1],
         60.0, rechazo, rechazo + timedelta(days=21), actor, 99, activo=False)

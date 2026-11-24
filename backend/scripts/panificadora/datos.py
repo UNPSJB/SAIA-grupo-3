@@ -84,22 +84,6 @@ CALIBRACIONES = {
     "balanza_envasado": 96,
 }
 
-INSUMOS_GENERALES = [
-    ("Bolsas impresas para pan de molde", "un", 3000.0, 2500.0, 30),
-    ("Bolsas de papel madera para pan", "un", 2000.0, 1500.0, 30),
-    ("Bolsas para pan de miga", "un", 800.0, 300.0, 30),
-    ("Bolsas para prepizza", "un", 1200.0, 400.0, 30),
-    ("Cajas de cartón para facturas", "un", 1500.0, 600.0, 30),
-    ("Etiquetas autoadhesivas de rotulado", "rollo", 40.0, 10.0, 30),
-    ("Clips de cierre para bolsas", "un", 10000.0, 3000.0, 30),
-    ("Papel separador para tapas de empanada", "un", 4000.0, 1500.0, 30),
-    ("Cofias descartables", "un", 1000.0, 200.0, 30),
-    ("Guantes de nitrilo", "un", 2000.0, 400.0, 30),
-    ("Barbijos descartables", "un", 150.0, 200.0, 30),
-    ("Papel para secado de manos", "rollo", 60.0, 20.0, 30),
-    ("Bolsas de residuos 60 x 90 cm", "un", 600.0, 150.0, 30),
-]
-
 INGREDIENTES = [
     ("Harina de trigo 000", "kg", "harina de trigo enriquecida (Ley 25.630)", None, 180, 7, 25.0, "molino"),
     ("Harina de trigo 0000", "kg", "harina de trigo enriquecida (Ley 25.630)", None, 180, 7, 25.0, "molino"),
@@ -120,6 +104,8 @@ INGREDIENTES = [
     ("Dulce de membrillo", "kg", "dulce de membrillo", None, 180, 14, 5.0, "dulces"),
     ("Dulce de leche repostero", "kg", "dulce de leche", None, 90, 14, 10.0, "lacteos"),
     ("Puré de tomate", "kg", "puré de tomate", 1.05, 365, 14, 10.0, "conservas"),
+    ("Cacao amargo en polvo", "kg", "cacao amargo en polvo", None, 365, 28, 5.0, "granero"),
+    ("Pasas de uva", "kg", "pasas de uva", None, 180, 28, 5.0, "dulces"),
 ]
 
 STOCK_MINIMO_INGREDIENTES = {
@@ -141,11 +127,11 @@ PROVEEDORES = {
     "dulces": ("Dulces Regionales Doña Elsa S.R.L.", "DDE", 90, True),
     "conservas": ("Conservas Hortícolas del Valle S.A.", "CHV", 150, True),
     "aditivos": ("Aditivos Alimentarios Pampa S.R.L.", "AAP", 45, True),
-    "envases": ("Envases y Embalajes del Oeste S.A.", "EEO", 365, True),
-    "higiene": ("Higiene Institucional Norte S.R.L.", "HIN", 200, True),
     "agua": ("Cooperativa de Agua y Servicios de Luján Oeste", "CAS", 330, True),
     "harinera_vieja": ("Distribuidora Harinera Santa Fe S.R.L.", "DHS", -90, False),
 }
+
+DENSIDADES_ADITIVOS = {"Esencia de vainilla": 1.0}
 
 ADITIVOS_RECEPCION = {
     "Sorbato de potasio en polvo": (1000.0, 365),
@@ -373,6 +359,8 @@ PRODUCTOS = [
     ("Pan rallado", "Paquete de 1 kg.", "paquete", True),
     ("Grisines", "Paquete de 250 g.", "paquete", True),
     ("Tapas de empanada para horno", "Paquete de 12 tapas.", "paquete", True),
+    ("Torta de chocolate", "Torta de bizcochuelo de chocolate rellena con dulce de leche, en caja.", "un", True),
+    ("Budín de vainilla", "Budín de vainilla con pasas de uva, en bolsa.", "un", True),
     ("Pan de salvado", "Producto discontinuado por baja demanda.", "kg", False),
 ]
 
@@ -423,6 +411,15 @@ PASOS_PAN_RALLADO = [
     ("Secado", "Secar en horno apagado durante 3 horas hasta humedad menor al 8 %.", "horno_rotativo_1", 180, 80, True),
     ("Molienda y tamizado", "Moler y tamizar con malla de 2 mm.", "moledora", 40, None, False),
     ("Envasado y rotulado", "Embolsar de a 1 kg, cerrar y etiquetar.", "balanza_envasado", 30, None, True),
+]
+
+PASOS_BATIDOS = [
+    ("Pesado de ingredientes", "Pesar los ingredientes según la orden de producción.", "balanza_amasado", 10, None, False),
+    ("Batido", "Batir huevos y azúcar hasta punto letra; incorporar los secos tamizados en forma envolvente.", "batidora", 15, None, False),
+    ("Moldeado", "Volcar la mezcla en moldes engrasados y enharinados, al peso indicado en la orden.", None, 15, None, False),
+    ("Horneado", "Hornear sin vapor. Verificar con el termómetro de pinche una temperatura interna mínima de 92 °C.", "horno_rotativo_2", 45, 170, True),
+    ("Enfriado y desmolde", "Enfriar en carros 60 minutos y desmoldar.", "carros", 60, None, False),
+    PASO_ENVASADO,
 ]
 
 
@@ -496,6 +493,14 @@ RECETAS = {
         [("Harina de trigo 000", 15, "kg"), ("Agua", 6.5, "L"), ("Grasa vacuna refinada", 2.2, "kg"), ("Sal fina", 0.3, "kg")],
         [("Sorbato de potasio en polvo", 15, "g")],
         PASOS_LAMINADOS + [("Envasado y refrigeración", "Apilar 12 tapas con separadores, embolsar, etiquetar y refrigerar a menos de 8 °C.", "embolsadora", 30, None, True)]),
+    "Torta de chocolate": (20, "un", 80, "1 porción",
+        [("Harina de trigo 0000", 4, "kg"), ("Azúcar", 5, "kg"), ("Huevo líquido pasteurizado", 4, "kg"), ("Manteca", 3, "kg"), ("Cacao amargo en polvo", 1.2, "kg"), ("Leche en polvo entera", 0.5, "kg"), ("Agua", 2, "L"), ("Dulce de leche repostero", 2, "kg")],
+        [("Polvo de hornear (bicarbonato)", 120, "g"), ("Esencia de vainilla", 30, "ml")],
+        PASOS_BATIDOS),
+    "Budín de vainilla": (34, "un", 50, "1 rebanada",
+        [("Harina de trigo 0000", 5, "kg"), ("Azúcar", 3, "kg"), ("Huevo líquido pasteurizado", 3, "kg"), ("Aceite de girasol", 2, "L"), ("Leche en polvo entera", 0.4, "kg"), ("Agua", 2, "L"), ("Pasas de uva", 1.5, "kg")],
+        [("Polvo de hornear (bicarbonato)", 100, "g"), ("Esencia de vainilla", 60, "ml")],
+        PASOS_BATIDOS),
 }
 
 VERSIONES_NUEVAS = {
@@ -518,6 +523,8 @@ RESPONSABLE_PRODUCTO = {
     "Pan rallado": ("claudia.sosa", 10),
     "Grisines": ("claudia.sosa", 9),
     "Tapas de empanada para horno": ("claudia.sosa", 7),
+    "Torta de chocolate": ("patricia.ibarra", 9),
+    "Budín de vainilla": ("patricia.ibarra", 10),
 }
 
 PLAN_PRODUCCION = {
@@ -534,6 +541,8 @@ PLAN_PRODUCCION = {
     "Bizcochos de grasa": ({1, 4}, 1.0),
     "Grisines": ({2}, 1.0),
     "Pan rallado": ({0}, 1.0),
+    "Torta de chocolate": ({1, 3, 5}, 1.0),
+    "Budín de vainilla": ({2, 4}, 1.0),
 }
 
 LOTE_ANULADO = ("Pan de hamburguesa con sésamo", 9,
@@ -579,7 +588,6 @@ REFERENCIAS_NUTRICIONALES = {
     "Harina de trigo 000": "DEMO-001",
     "Harina de trigo 0000": "DEMO-001",
     "Harina de trigo integral": "DEMO-002",
-    "Azúcar": "DEMO-004",
     "Agua": "DEMO-006",
     "Levadura fresca": "DEMO-007",
     "Aceite de girasol": "DEMO-008",
@@ -587,12 +595,14 @@ REFERENCIAS_NUTRICIONALES = {
     "Sal fina": "DEMO-010",
     "Puré de tomate": "DEMO-011",
     "Huevo líquido pasteurizado": "DEMO-017",
+    "Cacao amargo en polvo": "DEMO-018",
 }
 
 REFERENCIAS_ADITIVOS = {"Polvo de hornear (bicarbonato)": "DEMO-019"}
 
 N = Nutriente
 ROTULOS_PROVEEDOR = {
+    "Azúcar": {N.ENERGIA: 400, N.CARBOHIDRATOS: 100, N.AZUCARES_TOTALES: 100, N.AZUCARES_ANADIDOS: 100, N.PROTEINAS: 0, N.GRASAS_TOTALES: 0, N.GRASAS_SATURADAS: 0, N.GRASAS_TRANS: 0, N.FIBRA: 0, N.SODIO: 0},
     "Grasa vacuna refinada": {N.ENERGIA: 900, N.CARBOHIDRATOS: 0, N.AZUCARES_TOTALES: 0, N.AZUCARES_ANADIDOS: 0, N.PROTEINAS: 0, N.GRASAS_TOTALES: 100, N.GRASAS_SATURADAS: 50, N.GRASAS_TRANS: 1.5, N.FIBRA: 0, N.SODIO: 0},
     "Margarina para hojaldre": {N.ENERGIA: 720, N.CARBOHIDRATOS: 0, N.AZUCARES_TOTALES: 0, N.AZUCARES_ANADIDOS: 0, N.PROTEINAS: 0, N.GRASAS_TOTALES: 80, N.GRASAS_SATURADAS: 35, N.GRASAS_TRANS: 0.5, N.FIBRA: 0, N.SODIO: 400},
     "Leche en polvo entera": {N.ENERGIA: 496, N.CARBOHIDRATOS: 38, N.AZUCARES_TOTALES: 38, N.AZUCARES_ANADIDOS: 0, N.PROTEINAS: 26, N.GRASAS_TOTALES: 26, N.GRASAS_SATURADAS: 16.7, N.GRASAS_TRANS: 0.8, N.FIBRA: 0, N.SODIO: 370},
@@ -615,6 +625,8 @@ ROTULOS = {
     "Pan rallado": (1, "kg", 120, "ambiente", None),
     "Grisines": (250, "g", 90, "ambiente", None),
     "Tapas de empanada para horno": (396, "g", 30, "refrigerado", (0, 8, "Mantener refrigerado y consumir dentro de los 5 días de abierto")),
+    "Torta de chocolate": (950, "g", 7, "refrigerado", (2, 8, "Una vez abierta, consumir dentro de los 3 días")),
+    "Budín de vainilla": (450, "g", 20, "ambiente", None),
 }
 
 INSTRUCCIONES = {
@@ -626,6 +638,7 @@ PUEDE_CONTENER = {
     "Facturas surtidas": ["Maní", "Nuez"],
     "Medialunas de manteca": ["Soja"],
     "Pan de molde integral": ["Soja"],
+    "Torta de chocolate": ["Maní", "Nuez"],
 }
 
-ROTULOS_SIN_CONFIRMAR = {"Pan de pancho", "Grisines"}
+ROTULOS_SIN_CONFIRMAR = {"Pan de pancho", "Grisines", "Torta de chocolate"}

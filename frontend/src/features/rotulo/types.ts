@@ -153,6 +153,7 @@ export interface VistaPrevia {
     leyenda: string;
     fecha: string | null;
     lote_codigo: string | null;
+    lote_codigo_barras: string | null;
     lote_fecha_produccion: string | null;
   };
   informacion_nutricional: InformacionNutricional | null;

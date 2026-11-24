@@ -37,6 +37,7 @@ def armar_fecha_duracion(db: Session, borrador: schemas.Borrador) -> schemas.Fec
     if lote is None:
         return resultado
     resultado.lote_codigo = lote.codigo
+    resultado.lote_codigo_barras = lote.codigo_barras
     resultado.lote_fecha_produccion = lote.fecha_produccion
     if borrador.vida_util_cantidad:
         resultado.fecha = fecha_de_duracion(lote.fecha_produccion, borrador.vida_util_cantidad, borrador.vida_util_unidad)

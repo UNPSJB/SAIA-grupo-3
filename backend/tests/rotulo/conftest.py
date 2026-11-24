@@ -20,9 +20,10 @@ def producto_id(receta_referencia):
 
 @pytest.fixture
 def nuevo_lote(db_session, persona_administradora):
-    def crear(producto_id, codigo, fecha):
+    def crear(producto_id, codigo, fecha, codigo_barras=None):
         lote = LoteProduccion(
             codigo=codigo,
+            codigo_barras=codigo_barras,
             producto_id=producto_id,
             fecha_produccion=fecha,
             cantidad=10,

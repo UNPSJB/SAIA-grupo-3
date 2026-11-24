@@ -255,6 +255,7 @@ class FechaDuracionVistaPrevia(BaseModel):
     leyenda: str
     fecha: Optional[date] = None
     lote_codigo: Optional[str] = None
+    lote_codigo_barras: Optional[str] = None
     lote_fecha_produccion: Optional[date] = None
 
 

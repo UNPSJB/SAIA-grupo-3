@@ -1,4 +1,5 @@
 import { formatearFecha } from '../../shared/libreria/fechas';
+import { CodigoBarras } from '../lotesProduccion/CodigoBarras';
 import { TablaNutricional } from '../nutricion';
 import { LeyendaPrecautoria, Octogono } from '../rotuladoFrontal/Octogono';
 import type { VistaPrevia } from './types';
@@ -147,14 +148,7 @@ export function EtiquetaRotulo({ vista }: { vista: VistaPrevia }) {
               <p className="mb-1">
                 <span className="vp-etiqueta">{fecha.leyenda}: </span>
                 {fecha.fecha ? (
-                  <>
-                    {formatearFecha(fecha.fecha)}
-                    <span className="vp-anotacion">
-                      {' '}
-                      (ejemplo con el lote {fecha.lote_codigo}, elaborado el{' '}
-                      {formatearFecha(fecha.lote_fecha_produccion)})
-                    </span>
-                  </>
+                  formatearFecha(fecha.fecha)
                 ) : b.vida_util_cantidad ? (
                   <span>
                     dd/mm/aaaa
@@ -168,6 +162,12 @@ export function EtiquetaRotulo({ vista }: { vista: VistaPrevia }) {
                   <span className="vp-falta">[falta la vida útil]</span>
                 )}
               </p>
+              {fecha.lote_fecha_produccion && (
+                <p className="mb-1">
+                  <span className="vp-etiqueta">Fecha de elaboración: </span>
+                  {formatearFecha(fecha.lote_fecha_produccion)}
+                </p>
+              )}
               <p className="mb-1">
                 <Dato
                   valor={b.leyenda_conservacion}
@@ -178,6 +178,11 @@ export function EtiquetaRotulo({ vista }: { vista: VistaPrevia }) {
                 <p className="mb-1">
                   <Dato etiqueta="Modo de uso" valor={b.instrucciones} />
                 </p>
+              )}
+              {fecha.lote_codigo_barras && (
+                <div className="vp-codigo-barras">
+                  <CodigoBarras codigo={fecha.lote_codigo_barras} modulo={2} alto={56} />
+                </div>
               )}
             </div>
             <div className="vp-tabla">

@@ -75,6 +75,7 @@ def test_un_producto_completo_queda_listo_para_revision(
         "leyenda": "Consumir preferentemente antes del",
         "fecha": "2026-11-06",
         "lote_codigo": "L-2026-001",
+        "lote_codigo_barras": None,
         "lote_fecha_produccion": "2026-11-01",
     }
     assert vista["borrador"]["rotulado_frontal"] is None
@@ -116,3 +117,16 @@ def test_la_vista_previa_incluye_datos_de_emision_y_usuario_autenticado(
     assert vista["generado_por"]["id"] == persona_administradora.id
     assert vista["generado_por"]["nombre"] == persona_administradora.nombre
     assert vista["generado_por"]["apellido"] == persona_administradora.apellido
+
+
+def test_la_vista_previa_trae_el_codigo_de_barras_del_ultimo_lote(
+    client, headers_administradora, producto_id, nuevo_lote
+):
+    nuevo_lote(producto_id, "L-20261101-001", date(2026, 11, 1), codigo_barras="2026110100015")
+    nuevo_lote(producto_id, "L-20261120-008", date(2026, 11, 20), codigo_barras="2026112000087")
+    crear(client, headers_administradora, producto_id)
+
+    vista = vista_previa(client, headers_administradora, producto_id)
+
+    assert vista["fecha_duracion"]["lote_codigo"] == "L-20261120-008"
+    assert vista["fecha_duracion"]["lote_codigo_barras"] == "2026112000087"

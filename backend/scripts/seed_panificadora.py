@@ -51,7 +51,7 @@ def cargar(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
             equipos = maestros.cargar_equipos(crear, sectores)
             calidad.cargar_temperaturas(crear, equipos, operadores, hoy)
             calidad.cargar_calibraciones(crear, equipos, hoy, UPLOADS_DIR)
-            generales, ingredientes, aditivos = maestros.cargar_insumos(crear, unidades)
+            ingredientes, aditivos = maestros.cargar_insumos(crear, unidades)
             quimicos = maestros.cargar_quimicos(crear, unidades)
             elementos = maestros.cargar_elementos(crear, hoy)
             tareas = limpieza.cargar_tareas(crear, equipos, quimicos, elementos)
@@ -73,12 +73,12 @@ def cargar(*, session_factory=SessionLocal, db_engine=engine, hoy=None):
 
             proveedores = abastecimiento.cargar_proveedores(crear, hoy)
             planificados = produccion.planificar(versiones, hoy)
-            abastecimiento.cargar_recepciones(crear, proveedores, generales, ingredientes, aditivos,
+            abastecimiento.cargar_recepciones(crear, proveedores, ingredientes, aditivos,
                 planificados, personas["lucas.molina"], hoy)
             db.flush()
             produccion.cargar_lotes(db, crear, planificados, {**ingredientes, **aditivos}, personas, hoy)
 
-            _revisar_stock(db, [*generales.values(), *ingredientes.values(), *quimicos.values()])
+            _revisar_stock(db, [*ingredientes.values(), *quimicos.values()])
             db.flush()
             conteos = {
                 m.class_.__name__: db.scalar(select(func.count()).select_from(m.class_))

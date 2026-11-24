@@ -55,11 +55,6 @@ def cargar_equipos(crear, sectores):
 
 
 def cargar_insumos(crear, unidades):
-    generales = {}
-    for nombre, sufijo, _, minimo, _ in datos.INSUMOS_GENERALES:
-        insumo, _ = crear(Insumo, {"nombre": nombre}, unidad_medida_id=unidades[sufijo].id,
-            stock_minimo=minimo, activo=True)
-        generales[nombre] = insumo
     ingredientes = {}
     for nombre, sufijo, denominacion, densidad, *_ in datos.INGREDIENTES:
         ingrediente, _ = crear(Insumo, {"nombre": nombre}, unidad_medida_id=unidades[sufijo].id,
@@ -67,7 +62,9 @@ def cargar_insumos(crear, unidades):
             stock_minimo=datos.STOCK_MINIMO_INGREDIENTES.get(nombre), activo=True)
         ingredientes[nombre] = ingrediente
     aditivos = _cargar_aditivos(crear, unidades)
-    return generales, ingredientes, aditivos
+    for nombre, densidad in datos.DENSIDADES_ADITIVOS.items():
+        aditivos[nombre].densidad_g_ml = densidad
+    return ingredientes, aditivos
 
 
 def cargar_quimicos(crear, unidades):
