@@ -15,7 +15,7 @@ from src.pagination import filtrar_ordenar
 from src.producto.models import Producto
 from src.producto.services import leer_producto
 from src.receta.constants import EstadoVersionReceta
-from src.receta.models import VersionReceta
+from src.receta.models import Receta, VersionReceta
 from src.produccionDelDia.constants import EstadoPasoLote
 from src.produccionDelDia.generacion import pasos_desde_version
 from src.abastecimiento.models import (
@@ -91,6 +91,14 @@ def _validar_version_receta(db: Session, lote: schemas.LoteProduccionCreate) -> 
     return version
 
 
+def _version_vigente_del_producto(db: Session, producto_id: int) -> VersionReceta | None:
+    return db.scalar(
+        select(VersionReceta)
+        .join(Receta, Receta.id == VersionReceta.receta_id)
+        .where(Receta.producto_id == producto_id, VersionReceta.estado == EstadoVersionReceta.VIGENTE)
+    )
+
+
 def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_id: int) -> LoteProduccion:
     _validar_producto(db, lote.producto_id)
     version = _validar_version_receta(db, lote)
@@ -109,6 +117,14 @@ def crear_lote(db: Session, lote: schemas.LoteProduccionCreate, registrado_por_i
             raise exceptions.InsumoNoEncontrado()
         if any(not insumo.activo for insumo in insumos_por_id.values()):
             raise exceptions.InsumoInactivo()
+        receta = version or _version_vigente_del_producto(db, lote.producto_id)
+        if receta is not None:
+            de_la_receta = {renglon.insumo_id for renglon in receta.renglones}
+            ajenos = sorted(
+                insumos_por_id[insumo_id].nombre for insumo_id in ids_insumos if insumo_id not in de_la_receta
+            )
+            if ajenos:
+                raise exceptions.InsumoFueraDeReceta(ajenos)
         if any(
             insumos_por_id[item.insumo_id].cantidad < item.cantidad_usada
             for item in lote.insumos

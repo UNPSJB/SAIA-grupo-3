@@ -186,6 +186,7 @@ export function LoteProduccionForm({
   const cantidadDeReceta = new Map(
     (precarga?.insumos ?? []).map(({ insumoId, cantidad }) => [insumoId, cantidad]),
   );
+  const insumosDeLaReceta = vinculadoAReceta ? new Set(precarga.insumosReceta) : null;
   const insumosQuitados = precarga
     ? precarga.insumos.filter(
         ({ insumoId }) => !insumosSeleccionados.some(({ insumo }) => insumo.id === insumoId),
@@ -200,6 +201,8 @@ export function LoteProduccionForm({
   const recetaDelProducto = recetasVigentes.find(
     (receta) => String(receta.producto.id) === productoId,
   );
+  const faltaPrecargarReceta = !!recetaDelProducto && !vinculadoAReceta;
+  const puedeAgregarInsumos = !!productoId && !faltaPrecargarReceta;
 
   const aplicarPrecarga = (nueva: PrecargaLote) => {
     setPrecarga(nueva);
@@ -452,8 +455,10 @@ export function LoteProduccionForm({
     }
   });
 
-  const insumosFiltrados = insumos.filter((insumo) =>
-    insumo.nombre.toLocaleLowerCase().includes(busquedaInsumo.trim().toLocaleLowerCase()),
+  const insumosFiltrados = insumos.filter(
+    (insumo) =>
+      (!insumosDeLaReceta || insumosDeLaReceta.has(insumo.id)) &&
+      insumo.nombre.toLocaleLowerCase().includes(busquedaInsumo.trim().toLocaleLowerCase()),
   );
 
   return (
@@ -476,7 +481,8 @@ export function LoteProduccionForm({
                     Lote iniciado desde la receta de <strong>{precarga.productoNombre}</strong>,
                     versión {precarga.versionNumero} (factor ×
                     {precarga.factor.toLocaleString('es-AR', { maximumFractionDigits: 3 })}). Las
-                    cantidades son editables; se marcan las que difieren de la receta.
+                    cantidades son editables; se marcan las que difieren de la receta. Solo se
+                    pueden usar los insumos de esta receta.
                   </>
                 ) : (
                   <>
@@ -486,8 +492,8 @@ export function LoteProduccionForm({
                 )}
                 {precarga.sinPrecargar.length > 0 && (
                   <div className="small mt-1">
-                    No se precargaron: {precarga.sinPrecargar.join(', ')}. Agregalos a mano si los
-                    usás.
+                    No se precargaron: {precarga.sinPrecargar.join(', ')}. Si los usás, sumalos con
+                    “Agregar” y cargá la cantidad.
                   </div>
                 )}
                 {insumosQuitados > 0 && (
@@ -612,15 +618,17 @@ export function LoteProduccionForm({
                   </ToggleButtonGroup>
                 </div>
                 <div className="d-flex gap-2">
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() => setMostrarInsumos(true)}
-                    disabled={cargandoInsumos}
-                  >
-                    <i className="bi bi-card-list"></i> Agregar
-                  </Button>
-                  {esAdministrador && (
+                  {puedeAgregarInsumos && (
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      onClick={() => setMostrarInsumos(true)}
+                      disabled={cargandoInsumos}
+                    >
+                      <i className="bi bi-card-list"></i> Agregar
+                    </Button>
+                  )}
+                  {esAdministrador && puedeAgregarInsumos && !vinculadoAReceta && !recetaDelProducto && (
                     <Button
                       variant="outline-success"
                       size="sm"
@@ -638,6 +646,19 @@ export function LoteProduccionForm({
                   ? 'Las cantidades se asignan automáticamente a los lotes de insumos con vencimiento más próximo. Revisá qué lotes se utilizarán; si el saldo no alcanza, reducí la cantidad o ingresá un lote válido.'
                   : 'Elegí los lotes de insumos que vas a utilizar. Se ordenan por vencimiento; podés elegir otro lote vigente. Si uno no alcanza, agregá otro y distribuí manualmente la cantidad.'}
               </p>
+              {!productoId && (
+                <p className="small text-body-secondary mb-3">
+                  Elegí primero el producto: si tiene receta, los insumos salen de ella.
+                </p>
+              )}
+              {faltaPrecargarReceta && (
+                <Alert variant="info" className="py-2 small">
+                  <i className="bi bi-journal-bookmark me-2" aria-hidden="true" />
+                  {recetaDelProducto.producto.nombre} tiene receta vigente: cargá la cantidad en
+                  “Precargar desde la receta” y se completan sus insumos. Solo se pueden usar los
+                  insumos de esa receta.
+                </Alert>
+              )}
               {insumosSeleccionados.length === 0 ? (
                 <p className="text-muted small mb-0">Todavía no agregaste insumos al lote.</p>
               ) : (
@@ -1034,7 +1055,11 @@ export function LoteProduccionForm({
         dialogClassName="lotes-produccion-insumos-modal"
       >
         <Modal.Header closeButton className="bg-body-tertiary">
-          <Modal.Title className="text-secondary fs-5">Seleccionar insumos existentes</Modal.Title>
+          <Modal.Title className="text-secondary fs-5">
+            {vinculadoAReceta
+              ? `Insumos de la receta de ${precarga.productoNombre}`
+              : 'Seleccionar insumos existentes'}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body className="p-0">
           <div className="p-3">

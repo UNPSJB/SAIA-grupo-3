@@ -87,3 +87,8 @@ class CodigoControlInvalido(BadRequest):
 class LoteInexistente(NotFound):
     def __init__(self, codigo: str) -> None:
         super().__init__(ErrorCode.LOTE_INEXISTENTE.format(codigo=codigo))
+
+
+class InsumoFueraDeReceta(BadRequest):
+    def __init__(self, nombres: list[str]) -> None:
+        super().__init__(ErrorCode.INSUMO_FUERA_DE_RECETA.format(nombres=", ".join(nombres)))

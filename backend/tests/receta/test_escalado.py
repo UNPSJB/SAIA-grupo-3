@@ -1,5 +1,10 @@
 import pytest
 
+from datetime import date, timedelta
+from uuid import uuid4
+
+from src.abastecimiento.models import LoteRecepcionInsumo
+from src.insumos.models import Insumo
 from src.producto.models import Producto
 from src.unidadMedida.models import TipoUnidadMedida, UnidadMedida
 
@@ -179,3 +184,89 @@ def test_si_la_receta_cambio_hay_que_volver_a_escalar(
 
     assert respuesta.status_code == 400
     assert "volvé a calcular" in respuesta.json()["detail"].lower()
+
+
+@pytest.fixture
+def insumo_ajeno(db_session, unidad_medida, proveedor_activo, persona_administradora):
+    insumo = Insumo(nombre="Chocolate", unidad_medida_id=unidad_medida.id, activo=True)
+    db_session.add(insumo)
+    db_session.flush()
+    recepcion = LoteRecepcionInsumo(
+        insumo_id=insumo.id,
+        proveedor_id=proveedor_activo.id,
+        numero_lote="CHO-001",
+        cantidad=5,
+        cantidad_disponible=5,
+        fecha_recepcion=date.today() - timedelta(days=1),
+        fecha_vencimiento=date.today() + timedelta(days=30),
+        registrado_por_id=persona_administradora.id,
+        activo=True,
+        conciliacion=False,
+        clave_operacion=str(uuid4()),
+    )
+    db_session.add(recepcion)
+    db_session.commit()
+    return {"insumo_id": insumo.id, "cantidad_usada": 1, "lotes_recepcion": [{"lote_recepcion_id": recepcion.id, "cantidad": 1}]}
+
+
+def test_un_lote_desde_la_receta_no_acepta_insumos_que_no_estan_en_ella(
+    client, db_session, headers_operadora, receta, lote_recepcion, insumo_ajeno
+):
+    escalado = escalar(client, headers_operadora, receta, factor=1).json()
+    datos = _lote_desde_receta(receta, escalado, lote_recepcion)
+    datos["insumos"].append(insumo_ajeno)
+
+    respuesta = client.post("/lotes-produccion/", headers=headers_operadora, json=datos)
+
+    assert respuesta.status_code == 400
+    assert "Chocolate" in respuesta.json()["detail"]
+    assert "no están en la receta" in respuesta.json()["detail"]
+    db_session.expire_all()
+    assert db_session.get(LoteRecepcionInsumo, insumo_ajeno["lotes_recepcion"][0]["lote_recepcion_id"]).cantidad_disponible == 5
+    assert db_session.get(LoteRecepcionInsumo, lote_recepcion.id).cantidad_disponible == 12
+
+
+def test_un_lote_desde_la_receta_puede_usar_solo_parte_de_sus_insumos(
+    client, headers_operadora, receta, lote_recepcion
+):
+    escalado = escalar(client, headers_operadora, receta, factor=1).json()
+
+    respuesta = client.post("/lotes-produccion/", headers=headers_operadora, json=_lote_desde_receta(receta, escalado, lote_recepcion))
+
+    assert respuesta.status_code == 200, respuesta.text
+
+
+def test_un_lote_sin_vincular_de_un_producto_con_receta_tampoco_acepta_insumos_ajenos(
+    client, headers_operadora, receta, lote_recepcion, insumo_ajeno
+):
+    escalado = escalar(client, headers_operadora, receta, factor=1).json()
+    datos = _lote_desde_receta(receta, escalado, lote_recepcion)
+    del datos["version_receta_id"], datos["factor_receta"]
+    datos["insumos"].append(insumo_ajeno)
+
+    respuesta = client.post("/lotes-produccion/", headers=headers_operadora, json=datos)
+
+    assert respuesta.status_code == 400
+    assert "Chocolate" in respuesta.json()["detail"]
+
+
+def test_un_producto_sin_receta_puede_usar_cualquier_insumo(
+    client, db_session, headers_operadora, unidad_medida, lote_recepcion, insumo_ajeno
+):
+    sin_receta = Producto(nombre="Producto sin receta", unidad_medida_id=unidad_medida.id, activo=True)
+    db_session.add(sin_receta)
+    db_session.commit()
+    datos = {
+        "producto_id": sin_receta.id,
+        "fecha_produccion": lote_recepcion.fecha_recepcion.isoformat(),
+        "cantidad": 5,
+        "insumos": [
+            {"insumo_id": lote_recepcion.insumo_id, "cantidad_usada": 1,
+             "lotes_recepcion": [{"lote_recepcion_id": lote_recepcion.id, "cantidad": 1}]},
+            insumo_ajeno,
+        ],
+    }
+
+    respuesta = client.post("/lotes-produccion/", headers=headers_operadora, json=datos)
+
+    assert respuesta.status_code == 200, respuesta.text

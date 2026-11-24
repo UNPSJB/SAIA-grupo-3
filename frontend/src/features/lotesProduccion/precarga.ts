@@ -17,6 +17,7 @@ export function precargaDesde(escalado: Escalado): PrecargaLote {
       insumoId: renglon.insumo.id,
       cantidad: renglon.cantidad_en_unidad_stock ?? 0,
     })),
+    insumosReceta: escalado.renglones.map((renglon) => renglon.insumo.id),
     sinPrecargar: escalado.renglones
       .filter((renglon) => !precargables.includes(renglon))
       .map((renglon) => renglon.insumo.nombre),

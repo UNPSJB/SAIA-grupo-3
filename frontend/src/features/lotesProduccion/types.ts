@@ -85,6 +85,7 @@ export interface PrecargaLote {
   productoNombre: string;
   cantidad: number | null;
   insumos: { insumoId: number; cantidad: number }[];
+  insumosReceta: number[];
   sinPrecargar: string[];
 }
 

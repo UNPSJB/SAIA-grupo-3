@@ -48,6 +48,7 @@ class ErrorCode:
     RECETA_DESACTUALIZADA = (
         "La receta cambió desde que la escalaste. Volvé a calcular las cantidades con la versión vigente."
     )
+    INSUMO_FUERA_DE_RECETA = "Estos insumos no están en la receta vigente del producto: {nombres}. Un producto con receta solo puede usar los insumos de esa receta."
     FACTOR_RECETA_INCOMPLETO = "Para vincular el lote a una receta indicá la versión y el factor aplicado."
     LOTE_NO_FINALIZADO = (
         "El lote tiene {cantidad} paso(s) sin realizar: se puede cerrar cuando estén todos realizados."
