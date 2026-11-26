@@ -2,16 +2,16 @@ import { useId, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Offcanvas, Collapse } from 'react-bootstrap';
 import { useAuth } from '../hooks/useAuth';
-import { useRotuladoFrontalActivo } from '../../features/rotuladoFrontal/useRotuladoFrontalActivo';
 
 interface SidebarProps {
   show: boolean;
   onClose: () => void;
+  collapsed: boolean;
+  onToggle: () => void;
 }
 
 type Permiso = 'operar' | 'administrar' | 'consultarOperacion';
 
-type GrupoMaestro = 'maestrosProduccion' | 'maestrosLimpieza' | 'maestrosGenerales';
 
 interface MenuItem {
   to?: string;
@@ -19,7 +19,7 @@ interface MenuItem {
   label: string;
   icono: string;
   permiso?: Permiso;
-  grupo?: 'incidentes' | GrupoMaestro;
+  grupo?: 'incidentes';
   subItems?: {
     to: string;
     label: string;
@@ -28,16 +28,14 @@ interface MenuItem {
     permiso?: Permiso;
   }[];
 }
-export function Sidebar({ show, onClose }: SidebarProps) {
+export function Sidebar({ show, onClose, collapsed, onToggle }: SidebarProps) {
   const location = useLocation();
   const { currentUser } = useAuth();
-  const rotuladoActivo = useRotuladoFrontalActivo(currentUser?.administrar === true);
 
 
   const menuItems: MenuItem[] = [
     { to: '/inicio', label: 'Inicio', icono: 'bi bi-house-door', permiso: 'administrar'},
     { to: '/recepciones-insumos', label: 'Recepción de insumos', icono: 'bi bi-box-arrow-in-down', permiso: 'administrar' },
-    { to: '/vista-publica/configuracion', label: 'Vista pública', icono: 'bi bi-globe', permiso: 'administrar'},
     { to: '/tablero', label: 'Tablero de gestión', icono: 'bi bi-graph-up' },
     { to: '/planes', label: 'Planes de Limpieza', icono: 'bi bi-clipboard2-check' },
     { to: '/auditoria', label: 'Historial Checklist', icono: 'bi bi-clock-history' },
@@ -69,48 +67,12 @@ export function Sidebar({ show, onClose }: SidebarProps) {
       icono: 'bi bi-exclamation-triangle',
       permiso: 'operar',
     } satisfies MenuItem]),
-    {
-      label: 'Maestros de producción',
-      icono: 'bi bi-basket',
-      grupo: 'maestrosProduccion',
-      subItems: [
-        { to: '/productos', label: 'Productos', icono: 'bi bi-basket' },
-        { to: '/insumos', label: 'Insumos / Ingredientes', icono: 'bi bi-box-seam', end: true },
-        { to: '/proveedores', label: 'Proveedores', icono: 'bi bi-truck', permiso: 'administrar' },
-        { to: '/clases-funcionales', label: 'Clases funcionales', icono: 'bi bi-tags' },
-        { to: '/aditivos-referencia', label: 'Aditivos de referencia', icono: 'bi bi-capsule' },
-        { to: '/alimentos-referencia', label: 'Alimentos de referencia', icono: 'bi bi-clipboard2-pulse' },
-        { to: '/alergenos', label: 'Alérgenos', icono: 'bi bi-exclamation-octagon', permiso: 'administrar' },
-        { to: '/valores-diarios', label: 'Valores diarios y redondeo', icono: 'bi bi-percent' },
-        ...(rotuladoActivo
-          ? [{ to: '/parametros-normativos', label: 'Parámetros normativos', icono: 'bi bi-journal-check' }]
-          : []),
-        { to: '/configuracion-produccion', label: 'Configuración de producción', icono: 'bi bi-sliders' },
-      ],
-    },
-    {
-      label: 'Maestros de limpieza',
-      icono: 'bi bi-bucket',
-      grupo: 'maestrosLimpieza',
-      subItems: [
-        { to: '/tarea', label: 'Tareas', icono: 'bi bi-list-task' },
-        { to: '/elementos', label: 'Elementos de Limpieza', icono: 'bi bi-bucket-fill' },
-        { to: '/insumos-quimicos', label: 'Insumos Químicos', icono: 'bi bi-droplet-half' },
-      ],
-    },
-    {
-      label: 'Maestros generales',
-      icono: 'bi bi-database',
-      grupo: 'maestrosGenerales',
-      subItems: [
-        { to: '/personal', label: 'Personal', icono: 'bi bi-people', end: true },
-        { to: '/sectores', label: 'Sectores', icono: 'bi bi-diagram-3' },
-        { to: '/equipos', label: 'Equipos e Instrumentos', icono: 'bi bi-tools' },
-        { to: '/unidades-medida', label: 'Unidad de Medida', icono: 'bi bi-rulers' },
-        { to: '/tipos-documento', label: 'Tipo Documento', icono: 'bi bi-file-earmark-text' },
-        { to: '/tipos-incidente', label: 'Tipo Incidente', icono: 'bi bi-exclamation-triangle-fill' },
-      ],
-    },
+    { to: '/productos', label: 'Productos', icono: 'bi bi-basket' },
+    { to: '/insumos', label: 'Insumos / Ingredientes', icono: 'bi bi-box-seam', end: true },
+    { to: '/proveedores', label: 'Proveedores', icono: 'bi bi-truck' },
+    { to: '/tarea', label: 'Tareas', icono: 'bi bi-list-task' },
+    { to: '/insumos-quimicos', label: 'Insumos Químicos', icono: 'bi bi-droplet-half' },
+    { to: '/equipos', label: 'Equipos e Instrumentos', icono: 'bi bi-tools' },
   ];
 
   const puedeVer = (permiso: Permiso = 'administrar') =>
@@ -126,10 +88,9 @@ export function Sidebar({ show, onClose }: SidebarProps) {
 
   const instanceId = useId();
   const secciones = [
-    { id: 'gestion', label: 'Gestión', icono: 'bi bi-graph-up', rutas: ['/tablero', '/vista-publica/configuracion'] },
-    { id: 'produccion', label: 'Producción', icono: 'bi bi-basket2', rutas: ['/produccion-del-dia', '/recetas', '/lotes-produccion', '/rotulado', '/recepciones-insumos', '/lotes', '/buscar-lote', '/trazabilidad-insumos'] },
-    { id: 'limpieza', label: 'Limpieza', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/planes', '/auditoria', '/consumos', '/reportes/consumos'] },
-    { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/registro-temperatura', '/vencimientos', '/incidentes'] },
+    { id: 'produccion', label: 'Producción', icono: 'bi bi-basket2', rutas: ['/productos', '/insumos', '/proveedores', '/produccion-del-dia', '/recetas', '/lotes-produccion', '/rotulado', '/recepciones-insumos', '/lotes', '/buscar-lote', '/trazabilidad-insumos'] },
+    { id: 'limpieza', label: 'Limpieza', icono: 'bi bi-clipboard2-check', rutas: ['/checklist', '/tarea', '/insumos-quimicos', '/planes', '/auditoria', '/consumos', '/reportes/consumos'] },
+    { id: 'control', label: 'Control y seguimiento', icono: 'bi bi-shield-check', rutas: ['/equipos', '/registro-temperatura', '/vencimientos', '/incidentes'] },
     { id: 'documentacion', label: 'Documentación', icono: 'bi bi-files', rutas: ['/documentos-vigentes', '/documentos-tecnicos'] },
   ].map((seccion) => ({
     ...seccion,
@@ -147,14 +108,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
     }),
   })).filter((seccion) => seccion.items.length > 0);
 
-  const gruposMaestros: GrupoMaestro[] = ['maestrosProduccion', 'maestrosLimpieza', 'maestrosGenerales'];
-  const maestros = gruposMaestros.flatMap((grupo) => {
-    const item = menuVisible.find((menu) => menu.grupo === grupo);
-    return item?.subItems?.length
-      ? [{ id: grupo, label: item.label, icono: item.icono, items: item.subItems as MenuItem[] }]
-      : [];
-  });
-  const grupos = [...secciones, ...maestros];
+  const grupos = secciones;
   const esRutaActiva = (item: MenuItem) => Boolean(item.to && (
     location.pathname === item.to || (!item.end && location.pathname.startsWith(`${item.to}/`))
   ));
@@ -304,11 +258,24 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   return (
     <>
       <aside
-        className="position-fixed top-0 start-0 bottom-0 bg-body border-end d-none d-md-flex flex-column z-3 shadow-sm overflow-hidden"
+        id="sidebar-desktop"
+        className="sidebar-desktop position-fixed top-0 start-0 bottom-0 bg-body border-end d-none d-md-flex flex-column z-3 shadow-sm overflow-hidden"
         style={{ width: '260px' }}
       >
         {renderMenu('desktop')}
       </aside>
+
+      <button
+        type="button"
+        className="sidebar-edge-toggle d-none d-md-flex"
+        onClick={onToggle}
+        aria-label={collapsed ? 'Desplegar menú lateral' : 'Plegar menú lateral'}
+        title={collapsed ? 'Desplegar menú lateral' : 'Plegar menú lateral'}
+        aria-expanded={!collapsed}
+        aria-controls="sidebar-desktop"
+      >
+        <i className={`bi ${collapsed ? 'bi-chevron-right' : 'bi-chevron-left'}`} aria-hidden="true" />
+      </button>
 
       <Offcanvas show={show} onHide={onClose} placement="start" className="d-md-none">
         <Offcanvas.Header closeButton>

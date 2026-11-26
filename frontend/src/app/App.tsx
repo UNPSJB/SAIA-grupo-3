@@ -7,17 +7,25 @@ import '../App.css';
 
 export default function App() {
   const [showSidebar, setShowSidebar] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { currentUser } = useAuth();
   const vista = currentUser?.administrar
     ? 'Vista de administración'
     : currentUser?.operar ? 'Vista de operación' : 'Acceso al sistema';
 
   return (
-    <div className="min-vh-100 d-flex bg-body-tertiary">
-      <Sidebar show={showSidebar} onClose={() => setShowSidebar(false)} />
+    <div className={`min-vh-100 d-flex bg-body-tertiary ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <Sidebar
+        show={showSidebar}
+        onClose={() => setShowSidebar(false)}
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(actual => !actual)}
+      />
 
       <div className="flex-grow-1 main-content d-flex flex-column">
-        <TopHeader onToggleSidebar={() => setShowSidebar(true)} />
+        <TopHeader
+          onToggleSidebar={() => setShowSidebar(true)}
+        />
 
         <main className="flex-grow-1 p-3 p-md-4" style={{ marginTop: '64px' }}>
           <div className="container-fluid max-w-6xl mx-auto">

@@ -14,9 +14,10 @@ interface TopHeaderProps {
 const rutasNavegacion = [
   { ruta: '/inicio', titulo: 'Administración' },
   { ruta: '/perfil', titulo: 'Mi perfil' },
+  { ruta: '/configuracion', titulo: 'Configuración' },
   { ruta: '/sin-permisos', titulo: 'Sin permisos' },
   { ruta: '/tablero', titulo: 'Tablero de gestión', seccion: 'Gestión' },
-  { ruta: '/vista-publica/configuracion', titulo: 'Vista pública', seccion: 'Gestión' },
+  { ruta: '/vista-publica/configuracion', titulo: 'Vista pública', seccion: 'Configuración' },
   { ruta: '/recetas', titulo: 'Recetas', seccion: 'Producción' },
   { ruta: '/rotulado', titulo: 'Rotulado', seccion: 'Producción' },
   { ruta: '/produccion-del-dia', titulo: 'Producción del día', seccion: 'Producción' },
@@ -38,25 +39,25 @@ const rutasNavegacion = [
   { ruta: '/incidentes', titulo: 'Incidentes', seccion: 'Control y seguimiento' },
   { ruta: '/documentos-vigentes', titulo: 'Documentos vigentes', seccion: 'Documentación' },
   { ruta: '/documentos-tecnicos', titulo: 'Documentos técnicos', seccion: 'Documentación' },
-  { ruta: '/productos', titulo: 'Productos', seccion: 'Maestros de producción' },
-  { ruta: '/insumos', titulo: 'Insumos / ingredientes', seccion: 'Maestros de producción' },
-  { ruta: '/proveedores', titulo: 'Proveedores', seccion: 'Maestros de producción' },
-  { ruta: '/clases-funcionales', titulo: 'Clases funcionales', seccion: 'Maestros de producción' },
-  { ruta: '/aditivos-referencia', titulo: 'Aditivos de referencia', seccion: 'Maestros de producción' },
-  { ruta: '/alimentos-referencia', titulo: 'Alimentos de referencia', seccion: 'Maestros de producción' },
-  { ruta: '/alergenos', titulo: 'Alérgenos', seccion: 'Maestros de producción' },
-  { ruta: '/valores-diarios', titulo: 'Valores diarios y redondeo', seccion: 'Maestros de producción' },
-  { ruta: '/parametros-normativos', titulo: 'Parámetros normativos', seccion: 'Maestros de producción' },
-  { ruta: '/configuracion-produccion', titulo: 'Configuración de producción', seccion: 'Maestros de producción' },
-  { ruta: '/tarea', titulo: 'Tareas', seccion: 'Maestros de limpieza' },
-  { ruta: '/elementos', titulo: 'Elementos de limpieza', seccion: 'Maestros de limpieza' },
-  { ruta: '/insumos-quimicos', titulo: 'Insumos químicos', seccion: 'Maestros de limpieza' },
-  { ruta: '/personal', titulo: 'Personal', seccion: 'Maestros generales' },
-  { ruta: '/sectores', titulo: 'Sectores', seccion: 'Maestros generales' },
-  { ruta: '/equipos', titulo: 'Equipos e instrumentos', seccion: 'Maestros generales' },
-  { ruta: '/unidades-medida', titulo: 'Unidades de medida', seccion: 'Maestros generales' },
-  { ruta: '/tipos-documento', titulo: 'Tipo de documento', seccion: 'Maestros generales' },
-  { ruta: '/tipos-incidente', titulo: 'Tipo de incidente', seccion: 'Maestros generales' },
+  { ruta: '/productos', titulo: 'Productos', seccion: 'Producción' },
+  { ruta: '/insumos', titulo: 'Insumos / ingredientes', seccion: 'Producción' },
+  { ruta: '/proveedores', titulo: 'Proveedores', seccion: 'Producción' },
+  { ruta: '/clases-funcionales', titulo: 'Clases funcionales', seccion: 'Configuración' },
+  { ruta: '/aditivos-referencia', titulo: 'Aditivos de referencia', seccion: 'Configuración' },
+  { ruta: '/alimentos-referencia', titulo: 'Alimentos de referencia', seccion: 'Configuración' },
+  { ruta: '/alergenos', titulo: 'Alérgenos', seccion: 'Configuración' },
+  { ruta: '/valores-diarios', titulo: 'Valores diarios y redondeo', seccion: 'Configuración' },
+  { ruta: '/parametros-normativos', titulo: 'Parámetros normativos', seccion: 'Configuración' },
+  { ruta: '/configuracion-produccion', titulo: 'Configuración de producción', seccion: 'Configuración' },
+  { ruta: '/tarea', titulo: 'Tareas', seccion: 'Limpieza' },
+  { ruta: '/elementos', titulo: 'Elementos de limpieza', seccion: 'Configuración' },
+  { ruta: '/insumos-quimicos', titulo: 'Insumos químicos', seccion: 'Limpieza' },
+  { ruta: '/personal', titulo: 'Personal', seccion: 'Configuración' },
+  { ruta: '/sectores', titulo: 'Sectores', seccion: 'Configuración' },
+  { ruta: '/equipos', titulo: 'Equipos e instrumentos', seccion: 'Control y seguimiento' },
+  { ruta: '/unidades-medida', titulo: 'Unidades de medida', seccion: 'Configuración' },
+  { ruta: '/tipos-documento', titulo: 'Tipo de documento', seccion: 'Configuración' },
+  { ruta: '/tipos-incidente', titulo: 'Tipo de incidente', seccion: 'Configuración' },
 ].sort((a, b) => b.ruta.length - a.ruta.length);
 
 const etiquetasAccion: Record<string, string> = {
@@ -127,7 +128,14 @@ export function TopHeader({ onToggleSidebar }: TopHeaderProps) {
           </li>
           {rutaActual?.seccion && (
             <li className="breadcrumb-item text-body-secondary d-none d-lg-block flex-shrink-0">
-              {rutaActual.seccion}
+              {rutaActual.seccion === 'Configuración' ? (
+                <Link
+                  to={`/configuracion?area=${['/elementos', '/sectores'].includes(rutaActual.ruta) ? 'limpieza' : ['/personal', '/tipos-documento', '/tipos-incidente', '/vista-publica/configuracion'].includes(rutaActual.ruta) ? 'sistema' : 'produccion'}`}
+                  className="text-body-secondary text-decoration-none"
+                >
+                  Configuración
+                </Link>
+              ) : rutaActual.seccion}
             </li>
           )}
           <li className={`breadcrumb-item text-truncate ${accionActual ? '' : 'active'}`} aria-current={accionActual ? undefined : 'page'}>
@@ -208,6 +216,12 @@ export function TopHeader({ onToggleSidebar }: TopHeaderProps) {
                 <i className="bi bi-person-circle" aria-hidden="true" />
                 Mi perfil
               </Dropdown.Item>
+              {permissions(currentUser).canAdmin && (
+                <Dropdown.Item as={Link} to="/configuracion" active={pathname === '/configuracion'} className="cuenta-menu-item">
+                  <i className="bi bi-sliders" aria-hidden="true" />
+                  Configuración
+                </Dropdown.Item>
+              )}
               <Dropdown.Divider className="mx-2 my-2" />
               <Dropdown.Item
                 as="button"

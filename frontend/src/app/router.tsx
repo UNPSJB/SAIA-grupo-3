@@ -42,6 +42,7 @@ import { RecetaDetallePage, RecetaFormPage, RecetasPage } from '../features/rece
 import { AditivosReferenciaPage, ClasesFuncionalesPage } from '../features/aditivos';
 import { ProduccionDelDiaPage } from '../features/produccionDelDia';
 import { ConfiguracionProduccionPage } from '../features/configuracionProduccion';
+import { ConfiguracionPage } from '../features/configuracion/ConfiguracionPage';
 import { AlimentosReferenciaPage, ValoresDiariosPage } from '../features/nutricion';
 import { AlergenosPage } from '../features/alergenos';
 import { ConjuntoParametrosPage, ParametrosNormativosPage } from '../features/rotuladoFrontal';
@@ -114,6 +115,7 @@ export function AppRouter() {
 
             {/* Administración */}
             <Route element={<ProtectedRoute requireAdmin />}>
+              <Route path="configuracion" element={<ConfiguracionPage />} />
               <Route path="proveedores" element={<ProveedoresPage />} />
               <Route path="proveedores/nuevo" element={<ProveedoresPage />} />
               <Route path="proveedores/:id" element={<ProveedoresPage />} />

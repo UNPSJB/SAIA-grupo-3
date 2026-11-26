@@ -1,0 +1,188 @@
+.configuracion-page {
+  padding: 28px 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.configuracion-titulo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 32px;
+}
+.configuracion-icono {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bs-primary) 10%, var(--bs-body-bg));
+  color: var(--bs-primary-text-emphasis);
+  font-size: 25px;
+}
+.configuracion-antetitulo {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--bs-secondary-color);
+}
+.configuracion-titulo h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 3px 0 7px;
+  letter-spacing: -0.6px;
+}
+.configuracion-titulo p,
+.configuracion-descripcion {
+  font-size: 0.85rem;
+  color: var(--bs-secondary-color);
+  margin: 0;
+}
+.configuracion-distribucion {
+  display: grid;
+  grid-template-columns: 205px minmax(0, 1fr);
+  gap: 30px;
+}
+.configuracion-areas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.configuracion-areas button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px;
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--bs-secondary-color);
+  text-align: left;
+  font-size: 0.9rem;
+}
+.configuracion-areas button > i:last-child {
+  font-size: 0.7rem;
+  margin-left: auto;
+}
+.configuracion-areas button[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--bs-primary) 10%, var(--bs-body-bg));
+  color: var(--bs-primary-text-emphasis);
+  border-color: color-mix(in srgb, var(--bs-primary) 20%, var(--bs-border-color));
+}
+.configuracion-areas button:hover {
+  background-color: var(--bs-tertiary-bg);
+}
+.configuracion-permisos {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 20px 12px 0;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--bs-secondary-color);
+}
+.configuracion-opciones {
+  min-width: 0;
+}
+.configuracion-opciones > h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 8px 0;
+}
+.configuracion-descripcion {
+  margin-bottom: 20px;
+}
+.configuracion-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.configuracion-tarjeta {
+  min-width: 0;
+  padding: 20px;
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 9px;
+  text-decoration: none;
+}
+.configuracion-tarjeta:hover {
+  color: var(--bs-body-color);
+  border-color: var(--bs-primary-text-emphasis);
+  background: var(--bs-tertiary-bg);
+}
+.configuracion-tarjeta-iconos {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 13px;
+  color: var(--bs-primary-text-emphasis);
+  font-size: 1.15rem;
+}
+.configuracion-tarjeta-iconos > i:last-child {
+  color: var(--bs-secondary-color);
+  font-size: 0.8rem;
+}
+.configuracion-tarjeta h3 {
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin: 0 0 7px;
+}
+.configuracion-tarjeta p {
+  font-size: 0.8rem;
+  color: var(--bs-secondary-color);
+  line-height: 1.6;
+  margin: 0;
+}
+.configuracion-recordatorio {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-top: 1px solid var(--bs-border-color);
+  padding-top: 20px;
+  margin-top: 30px;
+  color: var(--bs-secondary-color);
+}
+.configuracion-recordatorio p {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  margin: 0;
+}
+@media (min-width: 1500px) {
+  .configuracion-tarjetas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1000px) {
+  .configuracion-distribucion {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .configuracion-areas {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .configuracion-areas button {
+    flex: 1 1 140px;
+  }
+  .configuracion-permisos {
+    flex-basis: 100%;
+    margin: 6px 0 0;
+  }
+}
+@media (max-width: 576px) {
+  .configuracion-page {
+    padding: 20px 12px;
+  }
+  .configuracion-tarjetas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .configuracion-areas button {
+    font-size: 0.8rem;
+    padding: 10px;
+  }
+  .configuracion-titulo h1 {
+    font-size: 1.5rem;
+  }
+}
